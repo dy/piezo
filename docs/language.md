@@ -154,6 +154,9 @@ So the main pain of JS for sound processing is GC. The rest is relatively ok.
       ? or maybe provide named references (unchangeable) #in, #in[0],..., #out, #t, #rate?
         + gives "private", "reserved" meaning, which is similar to private fields from js.
         - no need for #in - function just takes from last group
+  * `source | filter(freq, Q)` → `filter(source, freq, Q)` is fine convention. Placeholder is a pain, we 99% of time don't need that.
+    * ? Maybe worth renaming to `source |> filter(freq, Q)` to avoid confusion with `|`
+      - nah, `source | gain(.45)` is oldschool coolness, prob just fn clause: takes prev argument.
 
 * should there be lambda? `value | x -> x*.6 + reverb(x) * .4`
   - lambda function has diverging notation from regular fn definition.
@@ -199,6 +202,16 @@ So the main pain of JS for sound processing is GC. The rest is relatively ok.
       - what if we don't need else condition? `a ?.. b;`
   * ? What if we simply provide short version of for `for (condition) statements`, augmented to `for(;;)`?
     * ? `for(let i = 0; i++ < x.length)`, `for (a in b)`, `for (i=0 < x.length)`
+  * ? what if we even simpler do `a in b : a+1`, `i++ < x.length : a[i]++`?
+    + it's like label but evaluable and returning to itself;
+    + it's like `for`/`while` loop in form of operator;
+    + it's like tail of ternary `a ? b : c : d`
+      ? what about loop inside of a loop? `x++ < w : y++ < h : (x,y)`
+        + yes, nested loops can be comma-defined `x++<w, y++<h : ...;`
+    * ? or make label at the end? `(x,y) : x++ < w, y++ < h`
+      + this is more classic math notation
+      - a bit unusual and forces first step
+      ~ math notation for loop is either `∀A,∃B:A<B` or `∀{x∈N,0<x<10},yx=x**2`
 
 * ? Is there a way to multi-export without apparent `export` keyword for every function?
   → maybe it's good there's apparent `export` indicator - easy to scan and in-place, compared to accumulated export at the end.
