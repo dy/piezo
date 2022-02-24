@@ -55,6 +55,8 @@ So the main pain of JS for sound processing is GC. The rest is relatively ok.
 * One toy wasm language as a base: [WebBS](https://github.com/j-s-n/WebBS)
 * ~~Walt − more serious layer language, very JSy: [Walt](https://github.com/ballercat/walt)~~ compiles to wrong wat
 * [chasm](https://github.com/ColinEberhardt/chasm/blob/master/src/emitter.ts)
+* [mono-lib](https://github.com/stagas/mono/blob/main/src/lib.wat.ts), [monolib](https://github.com/stagas/monolib/blob/main/src/index.ts)
+* [webassemblo examples](https://openhome.cc/eGossip/WebAssembly/index.html)
 
 ## Points
 

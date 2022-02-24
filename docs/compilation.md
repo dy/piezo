@@ -97,6 +97,22 @@
   8. Configurable static layout: `setBlockSize(N), setMaxChannels(16)`
     * that recalculates `INPUT_PTR`, `OUTPUT_PTR`, `INPUT_LEN`, `OUTPUT_LEN`, `BLOCK_SIZE`
 
+  → It should be simple and soft, like a breeze.
+
+  9. `[ptr, size] = param(channels)`, `blockSize` is configurable global
+    + this is simple
+    + this is like 7.2 with pointers
+    + this allows space for extra args to param constructors, like clamping etc.
+    * ? maybe we better off `[ptr, size] = aParam(2)`, `ptr` = kParam(2)
+    ~ identifying slot params by ptr would require internal state. Ideally we keep it simply as calculation:
+      * gain(a,b,c) whould know nothing about params, it should really be isomorphic and calculate based on args, that's it.
+
+  → block size may change over time, so better reserve place in-advance.
+  → just follow [audioWorklet.process](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process)
+
+  10. Ok, proper way is malloc or array (see @audio/gain.wasm)
+    * [Simplest malloc](https://github.com/rain-1/awesome-allocators)
+    * [Array](https://openhome.cc/eGossip/WebAssembly/Array.html)
 
 ## How do we organize output?
 
@@ -104,3 +120,25 @@
   * Dynamized memory loses output location, unless indicated by arguments...
 
   ? Can we avoid that by providing OUTPUT_PTR?
+    - not really. We should pass output pointer and size to detect channels.
+
+## Autogeneration mono/stereo clauses vs manual clauses
+
+  * See [gain node](https://github.com/mohayonao/web-audio-engine/blob/master/src/impl/dsp/GainNode.js) for clause examples.
+
+  1. autogeneration
+    + makes son code shorter
+    - generates n^2 codebase
+  2. manual clauses
+    + reflect "hint" to how much code is generated in son source
+    + more precise
+    - can be tedious for long processors
+      ~ maybe long processors should fallback to core routine, for example
+    + clauses allow defining pipe-input case
+    + that's nice that clauses are turned on only if defined, not otherwise
+
+  → prob there's not sense to generate internal fn clauses, unless explicitly defined
+
+  → there's no much sense generating looping functions for internals.
+    * for exports we create clauses = that depends on the way fn is called.
+    * so that's just generalized way to "batch" functions against values in memory.
