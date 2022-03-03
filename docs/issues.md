@@ -20,6 +20,9 @@
   * ? Instantiate sound externally via module instance?
   * ? Or take `t`,`i` param?
   * ? Or have `reset` method?
+  * We may need to call same function with different time within same sound.
+    ? Should it be implicit-default-function param, like `f(#t=gTime)` and to call `f(a,b,c,#t=localTime)`?
+      + this can also be used for pipe input as `f(#input)`
 
 ## [x] `f(x, y) = x + y` standard classic way to define function in math
   + also as in F# or Elixir
@@ -131,6 +134,8 @@
       ? what if we identify by callsite and in-places denormalize usage as just direct code insertion? Sort of macro?
         ~ then overloading becomes questionable `...a = a0,a1,a2,a3 | a -> stretch(a, rate) | Comb`
 
+  ! -> operator must uniquely identify type and be macros
+
 ## [ ] Reduce operator:
 
   * ? Reduce operator? It can be eg. `:>` (2 become 1), or `=>`.
@@ -140,6 +145,8 @@
     * ? `a,b,c => a,b ->a+b`
     * ? `a,b,c ..> a,b -> a+b`
     → `a,b,c >- a,b -> a+b` (crazy!)
+
+  ! >- operator can be statically analyzable if group length is known (it should be known)
 
 ## [ ] Units
 
@@ -153,7 +160,11 @@
 ## [ ] End operator
 
   * `.` operator can finish function body and save state. `delay(x,y) = ...d=[1s], z=0; d[z++]=x; d[z-y].`
-  * ? it's still optional
+  * ? is it optional?
+    * eg. `noise(phase) = sin((phase % (PI*2))**3)` - what would be the point here?
+  - it makes direct sense only in case of unnested body. When body is nested - not as much.
+  - it creates confusion with block as `).` vs `.)`
+  + maybe for unwrapping it is still useful.
 
 ## [ ] State management
 
@@ -314,11 +325,12 @@
     + we may require block if new variables are defined, else args must be used.
     + () makes warmer inside, sort of nest in literal sense.
 
-* language should not break inline composability, like it does python or livescript: you can tightly pack code into a single line.
-* language should be mangle-able, therefore names should not have prefixes
-  ~ mangling can recognize that
-* Spacing material should not have any syntactic meaning. `;` should be default separator.
+## [ ] Inlining / Mangling / compressing
 
+  * language should not break inline composability, like it does python or livescript: you can tightly pack code into a single line.
+  * language should be mangle-able, therefore names should not have prefixes
+    ~ mangling can recognize that
+  * Spacing material should not have any syntactic meaning. `;` should be a default separator.
 
 ## [x] Compiler: How do we map various clauses to wat/wasm? → `alloc` function, untyped (f64 by default), see audio-gain
 
@@ -536,6 +548,7 @@
     + very common: rtype, hegel, flow use same notation
     - needs separate type parsing/tracking subsystem, whereas name immediately reflects type
     + allows multitype definition as `frequency:aParam|kParam`
+      + this solves redirection problem
   3. ★ use csound-like prefixing for identifying params: ifrequency, ainput, gi
     + melds in global params organically `gTime, gSampleRate` (which is glsl-familiar)
     + name reflects type constantly
@@ -546,7 +559,13 @@
     + that also works good as indicator of non-argument variables
     ~ ? should non-prefixed params possibly generate two versions?
       + default params better be direct fn values (helps problematic defaults case), prefixed - for batch
+    - unclear how to redirect a-param clause to k-param
+      ? name multiprefixed as `akVolume`
+        + csound's gi proves for this case
+        - ? how do we make direct param, aParam and kParam altogether?
+
   4. `amp as kParam`
+    + same as 2
     + no destructuring issue
     + more human-readable
     - longer lines, ~ although not much longer than colon
@@ -588,7 +607,7 @@
         ~ # is also a sort of prefix
     - can be problematic destructuring: `gain((al,ar) in -1..1)`
 
-## [x] Clauses selection → unprefixed params generate direct case, prefixed refer to clauses
+## [ ] Direct values clause is hindered by clause selector
 
   * ? How do we select direct values clause? `gain(inp, .75, outp)`
     ~ `gain(inp, .75, outp, 2)` is fine (null-arg means direct)
@@ -597,4 +616,4 @@
     ~ the worst-case damage is extra fn call + extra nan comparison that sees - ok, there's no signature, fall back to direct call.
     ~ single runs are not expected to be very regular externally, since for batch runs there's clause cases.
 
-  * Since we decided to use prefixed params, default params generates only direct function.
+  * ? Since we decided to use prefixed params, default params generates only direct function.

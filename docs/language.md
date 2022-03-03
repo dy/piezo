@@ -16,8 +16,6 @@ Some fruits from sonr discussion.
 * importable DSP libs: sound design, melody design, synth design, analysis, live, stdlib etc
 * radically minimal & performant
 * it must be 0 runtime: no arguments ambiguity, all types are predictable in advance.
-  ! >- operator can be statically analyzable if group length is known (it should be known)
-  ! -> operator must uniquely identify type and be macros
 
 **It should be language as a gift for Krsna: for him to compose beautiful melody once; and for all demigods to make songs praising Holy Name**
 
@@ -38,6 +36,7 @@ What qualities should it have? How should that be organized?
 * it should be low-level: bytebeat should be available without radical changes;
 * fluent: like js without `{}`
 * spacing intuition is wasm/js-like: you can put operands inline or multiline (unlike python)
+* drop `source | filter() | reverb() | fx()` and get controls with defaults; changing controls changes values;
 
 ## Performance
 
@@ -58,19 +57,6 @@ So the main pain of JS for sound processing is GC. The rest is relatively ok.
 * [mono-lib](https://github.com/stagas/mono/blob/main/src/lib.wat.ts), [monolib](https://github.com/stagas/monolib/blob/main/src/index.ts)
 * [webassemblo examples](https://openhome.cc/eGossip/WebAssembly/index.html)
 
-## Points
-
-* drop `source | filter() | reverb() | fx()` and get controls with defaults; changing controls changes values;
-
-
-## Lang likes/dislikes
-
-### JS
-
-### Wasm
-
-+ no ; needed here and there
-+ ;; as comment is nice, even just ; but it's not supported
 
 ## Test cases
 
