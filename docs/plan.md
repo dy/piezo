@@ -7,7 +7,6 @@
 
 * [ ] @audio/gain module
   * compiles basic son file to multicased function `process, process1, process2, process0`
-    → for a/k-params there is `process01, process11, process02, process12`
 
 * [ ] Minimal set:
   * [ ] common expressions
