@@ -187,8 +187,10 @@ So the main pain of JS for sound processing is GC. The rest is relatively ok.
 
 * short ternary operators as ` a > b ? a = 1;`
   + it not only eliminates else, but also augments null-path operator `a.b?.c`, which is for no-prop just `a.b?c` case.
+  - weirdly confusing, as if very important part is lost. Maybe just introduce elvis `a>b ? a=1` → `a<=b ?: a=1`
 
-* loops: `for i in 0..10 (a,b,c)`, `for i in src a;`
+* [x] loops: `i in 0..10 :| a,b,c`, `i in src :| a`, `[x*2 |: x in 1,2,3]`
+  * `for i in 0..10 (a,b,c)`, `for i in src a;`
   * alternatively as elixir does: `item <- 0..10 a,b,c`
     + also erlang list comprehension is similar: `[x*2 || x <- [1,2,3]]`
   * see [list-comprehension](https://en.wikipedia.org/wiki/List_comprehension)
@@ -226,16 +228,19 @@ So the main pain of JS for sound processing is GC. The rest is relatively ok.
     + `:|` is musical repeat indicator
     + `:` or `|` itself is not enough, it's too overloady or conflicting with ternary.
     * `i%3 == 0 :| i++`, `a :| b`, `i++ |: i%3 == 0`
-  ★ a.`x < 5 :| x++`,  `x++ |: x < 5`, `[ x in 1,2,3 :| x*2 ]`, `[ x * 2 |: x in 1,2,3 ]`
+    a.`x < 5 :| x++`,  `x++ |: x < 5`, `[ x in 1,2,3 :| x*2 ]`, `[ x * 2 |: x in 1,2,3 ]`
       + reminds label a: ...
-      + keeps body "clean", "isolated" after bar, as if returning result.
-      + it is also delimiting visually clean block, as if clarifying condition that clean block is shown: `[x*2]` → `[x*2|:x in 1..10]`
-      + `|:` sounds like `|` such `:` that, swoooch th th
+      + keeps body visually clean after bar, as if returning result, condition clarifies body: `[x*2]` → `[x*2 |: x in 1..10]`
+      ~ `|:` sounds like `|` such `:` that, swoooch th th
+      - it weirdly conflicts with elvis operator `x in 1..10 ?: body`, but `x in 1..10 :| body`
     b. `x < 5 |: x++`,  `x++ :| x < 5`, `[ x in 1,2,3 |: x*2 ]`, `[ x * 2 :| x in 1,2,3 ]`
       + refer to looping body, not condition, which is better in musical sense
+      + it matches elvis operator `x < 5 ?: x++`, `x < 5 |: x++`
+        + muscle memory of ternary/elvis
 
-* ? Is there a way to multi-export without apparent `export` keyword for every function?
-  → maybe it's good there's apparent `export` indicator - easy to scan and in-place, compared to accumulated export at the end.
+* [x] ? Is there a way to multi-export without apparent `export` keyword for every function?
+  ? maybe it's good there's apparent `export` indicator - easy to scan and in-place, compared to accumulated export at the end.
+  → C++ exports implicitly function clauses.
 
 * ? t param: local per-sound, or global?
   . Sound can be called multiple times, so timer per instance makes sense.
