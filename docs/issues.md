@@ -22,7 +22,7 @@
   * ? Or have `reset` method?
   * We may need to call same function with different time within same sound.
     ? Should it be implicit-default-function param, like `f(#t=gTime)` and to call `f(a,b,c,#t=localTime)`?
-      + this can also be used for pipe input as `f(#input)`
+      + ? this can also be used for pipe input as `f(#input)` or...
 
 ## [x] `f(x, y) = x + y` standard classic way to define function in math
   + also as in F# or Elixir
