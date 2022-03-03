@@ -64,19 +64,11 @@ So the main pain of JS for sound processing is GC. The rest is relatively ok.
 
 * frames as vectors like glsl (data views to underlying block buffer), with [standard channel ids](https://en.wikipedia.org/wiki/Surround_sound#Standard_speaker_channels); swizzles as `a.l, a.r = a.r, a.l; a.fl, a.fr = a.fl`
 
-* `input` is main input frame, `inputs` - list of all inputs, eg. `input === inputs[0]`
-  → Alternatively: just enforce it as first argument.
-    + same way elixir, F# pipes work
-    + makes no reserved keywords
-    + indicates apparently expected behaviour
-    + reduces infinite-input array case
-  → For multiple inputs just list them as `mix(a, b, c)=a+b+c`
-    . Maybe we just need to indicate that as input: `filter(x as input)` (aRate + default entry)
-    ! we can explicitly refer to reserved keywords via `#var`, which looks cool both as github/url ref and provides unchangeable meaning `#in`, `#in[0]`, `#in.l`
-
 * ? `t`, `i` are global params? Or must be imported?
-  ? cannot be imported since generally global-time t/i are unknown. Must be defined as `...t as time`.
-  → even better: `#t`
+  ? cannot be imported since generally global-time t/i are unknown. Mb defined as `...t as time`?
+    - try avoid typing
+  ? or `#t`
+    - try avoid too magic
 
 * `f(x, y) = x + y` standard classic way to define function in math
   + also as in F# or Elixir
@@ -128,7 +120,8 @@ So the main pain of JS for sound processing is GC. The rest is relatively ok.
   - `...a = a0,a1,a2,a3 |> stretch(rate) | Comb` becomes messy.
     * vs `...a = a0,a1,a2,a3 |> stretch(#, rate) |> Comb(#)`
     * vs `...a = a0,a1,a2,a3 | a -> stretch(a, rate) | Comb`
-    * vs (ideal) `...a = a0,a1,a2,a3 | stretch(rate) | Comb()`
+    * vs (ideal1) `...a = a0,a1,a2,a3 | stretch(rate) | Comb()`
+    * vs (ideal2) `...a = a0,a1,a2,a3 |> stretch(rate) |> Comb()`
   - this partial application is implicit argument - non-js intuition.
     . Operator `|>` should not know about next call operator `a()` - what if there is `a |> b` - how's that applied?
     → Partial application can be thought on its own regardless of pipe as `a1 = a(#, rate)`
@@ -159,31 +152,31 @@ So the main pain of JS for sound processing is GC. The rest is relatively ok.
   * `source | filter(freq, Q)` → `filter(source, freq, Q)` is fine convention. Placeholder is a pain, we 99% of time don't need that.
     * ? Maybe worth renaming to `source |> filter(freq, Q)` to avoid confusion with `|`
       - nah, `source | gain(.45)` is oldschool coolness, prob just fn clause: takes prev argument.
+  → The converging solution is: use implied argument as `gain(#input, amp) = gain(#input, amp)`
+    * that utilizes multiple fn clauses organically and enables simple overloading as `source | gain(amp)`
 
 * should there be lambda? `value | x -> x*.6 + reverb(x) * .4`
   - lambda function has diverging notation from regular fn definition.
-  ~ although `param -> result` is also classical math notation
+    ~ although `param -> result` is also classical math notation
   + lambda funcs also don't need brackets, just `a,b,c -> a*2 + b*3 + c*4`
   + lambda funcs have no state, they're just in-place routines (I guess level of macros, not table subroutines).
   → let's first find out how much these operational pipes are useful. Maybe not.
     + although lambda is useful for currying fns also
+  - lambda is heavy to implement: it requires a table, which can be dynamically spawned and needs some gc headache
+    ? what if we identify by callsite and in-places denormalize usage as just direct code insertion? Sort of macro?
+      ~ then overloading becomes questionable `...a = a0,a1,a2,a3 | a -> stretch(a, rate) | Comb`
 
 * ? Reduce operator? It can be eg. `:>` (2 become 1), or `=>`.
   * ? `a,b,c :> reducer`, like `signals :> #0 + #1`
     - `:>` looks like expecting some input or something.
-  * Or maybe `a,b,c | a,b => a + b |...`
-    - nope: we cannot reuse reducer defined elsewhere. It must be different `|` character
-  * ? `a,b,c => a,b ->a+b` * ? `a,b,c ..> a,b -> a+b`
+  * ? Or maybe `a,b,c ||> a,b -> a + b |...`
+  * ? `a,b,c => a,b ->a+b`
+  * ? `a,b,c ..> a,b -> a+b`
   → `a,b,c >- a,b -> a+b` (crazy!)
-
-* Use comma-operator groups as
-  . `a,b = b,a`
-  . `a,b,c + d,e,f → (a+d, b+e, c+f)`
-  . `(a,b,c).x() → (a.x(), b.x(), c.x())`
 
 * Units possibly intrudoced as `10k`, `1s`, `1hz`, `1khz`
 
-* `.` operator can finish function body and save state. `delay(x,y) = d=[..1s],z=0,d[z++]=x,d[z-y].`
+* `.` operator can finish function body and save state. `delay(x,y) = ...d=[1s], z=0; d[z++]=x; d[z-y].`
   . it's still optional
 
 * load previous state as `...x1, y1, x2, y2`
@@ -207,13 +200,39 @@ So the main pain of JS for sound processing is GC. The rest is relatively ok.
   * ? what if we even simpler do `a in b : a+1`, `i++ < x.length : a[i]++`?
     + it's like label but evaluable and returning to itself;
     + it's like `for`/`while` loop in form of operator;
-    + it's like tail of ternary `a ? b : c : d`
+    - it's like tail of ternary `a ? b : c : d`
       ? what about loop inside of a loop? `x++ < w : y++ < h : (x,y)`
         + yes, nested loops can be comma-defined `x++<w, y++<h : ...;`
     * ? or make label at the end? `(x,y) : x++ < w, y++ < h`
       + this is more classic math notation
       - a bit unusual and forces first step
       ~ math notation for loop is either `∀A,∃B:A<B` or `∀{x∈N,0<x<10},yx=x**2`
+    * : is basically infix loop notation, compared to prefix `for a b` or `while a b`, or postfix `do a until b`.
+    * ? `a :: b` ? `a <b>` ? `< a > b` ?
+  * ~ from ABC notation loop is defined as `|: common |1 part1 :|2 part2 |`.
+    * ? So maybe `|: i++ | i%3==0 :|`
+    * ? Or `i%3==0 |: i++ :|`
+      + separates repeating scope visually
+      - double-character groups are slower to parse
+  * ~ from UML loop is defined as `< i%3===0 > i++ : 0`, that can be done also as `{i%3==0} i++`
+    * ? Or `i%3==0 { i++ }`
+      + separates repeating scope visually
+      + single-character group
+  * ? modified ternary as `x in 1,2,3 ? a[x]=1 :|`, `i%3===0 ? i++ :|`
+    * `a ? b :|`, `x = [x in 1,2,3 ? x*2 :|]`
+      - mess at the end
+  * ? `[ x in 1,2,3 :| x*2 ]` or the vice-versa `[ x * 2 |: x in 1,2,3 ]`
+    + vertical bar is used in math notations {x∈R∣x<0}, {x∈R:x<0}
+    + `:|` is musical repeat indicator
+    + `:` or `|` itself is not enough, it's too overloady or conflicting with ternary.
+    * `i%3 == 0 :| i++`, `a :| b`, `i++ |: i%3 == 0`
+  ★ a.`x < 5 :| x++`,  `x++ |: x < 5`, `[ x in 1,2,3 :| x*2 ]`, `[ x * 2 |: x in 1,2,3 ]`
+      + reminds label a: ...
+      + keeps body "clean", "isolated" after bar, as if returning result.
+      + it is also delimiting visually clean block, as if clarifying condition that clean block is shown: `[x*2]` → `[x*2|:x in 1..10]`
+      + `|:` sounds like `|` such `:` that, swoooch th th
+    b. `x < 5 |: x++`,  `x++ :| x < 5`, `[ x in 1,2,3 |: x*2 ]`, `[ x * 2 :| x in 1,2,3 ]`
+      + refer to looping body, not condition, which is better in musical sense
 
 * ? Is there a way to multi-export without apparent `export` keyword for every function?
   → maybe it's good there's apparent `export` indicator - easy to scan and in-place, compared to accumulated export at the end.
@@ -222,7 +241,7 @@ So the main pain of JS for sound processing is GC. The rest is relatively ok.
   . Sound can be called multiple times, so timer per instance makes sense.
   . Time doesn't make sense as external parameter, since user cannot modify it, it flows forward, like state:
   . it has init moment and increases over time, not necessarily steadily.
-  → add specifier to initializer as `...t=0 as time, i=0 as index, rate as sampleRate`
+  ? add specifier to initializer as `...t=0 as time, i=0 as index, rate as sampleRate`
 
 * ? Arrays: should have standard map, filter, reduce methods or not?
   * ? what if we don't deal with arbitrary-length arrays?
@@ -242,11 +261,8 @@ So the main pain of JS for sound processing is GC. The rest is relatively ok.
   * `;`, `\n` or `.` act as end of function.
 
 * language should not break inline composability, like it does python or livescript: you can tightly pack code into a single line.
-
-* Scope or not to scope?
-  + maybe we need `{}` as indicator of scope: outside of it variables are not visible.
-  - (a,b)=>a+b also creates scope: a and b are unavailable outside of fn body - why not stretching that to language?
-  - look at [erlang functions](https://www.erlang.org/doc/reference_manual/functions.html): they use only `;` and `.`
+* language should be mangle-able, therefore names should not have prefixes
+  ~ mangling can recognize that
 
 * Elvis operator: `a ?: b` instead of jsy `a ?? b`
   ~ equivalent to a ? #0 : b
@@ -277,7 +293,38 @@ So the main pain of JS for sound processing is GC. The rest is relatively ok.
   + return (a, b, c) - single multichannel output
   → so group acts as single element
 
-* ? Possibly we can hide implementation detail of kRate/aRate and just generate both clauses depending on input type.
+* ? Should we provide param types or not?
+  1. hide implementation detail of kRate/aRate and generate both clauses depending on input type.
+    - see zzfx: myriad of params generate O^2 clauses. A mess.
+  2. generate params via typescript system
+    - colon is too ambiguous
+    + very common: rtype, hegel, flow use same notation
+    - needs separate type parsing/tracking subsystem, whereas name immediately reflects type
+    + allows multitype definition as `frequency:aParam|kParam`
+  3. use csound-like prefixing for identifying params: ifrequency, ainput, gi
+    + allows global params organically
+    + name reflects type constantly
+    + shortness
+    - problematic destructuring of multiple channels: gain((al,ar) in -1..1)
+      ~ can be mitigated by default params falling back to a-type `gain((l,r) in -1..1, kGain)`
+    + resolves conflict of fn name and param: gain vs kGain, delay vs kDelay
+    + that also works good as indicator of non-argument variables
+    ~ ? should non-prefixed params possibly generate two versions?
+      + default params better be direct fn values (helps problematic defaults case), prefixed - for batch
+  4. `amp as kParam`
+    + no destructuring issue
+    + more human-readable
+    - longer lines, ~ although not much longer than colon
+    - mb conflicting with `in` keyword
+
+* ! Variables case should not matter.
+
+* Minimum if not 0 keywords: for(a,b,c) is valid fn; if(a,b) is valid fn;
+
+* Use comma-operator groups as
+  . `a,b = b,a`
+  . `a,b,c + d,e,f → (a+d, b+e, c+f)`
+  . `(a,b,c).x() → (a.x(), b.x(), c.x())`
 
 * Grouping notes:
   ~ likely we have to swipe precedence of , over =
@@ -308,6 +355,21 @@ So the main pain of JS for sound processing is GC. The rest is relatively ok.
   + wat allows wat2wasm compiler optimizations
   + wat allows debugging
   + wat can be done via wat-compiler
+
+* Scope or not to scope?
+  + maybe we need `{}` as indicator of scope: outside of it variables are not visible.
+  - (a,b)=>a+b also creates scope: a and b are unavailable outside of fn body - why not stretching that to language?
+  - look at [erlang functions](https://www.erlang.org/doc/reference_manual/functions.html): they use only `;` and `.`
+* ? blocks: {} vs ()
+  . {} feels somewhat movetone.
+  . block basically needs limiting variable scope, it doesn't have sense on its own.
+  → we can make () a block if that includes variables definition, otherwise not.
+  + we may require block if new variables are defined, else args must be used.
+  + () makes warmer inside, sort of nest in literal sense.
+
+* loops can return a value: `(isActive(it): action(it))` - the last result of action is returned
+  + useful for many loop cases where we need internal variable result.
+
 
 ## Lang likes/dislikes
 

@@ -258,7 +258,7 @@ m6 = ':51...55:::::::<===<<<8811111111'
 m7 = ': ::: ::: ::: ::6 666 666 666 66'
 
 // Get Melody function. This is the real synthesizer.
-M(p, o, q, m, s, m2, j) =
+M(p, o, q, m, s, m2, j) = (
 	j = j || 0x2000
 	r = m[q] || 0
 	q = m2 != null ? m2[q] || 0 : 0
@@ -269,16 +269,16 @@ M(p, o, q, m, s, m2, j) =
 	x = (g % 255) / 128 - 1;
 	// The real magic: decide between pulse, saw and triangle and synthesize them.
 	s ? s < 2 ? x : s < 3 ? abs(x) * 3 : sin(PI * x) : (g & 128) / 64 - 1;
-.
+).
 
 // Base drum
-bd() =
+bd() = (
   btime = 2 << 12
   bm = (80 - 40) * pow(1 - (t % btime) / btime, 10) - 80
   bm2 = 0b01
   (bm2 >> (t / btime) % 2) & 1 ?
     sin(PI * (t % btime) * pow(2, bm / 12 - 1)) * pow(1 - (t % btime) / btime, 10) : 0
-.
+).
 
 // Hi tom
 bt() =

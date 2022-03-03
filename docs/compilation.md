@@ -1,6 +1,6 @@
 # Compilation issues
 
-## ? How do we map various clauses to wat/wasm?
+## [x] ? How do we map various clauses to wat/wasm?
 
   1. fixed pointers and `fn(aCh, bCh, ..., x, y, z)`
     - harder to manage variable number of inputs
@@ -110,25 +110,80 @@
   → block size may change over time, so better reserve place in-advance.
   → just follow [audioWorklet.process](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process)
 
-  10. Ok, proper way is malloc or array (see @audio/gain.wasm)
+  → 10. Ok, proper way is alloc or array (see @audio/gain.wasm)
     * [Simplest malloc](https://github.com/rain-1/awesome-allocators)
     * [Array](https://openhome.cc/eGossip/WebAssembly/Array.html)
 
-## How do we organize output?
+    ?.
+      10.a `malloc2d(blockSize, 2); gain(inptr, gainptr, outptr)`
+        - allocated memory cannot be reused by another number of channels
+      10.b `malloc(2*blockSize); gain(inptr, 2, gainptr, 1, outptr, 2 )`
+        + allocated memory can be reused for various channel numbers cases
+          * eg. `gain(x)`, `gain((l))`, `gain((l,r))`, instead of `gain(leftPtr, rightPtr)`
+        - k-param turns into `gain(inp, 2, gainp, 0, outp, 2)`
+      10.c `malloc(2*blockSize); gain(inptr, 2*blockSize, gainptr, blockSize, outptr, 2*blockSize )`
+        - number of channels calculated runtime, which is not apparent
+          * ie. mapping of arbitrary sizes to arbitrary other sizes is not clear
+        + can indicate exact number of samples, which is sort of convention [ptr, len]
+          - length is stored by allocator
+            ~ implicit remembered state isn't nice
+        + conventional (ptr, length) pairs
+        + allows reusing same memory for any number of channels
+        - signature calc is complicated-ish
+        - keeps redundant out size, which is apparent from the source
+          + in fact can be used to check available size
+        - inconsistency of pointer and blockSize units: pointer measures bytes, blockSize measures items
+          → either alloc should return units pointer, or require allocating bytes and not items
+          . if we allocate items, it really better be array, or slot, or something more hi-level
+          . or else use direct trivial malloc, but then the signature and implicit channels problem remains
+            - the original task doesn't correlate much with malloc purpose: memory can be managed memory.grow easily.
+            . maybe indeed we should better stick to param kinds convention instead of generic forms
+              - we still need to pass channels info somehow: slot size can fit more channels if blockSize lowers
+      10.d `malloc(2*blockSize); gain(202, inptr, gainptr, outptr )`
+        + saves time calculating signature client-side
+        + less arguments
+        - signature can be limiting to max 10/16 channels
+        - signature is too lengthy
+      10.e ✱ `malloc(2*blockSize); gain(inptr, gainptr, outptr, 2, 0, 2)`
+        + keep args order similar to descriptor
+        + breaks ptr-size convention
+        + allows optional last arguments (output is internal, gain is 0)
+          `gain(inp, gainp, outp, 2, 0)`
+        + easier to calc signature
+        + (possibly) less internal calculation - no need to detect number of channels from mem layout (implicitly as in 10.c)
+        + no need to deal with 1-value krate inputs calculation, as it's directly indicated
+        + direct values fn clause can be detected by 0 arguments
+        - there's no clear understanding how k-param or 1-channel a-param maps to multiple channels
+          * seems that notion of channels and k/a-rate are different
+          - detecting a-/k- rate implicitly from memory size of pointer is not necessarily good
+          ~ can be facilitated by [channels interpretation](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API/Basic_concepts_behind_Web_Audio_API#up-mixing_and_down-mixing)
+            * neither speaker nor discrete: only copies mono value to all channels, else - discrete.
+            ~ maybe we don't need absolute flexibility: if you need precise per-channel values, just provide full a-rates.
+      10.f `gain(inptr, gainptr, outptr, 2|A_RATE, 1|A_RATE)`
+        - requires const imports
+        - too magical
+      10.g `inp = aParam(2), gainp = kParam(1), outp = aParam(1), gain(inp, gainp, outp)`
+        - if we bind param to memory slots, we cannot reuse it for more channels
+          . therefore channels must be detected from gain input params
+          . therefore holding structure must be linear array, or slot
+
+## [x] How do we organize output?
 
   * Predefined memory statically indicated locations of input/output.
   * Dynamized memory loses output location, unless indicated by arguments...
 
   ? Can we avoid that by providing OUTPUT_PTR?
     - not really. We should pass output pointer and size to detect channels.
+  →   + not necessarily. If we follow array method (see above), we can return pointer to first element of array, but 0 element indicates its length, so we can easily grab length from pointer.
 
-## Autogeneration mono/stereo clauses vs manual clauses
+## [x] Autogeneration mono/stereo clauses vs manual clauses
 
   * See [gain node](https://github.com/mohayonao/web-audio-engine/blob/master/src/impl/dsp/GainNode.js) for clause examples.
 
   1. autogeneration
     + makes son code shorter
-    - generates n^2 codebase
+    - generates n^2 codebase, very redundant and prone to uncontrolled growth
+
   2. manual clauses
     + reflect "hint" to how much code is generated in son source
     + more precise
@@ -137,8 +192,55 @@
     + clauses allow defining pipe-input case
     + that's nice that clauses are turned on only if defined, not otherwise
 
-  → prob there's not sense to generate internal fn clauses, unless explicitly defined
+  → prob there's no sense to generate internal fn clauses, unless overload takes place
 
   → there's no much sense generating looping functions for internals.
     * for exports we create clauses = that depends on the way fn is called.
     * so that's just generalized way to "batch" functions against values in memory.
+
+## [ ] Processing function reads from memory; regular function takes arguments.
+
+  * ? How do we differentiate them?
+
+  1. `export` === processing
+    - `import pow from 'math'` is not processing function
+      ~ it's not necessarily external, if imported by wasm.
+        → Sonr can resolve imports to become internal.
+    - makes simple things slower than needed (reading from/to memory)
+      ~ not true for internals
+    - disallows direct params
+      ~ not sure if exports need direct params
+
+  2. Indicate parameter type: `gain(x:aRate in -1..1, gain:kRate in 0..1)`
+    + better distinguishes clauses
+    + allows direct params as `gain(x:aRate in -1..1, gain in 0..1)`
+    + allows implicit input type as eg. `gain(x:input in -1..1, gain)`
+    - doesn't propagate type info down the source
+    - colon can be used for loops, x:action means do action until x is true
+
+  3. Imply param type from name `gain(ax in -1..1, aGain in 0..1)`
+    + csound-like
+    * ? mb worth taking csound conventions:
+      a=audio rate calculation—calculated once per sample
+      k=control rate calculation—calculated once per control period
+      i=init rate calculation—calculated once at the start of the instrument
+      g=global
+    + reminds in source code about nature of variable, without implicit type
+      ? is that helpful anyhow?
+    + g can be used for `gTime`, `gSampleRate`, `gBlockSize`
+      + OpenGL uses `gl`, `glu`, `glut`, `glew` prefixes https://www3.ntu.edu.sg/home/ehchua/programming/opengl/HowTo_OpenGL_C.html
+      ~ can be competed with `#t`, `#sampleRate`, `#blockSize`, `#input`: `gain(#x, aGain in 0..1)` can mean implicitly passed #x.
+        + a |> b(1), b=(#a,b)->#a+b
+        ~ # is also a sort of prefix
+    - can be problematic destructuring: `gain((al,ar) in -1..1)`
+
+## [ ] Clauses selection
+
+  * ? How do we select direct values clause? `gain(inp, .75, outp)`
+    ~ `gain(inp, .75, outp, 2)` is fine (null-arg means direct)
+
+  * ? How do we export direct-values functions [ideally] without extra step of args detection?
+    ~ the worst-case damage is extra fn call + extra nan comparison that sees - ok, there's no signature, fall back to direct call.
+    ~ single runs are not expected to be very regular externally, since for batch runs there's clause cases.
+
+  *
