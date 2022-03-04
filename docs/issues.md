@@ -163,6 +163,8 @@
 ## [x] Elvis operator: `a ?: b` instead of jsy `a ?? b`
   * ~ equivalent to a ? #0 : b
 
+## [x] Init operator: `a ?= b`
+
 ## [x] short ternary operators as ` a > b ? a = 1;` → use elvis `?:`
   + it not only eliminates else, but also augments null-path operator `a.b?.c`, which is for no-prop just `a.b?c` case.
   - weirdly confusing, as if very important part is lost. Maybe just introduce elvis `a>b ? a=1` → `a<=b ?: a=1`
