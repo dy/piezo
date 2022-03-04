@@ -289,15 +289,11 @@ bt() =
     sin(PI * (t % btime) * pow(2, btm / 12 - 1)) * pow(1 - (t % btime) / btime, 10) * 0.3 : 0
 .
 
-export song () =
-  t *= 5.6,
-  // Match the speed that the original song has.
-  ratio = 0.78,
-  // ratio is multiplied here and removed again inside the get melody function, so the pitch wont increase.
-  t *= ratio,
-  // v is used in many places to check how far we are in the song. It is incremented each 4096 samples, roughly.
-  v = t >> 12,
-  // Song looping. When past 768, repeat, skipping the first 128.
+song() =
+  t *= 5.6,     // Match the speed that the original song has.
+  ratio = 0.78, // ratio is multiplied here and removed again inside the get melody function, so the pitch wont increase.
+  t *= ratio,   // v is used in many places to check how far we are in the song. It is incremented each 4096 samples, roughly.
+  v = t >> 12,  // Song looping. When past 768, repeat, skipping the first 128.
   v = (v % 768) + (v > 767 ? 128 : 0);
 
   0 +

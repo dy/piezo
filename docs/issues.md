@@ -4,25 +4,13 @@
 
   * like glsl (data views to underlying block buffer), with [standard channel ids](https://en.wikipedia.org/wiki/Surround_sound#Standard_speaker_channels); swizzles as `a.l, a.r = a.r, a.l; a.fl, a.fr = a.fl`
 
-## [ ] `t`, `i` are global params? Or must be imported? Or per-sound?
+## [x] `import a,b,c from 'lib'`, `import sin from 'stdlib'`
 
-  * ? cannot be imported since generally global-time t/i are unknown. Mb defined as `...t as time`?
-    - try avoid typing
-  * ? or `#t`
-    - try avoid too magic
-  * Sound can be called multiple times, so timer per instance makes sense.
-  . Time doesn't make sense as external parameter, since user cannot modify it, it flows forward, like state:
-  . it has init moment and increases over time, not necessarily steadily.
-  ? add specifier to initializer as `...t=0 as time, i=0 as index, rate as sampleRate`
+  * ? How do we redefine eg. sin from stdlib?
+    ? Just reassign to var or give another name? Every fn has unique name?
+    → import only subset, like `import sin from 'stdlib'`
 
-### [ ] Instantiation of sound
-
-  * ? Instantiate sound externally via module instance?
-  * ? Or take `t`,`i` param?
-  * ? Or have `reset` method?
-  * We may need to call same function with different time within same sound.
-    ? Should it be implicit-default-function param, like `f(#t=gTime)` and to call `f(a,b,c,#t=localTime)`?
-      + ? this can also be used for pipe input as `f(#input)` or...
+  → default is going to need a name to be importable directly
 
 ## [x] `f(x, y) = x + y` standard classic way to define function in math
   + also as in F# or Elixir
@@ -51,18 +39,11 @@
 ## [ ] !? erlang atoms: 'hello' (not string)
   * Atoms are useful for referencing:
     + function instances
+      ~ we have funcref type, not necessary
     + ranges?
     + arrays
   * ? we can use i64 for them
   * ? or we can use f64 for all numbers by default and keep rest of types free
-
-## [x] `import a,b,c from 'lib'`, `import sin from 'stdlib'`
-
-  * ? How do we redefine eg. sin from stdlib?
-    ? Just reassign to var or give another name? Every fn has unique name?
-    → import only subset, like `import sin from 'stdlib'`
-
-  * no import default, no export default - every fn got a name
 
 ## [ ] Pipes:
 
@@ -118,10 +99,11 @@
     * `source | filter(freq, Q)` → `filter(source, freq, Q)` is fine convention. Placeholder is a pain, we 99% of time don't need that.
       * ? Maybe worth renaming to `source |> filter(freq, Q)` to avoid confusion with `|`
         - nah, `source | gain(.45)` is oldschool coolness, prob just fn clause: takes prev argument.
-    → The converging solution is: use implied argument as `gain(#input, amp) = gain(#input, amp)`
-      * that utilizes multiple fn clauses organically and enables simple overloading as `source | gain(amp)`
+  → The converging solution is: use implied argument as `gain(#input, amp) = gain(#input, amp)`
+    * that utilizes multiple fn clauses organically and enables simple overloading as `source | gain(amp)`
+  * ? what if we do OO as  `pipe gain()` or even `source | gain(amp in 0..1) = gain(source, amp)`?
 
-## [ ] Lambda
+## [x] Lambda → generalized fn by callsite, spawning creates bound call
 
   * should there be lambda? `value | x -> x*.6 + reverb(x) * .4`
     - lambda function has diverging notation from regular fn definition.
@@ -133,10 +115,12 @@
     - lambda is heavy to implement: it requires a table, which can be dynamically spawned and needs some gc headache
       ? what if we identify by callsite and in-places denormalize usage as just direct code insertion? Sort of macro?
         ~ then overloading becomes questionable `...a = a0,a1,a2,a3 | a -> stretch(a, rate) | Comb`
+      * can be done as single funtion with many args identified by callsite, but in-place we call it with some predefined args
+        → by spawning a function somewhere, we spawn generic reference with predefined arguments, eg.
+        → `Comb(a) = x -> x + a` → `CombArr(a,x) = x+a;  Comb(a) = CombArr.bind(a)`
+  ! → operator must uniquely identify type and be macros
 
-  ! -> operator must uniquely identify type and be macros
-
-## [ ] Reduce operator:
+## [x] Reduce operator: converts into single expression (fixed length) OR applies reduce
 
   * ? Reduce operator? It can be eg. `:>` (2 become 1), or `=>`.
     * ? `a,b,c :> reducer`, like `signals :> #0 + #1`
@@ -144,8 +128,7 @@
     * ? Or maybe `a,b,c ||> a,b -> a + b |...`
     * ? `a,b,c => a,b ->a+b`
     * ? `a,b,c ..> a,b -> a+b`
-    → `a,b,c >- a,b -> a+b` (crazy!)
-
+    → `(a,b,c) >- a,b -> a+b` (crazy!)
   ! >- operator can be statically analyzable if group length is known (it should be known)
 
 ## [ ] Units
@@ -177,7 +160,6 @@
     ~ should find exactly where we'd need that
   ? Maybe can be done purely as aliases for position?
 
-
 ## [x] Elvis operator: `a ?: b` instead of jsy `a ?? b`
   * ~ equivalent to a ? #0 : b
 
@@ -185,7 +167,7 @@
   + it not only eliminates else, but also augments null-path operator `a.b?.c`, which is for no-prop just `a.b?c` case.
   - weirdly confusing, as if very important part is lost. Maybe just introduce elvis `a>b ? a=1` → `a<=b ?: a=1`
 
-## [x] Loops: `i in 0..10 |: a,b,c`, `i in src |: a`, `[x*2 :| x in 1,2,3]`
+## [x] Loops: `i in 0..10 :| a,b,c`, `i in src :| a`, `[x*2 |: x in 1,2,3]`
   * `for i in 0..10 (a,b,c)`, `for i in src a;`
   * alternatively as elixir does: `item <- 0..10 a,b,c`
     + also erlang list comprehension is similar: `[x*2 || x <- [1,2,3]]`
@@ -228,11 +210,16 @@
       + reminds label a: ...
       + keeps body visually clean after bar, as if returning result, condition clarifies body: `[x*2]` → `[x*2 |: x in 1..10]`
       ~ `|:` sounds like `|` such `:` that, swoooch th th
-      - it weirdly conflicts with elvis operator `x in 1..10 ?: body`, but `x in 1..10 :| body`
+      - it subtly conflicts with elvis operator `x in 1..10 ?: body`, but `x in 1..10 :| body`
+        ~ not necessarily - elvis has inversed intuition
+      + `x * 2 |` is close intuition to standard list comprehension syntax
     b. `x < 5 |: x++`,  `x++ :| x < 5`, `[ x in 1,2,3 |: x*2 ]`, `[ x * 2 :| x in 1,2,3 ]`
-      + refer to looping body, not condition, which is better in musical sense
+      + refer to looping body, not condition, which is better by musical intuition
       + it matches elvis operator `x < 5 ?: x++`, `x < 5 |: x++`
         + muscle memory of ternary/elvis
+        - it's not elvis by meaning: elvis does "else" branch, when condition is not true, whereas loop does "true" condition.
+      + has pipe operator intuition: by some condition produce the following `whileTrue |: produceItem`, `item :| whileTrue`
+        + colon gives hint as "multiple" instances created on the right, following `|>` operator intuition
 
 ### [x] loops can return a value: `(isActive(it): action(it))` - the last result of action is returned
   + useful for many loop cases where we need internal variable result.
@@ -241,6 +228,7 @@
 
   * ? maybe it's good there's apparent `export` indicator - easy to scan and in-place, compared to accumulated export at the end.
   → C++ exports implicitly function clauses.
+  * ? Should we export at all? Maybe we can just export all by default and assign main function, as it is done in C?
 
 ## [ ] Arrays: should have standard map, filter, reduce methods or not?
   * ? what if we don't deal with arbitrary-length arrays?
@@ -251,10 +239,11 @@
     ! that is in fact mixing operator! a,b,c >- mix
     !? we can reduce based on reducer's number of args
 
-## [ ] Concat/flat groups
+## [x] Concat/flat groups → no need to flattening/deep nesting
   * ?is done via range operator a, ..b, c..d, e (shortened spread)
 
   * ? destructuring is `a,b,c = ..d`
+    - nah, just do `(a,b,c) = d`
     ? Alternatively: do we need nested structures at all? Maybe just flat all the time?
 
 ## [ ] -< operator: splits list by some sorter: `a,b,c -< v -> v`
@@ -288,19 +277,21 @@
   . a,b,c = d,e,f       → a=d,b=e,c=f
   . (a,b,c) = (d,e,f)   → a=d, b=e, c=f          // destructured-assembled
   . (a,b,c) = d         → a=d[0], b=d[1], c=d[2] // destructure
-  . (a,b,c) = d,e,f     → a=f[0], b=f[1], c=f[2] // or destructure first?
+  . (a,b,c) = d,e,f     → a=f[0], b=f[1], c=f[2] // or destructure first? last seems to be convention everywhere
   . a,b,c = (d,e,f)     → a=(d,e,f),b=(d,e,f),c=(d,e,f)              // assign last
+    - contradicts to js intuition where only c = (d,e,f)
   → so there are 2 meanings:
     . () makes group a single component
     . , makes group, but separate components
 
+  ~ group destructuring
+  . (a,b,..cd) = (a,b,c,d) → a=a,b=b,cd=(c,d)
+  . (a,b,c,d) = (a,b,..cd)
+  . (a,..bcd) = e → a=e[0], bdc=e[1..]
+
+## [x] Array slice takes ranges a[1..3], unlike python
+
 ## [x] Notes as hi-level aliases for frequencies A4, B1 etc.
-
-## [ ] ? Orchestra definition
-
-  * We can use csound like initial definition:
-  sr = 44100, 0dbfs = 1
-  - that must be defined from outside
 
 ## [ ] ? Should it compile to wat or to wasm?
 
@@ -517,7 +508,7 @@
   + return (a, b, c) - single multichannel output
   → so group acts as single element
 
-## [x] Autogenerate mono/stereo clauses fn code or define fn clauses manually
+## [x] Autogenerate mono/stereo clauses fn code or define fn clauses manually in syntax
 
   * See [gain node](https://github.com/mohayonao/web-audio-engine/blob/master/src/impl/dsp/GainNode.js) for clause examples.
 
@@ -539,17 +530,19 @@
     * for exports we create clauses = that depends on the way fn is called.
     * so that's just generalized way to "batch" functions against values in memory.
 
-## [x] ? Should we provide param types or not? Yes - having prefixed params is very handy (see arguments)
+## [ ] ? Should we provide param types or not?
+  * kParam type clause can save 1024 memory reads per block.
 
   1. hide implementation detail of kRate/aRate and generate both clauses depending on input type.
     - see zzfx: myriad of params generate O^2 clauses. A mess.
+      → we need some indicator of param type
   2. generate params via typescript system
     - colon is too ambiguous
     + very common: rtype, hegel, flow use same notation
     - needs separate type parsing/tracking subsystem, whereas name immediately reflects type
     + allows multitype definition as `frequency:aParam|kParam`
       + this solves redirection problem
-  3. ★ use csound-like prefixing for identifying params: ifrequency, ainput, gi
+  3. ✱ use csound-like prefixing for identifying params: ifrequency, ainput, gi
     + melds in global params organically `gTime, gSampleRate` (which is glsl-familiar)
     + name reflects type constantly
     + shortness
@@ -563,6 +556,28 @@
       ? name multiprefixed as `akVolume`
         + csound's gi proves for this case
         - ? how do we make direct param, aParam and kParam altogether?
+          ~ we don't necessarily need that for the case of dsp instance: direct params are for direct functions.
+      + not sure if we necessarily need that. WAA doesn't have that, it's web-audio-engine invention.
+        + it also complicates detection: disables kParam to have multiple channels also makes constructor require param type.
+          * just use a-param if you need accurate/per-channel values.
+      ~ in this case we can assign a-prefix to audio params, and k-prefix for all else
+        + accurate params supposedly come first
+        + k-rate params may not need channels or could even be direct...
+  3.1 We can assign a- prefix for a-params, discard k-params as direct values
+    + allows getting rid of `dsp` prefix
+    + solves historical problem of k-param naming (no need for k prefix)
+    - `ax` instead of `x`, `aInput` instead of `input`
+      ~ not necessarily bad - `a` prefix is good indicator of channel-read.
+    - some functions are dsp with 0 params: like songs, fully uncustomizable
+
+  3.2 Instead of prefixes, we can demand channeled inputs be explicitly indicated as
+    `gain((l,r), amp)`, `gain((l), amp)`, `gain((...ch), amp)`
+    + very explicit difference and logic
+    - `...ch` is non-conventional operator, it's used for state recovery, not args destructuring
+      * ? what if we use range instead `gain((0..16), amp)`
+        - numbers are meaningless, not clear how to iterate non-numbers
+        - fixes to some particular number of channels, we need unbound
+    * see 7
 
   4. `amp as kParam`
     + same as 2
@@ -570,6 +585,130 @@
     + more human-readable
     - longer lines, ~ although not much longer than colon
     - mb conflicting with `in` keyword
+
+  5. GLSL, C-style `gain(kParam amp in 0..1)`
+    + nicer style than comma operator
+    - doesn't allow multiple types
+
+  6. Since we need main function to be exported, we can build clauses only for it, automatically.
+    + no param type headache and even notion
+      + no question of redirecting a-clause to k-clause
+    + easy internal functions interchange
+    + automatic management of global time and index
+    - still myriad of clauses for only zzfx
+
+  7. ✱ what if we use unclosed range `gain((..ch), amp)`
+    + matches array allocation `[..16]`
+    ~- changes type of unit - ch looks like number of channels, not channels array
+    + similar to args collecting `fn(...args)`: intuition is `[..args]` - spread args or create from range, `(..args)` - collect args...
+      ? + then matches destructuring as `(a,b,..cd) = (a,b,c,d)`
+
+## [ ] `t`, `i` are global params? Or must be imported? Or per-sound?
+
+  * ? cannot be imported since generally global-time t/i are unknown. Mb defined as `...t as time`?
+    - try avoid typing
+  * ? or `#t`
+    - try avoid too magic
+  * Sound can be called multiple times, so timer per instance makes sense.
+  . Time doesn't make sense as external parameter, since user cannot modify it, it flows forward, like state:
+  . it has init moment and increases over time, not necessarily steadily.
+  ? add specifier to initializer as `...t=0 as time, i=0 as index, rate as sampleRate`
+  * ? may we need access to current time / index params of a particular instance?
+
+## [x] Instantiation of sound → simple instantiation for now with last fn as main
+
+  1. ✔ ? Instantiate sound externally via module instance?
+    + resets and tracks globals per-environment
+    + naturally very simple API, no constructing complications
+    + t,i,sampleRate etc. params are accessible globally
+    - any exported function iterates i, t params === makes single processor per instance
+      - we need multiple processors exported, eg. latr library - should be useful itself.
+        ~ not necessarily. Sonr can be relatively isolated thing and provide single export on build of a single processor.
+          + that reduces number of generated codebases.
+          + that complies with AudioWorkletProcessor - one instance per audio node.
+      → there must be context per processor
+        → context can be done as module instance
+    * 290ms for 30k instances - comparable with subscript parser.
+      - slowish for just instancing
+    - still needs some convention for "main" method
+      ~ can simply be "last function is result of module", like last expression in function
+        + that builds nice structuring convention for all son programs - user knows where to look up for main processor.
+        -? what if last item in module is not a function, but eg. global?
+          * it returns global then and not processing function...
+    + doesn't have problems with collecting old instances (gc covers that)
+      + doesn't grow memory within processor
+    - channel case selector is part of processing function
+      + makes JS API simpler: only provide channels for a-params
+
+  2. ? Or take `t`,`i` as param?
+    * We may need to call same function with different time within same sound.
+    ? Should it be implicit-default-function param, like `f(#t=gTime)` and to call `f(a,b,c,#t=localTime)`?
+      + ? this can also be used for pipe input as `f(#input)` or...
+    - it would require manual time management...
+  3. ? Or have `main` method?
+    + reset t, i, similar to subscript.
+      ? does it imply some main method iterating `idx, t` values?
+      ? or that implies some init/config method, sort of csound orchestra definition below?
+        - doesn't provide automatic iteration.
+    + allows orchestra definition
+    + `main` name: C, GLSL, C#, D, Go, Haskell, Java, Python(ish), Rust
+      - mathematical name `f` is shorter and nicer, less descriptive though
+      - in JS default has more meaning.
+  3.1 JS has `default` export convention available.
+    + invites to rename to any fn name: `main`, `gain`, `process` etc.
+    + if not occupied leaves `default` hanging
+      - not necessary, since importing wasm is not yet part of ES
+
+  4. default function acts as config, returning main processing function
+    * ~ webassembly allows returning funcref result, meaning - functions can return functions
+    * `let gain = createGain(sampleRate: 44100, 0dbfs: 1)`
+      + it can even return array as `let [gain, reset] = createContext(sampleRate, 0bfs)`
+      - not necessary to have default
+      - redundant structuring: sampleRate can be global
+      - there really can be various "processing" entries
+
+  5. we can have a special keyword indicating processing nature of a function.
+    * ? make all exports processors?
+      - no, we may need to reuse other non-processing functions
+    * ~ `process gain() = `
+    * `channels gain()=`, `block gain()=`, `audio gain()=`, `bulk gain()`
+    * `batch gain()=`
+      + literally meaning of `https://en.wikipedia.org/wiki/Batch_production`
+    * `produce gain()=`, `producer gain()=`
+      - not necessarily producer, can be filter or processor
+    * `prod gain()=`
+      ~+ production.
+    * `gain...() = `?  `gain()... = `?  `...gain()=`,  `*gain()=`,  `gain*() = `
+      - too mysterious and not clear
+    * `signal gain()`?  `sig gain()`?
+    * <3 `dsp gain()`?
+      + signal, processor on their own is not enough, dsp is stable known acronym
+      + short, known, standard-ish, has meaning "digital signal processor"
+    * `through gain()`? `gen gain()`? `dest gain()`? `pipe gain()`?
+    - it's still not enough for instantiation: what if we export multiple processors? they all would share same time therefore could not be reused.
+      - creating module instance per processor is overkill-ish.
+
+  6. Capfirst function = DSP?
+    + resolves processor/param naming conflict `Gain(gain in 0..1)`
+    - makes fuctions in syntax more complicated than needed. `dsp gain` is direct minimum.
+    ~ maybe we better keep dsp keyword as indicator of not simple function
+
+  7. Create instances as `[process, reset] = gain(...channels)`
+    + provides config
+      - not convinced it's needed
+    + config can potentially take number of channels and type of params `[process, config] = gain(2, 1)`
+      ~ `sampleRate` can indeed be global
+    + allows pre-select clause to use for mass-processing, depending on number of channels and type of param.
+      ~- doesn't let dynamic switch of channels, need to have multiple instances for simple action
+    + less problem with fn args number detection
+      ~- isnan is not a big deal
+      - number of args can indicate k-params more precisely
+    - grows memory, ostensibly slow but irrevokably
+      ~+ can rotate instances by calling `reset`
+      ~- reset can also be implemented as module-wise method and module can be reused too.
+    + makes use of `alloc`
+    - complicates JS API by initiation step
+    - hides current value of global time, global index.
 
 ## [x] Processing function reads from memory; regular function takes arguments. → use prefixed params to indicate type
 
