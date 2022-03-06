@@ -45,6 +45,8 @@
   * ? we can use i64 for them
   * ? or we can use f64 for all numbers by default and keep rest of types free
 
+## [ ] Numbers: float64 by default, unless it's statically inferrable as int64, like ++, +-1 etc ops only
+
 ## [ ] Pipes:
 
   * ? Should pipes allow placeholder as `x | #*0.6 + reverb() * 0.4`
@@ -96,12 +98,15 @@
         ? or maybe provide named references (unchangeable) #in, #in[0],..., #out, #t, #rate?
           + gives "private", "reserved" meaning, which is similar to private fields from js.
           - no need for #in - function just takes from last group
+          + plays well with implicit arguments #t, #i etc.
     * `source | filter(freq, Q)` → `filter(source, freq, Q)` is fine convention. Placeholder is a pain, we 99% of time don't need that.
       * ? Maybe worth renaming to `source |> filter(freq, Q)` to avoid confusion with `|`
         - nah, `source | gain(.45)` is oldschool coolness, prob just fn clause: takes prev argument.
   → The converging solution is: use implied argument as `gain(#input, amp) = gain(#input, amp)`
     * that utilizes multiple fn clauses organically and enables simple overloading as `source | gain(amp)`
   * ? what if we do OO as  `pipe gain()` or even `source | gain(amp in 0..1) = gain(source, amp)`?
+    + direct meaning
+    - generalized operator overloading
 
 ## [x] Lambda → generalized fn by callsite, spawning creates bound call
 
@@ -131,7 +136,7 @@
     → `(a,b,c) >- a,b -> a+b` (crazy!)
   ! >- operator can be statically analyzable if group length is known (it should be known)
 
-## [ ] Units
+## [x] Units → makes formulas too noisy.
 
   * Units possibly intrudoced as `10k`, `1s`, `1hz`, `1khz`
 
@@ -139,6 +144,10 @@
   * 1k, 1M, etc.
   * 1s, 1m, 1h
   * 0:12
+
+  - .5pi/2 etc - complicates parsing, makes formulas unusual occupies 0xa, 12n, 0b2 namespaces.
+    → very simple to instead do 1/2*pi, 60*h + 10*m
+  - we can't include all units anyways, it's pointless
 
 ## [ ] End operator
 
@@ -148,10 +157,14 @@
   - it makes direct sense only in case of unnested body. When body is nested - not as much.
   - it creates confusion with block as `).` vs `.)`
   + maybe for unwrapping it is still useful.
+  - conflict with global variables init. x=1+2;y()=x+1. - like, why? better make as simple assignment.
 
-## [ ] State management
+## [x] State management → function state identified by callsite
 
   * load previous state as `...x1, y1, x2, y2`
+    + yes, that acts as hooks from react
+    + that solves problem of instancing
+    + identified by callsite
 
 ## [ ] Named array items
 
@@ -163,7 +176,8 @@
 ## [x] Elvis operator: `a ?: b` instead of jsy `a ?? b`
   * ~ equivalent to a ? #0 : b
 
-## [x] Init operator: `a ?= b`
+## [x] Init operator: `a ?:= b`
+  - pointless: `a = a && b` is a bit meaningless construct, isn't it, we need `a = a ? a : b`, `a = a ?: b`, or `a ?:= b`
 
 ## [x] short ternary operators as ` a > b ? a = 1;` → use elvis `?:`
   + it not only eliminates else, but also augments null-path operator `a.b?.c`, which is for no-prop just `a.b?c` case.
@@ -262,6 +276,14 @@
   - too innovative
   - single-comment breaks inline structures like a(x)=b;c;d.
   - // associates besides C+/Java/JS with F#, which is pipy
+  - // is noisy conflict with / and occupies operator space, eg.:
+  ```
+    tri(freq in 10..10000) = (
+      ...phase = 0  // phase state
+      phase += freq * pi2 / sampleRate
+      (1 - 4 * abs( round(phase/pi2) - phase/pi2 ))
+    )
+  ```
 
 ## [x] ! Variables case should not matter.
 
@@ -294,16 +316,24 @@
 ## [x] Array slice takes ranges a[1..3], unlike python
 
 ## [x] Notes as hi-level aliases for frequencies A4, B1 etc.
+  * import 'musi' - imports all these constants
+  + allows building chords as (C3, E3, G3) = Cmaj
+    ~ would require # to be valid part of identifier
+
+## [ ] ? Parts of identifier: $, #, @, _
+  + allows private-ish variables
+  + allows notes constants
+  ~ mb non-standardish
 
 ## [ ] ? Should it compile to wat or to wasm?
 
   - wasm is faster
   - wasm allows web compilation
   + wat allows wat2wasm compiler optimizations
-  + wat allows debugging
-  + wat can be done via wat-compiler
+  + wat allows debugging, bytecode can be hardstone
+  + wat can be done via wat-compiler and other better fit for that mappers
 
-  * Can be both I suppose, but needs researching wat format - mb we can utilize fn tables in better way
+  * ? Can be both I suppose, but needs researching wat format - mb we can utilize fn tables in better way
 
 ## [x] Scope or not to scope? → make () a block if new variables are defined there
 
@@ -532,7 +562,7 @@
     * for exports we create clauses = that depends on the way fn is called.
     * so that's just generalized way to "batch" functions against values in memory.
 
-## [ ] ? Should we provide param types or not?
+## [x] ? Should we provide param types or not?
   * kParam type clause can save 1024 memory reads per block.
 
   1. hide implementation detail of kRate/aRate and generate both clauses depending on input type.
@@ -601,11 +631,22 @@
 
   7. ✱ what if we use unclosed range `gain((..ch), amp)`
     + matches array allocation `[..16]`
-    ~- changes type of unit - ch looks like number of channels, not channels array
     + similar to args collecting `fn(...args)`: intuition is `[..args]` - spread args or create from range, `(..args)` - collect args...
       ? + then matches destructuring as `(a,b,..cd) = (a,b,c,d)`
+    ? how do we redirect channeled input to non-channeled (k-rate)?
+      → direct clause gain(v, amp) or channel clause gain((..v), amp) is detected statically
+      → internally they're used as direct case, not batch.
+        - that would require direct case compilation or sort of special internal batch call
+    ?~- is that just clause indicating layout?
+      ? is there an exported API case when this is used directly, not as batch?
+        + for multi-channels we'd need some memory layout anyways, batch is just natural extension.
+        ~→ we can pass blockSize as last argument - compatible with other DSP frameworks.
+          + which allows avoiding blockSize global.
+            ~- we'd going to need to take sampleRate argument as well then.
+              ~+ not necessarily: global sampleRate can be useful itself
 
-## [ ] `t`, `i` are global params? Or must be imported? Or per-sound?
+
+## [x] `t`, `i` are global params? Or must be imported? Or per-sound? -> manual time management
 
   * ? cannot be imported since generally global-time t/i are unknown. Mb defined as `...t as time`?
     - try avoid typing
@@ -617,9 +658,45 @@
   ? add specifier to initializer as `...t=0 as time, i=0 as index, rate as sampleRate`
   * ? may we need access to current time / index params of a particular instance?
 
-## [x] Instantiation of sound → simple instantiation for now with last fn as main
+  * floatbeat & co pass only `index` param called `t` - meaning depending on sample rate can be modified any way.
 
-  1. ✔ ? Instantiate sound externally via module instance?
+  * ? adsr may be called multiple times within same song, and it has internal t param.
+  * that is also useful to any sound function basically, so we need per-fn time param. How?
+    a. `t` as local param. adsr(t, a,d,s,r)
+      + standard notation
+      - redundant code
+      - conflicting with batch runner: first argument doesn't necessarily have meaning
+    b. `t` as implicit fn param, taken as `gt` by default. adsr(a,d,s,r), adsr(a,d,s,r, #t=0)
+      + like context, but may pass multiple implicit variables
+      ? mb acts as css
+      + "gates" reserved keywords, allowing prefixed reserved names
+      + plays well with #in as input from pipe operator
+      + prefix allows implicit arg come in any order
+      + allows passing "reset" param
+      - still redundant code: passing param here and there is mess
+    c. `t` as part of function state, which is defined as `...t`, eg. `...t as time`
+      + more explicit definition
+      + naturally reflects number of times this fn was called
+      ? how do we expose that? do we need to expose that?
+      + plays closer with stateful definition
+      + time is usually relative, so it's rather internal for a function...
+      ~ we then need means of resetting it
+        1. new fn()
+          - looks like class
+          - resets too much
+        2. [process, reset] = Gain() (~hooks)
+        3. reset manually by condition eg. if (x>100) x=0.
+    d. `sync` keyword? meaning time is synced with time of caller.
+
+  * time management is easy part. It can trivially be done within function itself: `...t=0, t++`
+    + avoids complexities of implicit params, function context, special timely batch etc.
+    + floatbeat is just t === index.
+    + unleashes batches to any function
+
+
+## [x] Instantiation of sound → no instantiation, use function state for manual tracking time/params.
+
+  1. ? Instantiate sound externally via module instance?
     + resets and tracks globals per-environment
     + naturally very simple API, no constructing complications
     + t,i,sampleRate etc. params are accessible globally
@@ -641,6 +718,8 @@
       + doesn't grow memory within processor
     - channel case selector is part of processing function
       + makes JS API simpler: only provide channels for a-params
+    - exporting single method makes module unusable by other modules, eg. we can't redist songs and stick to main function convention.
+      - main export function is no different from any other t-dependent sound producing function.
 
   2. ? Or take `t`,`i` as param?
     * We may need to call same function with different time within same sound.
@@ -682,6 +761,8 @@
       ~+ production.
     * `gain...() = `?  `gain()... = `?  `...gain()=`,  `*gain()=`,  `gain*() = `
       - too mysterious and not clear
+    * `[gain]() = `? `gain[] =` ? `gain[..blockSize]()`
+      + Square brackets indicate block, as for "array" processing
     * `signal gain()`?  `sig gain()`?
     * <3 `dsp gain()`?
       + signal, processor on their own is not enough, dsp is stable known acronym
@@ -712,9 +793,15 @@
     - complicates JS API by initiation step
     - hides current value of global time, global index.
 
-## [x] Processing function reads from memory; regular function takes arguments. → use prefixed params to indicate type
+  8. `@batch()` decorator
+    + decorator is right meaning
+    + able to initialize batching params (channels? rate?)
+      -~ doesn't seem we have params to pass
+    - extra concept
 
-  * ? How do we differentiate them?
+  9. No instantiation: use hooks-like callsite-defined state.
+
+## [x] Batch function reads from memory; regular function takes arguments. How to differentiate them? → detect batchable function from channeled inputs/outputs.
 
   1. `export` === processing
     - `import pow from 'math'` is not processing function
@@ -748,7 +835,9 @@
         ~ # is also a sort of prefix
     - can be problematic destructuring: `gain((al,ar) in -1..1)`
 
-## [ ] Direct values clause is hindered by clause selector
+  4. Imply batch from channel inputs (..ch)
+
+## [x] Direct values clause is hindered by clause selector →
 
   * ? How do we select direct values clause? `gain(inp, .75, outp)`
     ~ `gain(inp, .75, outp, 2)` is fine (null-arg means direct)
@@ -756,5 +845,30 @@
   * ? How do we export direct-values functions [ideally] without extra step of args detection?
     ~ the worst-case damage is extra fn call + extra nan comparison that sees - ok, there's no signature, fall back to direct call.
     ~ single runs are not expected to be very regular externally, since for batch runs there's clause cases.
+    → we detect from apparent channels idicator: gain(v, amp) is direct clause, gain((..ch), amp) is all-channels clause
 
-  * ? Since we decided to use prefixed params, default params generates only direct function.
+## [x] Output number of channels can be detected from the last operator in fn body.
+  * gain((..in), amp) = (..in)*amp
+
+## [ ] Batching
+
+  * Batch runs a fn against some context like `#t, #i, #sampleRate, #blockSize`, incrementing #t/#i
+  * Batch must compile fn clause, not take some fn
+    → we don't batch compiled clause/function by external means, batch is special defined-in-advance clause with loop inside
+
+## [ ] Tree shaking
+  * must shake off unused fns in compilation
+
+## [ ] Latr: alloc
+  * latr can provide alloc and other common helpers
+
+## [ ] Array/string length
+  * Ref https://en.wikipedia.org/wiki/Comparison_of_programming_languages_(array)
+  * Ref https://en.wikipedia.org/wiki/Cardinality
+  * Lua, J langs propose # operator for length
+  * Icon, Unicon propose * operator for length
+  * Math notation is |a|
+  * ? `melody_string[]`
+    ~+ sort of math association
+    ~+ sort of #, but not as generic
+    + empty array is unused anyways

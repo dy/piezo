@@ -269,7 +269,7 @@ M(p, o, q, m, s, m2, j) = (
 	x = (g % 255) / 128 - 1;
 	// The real magic: decide between pulse, saw and triangle and synthesize them.
 	s ? s < 2 ? x : s < 3 ? abs(x) * 3 : sin(PI * x) : (g & 128) / 64 - 1;
-).
+)
 
 // Base drum
 bd() = (
@@ -278,18 +278,19 @@ bd() = (
   bm2 = 0b01
   (bm2 >> (t / btime) % 2) & 1 ?
     sin(PI * (t % btime) * pow(2, bm / 12 - 1)) * pow(1 - (t % btime) / btime, 10) : 0
-).
+)
 
 // Hi tom
-bt() =
+bt() = (
   btime = 2 << 11
   btm = (80 - 15) * pow(1 - (t % btime) / btime, 10) - 80
   btm2 = 0b1111010111010111
   (btm2 >> (t / btime) % 16) & 1 ?
     sin(PI * (t % btime) * pow(2, btm / 12 - 1)) * pow(1 - (t % btime) / btime, 10) * 0.3 : 0
-.
+)
 
-song() =
+song() = (
+  ...t=0, t++
   t *= 5.6,     // Match the speed that the original song has.
   ratio = 0.78, // ratio is multiplied here and removed again inside the get melody function, so the pitch wont increase.
   t *= ratio,   // v is used in many places to check how far we are in the song. It is incremented each 4096 samples, roughly.
@@ -326,6 +327,40 @@ song() =
     // Distorted drum effect
     ((t >> 15) % 4 ? 0 : ((((sqrt(t % 0x2000) << 6 & 255) / 127 - 1)) / ((t >> 13) % 4 + 1)) * 0.15)
   );
-.
+)
 
+```
+
+
+https://dollchan.net/bytebeat/index.html#v3b64fVNRS+QwEP4rQ0FMtnVNS9fz9E64F8E38blwZGvWDbaptCP2kP3vziTpumVPH0qZyXzfzHxf8p7U3aNJrhK0rYHfgHAOZZkrlVVu0+saKbd5dTXazolRwnvlKuwNvvYORjiB/LpyO6pt7XhYqTNYZ1DP64WGBYgczuhAQgpiTXEtIwP29pteBZXqwTrB30jwc7i/i0jX2cF8g2WIGKlhriTRcPjSvcVMBn5NxvgCOc3TmqZ7/IdmmEnAMkX2UPB3oMHdE9WcKqVK+i5Prz+PKa98uOl60RgE6zP0+wUr+qVpZNsDUjKhtyLkKvS+LID0FYVSrJql8KdSMptKKlx9eTIbcllvdf8HxabpaJrIXEiycV7WGPeEW9Y4v5CBS07WBbUitvRqVbg7UDtQRRG3dqtZv3C7bsBbFUVcALvwH86MfSDws62fD7CTb0eIghE/mDAPyw9O9+aoa9h63zxXl2SW/GKOFNRyxbyF3N+FA8bPyzFb5misC9+J/XCC14nVKfgRQ7RY5ivKeKmmjOJMaBJSbEZJoiZZMuj2pTEPGunZhqeatOEN3zadxrXRmOw+AA==
+
+```
+import pi, asin, sin, pow from 'math'
+
+fract(x) = x % 1
+mix(a, b, c) = (a * (1 - c)) + (b * c)
+tri(x) = 2 * asin(sin(x)) / pi
+noise(x) = sin((x + 10) * sin(pow(x + 10, fract(x) + 10)));
+melodytest(time) = (
+	melody_string = '00040008';
+	melody = 0;
+	i = 0;
+  i++ < 5 : melody += tri(
+    time * mix(
+      200 + (i * 900),
+      500 + (i * 900),
+      melody_string[floor(time * 2) % melody_string[]] / 16
+    )
+  ) * (1 - fract(time * 4));
+	melody;
+)
+hihat(time) = noise(time) * pow(1 - fract(time * 4), 10)
+kick(time) = sin(pow(1 - fract(time * 2), 17) * 100)
+snare(time) = noise(floor((time) * 108000)) * pow(1 - fract(time + 0.5), 12)
+melody(time) = melodytest(time) * pow(fract(time * 2), 6) * 1
+
+song() = (
+  ...t=0, time = t++ / 44100
+  (kick(time) + snare(time)*.15 + hihat(time)*.05 + melody(time)) / 4
+)
 ```
