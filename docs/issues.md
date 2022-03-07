@@ -539,6 +539,8 @@
   + return a, b, c - returns multiple outputs
   + return (a, b, c) - single multichannel output
   → so group acts as single element
+  - clauses impose clause selector. That selector can be implemented manually or in JS side.
+  - no-selector simplifies API: no need to pass number of channels.
 
 ## [x] Autogenerate mono/stereo clauses fn code or define fn clauses manually in syntax
 

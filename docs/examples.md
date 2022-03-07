@@ -3,72 +3,78 @@
 # Filter
 
 ```son
-import sin, cos, pi2 from 'math'
+import sin, cos, pi from 'math'
+
+pi2 = pi*2
 
 // by default input/params are a-rate
-export lp(x0, freq = 100 in 1..1k, Q = 1.0 in 0.001..3.0) =
+lp(x0, freq = 100 in 1..1k, Q = 1.0 in 0.001..3.0) = (
   ...x1, x2, y1, y2;
 
   w = pi2 * freq / sampleRate;
-  sin_w, cos_w = sin(w), cos(w);
-  a = sin_w / (2.0 * Q);
+  sin_w, cos_w = sin(w), cos(w)
+  a = sin_w / (2.0 * Q)
 
-  b0, b1, b2 = (1.0 - cos_w) / 2.0, 1.0 - cos_w, b0;
-  a0, a1, a2 = 1.0 + a, -2.0 * cos_w, 1.0 - a;
+  b0, b1, b2 = (1.0 - cos_w) / 2.0, 1.0 - cos_w, b0
+  a0, a1, a2 = 1.0 + a, -2.0 * cos_w, 1.0 - a
 
-  b0,b1,b2,a1,a2 *= 1.0 / a0;
+  b0,b1,b2,a1,a2 *= 1.0 / a0
 
-  y0 = b0*x0 + b1*x1 + b2*x2 - a1*y1 - a2*y2;
+  y0 = b0*x0 + b1*x1 + b2*x2 - a1*y1 - a2*y2
 
-  x1, x2 = x0, x1;
-  y1, y2 = y0, y1;
+  x1, x2 = x0, x1
+  y1, y2 = y0, y1
 
-  y0.
+  y0
+)
 
-export default src -> src | lp(freq, Q) | amp(gain)
+default((..ch)) = ch |> lp(freq, Q) |> amp(gain)
 ```
 
 ## Bytebeat drone
 
 ```
-import sin, pow from 'math'
+import sin from 'math'
 
-fract(x) = x % 1.
-mix(a, b, c) = (a * (1 - c)) + (b * c).
-noise(x) = sin((x + 10.0) * sin(pow(x + 10.0, fract(x) + 10.0))).
-main(x) =
-  time = t / sampleRate / 4.0;
+sampleRate = 44100
+
+fract(x) = x % 1
+mix(a, b, c) = (a * (1 - c)) + (b * c)
+noise(x) = sin((x + 10.0) * sin((x + 10.0) ** fract(x) + 10.0))
+main(x) = (
+  ...t=0; time = ++t / sampleRate / 4.0;
   a = 0, j = 0;
-  j++ < 13 :
+  j++ < 13 |:
     a += sin((2100 + (noise((j + 2) + floor(time)) * 2500)) * time) *
     (1 - fract(time * floor(mix(1, 5, noise((j + 5.24) + floor(time))))));
+
   a / 9.0
-.
+)
 ```
 
 ## Subscript fragment
 
 ```
-import err from 'stdlib'
+import err from 'std'
 
-skip(n=1, from=idx, l) = cur.slice(from, idx += n).
-skip(fn, from=idx, l) = cond(cur[idx]) && idx++; cur.slice(from, idx).
+skip(n=1, from=idx, l) = cur[from..(idx+=n)]
+skip(fn, from=idx, l) = ( cond(cur[idx]) ? idx++; cur.slice(from, idx) )
 
 // a + b - c
-expr = (prec=0, end, cc, token, newNode, fn) =>
-  while (
-    cc=space() &&
-    newToken=(
-      lookup[cc]?.(token, prec) ||    // if operator with higher precedence isn't found
-      !token && lookup[0]()            // parse literal or quit. token seqs are forbidden: `a b`, `a "b"`, `1.32 a`
-    )
-  ) token = newToken;
+expr = (prec=0, end, cc, token, newNode, fn) => (
+  cc=space() &&
+  newToken=(
+    lookup[cc]?.(token, prec) ||    // if operator with higher precedence isn't found
+    !token && lookup[0]()            // parse literal or quit. token seqs are forbidden: `a b`, `a "b"`, `1.32 a`
+  )
+  |: token = newToken
 
   // check end character
   // FIXME: can't show "Unclose paren", because can be unknown operator within group as well
-  end ? cc==end ? idx++ : err();
+  end && cc==end ? idx++ : err();
 
-  token.
+  token
+)
 
 // skip space chars, return first non-space character
 space(cc) = (cc = cur.charCodeAt(idx)) <= SPACE : idx++; cc.
@@ -77,28 +83,8 @@ space(cc) = (cc = cur.charCodeAt(idx)) <= SPACE : idx++; cc.
 
 ## AudioGain
 
-```typescript
-memory.grow(1);
-
-export const INPUT_BUFFER_POINTER: i32 = 0;
-export const INPUT_BUFFER_SIZE: i32 = 1024;
-export const OUTPUT_BUFFER_POINTER: i32 = INPUT_BUFFER_POINTER + INPUT_BUFFER_SIZE;
-export const OUTPUT_BUFFER_SIZE: i32 = INPUT_BUFFER_SIZE;
-
-export function amplifyAudioInBuffer(): void {
-  for (let i = 0; i < INPUT_BUFFER_SIZE; i++) {
-    let audioSample: u8 = load<u8>(INPUT_BUFFER_POINTER + i);
-
-    audioSample *= 2;
-
-    // Store the audio sample into our output buffer
-    store<u8>(OUTPUT_BUFFER_POINTER + i, audioSample);
-  }
-}
-```
-
 ```son
-gain(frame, amp=1 in 0..1 as aRate) = frame*amp.
+gain(frame, amp=1 in 0..1) = frame*amp.
 ```
 
 ## Delay
@@ -107,16 +93,16 @@ gain(frame, amp=1 in 0..1 as aRate) = frame*amp.
 ```
 // opendsp version: https://github.com/opendsp/delay/blob/master/index.js
 
-delay(delay in 1..10, feedback in 1..10) =
-  ...size=512, buffer=[..size], count=0;
+dly(delay in 1..10, feedback in 1..10) = (
+  ...size=512, ...buffer=[..size], ...count=0;
 
-  back = count - delay * sampleRate;
-  back < 0 ? back = size + back;
-  i0, i_1, i1, i2 = floor(back), i0-1, i0+1, i0+2;
+  back = count - delay * sampleRate
+  back < 0 ? back = size + back
+  i0, i_1, i1, i2 = floor(back), i0-1, i0+1, i0+2
 
-  i_1 < 0 ? i_1 = size - 1;
-  i1 >= size ? i1 = 0;
-  i2 >= size ? i2 = 0;
+  i_1 < 0 ? i_1 = size - 1
+  i1 >= size ? i1 = 0
+  i2 >= size ? i2 = 0
 
   y_1, y0, y1, y2 = buffer[i_1], buffer[i0], buffer[i1], buffer[i2];
 
@@ -130,25 +116,26 @@ delay(delay in 1..10, feedback in 1..10) =
 
   ++count >= size ? count = 0;
 
-  out.
+  out
+)
 ```
 
 ## Oscillator
 
 ```
-export sine(f=432 in 0..20k as kRate) = sin(f * t * 2pi).
+export sine(f=432 in 0..20000) = sin(f * t * 2pi)
 
-export saw(f=432 in 0..20k as kRate) = 1 - 2 * (t % (1 / f)) * f.
+export saw(f=432 in 0..20000) = 1 - 2 * (t % (1 / f)) * f
 
-export ramp(f) = 2 * (t % (1 / f)) * f - 1.
+export ramp(f) = 2 * (t % (1 / f)) * f - 1
 
-export tri(f) = abs(1 - (2 * t * f) % 2) * 2 - 1.
+export tri(f) = |1 - (2 * t * f) % 2| * 2 - 1
 
-export sqr(f) = (t*f % 1/f < 1/f/2) * 2 - 1.
+export sqr(f) = (t*f % 1/f < 1/f/2) * 2 - 1
 
-export pulse(f, w) = (t*f % 1/f < 1/f/2*w) * 2 - 1.
+export pulse(f, w) = (t*f % 1/f < 1/f/2*w) * 2 - 1
 
-export noise() = rand() * 2 - 1.
+export noise() = rand() * 2 - 1
 ```
 
 ## nopop
@@ -167,20 +154,17 @@ export ladder(threshold=.05, amount=.12) =
 https://github.com/opendsp/step/blob/master/index.js
 
 ```
-step(bpm, sig, offset=0) =
-    ...offset = round((60 / bpm * 4) * sampleRate * offset),
-    max = round((60 / bpm * 4) * sampleRate * sig),
-    acc = 0, prev = 0
+sampleRate = 44100
 
-    frame += offset;
-    acc = frame - prev;
-    acc === 0 || acc === max ?
-      prev = frame;
-      acc = 0;
-      1;
-    :
-      0;
-    .
+step(bpm, sig, offset=0) = (
+  ...offset = round((60 / bpm * 4) * sampleRate * offset),
+  max = round((60 / bpm * 4) * sampleRate * sig),
+  acc = 0, prev = 0
+
+  frame += offset;
+  acc = frame - prev;
+  acc === 0 || acc === max ? prev = frame; acc = 0; 1 : 0;
+)
 
 ```
 
@@ -199,29 +183,32 @@ envelope(measure, decay, release) =
 See [fold](https://en.wikipedia.org/wiki/Fold_(higher-order_function)#In_various_languages) in different langs.
 
 ```
-import comb from './combfilter'
-import allpass from './allpass'
+import comb from './combfilter.son'
+import allpass from './allpass.son'
 import floor from 'math'
+
+sampleRate = 44100
 
 a1,a2,a3,a4 = 1116,1188,1277,1356
 b1,b2,b3,b4 = 1422,1491,1557,1617
 p1,p2,p3,p4 = 225,556,441,341
 
-sum(a, b) = a + b.
-waterfall(p, fn) = p + fn(p).
-stretch(n, rate) = floor(n * rate / 44100).
+sum(a, b) = a + b
+waterfall(p, fn) = p + fn(p)
+stretch(n, rate) = floor(n * rate / 44100)
 
-Comb(coef) = input, room, damp -> comb(input, coef, room, damp).
-Allpass(coef) = input, room, damp -> allpass(input, coef, room, damp).
+Comb(coef) = (input, room, damp) -> comb(input, coef, room, damp).
+Allpass(coef) = (input, room, damp) -> allpass(input, coef, room, damp).
 
-export reverb(input, room=0.5 as kRate, damp=0.5 as kRate) =
+reverb((..input), room=0.5, damp=0.5) = (
   ...combs_a = a0,a1,a2,a3 |> stretch(sampleRate) |> Comb()
   ...combs_b = b0,b1,b2,b3 |> stretch(sampleRate) |> Comb()
   ...aps = p0,p1,p2,p3 |> stretch(sampleRate) |> Allpass()
 
-  output = combs_a(input, room, damp) >- sum + combs_b(input, room, damp) >- sum
+  output = combs_a(input, room, damp) >- sum() + combs_b(input, room, damp) >- sum()
+
   (output, aps) >- waterfall
-.
+)
 ```
 
 ## dynamic processor
@@ -238,7 +225,7 @@ export reverb(input, room=0.5 as kRate, damp=0.5 as kRate) =
 # [floatbeat 1](https://dollchan.net/bytebeat/index.html#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)
 
 ```
-import PI, pow, abs, sin from 'math'
+import PI, sin from 'math'
 
 // Main arpeggio
 m = '5:=5:=5:<5:<5:<:16:18:161:168:68'
@@ -268,25 +255,25 @@ M(p, o, q, m, s, m2, j) = (
 	// This section is used by both saw and triangle wave (as tri is nothing more than abs(saw))
 	x = (g % 255) / 128 - 1;
 	// The real magic: decide between pulse, saw and triangle and synthesize them.
-	s ? s < 2 ? x : s < 3 ? abs(x) * 3 : sin(PI * x) : (g & 128) / 64 - 1;
+	s ? s < 2 ? x : s < 3 ? |x| * 3 : sin(PI * x) : (g & 128) / 64 - 1;
 )
 
 // Base drum
 bd() = (
   btime = 2 << 12
-  bm = (80 - 40) * pow(1 - (t % btime) / btime, 10) - 80
+  bm = (80 - 40) * (1 - (t % btime) / btime) ** 10 - 80
   bm2 = 0b01
   (bm2 >> (t / btime) % 2) & 1 ?
-    sin(PI * (t % btime) * pow(2, bm / 12 - 1)) * pow(1 - (t % btime) / btime, 10) : 0
+    sin(PI * (t % btime) * 2 ** (bm / 12 - 1)) * (1 - (t % btime) / btime) ** 10 : 0
 )
 
 // Hi tom
 bt() = (
   btime = 2 << 11
-  btm = (80 - 15) * pow(1 - (t % btime) / btime, 10) - 80
+  btm = (80 - 15) * (1 - (t % btime) / btime) ** 10 - 80
   btm2 = 0b1111010111010111
   (btm2 >> (t / btime) % 16) & 1 ?
-    sin(PI * (t % btime) * pow(2, btm / 12 - 1)) * pow(1 - (t % btime) / btime, 10) * 0.3 : 0
+    sin(PI * (t % btime) * 2 ** (btm / 12 - 1)) * (1 - (t % btime) / btime) ** 10 * 0.3 : 0
 )
 
 song() = (
@@ -297,7 +284,6 @@ song() = (
   v = t >> 12,  // Song looping. When past 768, repeat, skipping the first 128.
   v = (v % 768) + (v > 767 ? 128 : 0);
 
-  0 +
   (v < 640 ?
     // Arpeggio
     M(6, 5, (t >> 12) % 32, m, 3) * 0.3 +
@@ -335,12 +321,14 @@ song() = (
 https://dollchan.net/bytebeat/index.html#v3b64fVNRS+QwEP4rQ0FMtnVNS9fz9E64F8E38blwZGvWDbaptCP2kP3vziTpumVPH0qZyXzfzHxf8p7U3aNJrhK0rYHfgHAOZZkrlVVu0+saKbd5dTXazolRwnvlKuwNvvYORjiB/LpyO6pt7XhYqTNYZ1DP64WGBYgczuhAQgpiTXEtIwP29pteBZXqwTrB30jwc7i/i0jX2cF8g2WIGKlhriTRcPjSvcVMBn5NxvgCOc3TmqZ7/IdmmEnAMkX2UPB3oMHdE9WcKqVK+i5Prz+PKa98uOl60RgE6zP0+wUr+qVpZNsDUjKhtyLkKvS+LID0FYVSrJql8KdSMptKKlx9eTIbcllvdf8HxabpaJrIXEiycV7WGPeEW9Y4v5CBS07WBbUitvRqVbg7UDtQRRG3dqtZv3C7bsBbFUVcALvwH86MfSDws62fD7CTb0eIghE/mDAPyw9O9+aoa9h63zxXl2SW/GKOFNRyxbyF3N+FA8bPyzFb5misC9+J/XCC14nVKfgRQ7RY5ivKeKmmjOJMaBJSbEZJoiZZMuj2pTEPGunZhqeatOEN3zadxrXRmOw+AA==
 
 ```
-import pi, asin, sin, pow from 'math'
+import pi, asin, sin from 'math'
+
+sampleRate = 44100
 
 fract(x) = x % 1
 mix(a, b, c) = (a * (1 - c)) + (b * c)
 tri(x) = 2 * asin(sin(x)) / pi
-noise(x) = sin((x + 10) * sin(pow(x + 10, fract(x) + 10)));
+noise(x) = sin((x + 10) * sin((x + 10) ** (fract(x) + 10)))
 melodytest(time) = (
 	melody_string = '00040008';
 	melody = 0;
@@ -349,18 +337,18 @@ melodytest(time) = (
     time * mix(
       200 + (i * 900),
       500 + (i * 900),
-      melody_string[floor(time * 2) % melody_string[]] / 16
+      melody_string[floor(time * 2) % |melody_string|] / 16
     )
   ) * (1 - fract(time * 4));
 	melody;
 )
-hihat(time) = noise(time) * pow(1 - fract(time * 4), 10)
-kick(time) = sin(pow(1 - fract(time * 2), 17) * 100)
-snare(time) = noise(floor((time) * 108000)) * pow(1 - fract(time + 0.5), 12)
-melody(time) = melodytest(time) * pow(fract(time * 2), 6) * 1
+hihat(time) = noise(time) * (1 - fract(time * 4)) ** 10
+kick(time) = sin((1 - fract(time * 2)) ** 17 * 100)
+snare(time) = noise(floor((time) * 108000)) * (1 - fract(time + 0.5)) ** 12
+melody(time) = melodytest(time) * fract(time * 2) ** 6 * 1
 
 song() = (
-  ...t=0, time = t++ / 44100
-  (kick(time) + snare(time)*.15 + hihat(time)*.05 + melody(time)) / 4
+  ...t=0, time = t++ / sampleRate
+  ((kick(time) + snare(time)*.15 + hihat(time)*.05 + melody(time)) / 4)
 )
 ```
