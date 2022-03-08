@@ -236,6 +236,11 @@
         - it's not elvis by meaning: elvis does "else" branch, when condition is not true, whereas loop does "true" condition.
       + has pipe operator intuition: by some condition produce the following `whileTrue |: produceItem`, `item :| whileTrue`
         + colon gives hint as "multiple" instances created on the right, following `|>` operator intuition
+    - something's off...
+  * ? We can take almost purely math convention instead of objects `{ x < 5: x++ }` - procedural call
+    ~- with same success can be used without {} - these brackets don't make much sense here only visually
+  * ? We can take even simpler convention: { x < 5; x++ } - loops over until last condition is true.
+    - do..until version, not much useful on its own. Can be used as combo with above.
 
 ### [x] loops can return a value: `(isActive(it): action(it))` - the last result of action is returned
   + useful for many loop cases where we need internal variable result.
@@ -245,6 +250,13 @@
   * ? maybe it's good there's apparent `export` indicator - easy to scan and in-place, compared to accumulated export at the end.
   → C++ exports implicitly function clauses.
   * ? Should we export at all? Maybe we can just export all by default and assign main function, as it is done in C?
+    - not having export keyword is asymmetric with import
+      ? should we rename it to include?
+    - import signature isn't infix. Prefix?
+  * Exporting overloaded function that imposes tax of implementing clause selector for JS; in wasm that's not necessary.
+    * We could export for JS exactly the indicated clause?
+      ? how would we export multiple clauses?
+        → easiest would be to provide JS wrapper. The variety of WASM export forms is huge.
 
 ## [ ] Arrays: should have standard map, filter, reduce methods or not?
   * ? what if we don't deal with arbitrary-length arrays?
@@ -266,7 +278,7 @@
 
   * ? or in fact multiplexor? selects input by condition? like a,b,c -< x -> x > 2 ? 1 : 0
 
-## [ ] comments: //, /* vs ;; and (; ;)
+## [x] comments: //, /* vs ;; and (; ;) → use // without /*
   + ;; make more sense, since ; is separator, and everything behind it doesnt matter
   + (; makes more sense as "group with comments", since we use only ( for groups.
   + ;; is less noisy than //
@@ -284,6 +296,7 @@
       (1 - 4 * abs( round(phase/pi2) - phase/pi2 ))
     )
   ```
+    ~ just reformat
 
 ## [x] ! Variables case should not matter.
 
@@ -325,7 +338,7 @@
   + allows notes constants
   ~ mb non-standardish
 
-## [ ] ? Should it compile to wat or to wasm?
+## [x] ? Should it compile to wat or to wasm? → wat for now
 
   - wasm is faster
   - wasm allows web compilation
@@ -353,7 +366,8 @@
   * language should not break inline composability, like it does python or livescript: you can tightly pack code into a single line.
   * language should be mangle-able, therefore names should not have prefixes
     ~ mangling can recognize that
-  * Spacing material should not have any syntactic meaning. `;` should be a default separator.
+  * Spacing material should not have any syntactic meaning, like JS does for newlines. `;` should be a default separator.
+    * what if we detect next expression as next unrelated operand, regardless of separator?
 
 ## [x] Compiler: How do we map various clauses to wat/wasm? → `alloc` function, untyped (f64 by default), see audio-gain
 
@@ -361,10 +375,8 @@
     - harder to manage variable number of inputs
     - needs mem layout convention
     - no way to differentiate i32 from f32
-
   2. `fn(aPtr, aCh, bPtr, bCh, ..., x, y, z)` - pairs reflect a-Param, single value reflects k-Param
     - may have conflict number of args, eg. `gain(xPtr, xCh, amp)` and `gain(x, ampPtr, ampCh)`
-
   3. Combining flags for a-rate params? (or k-rate params)?
     ```
       enum {
@@ -395,11 +407,9 @@
         ? what is placeholder then? pointer? number of channels to destructure? clause indicator?
   3.3 Hex for clause indicator? `gain(0x1)`
     * same as just 3. The point is enriching indicator with meaning.
-
   3.4 Hex indicates type of args, args indicate memory layout or values.
     * `gain(A0_F32_PLANAR | K1, 2, .5)`
       - too many combinators A0, A1, K1 etc.
-
   4. Per-channel modifiers `gain(2|A|F32|PLANAR, .5)`
     + less modifiers
     + reflects memory layout
@@ -465,7 +475,7 @@
   → block size may change over time, so better reserve place in-advance.
   → just follow [audioWorklet.process](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process)
 
-  → 10. Ok, proper way is alloc or array (see @audio/gain.wasm)
+  10. Ok, proper way is alloc or array (see @audio/gain.wasm)
     * [Simplest malloc](https://github.com/rain-1/awesome-allocators)
     * [Array](https://openhome.cc/eGossip/WebAssembly/Array.html)
 
@@ -521,6 +531,9 @@
         - if we bind param to memory slots, we cannot reuse it for more channels
           . therefore channels must be detected from gain input params
           . therefore holding structure must be linear array, or slot
+    * memory can store last available item in global variable
+      + allows manual memory management
+      - doesn't allow sharing memory easily
 
 ## [x] Compiler: How do we organize output of function (array)?
 
@@ -532,7 +545,7 @@
   →  + not necessarily. If we follow array method (see above), we can return pointer to first element of array, but 0 element indicates its length, so we can easily grab length from pointer.
 
 
-## [x] Clauses: it seems to be useful to let fns to be redefinable.
+## [x] Clauses/function overload: → optional, but can select by argument type (pointer vs value)
   + (input, aParam, kParam) signarure handles any-channels input
   + (i1, i2, i3, a, k) handles multiple inputs
   + ((l, r), a, k) handles per-channel input
@@ -540,7 +553,25 @@
   + return (a, b, c) - single multichannel output
   → so group acts as single element
   - clauses impose clause selector. That selector can be implemented manually or in JS side.
+    + not necessarily. Static-time clause can be preselected within wasm.
+    + providing different clause increases efficiency: eg. 2-channel processor can be faster than n-channel.
   - no-selector simplifies API: no need to pass number of channels.
+  ? what if we provide generic clause selector?
+    ~ preselecting clause is similar to creating fn instance.
+  - direct case allows 1:1 arguments matching in fn signatures.
+    - it is faster, unambiguous, unconflicting
+  * This is optional extension, can be avoided.
+  * Case can be identified by passing pointers to "audio buffers" - channeled arg slots.
+
+### [x] Direct values clause is hindered by clause selector →
+
+  * ? How do we select direct values clause? `gain(inp, .75, outp)`
+    ~ `gain(inp, .75, outp, 2)` is fine (null-arg means direct)
+
+  * ? How do we export direct-values functions [ideally] without extra step of args detection?
+    ~ the worst-case damage is extra fn call + extra nan comparison that sees - ok, there's no signature, fall back to direct call.
+    ~ single runs are not expected to be very regular externally, since for batch runs there's clause cases.
+    ? we detect from apparent channels idicator: gain(v, amp) is direct clause, gain((..ch), amp) is all-channels clause
 
 ## [x] Autogenerate mono/stereo clauses fn code or define fn clauses manually in syntax
 
@@ -696,7 +727,7 @@
     + unleashes batches to any function
 
 
-## [x] Instantiation of sound → no instantiation, use function state for manual tracking time/params.
+## [?] Instantiation of sound → no instantiation, use function state for manual tracking time/params.
 
   1. ? Instantiate sound externally via module instance?
     + resets and tracks globals per-environment
@@ -715,13 +746,14 @@
       ~ can simply be "last function is result of module", like last expression in function
         + that builds nice structuring convention for all son programs - user knows where to look up for main processor.
         -? what if last item in module is not a function, but eg. global?
-          * it returns global then and not processing function...
+          - it returns global then and not processing function...
     + doesn't have problems with collecting old instances (gc covers that)
       + doesn't grow memory within processor
     - channel case selector is part of processing function
       + makes JS API simpler: only provide channels for a-params
-    - exporting single method makes module unusable by other modules, eg. we can't redist songs and stick to main function convention.
+    ~- exporting single method makes module unusable by other modules, eg. we can't redist songs and stick to main function convention.
       - main export function is no different from any other t-dependent sound producing function.
+      ~ ok, hooks-like state allows thespassing this limitation
 
   2. ? Or take `t`,`i` as param?
     * We may need to call same function with different time within same sound.
@@ -791,9 +823,22 @@
     - grows memory, ostensibly slow but irrevokably
       ~+ can rotate instances by calling `reset`
       ~- reset can also be implemented as module-wise method and module can be reused too.
+      ~ still need memory delegation per function for allocating state
     + makes use of `alloc`
     - complicates JS API by initiation step
-    - hides current value of global time, global index.
+      + doesn't need to export alloc for JS API, if that also creates refs to memory locations
+    ~~hides current value of global time, global index~~ → no need for global state
+    + could allocate memory / callsite id at the same time.
+    + even simple functions may have state = therefore we need to instantiate callsites.
+    - instances cannot reuse same memory
+      ~+ instance fn can still take all created pointers (or any other pointers)
+        - clauses if reuse memory cause shallow alloc
+    - makes direct functions impossible, as well as functions with kParams
+      ~ can be alleviated by `[fun] = fun()`
+      ~+ if instance fn takes pointers, can take kParams then
+  7.1 instead of instance constructor, we can call fn directly, and that creates instance the first call
+    + allows direct fn calls
+    - tricky js API
 
   8. `@batch()` decorator
     + decorator is right meaning
@@ -801,9 +846,22 @@
       -~ doesn't seem we have params to pass
     - extra concept
 
-  9. No instantiation: use hooks-like callsite-defined state.
+  9. Hooks-like callsite-identifined state.
+    - we're going to need to identify not by the last callsite, but by the full stack.
+      * imagine a→coin()→adsr(), b→coin()→adsr(). adsr is called from the same callsite, but by different external method.
+      → all exported fns must obtain instance id somehow (mem offset?) and pass it through;
+      → all internal fns must pass parent callsite id + internal callsite id to internal calls;
+      → since we don't provide instancing mechanism, JS instancing is done either via stack/ctx id (mem offset), or regular wasm instancing.
+        ? Can we maybe expose methods allocating memory for all fn reqs? There's too plenty of them: `args per channels, output, context/callsite`
+          * context also may require special amount of memory, it's not clear how to allocate it from user side
+          ~ that is similar to instancing from 7.
+          ~ fn can reserve memory for itself, context/callsite args may not be necessary
+            * eg. on instancing of WASM module
+    → we could provide global `instance` variable, switching current context, but that duplicates native switching.
+      → better export global `reset` to enable instance rotation.
+      → generally functions allocate own memory on first call, with assigned unique callsites within current instance.
 
-## [x] Batch function reads from memory; regular function takes arguments. How to differentiate them? → detect batchable function from channeled inputs/outputs.
+## [ ] Batch function reads from memory; regular function takes arguments. How to differentiate them? → detect batchable function from channeled inputs/outputs.
 
   1. `export` === processing
     - `import pow from 'math'` is not processing function
@@ -835,19 +893,10 @@
       ~ can be competed with `#t`, `#sampleRate`, `#blockSize`, `#input`: `gain(#x, aGain in 0..1)` can mean implicitly passed #x.
         + a |> b(1), b=(#a,b)->#a+b
         ~ # is also a sort of prefix
+      - nah, prefixes are too limiting & that's anachronism
     - can be problematic destructuring: `gain((al,ar) in -1..1)`
 
-  4. Imply batch from channel inputs (..ch)
-
-## [x] Direct values clause is hindered by clause selector →
-
-  * ? How do we select direct values clause? `gain(inp, .75, outp)`
-    ~ `gain(inp, .75, outp, 2)` is fine (null-arg means direct)
-
-  * ? How do we export direct-values functions [ideally] without extra step of args detection?
-    ~ the worst-case damage is extra fn call + extra nan comparison that sees - ok, there's no signature, fall back to direct call.
-    ~ single runs are not expected to be very regular externally, since for batch runs there's clause cases.
-    → we detect from apparent channels idicator: gain(v, amp) is direct clause, gain((..ch), amp) is all-channels clause
+  4. Imply batch from channel inputs gain((..ch))?
 
 ## [x] Output number of channels can be detected from the last operator in fn body.
   * gain((..in), amp) = (..in)*amp
@@ -857,11 +906,13 @@
   * Batch runs a fn against some context like `#t, #i, #sampleRate, #blockSize`, incrementing #t/#i
   * Batch must compile fn clause, not take some fn
     → we don't batch compiled clause/function by external means, batch is special defined-in-advance clause with loop inside
+  * batch can take last argument as number of items to process (count)
+    - that implies for multichannel input to pass pointers to each individual channel, or else that count gets meaning of "blockSize"
 
 ## [ ] Tree shaking
   * must shake off unused fns in compilation
 
-## [ ] Latr: alloc
+## [ ] Latr: alloc, array etc.
   * latr can provide alloc and other common helpers
 
 ## [ ] Array/string length
@@ -874,3 +925,7 @@
     ~+ sort of math association
     ~+ sort of #, but not as generic
     + empty array is unused anyways
+  * ? We can do |a| operator for abs(a) or a.length
+  * ? We can do a[0] for array length, and start items from 1: a[1], ...
+    + last element coincides with length, a[a.0] === last
+  * ~ we still may want to have .last, .length aliases

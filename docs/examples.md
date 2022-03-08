@@ -274,10 +274,10 @@ bt() = (
   btm2 = 0b1111010111010111
   (btm2 >> (t / btime) % 16) & 1 ?
     sin(PI * (t % btime) * 2 ** (btm / 12 - 1)) * (1 - (t % btime) / btime) ** 10 * 0.3 : 0
-)
+);
 
 song() = (
-  ...t=0, t++
+  ...t=0, t++;
   t *= 5.6,     // Match the speed that the original song has.
   ratio = 0.78, // ratio is multiplied here and removed again inside the get melody function, so the pitch wont increase.
   t *= ratio,   // v is used in many places to check how far we are in the song. It is incremented each 4096 samples, roughly.
@@ -325,30 +325,31 @@ import pi, asin, sin from 'math'
 
 sampleRate = 44100
 
-fract(x) = x % 1
-mix(a, b, c) = (a * (1 - c)) + (b * c)
-tri(x) = 2 * asin(sin(x)) / pi
-noise(x) = sin((x + 10) * sin((x + 10) ** (fract(x) + 10)))
+fract(x) = x % 1;
+mix(a, b, c) = (a * (1 - c)) + (b * c);
+tri(x) = 2 * asin(sin(x)) / pi;
+noise(x) = sin((x + 10) * sin((x + 10) ** (fract(x) + 10)));
 melodytest(time) = (
-	melody_string = '00040008';
+	melodyString = '00040008';
 	melody = 0;
 	i = 0;
-  i++ < 5 : melody += tri(
-    time * mix(
-      200 + (i * 900),
-      500 + (i * 900),
-      melody_string[floor(time * 2) % |melody_string|] / 16
-    )
-  ) * (1 - fract(time * 4));
+  i++ < 5 |:
+    melody += tri(
+      time * mix(
+        200 + (i * 900),
+        500 + (i * 900),
+        melodyString[floor(time * 2) % |melodyString|] / 16
+      )
+    ) * (1 - fract(time * 4));
 	melody;
 )
-hihat(time) = noise(time) * (1 - fract(time * 4)) ** 10
-kick(time) = sin((1 - fract(time * 2)) ** 17 * 100)
-snare(time) = noise(floor((time) * 108000)) * (1 - fract(time + 0.5)) ** 12
+hihat(time) = noise(time) * (1 - fract(time * 4)) ** 10;
+kick(time) = sin((1 - fract(time * 2)) ** 17 * 100);
+snare(time) = noise(floor((time) * 108000)) * (1 - fract(time + 0.5)) ** 12;
 melody(time) = melodytest(time) * fract(time * 2) ** 6 * 1
 
 song() = (
-  ...t=0, time = t++ / sampleRate
+  ...t=0, time = t++ / sampleRate;
   ((kick(time) + snare(time)*.15 + hihat(time)*.05 + melody(time)) / 4)
 )
 ```
