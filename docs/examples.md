@@ -332,8 +332,7 @@ noise(x) = sin((x + 10) * sin((x + 10) ** (fract(x) + 10)));
 melodytest(time) = (
 	melodyString = '00040008';
 	melody = 0;
-	i = 0;
-  i++ < 5 |:
+	i = 0; i++ < 5 :>
     melody += tri(
       time * mix(
         200 + (i * 900),

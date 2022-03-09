@@ -49,64 +49,75 @@
 
 ## [ ] Pipes:
 
-  * ? Should pipes allow placeholder as `x | #*0.6 + reverb() * 0.4`
-    * `.` placeholder from R-lang solve `..l=..r` as `(.).l = (.).r`, but if `.` is used for terminator, then not this.
-    * maybe we better off `#.l = #.r`, unless we need `#` for something else.
+  1. ~~Placeholder as `x | #*0.6 + reverb() * 0.4`, `source | lp($, frq, Q)`?~~
+    ? can there be multiple args to pipe operator? a,b |> runs 2 pipes, not multiarg.
     ? possibly it should be both: passing input as `input` implicit param, `#` redirects to another param
       - nah, too complicated.
-    → ok, seems like intuition for `|` is direct expression, sort of overload: `a | filter(f, q)` ← filter creates processor here
+    - function plays natural role of args inserter, why duplicating with topic placeholder?
+    → ok, seems like intuition for `|` is direct expression, sort of overload: `a | filter(f, q)` ← filter creates fn here
     → but for pipeline there's intuition as `a |> filter(#, f, q)` ← we don't necessarily need that
-    → so `a | b | c` is _simply_ operator overloading for functions, same as `"a"+"b"` for strings.
-    → for passing params use inline functions as `a1,a2,a3 | a -> b(a) | c`
-    → that builds good functional intuition, but to make it feel better - functions should be macros, not lang constructs
-  * Maybe to keep basic expressions clean we better use `|>` for pipe operator?
+    + $ looks regexy - backreferences in both string/regexes
+    + enables access to group members as `a,b,c | d($1, $2)`
+    - `source | lp($, freq, Q)` is lame-ish (non-standard with |) & redundant.
+    - let's avoid implicit/reserved references
+
+  2. Pass first argument[s] to pipe operator (elixir/F#-like): `source |> lp(frq, Q)`?
     + That would be just direct F#/elixir pipes.
-    + We can even do `||>` and `|||>`.
-    + We can even do `*>` or `+>` for piping _all_ inputs as arguments `a,b,c +> mix()`, `a,b,c *> mix()`, `a,b,c |>> mix()`
-    → Maybe just use `||>` to send all arguments to inputs `a,b,c ||> mix()` === `mix(a,b,c)`
+    + `||>` to send all arguments to inputs `a,b,c ||> mix()` === `mix(a,b,c)`
       * whereas `a,b,c |> mix()` === `mix(a),mix(b),mix(c)`
-  * What if we keep overloading intuition, but introduce `a |> b(x)` operator as a shortcut for `a | a -> b(a, x)`?
-    - `...a = a0,a1,a2,a3 |> stretch(rate) | Comb` becomes messy.
+    + |> can have other than | precedence
+    + available instantly to all functions, not only overloaded ones
+    - Operator `|>` knows about next call operator `a()` - what if there is `a |> b` - how's that applied?
+
+  3. Lambda functions: `a | a -> b(a, x)`
+    * `a | b | c` is _simply_ operator overloading for functions, same as `"a"+"b"` for strings.
+    * for passing params use inline functions as `a1,a2,a3 | a -> b(a) | c`
+    + that builds good functional intuition, but to make it feel better - functions should be macros or transform to direct code, not use lang constructs
+    * `a | a -> a + delay(a, time)` is equiv. to `a |> delay(#, time)`
+      ~ it's only 1 symbol more + topic placeholder
+      + functions are natural arg call placeholders, inventing new scheme to insert args is not DRY
+      + fn overloading plays well with definition as `a | gain(amp) = gain(a, amp)`.
+
+  4. Function overload `a | b(x) = b(a,x);  a | b(x)`
+    ~+ Partial application can be thought on its own regardless of pipe as `a1 = a(#, rate)`
+      , which is solved via lambda as `a1 = x->a(x,rate)`.
+    + `source | gain(.45)` is oldschool coolness.
+    + direct meaning definition
+    - generalized operator overloading
+    - too much noise, compared to just |> available for every fn
+    - comma has precedence below |.
+    - `a | b(x)` being replaced by `b(a, x)` is meta-programming, it's not operator overloading
+
+  5. (2+3) lambda + `a |> b(x)` as a shortcut for `a | a -> b(a, x)`?
+    - `...a = a0,a1,a2,a3 |> stretch(rate) | Comb` becomes messy
+      - mixing function scope with direct scope
       * vs `...a = a0,a1,a2,a3 |> stretch(#, rate) |> Comb(#)`
       * vs `...a = a0,a1,a2,a3 | a -> stretch(a, rate) | Comb`
       * vs (ideal1) `...a = a0,a1,a2,a3 | stretch(rate) | Comb()`
       * vs (ideal2) `...a = a0,a1,a2,a3 |> stretch(rate) |> Comb()`
-    - this partial application is implicit argument - non-js intuition.
-      . Operator `|>` should not know about next call operator `a()` - what if there is `a |> b` - how's that applied?
-      → Partial application can be thought on its own regardless of pipe as `a1 = a(#, rate)`
-        , which is solved via lambda as `a1 = x->a(x,rate)`
-      → therefore no partial application concept is needed, just use lambda functions + operator overloading
-    → `source | lp(freq, Q)` is lame. I think we're fine using literal as reference to group variables as `source | lp($, frq, Q)`
-      + that looks regexy - backreferences in both string/regexes
-      + that enables access to group members as `a,b,c | d($1, $2)`
-      - `source | lp($, freq, Q)` is lame & redundant.
-        ~ creating lambda function  for `source | lp(freq, Q)` can be tricky; also complicates source.
-      . this form of pipe `source|lp(freq,Q)` forces implicit input, which is a form of fluent intuition (wasm-y):
-      . `source` puts value to stack, and pipe operator just processes that value from stack - same implict thing we mean by autoreturning last statement.
-      . I think function should have internally something like stdin to read from.
-      ? what if we introduce global variables $1,$2,...$n as constant references to last elements in stack?
-        + then we can use them internally: `gain(amp)=$0*amp`
-        + then we can use them in pipes as: `source, modulator | filter(freq:#2)`
-        ? or maybe better #0, #1, #2?
-          + works better as ordered number meaning
-          + github (url) ref
-          . #0 - all last args, #1 - first arg etc.
-        ? or $0, $1, $2?
-          + reminds string replace
-          + reminds wasm text reference
-          + wasm refers $ to variable name, to named entry in stack (variable or callstack)
-        ? or maybe provide named references (unchangeable) #in, #in[0],..., #out, #t, #rate?
-          + gives "private", "reserved" meaning, which is similar to private fields from js.
-          - no need for #in - function just takes from last group
-          + plays well with implicit arguments #t, #i etc.
-    * `source | filter(freq, Q)` → `filter(source, freq, Q)` is fine convention. Placeholder is a pain, we 99% of time don't need that.
-      * ? Maybe worth renaming to `source |> filter(freq, Q)` to avoid confusion with `|`
-        - nah, `source | gain(.45)` is oldschool coolness, prob just fn clause: takes prev argument.
-  → The converging solution is: use implied argument as `gain(#input, amp) = gain(#input, amp)`
-    * that utilizes multiple fn clauses organically and enables simple overloading as `source | gain(amp)`
-  * ? what if we do OO as  `pipe gain()` or even `source | gain(amp in 0..1) = gain(source, amp)`?
-    + direct meaning
-    - generalized operator overloading
+    -~ this partial application is implicit argument - non-js intuition.
+
+  6. ~~Internal/implicit variable like `#in` to read from.~~
+    - let's try avoiding any implicit values for now, most of them can be done via internal state (+ explicit init args)
+
+  7. ~~Global variables $1,$2,...$n as constant references to last elements in stack?~~
+    + then we can use them internally: `gain(amp)=$0*amp`
+    + then we can use them in pipes as: `source, modulator | filter(freq:#2)`
+    ? or maybe better #0, #1, #2?
+      + works better as ordered number meaning
+      + github (url) ref
+      . #0 - all last args, #1 - first arg etc.
+    ? or $0, $1, $2?
+      + reminds string replace
+      + reminds wasm text reference
+      + wasm refers $ to variable name, to named entry in stack (variable or callstack)
+    ? or maybe provide named references (unchangeable) #in, #in[0],..., #out, #t, #rate?
+      + gives "private", "reserved" meaning, which is similar to private fields from js.
+      - no need for #in - function just takes from last group
+      + plays well with implicit arguments #t, #i etc.
+    - same as 5 - let's avoid implicit stuff
+
+  * a,b,c |> fn() - maps multiple, (a,b,c) |> fn() - maps single
 
 ## [x] Lambda → generalized fn by callsite, spawning creates bound call
 
@@ -149,7 +160,7 @@
     → very simple to instead do 1/2*pi, 60*h + 10*m
   - we can't include all units anyways, it's pointless
 
-## [ ] End operator
+## [x] ~~End operator~~ → no much sense but decorative for now.
 
   * `.` operator can finish function body and save state. `delay(x,y) = ...d=[1s], z=0; d[z++]=x; d[z-y].`
   * ? is it optional?
@@ -179,11 +190,11 @@
 ## [x] Init operator: `a ?:= b`
   - pointless: `a = a && b` is a bit meaningless construct, isn't it, we need `a = a ? a : b`, `a = a ?: b`, or `a ?:= b`
 
-## [x] short ternary operators as ` a > b ? a = 1;` → use elvis `?:`
+## [x] short ternary operators as ` a > b ? a = 1;` → use elvis `?:` or direct JS `a && b`
   + it not only eliminates else, but also augments null-path operator `a.b?.c`, which is for no-prop just `a.b?c` case.
   - weirdly confusing, as if very important part is lost. Maybe just introduce elvis `a>b ? a=1` → `a<=b ?: a=1`
 
-## [x] Loops: `i in 0..10 :| a,b,c`, `i in src :| a`, `[x*2 |: x in 1,2,3]`
+## [x] Loops: `i in 0..10 :> a,b,c`, `i in src :> a`, `[x*2 <: x in 1,2,3]`
   * `for i in 0..10 (a,b,c)`, `for i in src a;`
   * alternatively as elixir does: `item <- 0..10 a,b,c`
     + also erlang list comprehension is similar: `[x*2 || x <- [1,2,3]]`
@@ -241,6 +252,36 @@
     ~- with same success can be used without {} - these brackets don't make much sense here only visually
   * ? We can take even simpler convention: { x < 5; x++ } - loops over until last condition is true.
     - do..until version, not much useful on its own. Can be used as combo with above.
+  * ? What about "splitter" operator:
+    a.`x < 5 -< x++`,  `x++ >- x < 5`, `[ x in 1,2,3 -< x*2 ]`, `[ x * 2 >- x in 1,2,3 ]`
+    b.`x < 5 >- x++`,  `x++ -< x < 5`, `[ x in 1,2,3 >- x*2 ]`, `[ x * 2 -< x in 1,2,3 ]`
+
+  * → ? "Other" from FIRA `x < 5 :> x++`,  `x++ <: x < 5`, `[ x in 1,2,3 :> x*2 ]`, `[ x * 2 <: x in 1,2,3 ]`
+    + result direction indicator
+    + aligns with math, label reference
+    + indicates "many"
+    + less conflict with boolean in condition
+    + adds sense of flow
+    + association with <> condition block
+    - conflicts with F#'s :> operator
+      ~ we don't deal with explicit types and don't use : in any meaning of types
+  * ? "Other" from FIRA `x < 5 <: x++`,  `x++ :> x < 5`, `[ x in 1,2,3 <: x*2 ]`, `[ x * 2 :> x in 1,2,3 ]`
+    + meaning of <> block
+    + musical reference |:
+    + 1:M relation
+    ~- conflicting with condition, but less than others
+    - result direction is wrong
+  * ? `x < 5 ..> x++`,  `x++ <.. x < 5`, `[ x in 1,2,3 ..> x*2 ]`, `[ x * 2 <.. x in 1,2,3 ]`
+  * ? `x < 5 ::> x++`,  `x++ <:: x < 5`, `[ x in 1,2,3 ::> x*2 ]`, `[ x * 2 <:: x in 1,2,3 ]`
+  * ? `x < 5 *> x++`,  `x++ <* x < 5`, `[ x in 1,2,3 *> x*2 ]`, `[ x * 2 <* x in 1,2,3 ]`
+  * ? `x < 5 ~> x++`,  `x++ <~ x < 5`, `[ x in 1,2,3 ~> x*2 ]`, `[ x * 2 <~ x in 1,2,3 ]`
+  * ? `x < 5 |:> x++`,  `x++ <:| x < 5`, `[ x in 1,2,3 |:> x*2 ]`, `[ x * 2 <:| x in 1,2,3 ]`
+  * ? `x < 5 :>: x++`,  `x++ :<: x < 5`, `[ x in 1,2,3 :>: x*2 ]`, `[ x * 2 :<: x in 1,2,3 ]`
+  * ? `x < 5 >:> x++`,  `x++ <:< x < 5`, `[ x in 1,2,3 >:> x*2 ]`, `[ x * 2 <:< x in 1,2,3 ]`
+  * ? `x < 5 :>> x++`,  `x++ <<: x < 5`, `[ x in 1,2,3 :>> x*2 ]`, `[ x * 2 <<: x in 1,2,3 ]`
+  * ? `x < 5 ?.. x++`,  `x++ ..? x < 5`, `[ x in 1,2,3 ..? x*2 ]`, `[ x * 2 ?.. x in 1,2,3 ]`
+  * ? `x < 5 :.. x++`,  `x++ ..: x < 5`, `[ x in 1,2,3 ..: x*2 ]`, `[ x * 2 :.. x in 1,2,3 ]`
+  * ? `x < 5 <> x++`,  `x++ <> x < 5`, `[ x in 1,2,3 <> x*2 ]`, `[ x * 2 <> x in 1,2,3 ]`
 
 ### [x] loops can return a value: `(isActive(it): action(it))` - the last result of action is returned
   + useful for many loop cases where we need internal variable result.
@@ -277,6 +318,7 @@
 ## [ ] -< operator: splits list by some sorter: `a,b,c -< v -> v`
 
   * ? or in fact multiplexor? selects input by condition? like a,b,c -< x -> x > 2 ? 1 : 0
+  * ? what if we use it as loop? [ x in 1,2,3 -< x * 2]
 
 ## [x] comments: //, /* vs ;; and (; ;) → use // without /*
   + ;; make more sense, since ; is separator, and everything behind it doesnt matter
@@ -369,7 +411,7 @@
   * Spacing material should not have any syntactic meaning, like JS does for newlines. `;` should be a default separator.
     * what if we detect next expression as next unrelated operand, regardless of separator?
 
-## [x] Compiler: How do we map various clauses to wat/wasm? → `alloc` function, untyped (f64 by default), see audio-gain
+## [x] Compiler: How do we map various clauses to wat/wasm? → `allocBlock` function, untyped (f64 by default), see audio-gain
 
   1. fixed pointers and `fn(aCh, bCh, ..., x, y, z)`
     - harder to manage variable number of inputs
@@ -479,58 +521,63 @@
     * [Simplest malloc](https://github.com/rain-1/awesome-allocators)
     * [Array](https://openhome.cc/eGossip/WebAssembly/Array.html)
 
-    ?.
-      10.a `malloc2d(blockSize, 2); gain(inptr, gainptr, outptr)`
-        - allocated memory cannot be reused by another number of channels
-      10.b `malloc(2*blockSize); gain(inptr, 2, gainptr, 1, outptr, 2 )`
-        + allocated memory can be reused for various channel numbers cases
-          * eg. `gain(x)`, `gain((l))`, `gain((l,r))`, instead of `gain(leftPtr, rightPtr)`
-        - k-param turns into `gain(inp, 2, gainp, 0, outp, 2)`
-      10.c `malloc(2*blockSize); gain(inptr, 2*blockSize, gainptr, blockSize, outptr, 2*blockSize )`
-        - number of channels calculated runtime, which is not apparent
-          * ie. mapping of arbitrary sizes to arbitrary other sizes is not clear
-        + can indicate exact number of samples, which is sort of convention [ptr, len]
-          - length is stored by allocator
-            ~ implicit remembered state isn't nice
-        + conventional (ptr, length) pairs
-        + allows reusing same memory for any number of channels
-        - signature calc is complicated-ish
-        - keeps redundant out size, which is apparent from the source
-          + in fact can be used to check available size
-        - inconsistency of pointer and blockSize units: pointer measures bytes, blockSize measures items
-          → either alloc should return units pointer, or require allocating bytes and not items
-          . if we allocate items, it really better be array, or slot, or something more hi-level
-          . or else use direct trivial malloc, but then the signature and implicit channels problem remains
-            - the original task doesn't correlate much with malloc purpose: memory can be managed memory.grow easily.
-            . maybe indeed we should better stick to param kinds convention instead of generic forms
-              - we still need to pass channels info somehow: slot size can fit more channels if blockSize lowers
-      10.d `malloc(2*blockSize); gain(202, inptr, gainptr, outptr )`
-        + saves time calculating signature client-side
-        + less arguments
-        - signature can be limiting to max 10/16 channels
-        - signature is too lengthy
-      10.e ✱ `malloc(2*blockSize); gain(inptr, gainptr, outptr, 2, 0, 2)`
-        + keep args order similar to descriptor
-        + breaks ptr-size convention
-        + allows optional last arguments (output is internal, gain is 0)
-          `gain(inp, gainp, outp, 2, 0)`
-        + easier to calc signature
-        + (possibly) less internal calculation - no need to detect number of channels from mem layout (implicitly as in 10.c)
-        + no need to deal with 1-value krate inputs calculation, as it's directly indicated
-        + direct values fn clause can be detected by 0 arguments
-        - there's no clear understanding how k-param or 1-channel a-param maps to multiple channels
-          * seems that notion of channels and k/a-rate are different
-          - detecting a-/k- rate implicitly from memory size of pointer is not necessarily good
-          ~ can be facilitated by [channels interpretation](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API/Basic_concepts_behind_Web_Audio_API#up-mixing_and_down-mixing)
-            * neither speaker nor discrete: only copies mono value to all channels, else - discrete.
-            ~ maybe we don't need absolute flexibility: if you need precise per-channel values, just provide full a-rates.
-      10.f `gain(inptr, gainptr, outptr, 2|A_RATE, 1|A_RATE)`
-        - requires const imports
-        - too magical
-      10.g `inp = aParam(2), gainp = kParam(1), outp = aParam(1), gain(inp, gainp, outp)`
-        - if we bind param to memory slots, we cannot reuse it for more channels
-          . therefore channels must be detected from gain input params
-          . therefore holding structure must be linear array, or slot
+    10.a ✱ `inptr = allocBlock(2); outptr = gain(inptr, gain)`
+      - allocated memory cannot be reused by another number of channels
+        ~ that region can be read though
+        ~ that can be undesirable practice to reuse same memory for different arg types
+      + can store information about number of channels in this slot
+        * memory at pointer should have a flag for clause selector to quickly check if that area is block
+      + signature matches directly function arguments
+    10.b `malloc(2*blockSize); gain(inptr, 2, gainptr, 1, outptr, 2 )`
+      + allocated memory can be reused for various channel numbers cases
+        * eg. `gain(x)`, `gain((l))`, `gain((l,r))`, instead of `gain(leftPtr, rightPtr)`
+      - k-param turns into `gain(inp, 2, gainp, 0, outp, 2)`
+    10.c `malloc(2*blockSize); gain(inptr, 2*blockSize, gainptr, blockSize, outptr, 2*blockSize )`
+      - number of channels calculated runtime, which is not apparent
+        * ie. mapping of arbitrary sizes to arbitrary other sizes is not clear
+      + can indicate exact number of samples, which is sort of convention [ptr, len]
+        - length is stored by allocator
+          ~ implicit remembered state isn't nice
+      + conventional (ptr, length) pairs
+      + allows reusing same memory for any number of channels
+      - signature calc is complicated-ish
+      - keeps redundant out size, which is apparent from the source
+        + in fact can be used to check available size
+      - inconsistency of pointer and blockSize units: pointer measures bytes, blockSize measures items
+        → either alloc should return units pointer, or require allocating bytes and not items
+        . if we allocate items, it really better be array, or slot, or something more hi-level
+        . or else use direct trivial malloc, but then the signature and implicit channels problem remains
+          - the original task doesn't correlate much with malloc purpose: memory can be managed memory.grow easily.
+          . maybe indeed we should better stick to param kinds convention instead of generic forms
+            - we still need to pass channels info somehow: slot size can fit more channels if blockSize lowers
+    10.d `malloc(2*blockSize); gain(202, inptr, gainptr, outptr )`
+      + saves time calculating signature client-side
+      + less arguments
+      - signature can be limiting to max 10/16 channels
+      - signature is too lengthy
+    10.e `malloc(2*blockSize); gain(inptr, gainptr, outptr, 2, 0, 2)`
+      + keep args order similar to descriptor
+      + breaks ptr-size convention
+      + allows optional last arguments (output is internal, gain is 0)
+        `gain(inp, gainp, outp, 2, 0)`
+      + easier to calc signature
+      + (possibly) less internal calculation - no need to detect number of channels from mem layout (implicitly as in 10.c)
+      + no need to deal with 1-value krate inputs calculation, as it's directly indicated
+      + direct values fn clause can be detected by 0 arguments
+      - there's no clear understanding how k-param or 1-channel a-param maps to multiple channels
+        * seems that notion of channels and k/a-rate are different
+        - detecting a-/k- rate implicitly from memory size of pointer is not necessarily good
+        ~ can be facilitated by [channels interpretation](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API/Basic_concepts_behind_Web_Audio_API#up-mixing_and_down-mixing)
+          * neither speaker nor discrete: only copies mono value to all channels, else - discrete.
+          ~ maybe we don't need absolute flexibility: if you need precise per-channel values, just provide full a-rates.
+      - redundant arguments; we can store them in pointer itself.
+    10.f `gain(inptr, gainptr, outptr, 2|A_RATE, 1|A_RATE)`
+      - requires const imports
+      - too magical
+    10.g `inp = aParam(2), gainp = kParam(1), outp = aParam(1), gain(inp, gainp, outp)`
+      - if we bind param to memory slots, we cannot reuse it for more channels
+        . therefore channels must be detected from gain input params
+        . therefore holding structure must be linear array, or slot
     * memory can store last available item in global variable
       + allows manual memory management
       - doesn't allow sharing memory easily
@@ -929,3 +976,22 @@
   * ? We can do a[0] for array length, and start items from 1: a[1], ...
     + last element coincides with length, a[a.0] === last
   * ~ we still may want to have .last, .length aliases
+
+## [ ] JSify, Cify
+  Draft is ready, needs polishing corners and reaching the planned feeling.
+  Taking r&d issues and aligning them.
+
+  * Don't enforce `;` everywhere. Recognize newline intelligently.
+
+  * There are 2 types available: numbers and functions. Build around that and reinforce that.
+
+  * Ditch |arr|, |x| and use abs(x), arr.length instead: makes syntax more familiar and less entropic.
+    ~ not a big deal tbh, arr[-1] is good for last el
+
+  * |>, ->, >-, -<, :> is group of similar operators, they should build intuitionn around. "Would be cool if JS had them"
+    * |: → :> for loop
+
+
+  * Don't extend conditionals, elvis `?:` is enough, the rest is &&, ||
+
+
