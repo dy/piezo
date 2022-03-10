@@ -26,6 +26,7 @@ Initially inspired by [zzfx](https://github.com/KilledByAPixel/ZzFX), [bytebeat]
 
 <!-- * drop `source | filter() | reverb() | fx()` and get controls with defaults; changing controls changes values; -->
 
+
 ## Examples
 
 ### Gain
@@ -45,7 +46,7 @@ Features:
 * _function overload_ − function clause is matched automatically by call signature.
 * _channeled_ input/output − `[left]` for mono, `[left, right]` for stereo, `[..channels]` for any number of input channels.
 * _a-rate_/_k-rate param type_ − `[arg]` indicates a-rate (_accurate_) param, direct `arg` param is k-rate (_controlling_), per-block.
-* _range_ − `from..to`, `from..<to`, `from>..to` define language-level range primitive, useful in arguments validation, destructuring, arrays constructor etc.
+* _range_ − is language-level primitive with `from..to`, `from..<to`, `from>..to` signature, useful in arguments validation, array constructor etc.
 * _validation_ − `a in range` asserts and clamps argument to provided range, to avoid blowing up state.
 * _destructuring_ − collects channels or group as `[a,..bc] = [a,b,c]`.
 
@@ -76,7 +77,7 @@ lp([x0], freq = 100 in 1..10000, Q = 1.0 in 0.001..3.0) = (
   x1, x2 = x0, x1
   y1, y2 = y0, y1
 
-  y0
+  [y0]
 )
 ```
 

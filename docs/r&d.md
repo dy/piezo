@@ -425,7 +425,9 @@
   . (a,b,c) = (d,e,f)   → a=d, b=e, c=f          // destructured-assembled
   . (a,b,c) = d         → a=d[0], b=d[1], c=d[2] // destructure
   . (a,b,c) = d,e,f     → a=f[0], b=f[1], c=f[2] // or destructure first? last seems to be convention everywhere
-  . a,b,c = (d,e,f)     → a=(d,e,f),b=(d,e,f),c=(d,e,f)              // assign last
+    . ok, from ↓ logic it's (a,b,c) = (d,e,f)
+  . a = b,c,d           → a=(b,c,d)
+  . a,b,c = (d,e,f)     → a=(d,e,f),b=(d,e,f),c=(d,e,f)
     - contradicts to js intuition where only c = (d,e,f)
   → so there are 2 meanings:
     . () makes group a single component
