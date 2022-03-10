@@ -129,7 +129,7 @@ export saw(f=432 in 0..20000) = 1 - 2 * (t % (1 / f)) * f
 
 export ramp(f) = 2 * (t % (1 / f)) * f - 1
 
-export tri(f) = |1 - (2 * t * f) % 2| * 2 - 1
+export tri(f) = abs(1 - (2 * t * f) % 2) * 2 - 1
 
 export sqr(f) = (t*f % 1/f < 1/f/2) * 2 - 1
 
@@ -182,7 +182,7 @@ envelope(measure, decay, release) =
 
 See [fold](https://en.wikipedia.org/wiki/Fold_(higher-order_function)#In_various_languages) in different langs.
 
-```
+```fs
 import comb from './combfilter.son'
 import allpass from './allpass.son'
 import floor from 'math'
@@ -193,21 +193,45 @@ a1,a2,a3,a4 = 1116,1188,1277,1356
 b1,b2,b3,b4 = 1422,1491,1557,1617
 p1,p2,p3,p4 = 225,556,441,341
 
-sum(a, b) = a + b
-waterfall(p, fn) = p + fn(p)
 stretch(n, rate) = floor(n * rate / 44100)
+sum(a, b) = a + b
+waterfall(p, apcoef) = p + allpass(p, apcoef, room, damp)
 
-Comb(coef) = (input, room, damp) -> comb(input, coef, room, damp).
-Allpass(coef) = (input, room, damp) -> allpass(input, coef, room, damp).
+// Comb(coef) = (input, room, damp) -> comb(input, coef, room, damp).
+// Allpass(coef) = (input, room, damp) -> allpass(input, coef, room, damp).
 
+// pipes
+// + implicitly passed arg works well
+// + it also saves output space
+// - reducer has a bit of stretch here - it doesn't simply extend pipe as |> → ||>, but adds "fold" meaning
 reverb((..input), room=0.5, damp=0.5) = (
-  ...combs_a = a0,a1,a2,a3 |> stretch(sampleRate) |> Comb()
-  ...combs_b = b0,b1,b2,b3 |> stretch(sampleRate) |> Comb()
-  ...aps = p0,p1,p2,p3 |> stretch(sampleRate) |> Allpass()
+  ...combs_a = a0,a1,a2,a3 |> stretch(sampleRate)
+  ...combs_b = b0,b1,b2,b3 |> stretch(sampleRate)
+  ...aps = p0,p1,p2,p3 |> stretch(sampleRate)
 
-  output = combs_a(input, room, damp) >- sum() + combs_b(input, room, damp) >- sum()
+  output = ..combs_a |> comb(input, room, damp) ||> sum() + ..combs_b |> comb(input, room, damp) ||> sum()
 
-  (output, aps) >- waterfall
+  output, ..aps ||> waterfall()
+)
+
+// lambdas
+// + only >- new operator
+// + holds conventions: lambda, pipe
+// + resolves syntactically merged scope issue
+// + no implicit args, indicates apparently what's going on under the hood
+// + plays well with >-
+// - introduces fn overload, which might be ok for funcrefs
+// - introduces lambdas, which might be unavoidable anyways
+// - introduces operator precedence issue, | being above `,` which can be mitigated by raising , precedence
+// - overuses lambdas and/or curried functions constructors, if say we want `source | filter(freq, Q)`, can be mitigated by |> operator
+reverb((..input), room=0.5, damp=0.5) = (
+  ...combs_a = a0,a1,a2,a3 | coef -> stretch(coef, sampleRate)
+  ...combs_b = b0,b1,b2,b3 | coef -> stretch(coef, sampleRate)
+  ...aps = p0,p1,p2,p3 | coef -> stretch(coef, sampleRate)
+
+  ..combs_a | a -> comb(a, input, room, damp) >- sum + ..combs_b | a -> comb(input, room, damp) >- sum
+
+  ^, ..aps >- waterfall
 )
 ```
 
@@ -258,6 +282,7 @@ M(p, o, q, m, s, m2, j) = (
 	s ? s < 2 ? x : s < 3 ? |x| * 3 : sin(PI * x) : (g & 128) / 64 - 1;
 )
 
+
 // Base drum
 bd() = (
   btime = 2 << 12
@@ -277,7 +302,7 @@ bt() = (
 );
 
 song() = (
-  ...t=0, t++;
+  ...t=0, t++
   t *= 5.6,     // Match the speed that the original song has.
   ratio = 0.78, // ratio is multiplied here and removed again inside the get melody function, so the pitch wont increase.
   t *= ratio,   // v is used in many places to check how far we are in the song. It is incremented each 4096 samples, roughly.
@@ -300,7 +325,7 @@ song() = (
     // This part only between 256 and 480?, then a pause until 512 and then play again
     (v > 255 && (v < 448 || v > 511) ?
       // Drums
-      (v < 256 ? 0 : bd() + bt()) +
+      (v < 256 ? 0 : bd(t) + bt(t)) +
       // Second melody
       (v < 20 ? 0 : M(6, 3, (t >> 13) % 32, m4, 2, m4b, 0x8000) * 0.1 +
         M(6, 4, (t >> 13) % 32, m4, 1, m4b, 0x8000) * 0.05) +

@@ -45,51 +45,105 @@
   * ? we can use i64 for them
   * ? or we can use f64 for all numbers by default and keep rest of types free
 
-## [ ] Numbers: float64 by default, unless it's statically inferrable as int64, like ++, +-1 etc ops only
+## [x] Numbers: float64 by default, unless it's statically inferrable as int64, like ++, +-1 etc ops only
+  * Boolean operators turn float64 into int64
 
-## [ ] Pipes:
+## [x] Pipes: → let's try basics: lambdas, then pipe overload, then topic reference between expressions, and maybe then pipe operator
 
-  1. ~~Placeholder as `x | #*0.6 + reverb() * 0.4`, `source | lp($, frq, Q)`?~~
+  1. Placeholder as `x |> #*0.6 + reverb() * 0.4`, `source |> lp($, frq, Q)`?
     ? can there be multiple args to pipe operator? a,b |> runs 2 pipes, not multiarg.
     ? possibly it should be both: passing input as `input` implicit param, `#` redirects to another param
       - nah, too complicated.
     - function plays natural role of args inserter, why duplicating with topic placeholder?
+      ~+ function creates a (semantic) scope, whereas pipe acts on the same level
     → ok, seems like intuition for `|` is direct expression, sort of overload: `a | filter(f, q)` ← filter creates fn here
     → but for pipeline there's intuition as `a |> filter(#, f, q)` ← we don't necessarily need that
     + $ looks regexy - backreferences in both string/regexes
-    + enables access to group members as `a,b,c | d($1, $2)`
-    - `source | lp($, freq, Q)` is lame-ish (non-standard with |) & redundant.
-    - let's avoid implicit/reserved references
+    - implicit/reserved references we could avoid
+    + it's overall shorter than other options, as easy syntax sugar, because
+      * `a | a -> a+1` introduces fn overload overusea and curried fns constructor problem
+      * `A()=a->a+1; a | A()` requires heavy constructor code and passing lambdas
+      * `a |> a -> a+1` is redundancy and aint nice looking
+    ? enable access to group members as `a,b,c | d($1, $2)`
+    - sending group items would require referencing by number
+      ~ unless we prohibit sending groups, not sure we need it.
 
-  2. Pass first argument[s] to pipe operator (elixir/F#-like): `source |> lp(frq, Q)`?
-    + That would be just direct F#/elixir pipes.
+  1.1 ✱ What if we get rid of pipe operator and just use "last expression" placeholder?
+    * `a; ^ + 1;`
+    + looks sick & clean
+    + most compact
+    + no legacy pipes
+    - doesn't allow easy use in initializer
+      ~+ unless we do ...a=(x;^+y)
+    - not clear how to apply to group
+      ~+ ...a=(x1,x2,x3;^+y) - does it apply to sequence?
+        ~ semic is noisy here.
+    -~ doesn't make much difference with just ...a=(tmp=x;tmp=tmp+y), only shorter
+    ~ can possibly do `^2`, `^3` in wasm-style access to stack variables
+    - enforces redundant parens, compared to `...a=x|>add(y)`
+
+  2. ~~Pass first argument[s] to pipe operator (elixir/R-like): `source |> lp(frq, Q)`?~~
+    + That would be just direct R/elixir pipes.
+    * a,b,c |> fn() - maps multiple, (a,b,c) |> fn() - maps single
     + `||>` to send all arguments to inputs `a,b,c ||> mix()` === `mix(a,b,c)`
       * whereas `a,b,c |> mix()` === `mix(a),mix(b),mix(c)`
+        ? can't we just `mix(a,b,c)` or `mix(..abc)`?
+      ? what if we send pairwise, depending on mixer target args length? `a,b,c ||> sum()` === `sum(sum(a,b), c)`
+        + this way we can implement any sort of reducers
     + |> can have other than | precedence
     + available instantly to all functions, not only overloaded ones
-    - Operator `|>` knows about next call operator `a()` - what if there is `a |> b` - how's that applied?
+    + puts chunks into separate functions = good [musical] practice
+      + makes code easier to read
+    + plays well with >- operator in fn signature a,b,c|>fn()>-sum()
+    + compact
+    + replaces lambda in a way (see reverb case)
+    - Operator `|>` makes assumption about next call operator `a()` - what if there is `a |> b` - how's that applied?
+      - this and >- make it confusing if that's supposed to pass funcref `a |> b` or call to a function `a |> b()`
+      - this makes sonl less strict, more toyful script, because it doesn't stand exhaustive review
+    - missing an easy way to insert placeholder value, forcing 1-time fn defs or lambdas.
+      ? topical pipe `source .> sign(.) * abs(.) ** shapeCurve`? - nah, indecisiveness.
+    - aesthetically |> doesn't match -< and ->
 
   3. Lambda functions: `a | a -> b(a, x)`
     * `a | b | c` is _simply_ operator overloading for functions, same as `"a"+"b"` for strings.
     * for passing params use inline functions as `a1,a2,a3 | a -> b(a) | c`
-    + that builds good functional intuition, but to make it feel better - functions should be macros or transform to direct code, not use lang constructs
+    + that uses good(existing) functional intuition, but to make it performant - functions should be macros or transform to direct code, not use lang constructs
+    - introduces overload
+      ~ it is natural for fnref, as + for strings or & for booleans
     * `a | a -> a + delay(a, time)` is equiv. to `a |> delay(#, time)`
       ~ it's only 1 symbol more + topic placeholder
       + functions are natural arg call placeholders, inventing new scheme to insert args is not DRY
-      + fn overloading plays well with definition as `a | gain(amp) = gain(a, amp)`.
+      + fn overloading can be specially defined as `a | gain(amp) = gain(a, amp)`
+    * F# style of pipes
+    - no easy way to pass to curried function as `source | filter(f, Q)`
+      ~ can define overload case as `filter(f, Q) = src -> filter(src, f, Q)` or `src | filter(f, Q) = filter(src, f, Q)`
+      ~ can do arrow fn `source | s -> filter(s, f, Q)`
+    * makes same assumption as 2. by invoking rhs function with lhs as first argument.
+    + doesn't have generic operator overloading meaning as in 4: only applies as first argument.
 
-  4. Function overload `a | b(x) = b(a,x);  a | b(x)`
+  3.1 ✱ We can combine topic token 1.1 and overload fn
+    + syntax looks fresh, compact, flowy
+    + no redundant function calls from 2. (unless we do 4. with constructor/currying meaning)
+      + `|` + `^` = `|>`, which makes sense
+    + reducer operator is as promised, without redundant call: `..combs_a | a -> comb(a, input, room, damp) >- sum`
+
+  4. ~~Function overload `a | b(x) = b(a,x);  a | b(x)`~~
     ~+ Partial application can be thought on its own regardless of pipe as `a1 = a(#, rate)`
       , which is solved via lambda as `a1 = x->a(x,rate)`.
     + `source | gain(.45)` is oldschool coolness.
     + direct meaning definition
+    + semantically clear
     - generalized operator overloading
-    - too much noise, compared to just |> available for every fn
+    - too much definition noise, compared to just |> available for every fn
     - comma has precedence below |.
     - `a | b(x)` being replaced by `b(a, x)` is meta-programming, it's not operator overloading
+    - there's no difference in `a | b(x)` between OR of result and overloaded function
+      ~ b(x) signature can return b(a,x), not boolean.
+    - definition is alternative to `b(a) = x -> b(x,a)`, duplication
+    - the definition breaks convention of calling rhs `|` function with first argument applied, eg `x|b(a)=b(a,x)` swaps args.
 
-  5. (2+3) lambda + `a |> b(x)` as a shortcut for `a | a -> b(a, x)`?
-    - `...a = a0,a1,a2,a3 |> stretch(rate) | Comb` becomes messy
+  5. lambda + `a |> b(x)` as a shortcut for `a | a -> b(a, x)`?
+    - `...a = a0,a1,a2,a3 |> stretch(rate) | Comb` is too entropic
       - mixing function scope with direct scope
       * vs `...a = a0,a1,a2,a3 |> stretch(#, rate) |> Comb(#)`
       * vs `...a = a0,a1,a2,a3 | a -> stretch(a, rate) | Comb`
@@ -117,9 +171,7 @@
       + plays well with implicit arguments #t, #i etc.
     - same as 5 - let's avoid implicit stuff
 
-  * a,b,c |> fn() - maps multiple, (a,b,c) |> fn() - maps single
-
-## [x] Lambda → generalized fn by callsite, spawning creates bound call
+## [x] Lambda → (wait for use-case) generalized fn by callsite, spawning creates bound call
 
   * should there be lambda? `value | x -> x*.6 + reverb(x) * .4`
     - lambda function has diverging notation from regular fn definition.
@@ -160,7 +212,7 @@
     → very simple to instead do 1/2*pi, 60*h + 10*m
   - we can't include all units anyways, it's pointless
 
-## [x] ~~End operator~~ → no much sense but decorative for now.
+## [x] End operator → no much sense but decorative for now.
 
   * `.` operator can finish function body and save state. `delay(x,y) = ...d=[1s], z=0; d[z++]=x; d[z-y].`
   * ? is it optional?
@@ -169,6 +221,13 @@
   - it creates confusion with block as `).` vs `.)`
   + maybe for unwrapping it is still useful.
   - conflict with global variables init. x=1+2;y()=x+1. - like, why? better make as simple assignment.
+  * ? make it an alternative to semic? semic is too noisy as separator, eg. (a,b,c; ^+1) → (a,b,c. ^+1)
+    + keeps natural aesthethics.
+  * ? make it indicator of "return" statement?
+  * ? make it indicator of "end pipe"?
+  * ? make it null literal?
+    + works as "end function without result" a -> b().
+    + works as fn args as `a(b,.,c,.,e)`
 
 ## [x] State management → function state identified by callsite
 
@@ -182,7 +241,7 @@
   * named properties in arrays? `[1,2,3,a:4,b:5]`
     ~ reminds typescript named tuples
     ~ should find exactly where we'd need that
-  ? Maybe can be done purely as aliases for position?
+  ? Maybe can be done purely as aliases for position? Let's see for use-case
 
 ## [x] Elvis operator: `a ?: b` instead of jsy `a ?? b`
   * ~ equivalent to a ? #0 : b
@@ -252,11 +311,9 @@
     ~- with same success can be used without {} - these brackets don't make much sense here only visually
   * ? We can take even simpler convention: { x < 5; x++ } - loops over until last condition is true.
     - do..until version, not much useful on its own. Can be used as combo with above.
-  * ? What about "splitter" operator:
-    a.`x < 5 -< x++`,  `x++ >- x < 5`, `[ x in 1,2,3 -< x*2 ]`, `[ x * 2 >- x in 1,2,3 ]`
-    b.`x < 5 >- x++`,  `x++ -< x < 5`, `[ x in 1,2,3 >- x*2 ]`, `[ x * 2 -< x in 1,2,3 ]`
-
-  * → ? "Other" from FIRA `x < 5 :> x++`,  `x++ <: x < 5`, `[ x in 1,2,3 :> x*2 ]`, `[ x * 2 <: x in 1,2,3 ]`
+  * `x < 5 -< x++`,  `x++ >- x < 5`, `[ x in 1,2,3 -< x*2 ]`, `[ x * 2 >- x in 1,2,3 ]`
+    `x < 5 >- x++`,  `x++ -< x < 5`, `[ x in 1,2,3 >- x*2 ]`, `[ x * 2 -< x in 1,2,3 ]`
+  * → ? `x < 5 :> x++`,  `x++ <: x < 5`, `[ x in 1,2,3 :> x*2 ]`, `[ x * 2 <: x in 1,2,3 ]`
     + result direction indicator
     + aligns with math, label reference
     + indicates "many"
@@ -265,13 +322,22 @@
     + association with <> condition block
     - conflicts with F#'s :> operator
       ~ we don't deal with explicit types and don't use : in any meaning of types
-  * ? "Other" from FIRA `x < 5 <: x++`,  `x++ :> x < 5`, `[ x in 1,2,3 <: x*2 ]`, `[ x * 2 :> x in 1,2,3 ]`
+  * ? `x < 5 <: x++`,  `x++ :> x < 5`, `[ x in 1,2,3 <: x*2 ]`, `[ x * 2 :> x in 1,2,3 ]`
     + meaning of <> block
     + musical reference |:
     + 1:M relation
     ~- conflicting with condition, but less than others
     - result direction is wrong
+  * ? `x < 5 |: x++`,  `x++ :| x < 5`, `[ x in 1,2,3 |: x*2 ]`, `[ x * 2 :| x in 1,2,3 ]`
+  * ? `x < 5 |> x++`,  `x++ <| x < 5`, `[ x in 1,2,3 |> x*2 ]`, `[ x * 2 <| x in 1,2,3 ]`
+  * ? `x < 5 :> x++`,  `x++ <: x < 5`, `[ x in 1,2,3 :> x*2 ]`, `[ x * 2 <: x in 1,2,3 ]`
   * ? `x < 5 ..> x++`,  `x++ <.. x < 5`, `[ x in 1,2,3 ..> x*2 ]`, `[ x * 2 <.. x in 1,2,3 ]`
+    - similar to ..<, which means range definition
+    + no visual conflict with ternary `a? b : c :> e`, `a ? b :> c: d`
+  * ? `x < 5 --> x++`,  `x++ <-- x < 5`, `[ x in 1,2,3 --> x*2 ]`, `[ x * 2 <-- x in 1,2,3 ]`
+  * ? `x < 5 => x++`,  `x++ <= x < 5`, `[ x in 1,2,3 => x*2 ]`, `[ x * 2 <= x in 1,2,3 ]`
+  * ? `x < 5 -> x++`,  `x++ <- x < 5`, `[ x in 1,2,3 -> x*2 ]`, `[ x * 2 <- x in 1,2,3 ]`
+    ~+ scala, ~+ elixir, ~+ erlang (~- not exactly them)
   * ? `x < 5 ::> x++`,  `x++ <:: x < 5`, `[ x in 1,2,3 ::> x*2 ]`, `[ x * 2 <:: x in 1,2,3 ]`
   * ? `x < 5 *> x++`,  `x++ <* x < 5`, `[ x in 1,2,3 *> x*2 ]`, `[ x * 2 <* x in 1,2,3 ]`
   * ? `x < 5 ~> x++`,  `x++ <~ x < 5`, `[ x in 1,2,3 ~> x*2 ]`, `[ x * 2 <~ x in 1,2,3 ]`
@@ -307,6 +373,7 @@
     . for reduce use `a,b,c >- fn` or `a,b,c >- a,b -> a+b`
     ! that is in fact mixing operator! a,b,c >- mix
     !? we can reduce based on reducer's number of args
+  * I think we should overload these operators |, >-
 
 ## [x] Concat/flat groups → no need to flattening/deep nesting
   * ?is done via range operator a, ..b, c..d, e (shortened spread)
@@ -318,7 +385,8 @@
 ## [ ] -< operator: splits list by some sorter: `a,b,c -< v -> v`
 
   * ? or in fact multiplexor? selects input by condition? like a,b,c -< x -> x > 2 ? 1 : 0
-  * ? what if we use it as loop? [ x in 1,2,3 -< x * 2]
+  * ? ~~what if we use it as loop? [ x in 1,2,3 -< x * 2]~~ → use <:
+  * maybe that's just inverse reduce operator. a = sum -< a,b,c
 
 ## [x] comments: //, /* vs ;; and (; ;) → use // without /*
   + ;; make more sense, since ; is separator, and everything behind it doesnt matter
@@ -375,7 +443,7 @@
   + allows building chords as (C3, E3, G3) = Cmaj
     ~ would require # to be valid part of identifier
 
-## [ ] ? Parts of identifier: $, #, @, _
+## [x] ? Parts of identifier: $, #, @, _ → don't see why not, doesn't seem we need number references
   + allows private-ish variables
   + allows notes constants
   ~ mb non-standardish
@@ -410,6 +478,7 @@
     ~ mangling can recognize that
   * Spacing material should not have any syntactic meaning, like JS does for newlines. `;` should be a default separator.
     * what if we detect next expression as next unrelated operand, regardless of separator?
+    - nah, too much noise.
 
 ## [x] Compiler: How do we map various clauses to wat/wasm? → `allocBlock` function, untyped (f64 by default), see audio-gain
 
@@ -528,6 +597,8 @@
       + can store information about number of channels in this slot
         * memory at pointer should have a flag for clause selector to quickly check if that area is block
       + signature matches directly function arguments
+      - not passing blockSize as last argument makes direct non-batch call return single value.
+        ~+ direct calls have nothing to do with block size - we don't pass blocks as args to them.
     10.b `malloc(2*blockSize); gain(inptr, 2, gainptr, 1, outptr, 2 )`
       + allocated memory can be reused for various channel numbers cases
         * eg. `gain(x)`, `gain((l))`, `gain((l,r))`, instead of `gain(leftPtr, rightPtr)`
@@ -774,7 +845,7 @@
     + unleashes batches to any function
 
 
-## [?] Instantiation of sound → no instantiation, use function state for manual tracking time/params.
+## [x] Instantiation of sound → no instantiation, use function state for manual tracking time/params.
 
   1. ? Instantiate sound externally via module instance?
     + resets and tracks globals per-environment
@@ -908,7 +979,7 @@
       → better export global `reset` to enable instance rotation.
       → generally functions allocate own memory on first call, with assigned unique callsites within current instance.
 
-## [ ] Batch function reads from memory; regular function takes arguments. How to differentiate them? → detect batchable function from channeled inputs/outputs.
+## [x] Batch function reads from memory; regular function takes arguments. How to differentiate them? → detect batchable function from channeled inputs/outputs.
 
   1. `export` === processing
     - `import pow from 'math'` is not processing function
@@ -945,24 +1016,27 @@
 
   4. Imply batch from channel inputs gain((..ch))?
 
+
 ## [x] Output number of channels can be detected from the last operator in fn body.
   * gain((..in), amp) = (..in)*amp
 
-## [ ] Batching
+## [x] Batching
 
   * Batch runs a fn against some context like `#t, #i, #sampleRate, #blockSize`, incrementing #t/#i
   * Batch must compile fn clause, not take some fn
     → we don't batch compiled clause/function by external means, batch is special defined-in-advance clause with loop inside
   * batch can take last argument as number of items to process (count)
-    - that implies for multichannel input to pass pointers to each individual channel, or else that count gets meaning of "blockSize"
+    - that implies for multichannel input to pass pointers to each individual channel, or else that count gets meaning of "blockSize" (not generic number of samples to process)
+  → just have global blockSize, allocBlock and make functions match signature in son 1:1, by passing blocks for batching
 
-## [ ] Tree shaking
+## [x] Tree shaking
   * must shake off unused fns in compilation
 
-## [ ] Latr: alloc, array etc.
+## [x] Latr: alloc, array etc.
   * latr can provide alloc and other common helpers
+  - not latr nut std. Latr is generic synthesis
 
-## [ ] Array/string length
+## [ ] Array/string length →
   * Ref https://en.wikipedia.org/wiki/Comparison_of_programming_languages_(array)
   * Ref https://en.wikipedia.org/wiki/Cardinality
   * Lua, J langs propose # operator for length
@@ -973,9 +1047,20 @@
     ~+ sort of #, but not as generic
     + empty array is unused anyways
   * ? We can do |a| operator for abs(a) or a.length
+    - fn syntax is waaay more familiar
+    - higher entropy compared to other ops
+    - symmetricity causes special parsing requirements as prefix/postfix: `|a + |b * c| / d|`
+    + rust uses that for closure syntax
+    ~ not a big deal tbh, arr[-1] is good for last el
   * ? We can do a[0] for array length, and start items from 1: a[1], ...
     + last element coincides with length, a[a.0] === last
   * ~ we still may want to have .last, .length aliases
+    - .length can shadow named array properties.
+      ~ not a big deal: that's just an alias
+    - .length isn't nice for groups
+      ~ that's fine too
+  * channels | len
+    - precedence isn't nice
 
 ## [ ] JSify, Cify
   Draft is ready, needs polishing corners and reaching the planned feeling.
@@ -983,15 +1068,20 @@
 
   * Don't enforce `;` everywhere. Recognize newline intelligently.
 
-  * There are 2 types available: numbers and functions. Build around that and reinforce that.
-
-  * Ditch |arr|, |x| and use abs(x), arr.length instead: makes syntax more familiar and less entropic.
-    ~ not a big deal tbh, arr[-1] is good for last el
+  * There are 4 types available: numbers, functions, booleans, strings. Build around that and reinforce that.
 
   * |>, ->, >-, -<, :> is group of similar operators, they should build intuitionn around. "Would be cool if JS had them"
-    * |: → :> for loop
-
+    * |: → :>, <: loop
+    * `>- is reducer
+    * -> is lambda
 
   * Don't extend conditionals, elvis `?:` is enough, the rest is &&, ||
+
+## [ ] Make channeled input an array: `gain([left, right], amp)` instead of group destructuring `gain((left, right), amp)`?
+
+  + array better refers to memory send to input, not some internal grouping - so it's "frame"
+  + it allows more clearly indicate output signal, opposed just grouped value:
+   * `phase -> (sin(phase))` === `phase -> sin(phase)` - because group of 1 element is that element;
+   * `phase -> [sin(phase)]` - that's output signal.
 
 
