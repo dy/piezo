@@ -40,14 +40,14 @@ gain([left, right], volume in range) = [left * volume, right * volume]
 gain([..channels], volume in range) = [..channels * volume]
 ```
 
-Introduced features:
+Features:
 
-* _function overload_ − function signature is matched automatically by call signature.
+* _function overload_ − function clause is matched automatically by call signature.
 * _channeled_ input/output − `[left]` for mono, `[left, right]` for stereo, `[..channels]` for any number of input channels;
-* _a-rate_/_k-rate_ params − braced `[arg]` indicate a-rate (accurate) param, direct param is k-rate (controlling), same value per-block.
-* _range_ − built-in language primitive defined by `from..to`, `from..<to`, `from>..to` signatures.
-* _validation_ − `a in range` asserts and clamps argument to provided range, to avoid blowing up processor state.
-* _destructuring_ − collects channels or group as `(a,..bc) = (a,b,c)`.
+* _a-rate_/_k-rate param type_ − `[arg]` indicates a-rate (_accurate_) param, direct `arg` param is k-rate (_controlling_), per-block.
+* _range_ − `from..to`, `from..<to`, `from>..to` define language-level range primitive, useful in arguments validation, destructuring, arrays constructor etc.
+* _validation_ − `a in range` asserts and clamps argument to provided range, to avoid blowing up state.
+* _destructuring_ − collects channels or group as `[a,..bc] = [a,b,c]`.
 
 ### Biquad Filter
 
@@ -59,7 +59,7 @@ import sin, cos, pi from "math"
 pi2 = pi*2
 sampleRate = 44100
 
-lp((x0), freq = 100 in 1..10000, Q = 1.0 in 0.001..3.0) = (
+lp([x0], freq = 100 in 1..10000, Q = 1.0 in 0.001..3.0) = (
   ...x1, x2, y1, y2 = 0;    // internal state
 
   w = pi2 * freq / sampleRate;
@@ -83,11 +83,13 @@ lp((x0), freq = 100 in 1..10000, Q = 1.0 in 0.001..3.0) = (
 Features:
 
 * _import_ − by default, all top-level functions and variables are exported. Unused functions are tree-shaken from compiled code. Built-in libs are: `math`, `std`. Additional libs: `latr`, `musi` and [others]().
-* _scope_ − block scope is defined by nesting `()` (unlike `{}` in JS) − if it includes variable definitions, it acts as block.
-* _grouping_ − comma operator allows bulk operations on many variables, such as `a,b,c = d,e,f` → `a=d, b=e, c=f` or `a,b,c + d,e,f` → `a+d, b+e, c+f`.
-* _state_ − internal function state is persisted between fn calls via definition `...state=init`. State is identified by function callsite for current module instance. That is like language-level react hooks.
+* _scope_ − block scope is defined by nesting `()` (unlike `{}` in JS) − variables defined in block act within its scope.
+* _grouping_ − comma operator allows bulk operations on many variables, such as `a,b,c = d,e,f` → `a=d, b=e, c=f` or `a,b,c + d,e,f` → `a+d, b+e, c+f` etc.
+* _state_ − internal function state is persisted between fn calls via ellipsis operator `...state=init`. State is identified by function callsite for current module instance. That is like language-level react hooks.
 
-### [ZZFX Coin](https://codepen.io/KilledByAPixel/full/BaowKzv): `zzfx(...[,,1675,,.06,.24,1,1.82,,,837,.06])`:
+### [ZZFX Coin](https://codepen.io/KilledByAPixel/full/BaowKzv)
+
+> `zzfx(...[,,1675,,.06,.24,1,1.82,,,837,.06])`:
 
 ```fs
 import pow, sign, round, abs, max, pi, inf, sin from "math"
