@@ -193,7 +193,7 @@ melodytest(time) = (
 	melodyString = "00040008";
 	melody = 0;
 	i = 0;
-  i++ < 5 :>
+  i++ < 5 ?..
     melody += tri(
       time * mix(
         200 + (i * 900),

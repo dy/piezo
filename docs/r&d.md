@@ -331,6 +331,10 @@
   * ? `x < 5 |: x++`,  `x++ :| x < 5`, `[ x in 1,2,3 |: x*2 ]`, `[ x * 2 :| x in 1,2,3 ]`
   * ? `x < 5 |> x++`,  `x++ <| x < 5`, `[ x in 1,2,3 |> x*2 ]`, `[ x * 2 <| x in 1,2,3 ]`
   * ? `x < 5 :> x++`,  `x++ <: x < 5`, `[ x in 1,2,3 :> x*2 ]`, `[ x * 2 <: x in 1,2,3 ]`
+  * ? `x < 5 ..: x++`,  `x++ :.. x < 5`, `[ x in 1,2,3 ..: x*2 ]`, `[ x * 2 :.. x in 1,2,3 ]`
+    + .. as intuition for "spread"
+    + : as intuition for "comprehension/label"
+  * ? `x < 5 ..| x++`,  `x++ |.. x < 5`, `[ x in 1,2,3 ..| x*2 ]`, `[ x * 2 |.. x in 1,2,3 ]`
   * ? `x < 5 ..> x++`,  `x++ <.. x < 5`, `[ x in 1,2,3 ..> x*2 ]`, `[ x * 2 <.. x in 1,2,3 ]`
     - similar to ..<, which means range definition
     + no visual conflict with ternary `a? b : c :> e`, `a ? b :> c: d`
@@ -339,15 +343,28 @@
   * ? `x < 5 -> x++`,  `x++ <- x < 5`, `[ x in 1,2,3 -> x*2 ]`, `[ x * 2 <- x in 1,2,3 ]`
     ~+ scala, ~+ elixir, ~+ erlang (~- not exactly them)
   * ? `x < 5 ::> x++`,  `x++ <:: x < 5`, `[ x in 1,2,3 ::> x*2 ]`, `[ x * 2 <:: x in 1,2,3 ]`
+    + gives taste of .., : and direction.
   * ? `x < 5 *> x++`,  `x++ <* x < 5`, `[ x in 1,2,3 *> x*2 ]`, `[ x * 2 <* x in 1,2,3 ]`
   * ? `x < 5 ~> x++`,  `x++ <~ x < 5`, `[ x in 1,2,3 ~> x*2 ]`, `[ x * 2 <~ x in 1,2,3 ]`
   * ? `x < 5 |:> x++`,  `x++ <:| x < 5`, `[ x in 1,2,3 |:> x*2 ]`, `[ x * 2 <:| x in 1,2,3 ]`
   * ? `x < 5 :>: x++`,  `x++ :<: x < 5`, `[ x in 1,2,3 :>: x*2 ]`, `[ x * 2 :<: x in 1,2,3 ]`
   * ? `x < 5 >:> x++`,  `x++ <:< x < 5`, `[ x in 1,2,3 >:> x*2 ]`, `[ x * 2 <:< x in 1,2,3 ]`
   * ? `x < 5 :>> x++`,  `x++ <<: x < 5`, `[ x in 1,2,3 :>> x*2 ]`, `[ x * 2 <<: x in 1,2,3 ]`
-  * ? `x < 5 ?.. x++`,  `x++ ..? x < 5`, `[ x in 1,2,3 ..? x*2 ]`, `[ x * 2 ?.. x in 1,2,3 ]`
+  * ? `x < 5 ?.. x++`,  `[ x in 1,2,3 ?.. x*2 ]`
+    + intuition for condition and spread
+    + reminds [..len] array creation, but [x in arr ?.. x*2]
+  * ? `x < 5 ..? x++`, `[ x in 1,2,3 ..? x*2 ]`
+    + semantic is close to punctuation combo
+    + intuition for condition and spread
+  * ? `x < 5 ?.. x++`, `[ x in 1,2,3 ?.. x*2 ]`
+  * ? `x < 5 :? x++`, `[ x in 1,2,3 :? x*2 ]`
+  * ? `x < 5 <?> x++`, `[ x in 1,2,3 <?> x*2 ]`
+    + reminds UML <> block with condition inside
+  * ? `x < 5 <:> x++`, `[ x in 1,2,3 <:> x*2 ]`
   * ? `x < 5 :.. x++`,  `x++ ..: x < 5`, `[ x in 1,2,3 ..: x*2 ]`, `[ x * 2 :.. x in 1,2,3 ]`
+  * ? `x < 5 :: x++`,  `x++ :: x < 5`, `[ x in 1,2,3 :: x*2 ]`, `[ x * 2 :: x in 1,2,3 ]`
   * ? `x < 5 <> x++`,  `x++ <> x < 5`, `[ x in 1,2,3 <> x*2 ]`, `[ x * 2 <> x in 1,2,3 ]`
+  * ? Do we need reverse direction? - Until is very rarely used, - until style is incompatible for list comprehension
 
 ### [x] loops can return a value: `(isActive(it): action(it))` - the last result of action is returned
   + useful for many loop cases where we need internal variable result.
