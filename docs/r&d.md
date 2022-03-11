@@ -224,10 +224,13 @@
   * ? make it an alternative to semic? semic is too noisy as separator, eg. (a,b,c; ^+1) → (a,b,c. ^+1)
     + keeps natural aesthethics.
   * ? make it indicator of "return" statement?
-  * ? make it indicator of "end pipe"?
+  * ? make it indicator of "end pipeline"?
   * ? make it null literal?
     + works as "end function without result" a -> b().
     + works as fn args as `a(b,.,c,.,e)`
+      - sheer redundance
+  * ? it can act both as "return" and "save state" indicator for scoped blocks.
+    + enforces semicolons and adds clarity.
 
 ## [x] State management → function state identified by callsite
 
@@ -1086,6 +1089,9 @@
   Taking r&d issues and aligning them.
 
   * Don't enforce `;` everywhere. Recognize newline intelligently.
+    - C/Java-family has them mandatory; Also many JS folk tend to make it mandatory also.
+    - It's just simpler and more apparent to have them everywhere
+    - It's also a bit low-level-y feeling, which is rather good
 
   * There are 4 types available: numbers, functions, booleans, strings. Build around that and reinforce that.
 

@@ -34,11 +34,11 @@ Initially inspired by [zzfx](https://github.com/KilledByAPixel/ZzFX), [bytebeat]
 Gain processor, providing k-rate amplification of mono, stereo or generic input.
 
 ```fs
-range = 0..1000
+range = 0..1000;
 
-gain([left], volume in range) = [left * volume]
-gain([left, right], volume in range) = [left * volume, right * volume]
-gain([..channels], volume in range) = [..channels * volume]
+gain([left], volume in range) = [left * volume];
+gain([left, right], volume in range) = [left * volume, right * volume];
+gain([..channels], volume in range) = [..channels * volume];
 ```
 
 Features:
@@ -55,10 +55,10 @@ Features:
 Biquad filter processor for single channel input.
 
 ```fs
-import sin, cos, pi from "math"
+import sin, cos, pi from "math";
 
-pi2 = pi*2
-sampleRate = 44100
+pi2 = pi*2;
+sampleRate = 44100;
 
 lp([x0], freq = 100 in 1..10000, Q = 1.0 in 0.001..3.0) = (
   ...x1, x2, y1, y2 = 0;    // internal state
@@ -72,12 +72,12 @@ lp([x0], freq = 100 in 1..10000, Q = 1.0 in 0.001..3.0) = (
 
   b0, b1, b2, a1, a2 *= 1.0 / a0;
 
-  y0 = b0*x0 + b1*x1 + b2*x2 - a1*y1 - a2*y2
+  y0 = b0*x0 + b1*x1 + b2*x2 - a1*y1 - a2*y2;
 
-  x1, x2 = x0, x1
-  y1, y2 = y0, y1
+  x1, x2 = x0, x1;
+  y1, y2 = y0, y1;
 
-  [y0]
+  [y0].
 )
 ```
 
@@ -85,31 +85,32 @@ Features:
 
 * _import_ − by default, all top-level functions and variables are exported. Unused functions are tree-shaken from compiled code. Built-in libs are: `math`, `std`. Additional libs: `latr`, `musi` and [others]().
 * _scope_ − block scope is defined by nesting `()` (unlike `{}` in JS) − variables defined in block act within its scope.
-* _grouping_ − comma operator allows bulk operations on many variables, such as `a,b,c = d,e,f` → `a=d, b=e, c=f` or `a,b,c + d,e,f` → `a+d, b+e, c+f` etc.
 * _state_ − internal function state is persisted between fn calls via ellipsis operator `...state=init`. State is identified by function callsite for current module instance. That is like language-level react hooks.
+* _grouping_ − comma operator allows bulk operations on many variables, such as `a,b,c = d,e,f` → `a=d, b=e, c=f` or `a,b,c + d,e,f` → `a+d, b+e, c+f` etc.
+* _end operator_ − `.` at the end of scoped function definition acts as indicator of returned value, instead of replacement to semicolon.
 
 ### [ZZFX Coin](https://codepen.io/KilledByAPixel/full/BaowKzv)
 
 > `zzfx(...[,,1675,,.06,.24,1,1.82,,,837,.06])`:
 
 ```fs
-import pow, sign, round, abs, max, pi, inf, sin from "math"
+import pow, sign, round, abs, max, pi, inf, sin from "math";
 
-pi2 = pi*2
-sampleRate = 44100
+pi2 = pi*2;
+sampleRate = 44100;
 
 // waveshape generators
 oscillator = [
   phase -> [1 - 4 * abs( round(phase/pi2) - phase/pi2 )],
   phase -> [sin(phase)]
-]
+];
 
 // adsr weighting
 adsr(x, a, d, s, sv, r=1) = (
-  ...i=0, t=i++/sampleRate
+  ...i=0, t=i++/sampleRate;
 
-  a = max(a, 0.0001)                 // prevent click
-  total = a + d + s + r
+  a = max(a, 0.0001);                 // prevent click
+  total = a + d + s + r;
 
   t >= total ? 0 : x * (
     t < a ? t/a :                    // attack
@@ -118,24 +119,24 @@ adsr(x, a, d, s, sv, r=1) = (
     t < a  + d + s ?                 // sustain
     sv :                             // sustain volume
     (total - t)/r * sv
-  )
-)
-adsr(x, a, d, s, r) = adsr(x, a, d, s, 1, r)  // no sustain volume case
-adsr(a, d, s, r) = x -> adsr(x, a, d, s, r)   // pipe case
+  ).
+);
+adsr(x, a, d, s, r) = adsr(x, a, d, s, 1, r);  // no sustain volume case
+adsr(a, d, s, r) = x -> adsr(x, a, d, s, r);   // pipe case
 
 // curve effect
-curve(x, amt=1.82 in 0..10) = pow(sign(x) * abs(x), amt)
-curve(amt) = x -> curve(x, amt)
+curve(x, amt=1.82 in 0..10) = pow(sign(x) * abs(x), amt);
+curve(amt) = x -> curve(x, amt);
 
 // coin = triangle with pitch jump
 coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
-  ...i=0, phase=0
+  ...i=0, phase=0;
 
-  t = i++/sampleRate
-  phase += (freq + t > delay ? jump : 0) * pi2 / sampleRate
+  t = i++/sampleRate;
+  phase += (freq + t > delay ? jump : 0) * pi2 / sampleRate;
 
-  oscillator[shape](phase) | adsr(0, 0, .06, .24) | curve(1.82)
-)
+  oscillator[shape](phase) | adsr(0, 0, .06, .24) | curve(1.82).
+);
 ```
 
 Features:
@@ -147,27 +148,28 @@ Features:
 ## [Freeverb](https://github.com/opendsp/freeverb/blob/master/index.js)
 
 ```fs
-import comb from "./combfilter.son"
-import allpass from "./allpass.son"
-import floor from "math"
+import comb from "./combfilter.son";
+import allpass from "./allpass.son";
+import floor from "math";
 
-sampleRate = 44100
+sampleRate = 44100;
 
-a1,a2,a3,a4 = 1116,1188,1277,1356
-b1,b2,b3,b4 = 1422,1491,1557,1617
-p1,p2,p3,p4 = 225,556,441,341
+a1,a2,a3,a4 = 1116,1188,1277,1356;
+b1,b2,b3,b4 = 1422,1491,1557,1617;
+p1,p2,p3,p4 = 225,556,441,341;
 
-stretch(n) = floor(n * sampleRate / 44100)
-sum(a, b) = a + b
+stretch(n) = floor(n * sampleRate / 44100);
+sum(a, b) = a + b;
 
 reverb((..input), room=0.5, damp=0.5) = (
-  ...combs_a = a0,a1,a2,a3 | stretch
-  ...combs_b = b0,b1,b2,b3 | stretch
-  ...aps = p0,p1,p2,p3 | stretch
+  ...combs_a = a0,a1,a2,a3 | stretch;
+  ...combs_b = b0,b1,b2,b3 | stretch;
+  ...aps = p0,p1,p2,p3 | stretch;
 
-  ..combs_a | a -> comb(a, input, room, damp) >- sum + ..combs_b | a -> comb(a, input, room, damp) >- sum
-  ^, ..aps >- (input, coef) -> p + allpass(p, coef, room, damp)
-)
+  ..combs_a | a -> comb(a, input, room, damp) >- sum +
+  ..combs_b | a -> comb(a, input, room, damp) >- sum;
+  ^, ..aps >- (input, coef) -> p + allpass(p, coef, room, damp).
+);
 ```
 
 This features:
@@ -201,7 +203,7 @@ melodytest(time) = (
         melodyString[floor(time * 2) % melodyString.length] / 16
       )
     ) * (1 - fract(time * 4));
-	melody;
+	melody.
 )
 hihat(time) = noise(time) * (1 - fract(time * 4)) ** 10;
 kick(time) = sin((1 - fract(time * 2)) ** 17 * 100);
@@ -210,14 +212,14 @@ melody(time) = melodytest(time) * fract(time * 2) ** 6 * 1;
 
 song() = (
   ...t=0, time = t++ / sampleRate;
-  [(kick(time) + snare(time)*.15 + hihat(time)*.05 + melody(time)) / 4]
-)
+  [(kick(time) + snare(time)*.15 + hihat(time)*.05 + melody(time)) / 4].
+);
 ```
 
 Features:
 
-* _loop operator_ − `cond :> expr` or `expr <: cond` acts as _while_/_until_ loop, calling expression until condition holds true. Can also be used in array comprehension as `[x in 0..10 :> x*2]`.
-* _string literal − `""` acts as array with ASCII codes.
+* _loop operator_ − `cond ?| expr` or `expr <: cond` acts as _while_/_until_ loop, calling expression until condition holds true. Can also be used in array comprehension as `[x in 0..10 :> x*2]`.
+* _string literal_ − `""` acts as array with ASCII codes.
 
 
 ## Language Reference
