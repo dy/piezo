@@ -6,7 +6,9 @@
   * [ ] make subscript generate wasm binary for evaluator.
 
 * [ ] @audio/gain module
-  * compiles basic son file to multicased function `process, process1, process2, process0`
+  * compiles basic son file to multicased function `gain`
+  * [ ] wasm gain node: browser
+  * [ ] wasm gain node: node
 
 * [ ] Minimal set:
   * [ ] common expressions
@@ -23,8 +25,6 @@
 
 * [ ] compile common subscript syntax to wasm
 
-* [ ] wasm gain node: browser
-
-* [ ] wasm gain node: node
-
 * [ ] web-audio-api
+
+* [ ] [musicdsp](https://github.com/bdejong/musicdsp/tree/master/source)
