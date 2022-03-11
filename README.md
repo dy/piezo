@@ -106,7 +106,7 @@ oscillator = [
 ];
 
 // adsr weighting
-adsr(x, a, d, s, sv, r=1) = (
+adsr(x, a, d, (s, sv=1), r) = (
   ...i=0, t=i++/sampleRate;
 
   a = max(a, 0.0001);                 // prevent click
@@ -121,8 +121,7 @@ adsr(x, a, d, s, sv, r=1) = (
     (total - t)/r * sv
   ).
 );
-adsr(x, a, d, s, r) = adsr(x, a, d, s, 1, r);  // no sustain volume case
-adsr(a, d, s, r) = x -> adsr(x, a, d, s, r);   // pipe case
+adsr(a, d, s, r) = x -> adsr(x, a, d, s, r);   // pipe
 
 // curve effect
 curve(x, amt=1.82 in 0..10) = pow(sign(x) * abs(x), amt);
