@@ -141,7 +141,7 @@ coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
 Features:
 
 * _pipes_ − `|` operator for a function calls that function with argument from the left side, eg. `a | b` == `b(a)`.
-* _lambda functions_ − useful for organizing pipe transforms.
+* _lambda functions_ − useful for organizing pipe transforms. Don't require parens for arguments, since `,` has higher precedence than `->`.
 * _arrays_ − linear collection of same-type elements with fixed size. Useful for organizing enums, dicts, buffers etc. Arrays support alias name for items: `a = [first: 1, second: 2]` → `a[0] == a.first == 1`.
 
 ## [Freeverb](https://github.com/opendsp/freeverb/blob/master/index.js)
@@ -217,7 +217,7 @@ song() = (
 
 Features:
 
-* _loop operator_ − `cond ?| expr` or `expr <: cond` acts as _while_/_until_ loop, calling expression until condition holds true. Can also be used in array comprehension as `[x in 0..10 :> x*2]`.
+* _loop operator_ − `cond ?.. expr` acts as _while_ loop, calling expression until condition holds true. Can also be used in array comprehension as `[x in 0..10 ?.. x*2]`.
 * _string literal_ − `""` acts as array with ASCII codes.
 
 
