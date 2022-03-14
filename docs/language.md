@@ -91,4 +91,7 @@ So the main pain of JS for sound processing is GC. The rest is relatively ok.
 * get value at a time `a(t)`?
 * integrate: `∫(a, dt)`? `acc(a, dt)`?
 
+## Alternatives
 
+* [soul](https://github.com/soul-lang/SOUL/blob/master/docs/SOUL_Language.md)
+* [elementary/audio](https://www.elementary.audio/docs/guides/Making_Sound)

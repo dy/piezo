@@ -28,3 +28,6 @@
 * [ ] web-audio-api
 
 * [ ] [musicdsp](https://github.com/bdejong/musicdsp/tree/master/source)
+* [ ] [sndkit](https://github.com/paulbatchelor/sndkit)
+
+* [ ] Compare to alternatives: rust, soul, elementary-audio

@@ -41,11 +41,13 @@ gain([left, right], volume in range) = [left * volume, right * volume];
 gain([..channels], volume in range) = [..channels * volume];
 ```
 
+Mono/stereo clauses inform the compiler to provide shortcuts for better performance. Generally speaking multi-channel case is enough.
+
 Features:
 
-* _function overload_ − function clause is matched automatically by call signature.
+* _function overload_ − function clause is matched by call signature.
 * _channeled_ input/output − `[left]` for mono, `[left, right]` for stereo, `[..channels]` for any number of input channels.
-* _a-rate_/_k-rate param type_ − `[arg]` indicates a-rate (_accurate_) param, direct `arg` param is k-rate (_controlling_), per-block.
+* _a-rate_/_k-rate param type_ − `[arg]` indicates a-rate (_accurate_) param passed as array, direct `arg` param is k-rate (_controlling_), passed as direct value per-block.
 * _range_ − is language-level primitive with `from..to`, `from..<to`, `from>..to` signature, useful in arguments validation, array constructor etc.
 * _validation_ − `a in range` asserts and clamps argument to provided range, to avoid blowing up state.
 * _destructuring_ − collects channels or group as `[a,..bc] = [a,b,c]`.
@@ -79,15 +81,17 @@ lp([x0], freq = 100 in 1..10000, Q = 1.0 in 0.001..3.0) = (
 
   [y0].
 )
+
+export lp.
 ```
 
 Features:
 
-* _import_ − by default, all top-level functions and variables are exported. Unused functions are tree-shaken from compiled code. Built-in libs are: `math`, `std`. Additional libs: `latr`, `musi` and [others]().
-* _scope_ − block scope is defined by nesting `()` (unlike `{}` in JS) − variables defined in block act within its scope.
-* _state_ − internal function state is persisted between fn calls via ellipsis operator `...state=init`. State is identified by function callsite for current module instance. That is like language-level react hooks.
+* _import/export_ − defines imported or exported module parts. Unused functions are tree-shaken from the compiled code. Built-in libs are: `math`, `std`. Additional libs: `latr`, `musi` and [others]().
+* _block scope_ − parens `()` permit defining variables within its scope, making `{}` redundant for blocks (like one-line arrow functions in JS).
+* _state_ − internal function state is persisted between fn calls via ellipsis operator `...state=initValue` (prefix ellipsis in punctuation means "continuation" of larger sentence). That is like language-level react hooks, an alternative to classes with instances.
 * _grouping_ − comma operator allows bulk operations on many variables, such as `a,b,c = d,e,f` → `a=d, b=e, c=f` or `a,b,c + d,e,f` → `a+d, b+e, c+f` etc.
-* _end operator_ − `.` at the end of scoped function definition acts as indicator of returned value, instead of replacement to semicolon.
+* _end operator_ − `.` acts as indicator of returned value and end of body. Any code after that is dead code.
 
 ### [ZZFX Coin](https://codepen.io/KilledByAPixel/full/BaowKzv)
 
@@ -136,6 +140,8 @@ coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
 
   oscillator[shape](phase) | adsr(0, 0, .06, .24) | curve(1.82).
 );
+
+export coin.
 ```
 
 Features:
@@ -169,6 +175,8 @@ reverb((..input), room=0.5, damp=0.5) = (
   ..combs_b | a -> comb(a, input, room, damp) >- sum;
   ^, ..aps >- (input, coef) -> p + allpass(p, coef, room, damp).
 );
+
+export reverb.
 ```
 
 This features:
@@ -213,6 +221,8 @@ song() = (
   ...t=0, time = t++ / sampleRate;
   [(kick(time) + snare(time)*.15 + hihat(time)*.05 + melody(time)) / 4].
 );
+
+export song.
 ```
 
 Features:

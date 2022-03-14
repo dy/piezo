@@ -12,6 +12,8 @@
 
   → default is going to need a name to be importable directly
 
+  → We can declare exporting as a separate area, like `export gain, somethingElse, somethingElse`
+
 ## [x] `f(x, y) = x + y` standard classic way to define function in math
   + also as in F# or Elixir
 
@@ -384,6 +386,7 @@
     * We could export for JS exactly the indicated clause?
       ? how would we export multiple clauses?
         → easiest would be to provide JS wrapper. The variety of WASM export forms is huge.
+  * Export area solves the issue: `gain()=...; export gain`
 
 ## [ ] Arrays: should have standard map, filter, reduce methods or not?
   * ? what if we don't deal with arbitrary-length arrays?
