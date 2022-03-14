@@ -9,7 +9,7 @@ PREC_EQ=9, PREC_COMP=10, PREC_SHIFT=11, PREC_SUM=12, PREC_MULT=13, PREC_EXP=14, 
 
 
 // extended id definition
-lookup[0] = [()=>skip(c => isId(c) || c == 35 || c == 64)] // #, @ are parts of id
+lookup[0] = ()=>skip(c => isId(c) || c == 35 || c == 64).toLowerCase() // #, @ are parts of id
 
 const string = q => (qc, c, str='') => {
   qc&&err('Unexpected string') // must not follow another token
@@ -71,14 +71,15 @@ binary('>>>', PREC_SHIFT)
 binary('<<', PREC_SHIFT)
 binary('in', PREC_COMP )
 binary('**', -PREC_EXP)
-binary('=', PREC_ASSIGN)
+
+binary('=', -PREC_ASSIGN)
 
 // a,b->b,a
-binary('->', PREC_FUNC, binary)
+binary('->', PREC_FUNC)
 // a,b>-c
-binary('>-', PREC_FUNC, binary)
+binary('>-', PREC_FUNC)
 // a ?.. b
-binary('?..', PREC_LOOP, binary)
+binary('?..', PREC_LOOP)
 
 
 // unaries
@@ -121,4 +122,5 @@ unary('...', PREC_UNARY)
 // import a,b from "ab";
 unary('import', PREC_ASSIGN)
 binary('from', PREC_SEQ)
+unary('export', PREC_ASSIGN)
 
