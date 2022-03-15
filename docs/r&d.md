@@ -1161,4 +1161,10 @@
    * `phase -> (sin(phase))` === `phase -> sin(phase)` - because group of 1 element is that element;
    * `phase -> [sin(phase)]` - that's output signal.
 
+## [ ] No-keywords?
 
+  + It allows compressing code to no-spaces, which can be nice for serialization to/from string;
+  + Natural languages or math equations don't have keywords in punctuation. Imagine if we had to write sentences where some of words were syntactic. It's fine - everyone got used to punctuational conventions and even don't mix up ...a and a..b
+  + From ancient times scientists separated meta-meaning (take music staff notation) from actual content by different kind of notation.
+  + No-keywords removes English language bias, allowing real i18 code.
+  + It frees user from caring about variable name conflict. `in`, `from`, `if`, `for`, `at` can be useful variable bits.
