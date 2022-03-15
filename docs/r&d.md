@@ -310,13 +310,21 @@
     )
     ```
     - often means compiler directive or comment
-    5. `[x1, x2, y1, y2] = #`
-      + involves destructuring syntax
-      - introduces unnecessary token
-      - `#` is hardly works on its own not in conjunction
-    6. `#(x1, x2, y1, y2)`
-    7. `<x1, x2, y1, y2>`
-    8. Introduce keywords? Not having if (a) b can be too cryptic.
+    - may conflict with cardinal number operator
+
+  5. `[x1, x2, y1, y2] = #`
+    + involves destructuring syntax
+    - introduces unnecessary token
+    - `#` is hardly works on its own not in conjunction
+  6. `#(x1, x2, y1, y2)`
+  7. `<x1, x2, y1, y2>`
+  8. Introduce keywords? Not having if (a) b can be too cryptic.
+
+  9. `$x1, $x2, $y1, $y2`
+    + $ means "save"
+    + $ means "state"
+    + $ means "self"
+    ± $ means money
 
 ## [ ] Named array items
 
