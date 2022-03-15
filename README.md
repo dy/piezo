@@ -47,9 +47,9 @@ Gain processor, providing k-rate amplification of mono, stereo or generic input.
 ```fs
 range = 0..1000;
 
-gain([left], volume ~= range) = [left * volume];
-gain([left, right], volume ~= range) = [left * volume, right * volume];
-gain([..channels], volume ~= range) = [..channels * volume];
+gain([left], volume -< range) = [left * volume];
+gain([left, right], volume -< range) = [left * volume, right * volume];
+gain([..channels], volume -< range) = [..channels * volume];
 ```
 
 Mono/stereo clauses inform the compiler to provide shortcuts for better performance. Generally speaking multi-channel case is enough.
@@ -60,7 +60,7 @@ Features:
 * _channeled_ input/output − `[left]` for mono, `[left, right]` for stereo, `[..channels]` for any number of input channels.
 * _a-rate_/_k-rate param type_ − `[arg]` indicates a-rate (_accurate_) param passed as array, direct `arg` param is k-rate (_controlling_), passed as direct value per-block.
 * _range_ − is language-level primitive with `from..to`, `from..<to`, `from>..to` signature, useful in arguments validation, array constructor etc.
-* _validation_ − `a ~= range` asserts and clamps argument to provided range, to avoid blowing up state.
+* _validation_ − `a -< range` asserts and clamps argument to provided range, to avoid blowing up state.
 * _destructuring_ − collects channels or group as `[a,..bc] = [a,b,c]`.
 
 ### Biquad Filter
@@ -73,7 +73,7 @@ sin, cos @ 'math';
 pi2 = pi*2;
 sampleRate = 44100;
 
-lp([x0], freq = 100 ~= 1..10000, Q = 1.0 ~= 0.001..3.0) = (
+lp([x0], freq = 100 -< 1..10000, Q = 1.0 -< 0.001..3.0) = (
   &x1, &x2, &y1, &y2 = 0;    // internal state
 
   w = pi2 * freq / sampleRate;
@@ -139,7 +139,7 @@ adsr(x, a, d, s, r) = adsr(x, a, d, (s, 1), r);   // no-sv alias
 adsr(a, d, s, r) = x -> adsr(x, a, d, s, r);      // pipe
 
 // curve effect
-curve(x, amt=1.82 ~= 0..10) = pow(sign(x) * abs(x), amt);
+curve(x, amt=1.82 -< 0..10) = pow(sign(x) * abs(x), amt);
 curve(amt) = x -> curve(x, amt);
 
 // coin = triangle with pitch jump

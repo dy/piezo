@@ -47,6 +47,9 @@
     + allows joining ranges {0..10, 20..30}
       ~ can be solved as 0..10 + 20..30
 
+  * `f(x = 100 -< 0..100, y -< 0..100 = 1, z -< 1..100, p -< 0.001..5, shape -< (tri, sin, tan) = sin)`
+    + visually precise indication of what's going on
+
 ## [x] Enums
 
   * ? for enums and ranges `{a,b,c}` seems to be the best:
