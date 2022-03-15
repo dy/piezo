@@ -327,6 +327,11 @@
     ± $ means money
     - speaks little about persistency, perceived as var name
 
+  10. `&x1, &x2, &y1, &y2`
+    + means "arguments and x1, x2, y1, y2"
+    + gives reference to C dereference
+    + doesn't indicate & as part of name
+
 ## [ ] Named array items
 
   * named properties in arrays? `[1,2,3,a:4,b:5]`
