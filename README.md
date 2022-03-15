@@ -74,7 +74,7 @@ pi2 = pi*2;
 sampleRate = 44100;
 
 lp([x0], freq = 100 ~= 1..10000, Q = 1.0 ~= 0.001..3.0) = (
-  & x1, & x2, & y1, & y2 = 0;    // internal state
+  &x1, &x2, &y1, &y2 = 0;    // internal state
 
   w = pi2 * freq / sampleRate;
   sin_w, cos_w = sin(w), cos(w);
@@ -120,7 +120,7 @@ oscillator = [
 
 // adsr weighting
 adsr(x, a, d, (s, sv), r) = (
-  & i=0;
+  &i=0;
   t=i++/sampleRate;
 
   a = max(a, 0.0001);                // prevent click
@@ -144,7 +144,7 @@ curve(amt) = x -> curve(x, amt);
 
 // coin = triangle with pitch jump
 coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
-  & i=0, & phase=0;
+  &i=0, &phase=0;
 
   t = i++/sampleRate;
   phase += (freq + t > delay ? jump : 0) * pi2 / sampleRate;
@@ -176,9 +176,9 @@ stretch(n) = floor(n * sampleRate / 44100);
 sum(a, b) = a + b;
 
 reverb([..input], room=0.5, damp=0.5) = (
-  & combs_a = (a0,a1,a2,a3 | stretch),
-  & combs_b = (b0,b1,b2,b3 | stretch),
-  & aps = (p0,p1,p2,p3 | stretch);
+  &combs_a = (a0,a1,a2,a3 | stretch),
+  &combs_b = (b0,b1,b2,b3 | stretch),
+  &aps = (p0,p1,p2,p3 | stretch);
 
   (..combs_a | a -> comb(a, input, room, damp)) >- sum +
   (..combs_b | a -> comb(a, input, room, damp)) >- sum;
@@ -226,7 +226,7 @@ snare(time) = noise(floor((time) * 108000)) * (1 - fract(time + 0.5)) ** 12;
 melody(time) = melodytest(time) * fract(time * 2) ** 6 * 1;
 
 song() = (
-  & t=0; time = t++ / sampleRate;
+  &t=0; time = t++ / sampleRate;
   [(kick(time) + snare(time)*.15 + hihat(time)*.05 + melody(time)) / 4].
 ).
 ```
