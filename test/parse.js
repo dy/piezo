@@ -22,18 +22,20 @@ t('assign', t => {
 
 t('readme: audio-gain', t => {
   is(unbox(parse(`
-range = 0..1000;
+    range = 0..1000;
 
-gain([left], volume in range) = [left * volume];
-//gain([left, right], volume in range) = [left * volume, right * volume];
-//gain([..channels], volume in range) = [..channels * volume];
+    gain([left], volume in range) = [left * volume];
+    gain([left, right], volume in range) = [left * volume, right * volume];
+    //gain([..channels], volume in range) = [..channels * volume];
 
-export gain.
-`)), [';',
-  ['=', 'range', ['..', '0', '1000']],
-  ['=', ['(', 'gain', [',', ['[', 'left'], ['in', 'volume', 'range']]], ['[', ['*', 'left', 'volume']]],
-  ['export', 'gain']
-])
+    export gain.
+  `)), [';',
+    ['=', 'range', ['..', '0', '1000']],
+    ['=', ['(', 'gain', [',', ['[', 'left'], ['in', 'volume', 'range']]], ['[', ['*', 'left', 'volume']]],
+
+    ['=', ['(', 'gain', [',', ['[', [',','left','right']], ['in', 'volume', 'range']]], ['[', [',',['*', 'left', 'volume'],['*', 'right', 'volume']]]],
+    ['export', 'gain']
+  ])
 })
 
 t('end operator', t => {
