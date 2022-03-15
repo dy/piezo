@@ -74,7 +74,7 @@ pi2 = pi*2;
 sampleRate = 44100;
 
 lp([x0], freq = 100 ~= 1..10000, Q = 1.0 ~= 0.001..3.0) = (
-  $x1, $x2, $y1, $y2 = 0;    // internal state
+  ...x1, x2, y1, y2 = 0;    // internal state
 
   w = pi2 * freq / sampleRate;
   sin_w, cos_w = sin(w), cos(w);
@@ -119,10 +119,11 @@ oscillator = [
 ];
 
 // adsr weighting
-adsr(x, a, d, (s, sv=1), r) = (
-  ...i=0, t=i++/sampleRate;
+adsr(x, a, d, (s, sv), r) = (
+  ...i=0;
+  t=i++/sampleRate;
 
-  a = max(a, 0.0001);                 // prevent click
+  a = max(a, 0.0001);                // prevent click
   total = a + d + s + r;
 
   t >= total ? 0 : x * (
@@ -134,7 +135,8 @@ adsr(x, a, d, (s, sv=1), r) = (
     (total - t)/r * sv
   ).
 );
-adsr(a, d, s, r) = x -> adsr(x, a, d, s, r);   // pipe
+adsr(x, a, d, s, r) = adsr(x, a, d, (s, 1), r);   // no-sv alias
+adsr(a, d, s, r) = x -> adsr(x, a, d, s, r);      // pipe
 
 // curve effect
 curve(x, amt=1.82 ~= 0..10) = pow(sign(x) * abs(x), amt);
@@ -174,12 +176,12 @@ stretch(n) = floor(n * sampleRate / 44100);
 sum(a, b) = a + b;
 
 reverb([..input], room=0.5, damp=0.5) = (
-  $combs_a = (a0,a1,a2,a3 | stretch);
-  $combs_b = (b0,b1,b2,b3 | stretch);
-  $aps = (p0,p1,p2,p3 | stretch);
+  ...combs_a = (a0,a1,a2,a3 | stretch),
+    combs_b = (b0,b1,b2,b3 | stretch),
+    aps = (p0,p1,p2,p3 | stretch);
 
-  ..combs_a | a -> comb(a, input, room, damp) >- sum +
-  ..combs_b | a -> comb(a, input, room, damp) >- sum;
+  (..combs_a | a -> comb(a, input, room, damp)) >- sum +
+  (..combs_b | a -> comb(a, input, room, damp)) >- sum;
 
   ^, ..aps >- (input, coef) -> p + allpass(p, coef, room, damp).
 ).
@@ -196,7 +198,7 @@ This features:
 Transpiled floatbeat/bytebeat song:
 
 ```fs
-sin, cos @ 'math';
+sin, cos, floor @ 'math';
 
 sampleRate = 44100
 
@@ -205,7 +207,7 @@ mix(a, b, c) = (a * (1 - c)) + (b * c);
 tri(x) = 2 * asin(sin(x)) / pi;
 noise(x) = sin((x + 10) * sin((x + 10) ** (fract(x) + 10)));
 melodytest(time) = (
-	melodyString = "00040008";
+	melodyString = "00040008",
 	melody = 0;
 	i = 0;
   i++ < 5 ?..
@@ -213,7 +215,7 @@ melodytest(time) = (
       time * mix(
         200 + (i * 900),
         500 + (i * 900),
-        melodyString[floor(time * 2) % #melodyString] / 16
+        melodyString[floor(time * 2) % melodyString.length] / 16
       )
     ) * (1 - fract(time * 4));
 	melody.
@@ -224,8 +226,7 @@ snare(time) = noise(floor((time) * 108000)) * (1 - fract(time + 0.5)) ** 12;
 melody(time) = melodytest(time) * fract(time * 2) ** 6 * 1;
 
 song() = (
-  ...t=0
-  time = t++ / sampleRate;
+  ...t=0; time = t++ / sampleRate;
   [(kick(time) + snare(time)*.15 + hihat(time)*.05 + melody(time)) / 4].
 ).
 ```

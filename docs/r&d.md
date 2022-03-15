@@ -325,6 +325,7 @@
     + $ means "state"
     + $ means "self"
     ± $ means money
+    - speaks little about persistency, perceived as var name
 
 ## [ ] Named array items
 
