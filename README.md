@@ -198,7 +198,7 @@ This features:
 Transpiled floatbeat/bytebeat song:
 
 ```fs
-sin, cos, floor @ 'math';
+sin,cos,floor @ 'math';
 
 sampleRate = 44100
 

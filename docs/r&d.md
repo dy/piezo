@@ -1223,7 +1223,7 @@
   + No-keywords removes English language bias, allowing real i18 code.
   + It frees user from caring about variable name conflict. `in`, `from`, `if`, `for`, `at` can be useful variable bits.
 
-## [x] Import no-keyword?
+## [x] Import no-keyword? sin,cos @ 'math'
 
   * No need to define scope: imports full contents
   * #['math']; (Rusti)
@@ -1256,5 +1256,12 @@
     + at math: sin, cos
   * ✱ `sin, cos @ 'math', * @ 'latr'`
     + a,b at source
+    +~ reminds npm namespace convention
+    + reminds CSS @import and other directives
+    + relatively exceptional character, compared to #, :, &
+  *! what if npm module namespace convention? `'@math/sin,cos'`, `'./my-sound.son/*'`
+    ~ similar to just @
   * `'math' / sin, cos;`
     ? 'math' / *; ?
+  * `'math' : sin,cos, 'latr' : *`
+    - too pale, usual and conflicting
