@@ -288,6 +288,7 @@
       - `#` is hardly works on its own not in conjunction
     6. `#(x1, x2, y1, y2)`
     7. `<x1, x2, y1, y2>`
+    8. Introduce keywords? Not having if (a) b can be too cryptic.
 
 ## [ ] Named array items
 

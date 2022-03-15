@@ -27,9 +27,11 @@ token('"', PREC_TOKEN, string(DQUOTE))
 // 'true', 20, a => a ? err() : ['',true],
 // 'false', 20, a => a ? err() : ['',false],
 
-const num = a => a ? err() : console.log('num',cur.slice(idx)) || new Number((
-  a=+skip(c => c === PERIOD || (c>=_0 && c<=_9) || (c===69||c===101?2:0))
-)!=a?err():a)
+const num = (a,fract) => a ? err() : new Number((
+  a = skip(c => c>=_0 && c<=_9),
+  cur[idx]==='.' && (fract = skip(c => c>=_0 && c<=_9)) && (a += fract),
+  (a=+a)!=a?err('Bad number', a) : a
+))
 // .1
 // '.',, a=>!a && num(),
 // 0-9
@@ -40,6 +42,9 @@ Array(10).fill(0).forEach((_,i)=>lookup[(''+i).charCodeAt(0)] = num)
 // topic reference
 token('^', PREC_TOKEN, a => ['^'])
 
+// end token
+token('.', PREC_SEQ, a => a)
+
 // comments
 token('//', PREC_TOKEN, (a, prec) => (skip(c => c >= SPACE), a||expr(prec)))
 
@@ -48,10 +53,11 @@ const sequence = (op, prec) => token(op, prec, (a, b) => a && (b=expr(prec)) && 
 sequence(',', PREC_SEQ)
 sequence('||', PREC_SOME)
 sequence('&&', PREC_EVERY)
-sequence(';', PREC_SEQ, (a, b) => a && (b=expr(prec, PERIOD)) && (a[0] === op && a[2] ? (a.push(b), a) : [op,a,b]))
+// sequence(';', PREC_SEQ, (a, b) => a && (b=expr(prec, PERIOD)) && (a[0] === op && a[2] ? (a.push(b), a) : [op,a,b]))
+sequence(';', PREC_SEQ)
 
 // binaries
-const binary = (op, prec, right=prec<0?(prec=-prec,1):0) => token(op, prec, (a, b) => a && (b=expr(prec-right)) && [op,a,b])
+const binary = (op, prec, right=prec<0?(prec=-prec,.1):0) => token(op, prec, (a, b) => a && (b=expr(prec-right)) && ([op,a,b]))
 binary('+', PREC_SUM)
 binary('-', PREC_SUM)
 binary('*', PREC_MULT)

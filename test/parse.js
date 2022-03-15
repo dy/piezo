@@ -15,3 +15,28 @@ t('identifiers', t => {
   // disregard casing
   is(parse('A, Bc, d_E'), [',', 'a', 'bc','d_e'])
 })
+
+t('assign', t => {
+
+})
+
+t('readme: audio-gain', t => {
+  is(unbox(parse(`
+range = 0..1000;
+
+gain([left], volume in range) = [left * volume];
+//gain([left, right], volume in range) = [left * volume, right * volume];
+//gain([..channels], volume in range) = [..channels * volume];
+
+export gain.
+`)), [';',
+  ['=', 'range', ['..', '0', '1000']],
+  ['=', ['(', 'gain', [',', ['[', 'left'], ['in', 'volume', 'range']]], ['[', ['*', 'left', 'volume']]],
+  ['export', 'gain']
+])
+})
+
+t('end operator', t => {
+  // must throw if anything comes after . in body
+  // throws if anything comes after . in
+})

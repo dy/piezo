@@ -1,0 +1,36 @@
+{
+  "devDependencies": {
+    "tst": "^7.1.1",
+    "wabt": "^1.0.26"
+  },
+  "dependencies": {
+    "subscript": "^7.0.7"
+  },
+  "name": "sonscript",
+  "description": "> Sound language",
+  "version": "1.0.0",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "test"
+  },
+  "type": "module",
+  "scripts": {
+    "test": "node test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/audio-lab/sonscript.git"
+  },
+  "keywords": [
+    "sones",
+    "sound",
+    "audio"
+  ],
+  "author": "dmitry iv",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/audio-lab/sonscript/issues"
+  },
+  "homepage": "https://github.com/audio-lab/sonscript#readme"
+}
