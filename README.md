@@ -14,6 +14,17 @@ Initially inspired by [zzfx](https://github.com/KilledByAPixel/ZzFX), [bytebeat]
 * 0 runtime, types predictable in advance, static memory.
 * Compiling to WASM.
 
+## Key concepts
+
+* No-keywords.
+* No implicit globals.
+* Any-case variable names.
+* Auto-type inference.
+* Function overloading.
+* Built-in operator overloading core types.
+* Auto-instantiation.
+* Groups as primitive.
+
 <!--
 ## Use cases
 
@@ -36,9 +47,9 @@ Gain processor, providing k-rate amplification of mono, stereo or generic input.
 ```fs
 range = 0..1000;
 
-gain([left], volume in range) = [left * volume];
-gain([left, right], volume in range) = [left * volume, right * volume];
-gain([..channels], volume in range) = [..channels * volume];
+gain([left], volume ~= range) = [left * volume];
+gain([left, right], volume ~= range) = [left * volume, right * volume];
+gain([..channels], volume ~= range) = [..channels * volume];
 ```
 
 Mono/stereo clauses inform the compiler to provide shortcuts for better performance. Generally speaking multi-channel case is enough.
@@ -49,7 +60,7 @@ Features:
 * _channeled_ input/output − `[left]` for mono, `[left, right]` for stereo, `[..channels]` for any number of input channels.
 * _a-rate_/_k-rate param type_ − `[arg]` indicates a-rate (_accurate_) param passed as array, direct `arg` param is k-rate (_controlling_), passed as direct value per-block.
 * _range_ − is language-level primitive with `from..to`, `from..<to`, `from>..to` signature, useful in arguments validation, array constructor etc.
-* _validation_ − `a in range` asserts and clamps argument to provided range, to avoid blowing up state.
+* _validation_ − `a ~= range` asserts and clamps argument to provided range, to avoid blowing up state.
 * _destructuring_ − collects channels or group as `[a,..bc] = [a,b,c]`.
 
 ### Biquad Filter
@@ -57,12 +68,12 @@ Features:
 Biquad filter processor for single channel input.
 
 ```fs
-import sin, cos, pi from "math";
+sin, cos @ 'math';
 
 pi2 = pi*2;
 sampleRate = 44100;
 
-lp([x0], freq = 100 in 1..10000, Q = 1.0 in 0.001..3.0) = (
+lp([x0], freq = 100 ~= 1..10000, Q = 1.0 ~= 0.001..3.0) = (
   ...x1, x2, y1, y2 = 0;    // internal state
 
   w = pi2 * freq / sampleRate;
@@ -80,25 +91,23 @@ lp([x0], freq = 100 in 1..10000, Q = 1.0 in 0.001..3.0) = (
   y1, y2 = y0, y1;
 
   [y0].
-)
-
-export lp.
+).
 ```
 
 Features:
 
-* _import/export_ − defines imported or exported module parts. Unused functions are tree-shaken from the compiled code. Built-in libs are: `math`, `std`. Additional libs: `latr`, `musi` and [others]().
+* _import_ − organized via `a, b, c @ 'path/to/lib'` or `@ 'lib'`. Built-in libs are: `math`, `std`. Additional libs: `latr`, `musi` and [others]().
 * _block scope_ − parens `()` permit defining variables within its scope, making `{}` redundant for blocks (like one-line arrow functions in JS).
 * _state_ − internal function state is persisted between fn calls via ellipsis operator `...state=initValue` (prefix ellipsis in punctuation means "continuation" of larger sentence). That is like language-level react hooks, an alternative to classes with instances.
 * _grouping_ − comma operator allows bulk operations on many variables, such as `a,b,c = d,e,f` → `a=d, b=e, c=f` or `a,b,c + d,e,f` → `a+d, b+e, c+f` etc.
-* _end operator_ − `.` acts as indicator of returned value and end of body. Any code after that is dead code.
+* _end operator_ − `.` indicates returned value and the end of body or exported values at the end of module. Any code after that is dead code.
 
 ### [ZZFX Coin](https://codepen.io/KilledByAPixel/full/BaowKzv)
 
 > `zzfx(...[,,1675,,.06,.24,1,1.82,,,837,.06])`:
 
 ```fs
-import pow, sign, round, abs, max, pi, inf, sin from "math";
+@ 'math';
 
 pi2 = pi*2;
 sampleRate = 44100;
@@ -128,7 +137,7 @@ adsr(x, a, d, (s, sv=1), r) = (
 adsr(a, d, s, r) = x -> adsr(x, a, d, s, r);   // pipe
 
 // curve effect
-curve(x, amt=1.82 in 0..10) = pow(sign(x) * abs(x), amt);
+curve(x, amt=1.82 ~= 0..10) = pow(sign(x) * abs(x), amt);
 curve(amt) = x -> curve(x, amt);
 
 // coin = triangle with pitch jump
@@ -139,9 +148,7 @@ coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
   phase += (freq + t > delay ? jump : 0) * pi2 / sampleRate;
 
   oscillator[shape](phase) | adsr(0, 0, .06, .24) | curve(1.82).
-);
-
-export coin.
+).
 ```
 
 Features:
@@ -153,9 +160,9 @@ Features:
 ## [Freeverb](https://github.com/opendsp/freeverb/blob/master/index.js)
 
 ```fs
-import comb from "./combfilter.son";
-import allpass from "./allpass.son";
-import floor from "math";
+@ './combfilter.son';
+@ './allpass.son';
+@ 'math';
 
 sampleRate = 44100;
 
@@ -166,17 +173,15 @@ p1,p2,p3,p4 = 225,556,441,341;
 stretch(n) = floor(n * sampleRate / 44100);
 sum(a, b) = a + b;
 
-reverb((..input), room=0.5, damp=0.5) = (
-  ...combs_a = a0,a1,a2,a3 | stretch;
-  ...combs_b = b0,b1,b2,b3 | stretch;
-  ...aps = p0,p1,p2,p3 | stretch;
+reverb([..input], room=0.5, damp=0.5) = (
+  ...combs_a = (a0,a1,a2,a3) | stretch;
+  ...combs_b = (b0,b1,b2,b3) | stretch;
+  ...aps = (p0,p1,p2,p3) | stretch;
 
   ..combs_a | a -> comb(a, input, room, damp) >- sum +
   ..combs_b | a -> comb(a, input, room, damp) >- sum;
   ^, ..aps >- (input, coef) -> p + allpass(p, coef, room, damp).
-);
-
-export reverb.
+).
 ```
 
 This features:
@@ -190,7 +195,7 @@ This features:
 Transpiled floatbeat/bytebeat song:
 
 ```fs
-import pi, asin, sin from "math"
+sin, cos @ 'math';
 
 sampleRate = 44100
 
@@ -207,7 +212,7 @@ melodytest(time) = (
       time * mix(
         200 + (i * 900),
         500 + (i * 900),
-        melodyString[floor(time * 2) % melodyString.length] / 16
+        melodyString[floor(time * 2) % #melodyString] / 16
       )
     ) * (1 - fract(time * 4));
 	melody.
@@ -218,11 +223,10 @@ snare(time) = noise(floor((time) * 108000)) * (1 - fract(time + 0.5)) ** 12;
 melody(time) = melodytest(time) * fract(time * 2) ** 6 * 1;
 
 song() = (
-  ...t=0, time = t++ / sampleRate;
+  ...t=0
+  time = t++ / sampleRate;
   [(kick(time) + snare(time)*.15 + hihat(time)*.05 + melody(time)) / 4].
-);
-
-export song.
+).
 ```
 
 Features:
@@ -236,4 +240,4 @@ Features:
 ...Coming
 
 
-<p align=center><a href="">🕉</a></p>
+<p align=center><a href="https://github.com/krsnzd/license/">🕉</a></p>

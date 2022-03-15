@@ -17,11 +17,37 @@
 ## [x] `f(x, y) = x + y` standard classic way to define function in math
   + also as in F# or Elixir
 
-## [x] Define params/vars range as `f(x=100 in 0..100, y=1 in 0..100, z in 1..100, p in 0.001..5) = ...`
+## [x] Ranges: f(x=100~0..100, y~0..100, p~0.001..5, shape~(tri,sin,tan)=sin)
+
+  * `f(x=100 in 0..100, y=1 in 0..100, z in 1..100, p in 0.001..5) = ...`
+    - conflicts with no-keywords policy
 
   * ! Swift: non-inclusive range is 0..<100
 
-## [x] Enums can be defined as `f(x in sin|tri|cos)`
+  * `f(x{0..100} = 100, y{0..100} = 1, z{1..100}, p{0.001..5}, shape{sin,tri,tan}=sin )`
+    +  matches set definition
+    - missing operator
+
+  * `f(x = 100 ~ 0..100, y ~ 0..100 = 1, z ~ 1..100, p ~ 0.001..5, shape ~ (tri, sin, tan) = sin)`
+    + swift has ~= operator checking if value is within range
+    - needs special construct for enums
+    ? shape ~ tri+sin+tan
+    ? shape ~ tri || sin || tan
+    ? shape ~ [tri, sin, tan]
+      - nope: array is not a group and raises question why not `[1..100]` then.
+    ? shape ~ (tri, sin, tan)
+      + matches direct groups
+      + parens are just means to group items
+
+  * `f(x = 100 ~ {0..100}, y ~ {0..100} = 1, z ~ {1..100}, p ~ {0.001..5}, shape ~ {tri, sin, tan} = sin)`
+    + less digit-y as above
+    - a bit redundant
+    + allows sets
+    - confuses of 0..10 and {0..10}
+    + allows joining ranges {0..10, 20..30}
+      ~ can be solved as 0..10 + 20..30
+
+## [x] Enums
 
   * ? for enums and ranges `{a,b,c}` seems to be the best:
     ref: https://en.wikipedia.org/wiki/Enumerated_type#Syntax_in_several_programming_languages
@@ -33,6 +59,7 @@
     + used in may languages
     - a bit redundant for range definition as `{0..10}`: `{}` has js intuition as creating/destructuring object.
     - holds "scope" or "object" meaning
+      ~ nope: we decided to free `{}` from scope meaning. And object === set, so.
     → sets can be listed as `(a,b,c)` ()
       ⇒ or even better, as functional languages do: `type in a|b|c`
 
@@ -44,6 +71,7 @@
       ~ we have funcref type, not necessary
     + ranges?
     + arrays
+    + file paths
   * ? we can use i64 for them
   * ? or we can use f64 for all numbers by default and keep rest of types free
 
@@ -1114,6 +1142,7 @@
   * Ref https://en.wikipedia.org/wiki/Comparison_of_programming_languages_(array)
   * Ref https://en.wikipedia.org/wiki/Cardinality
   * Lua, J langs propose # operator for length
+    + Math #S indicates cardinality. (number of something)
   * Icon, Unicon propose * operator for length
   * Math notation is |a|
   * ? `melody_string[]`
@@ -1136,14 +1165,30 @@
   * channels | len
     - precedence isn't nice
 
+## [ ] Binary operators
+
+  1. JS convention: a|b, a&b, a^b
+    - occupies significant operators with secondary operations
+    - conflicts with a^b as math exponentiation
+    - conflicts with topic operator ^ + b
+  2. Overloaded a+b, a*b for booleans
+    - doesn't apply for integers
+  3. Reverse convention: a&&b, a||b, a^^b for binaries
+    + shorter conditioning a & b | c
+    - unconventional
+
 ## [ ] JSify, Cify
   Draft is ready, needs polishing corners and reaching the planned feeling.
   Taking r&d issues and aligning them.
 
   * Don't enforce `;` everywhere. Recognize newline intelligently.
     - C/Java-family has them mandatory; Also many JS folk tend to make it mandatory also.
-    - It's just simpler and more apparent to have them everywhere
+    - It's just simpler and more explicit to have them everywhere
     - It's also a bit low-level-y feeling, which is rather good
+    - easier to parse via ;
+      ~ prohibits empty statements
+    - no JS problems associated with that, like newline etc.
+    + "bullshit" noise
 
   * There are 4 types available: numbers, functions, booleans, strings. Build around that and reinforce that.
 
@@ -1154,17 +1199,53 @@
 
   * Don't extend conditionals, elvis `?:` is enough, the rest is &&, ||
 
-## [ ] Make channeled input an array: `gain([left, right], amp)` instead of group destructuring `gain((left, right), amp)`?
+## [x] Make channeled input an array: `gain([left, right], amp)` instead of group destructuring `gain((left, right), amp)`?
 
   + array better refers to memory send to input, not some internal grouping - so it's "frame"
   + it allows more clearly indicate output signal, opposed just grouped value:
    * `phase -> (sin(phase))` === `phase -> sin(phase)` - because group of 1 element is that element;
    * `phase -> [sin(phase)]` - that's output signal.
 
-## [ ] No-keywords?
+## [x] No-keywords? Let's try. i18n is a good call.
 
   + It allows compressing code to no-spaces, which can be nice for serialization to/from string;
   + Natural languages or math equations don't have keywords in punctuation. Imagine if we had to write sentences where some of words were syntactic. It's fine - everyone got used to punctuational conventions and even don't mix up ...a and a..b
   + From ancient times scientists separated meta-meaning (take music staff notation) from actual content by different kind of notation.
   + No-keywords removes English language bias, allowing real i18 code.
   + It frees user from caring about variable name conflict. `in`, `from`, `if`, `for`, `at` can be useful variable bits.
+
+## [x] Import no-keyword?
+
+  * No need to define scope: imports full contents
+  * #['math']; (Rusti)
+  * `# 'math', './my-mod.son', 'musi'`
+    + like md title
+  * ... 'math', 'latr', 'musi';
+  * << 'math', 'latr', 'musi'; (mathematica, wolfram)
+  * <- 'math', 'latr', 'musi';
+  * ! 'math', 'latr', 'musi'
+    + matches doctype delcaration
+    + reversed i
+  * <'math', 'latr', 'musi'>
+  * :: 'math', 'latr', 'musi'
+  * > 'math', 'latr', 'musi'
+    + quote in md
+  * {{math}} {{latr}} {{musi}}
+    + like django templates
+  * {'math', 'latr', 'musi'}
+    - occupies sets convention
+  * & 'math', 'latr', './my.son'
+    + semantically makes point as "with math"
+    + et ≈ include
+  * @ 'math', 'latr', './my.son'
+    + at - better reflects
+  * +'math', +'latr', +'musi', +'my-module':
+    * overloaded + for atoms includes them
+  * wildcard? 'math.*', 'latr.*', './my.son/*'
+  * `* :: 'math', sin, cos :: 'math'`
+  * `@math: sin, cos; @latr *; @./my-lib.son *`
+    + at math: sin, cos
+  * ✱ `sin, cos @ 'math', * @ 'latr'`
+    + a,b at source
+  * `'math' / sin, cos;`
+    ? 'math' / *; ?
