@@ -178,7 +178,7 @@ sum(a, b) = a + b;
 reverb([..input], room=0.5, damp=0.5) = (
   & combs_a = (a0,a1,a2,a3 | stretch),
   & combs_b = (b0,b1,b2,b3 | stretch),
-  &  aps = (p0,p1,p2,p3 | stretch);
+  & aps = (p0,p1,p2,p3 | stretch);
 
   (..combs_a | a -> comb(a, input, room, damp)) >- sum +
   (..combs_b | a -> comb(a, input, room, damp)) >- sum;
