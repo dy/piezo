@@ -236,10 +236,58 @@
 
 ## [x] State management → function state identified by callsite
 
-  * load previous state as `...x1, y1, x2, y2`
+  * `...x1, y1, x2, y2`
     + yes, that acts as hooks from react
     + that solves problem of instancing
-    + identified by callsite
+    + identified by callstack
+
+### [ ] Load state syntax
+
+  * There's disagreement on `...` is best candidate for loading prev state. Let's consider alternatives.
+  1. `...x1,y1,x2,y2`
+    + clear
+    + matches punctuation meaning
+    - ostensibly conflicts with ranges (imo no)
+    - possibly doesn't indicate well enough if ... is applied to group or first item
+      ~ to a group
+  2. `^x1, ^y1, ^x2, ^y2`
+    + topical reference enjoining with the last value
+    - too many meanings to topical operator
+  3. `*x1, *x2, *y1, *y2`
+    - C pointers are a mess. User doesn't need to know that.
+  4. `#x1, #x2, #y1, #y2`
+    + internal, private state, act as instance private properties
+    + indicator of special meaning
+    ~ conflict with note names
+    - pollutes the code:
+    ```
+    lp([x0], freq = 100 in 1..10000, Q = 1.0 in 0.001..3.0) = (
+      #x1, #x2, #y1, #y2 = 0;    // internal state
+
+      w = pi2 * freq / sampleRate;
+      sin_w, cos_w = sin(w), cos(w);
+      a = sin_w / (2.0 * Q);
+
+      b0, b1, b2 = (1.0 - cos_w) / 2.0, 1.0 - cos_w, b0;
+      a0, a1, a2 = 1.0 + a, -2.0 * cos_w, 1.0 - a;
+
+      b0, b1, b2, a1, a2 *= 1.0 / a0;
+
+      y0 = b0*x0 + b1*#x1 + b2*#x2 - a1*#y1 - a2*#y2;
+
+      #x1, #x2 = x0, #x1;
+      #y1, #y2 = y0, #y1;
+
+      [y0].
+    )
+    ```
+    - often means compiler directive or comment
+    5. `[x1, x2, y1, y2] = #`
+      + involves destructuring syntax
+      - introduces unnecessary token
+      - `#` is hardly works on its own not in conjunction
+    6. `#(x1, x2, y1, y2)`
+    7. `<x1, x2, y1, y2>`
 
 ## [ ] Named array items
 

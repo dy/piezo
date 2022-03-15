@@ -3,7 +3,7 @@
 * [x] make subscript generate lispy tree (wasm, wat, js, ast targets are possible)
   . we need not immediately compile, we need intermediary state to codegenerate after.
   . parsing time can be improved via wasm version;
-  * [ ] make subscript generate wasm binary for evaluator.
+  * [x] ~~make subscript generate wasm binary for evaluator.~~ nah, later
 
 * [ ] @audio/gain module
   * compiles basic son file to multicased function `gain`
