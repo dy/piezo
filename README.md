@@ -68,7 +68,7 @@ Features:
 Biquad filter processor for single channel input.
 
 ```fs
-sin, cos @ 'math';
+sin, cos = 'math';
 
 pi2 = pi*2;
 sampleRate = 44100;
@@ -107,7 +107,7 @@ Features:
 > `zzfx(...[,,1675,,.06,.24,1,1.82,,,837,.06])`:
 
 ```fs
-@ 'math';
+'math';
 
 pi2 = pi*2;
 sampleRate = 44100;
@@ -162,9 +162,9 @@ Features:
 ## [Freeverb](https://github.com/opendsp/freeverb/blob/master/index.js)
 
 ```fs
-& './combfilter.son';
-& './allpass.son';
-& 'math';
+'./combfilter.son';
+'./allpass.son';
+'math';
 
 sampleRate = 44100;
 

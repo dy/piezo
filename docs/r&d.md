@@ -1280,9 +1280,21 @@
     ~ similar to just @
   * `'math' / sin, cos;`
     ? 'math' / *; ?
-  * `'math' : sin,cos, 'latr' : *`
+  * `'math': sin,cos, 'latr': *`
     - too pale, usual and conflicting
   * `sin,cos =< 'math'`
   * `sin,cos -< math`
+    - conflict with reducer >-
   * `'math'!sin,cos, '@audio-lab/synth'!, './my-sound.son'!`
     - prefix is easier identifiable
+  * `osc1, osc2 =: '@audio-lab/synt'`
+  * `<math>, <./path/to/my/son>, <@audio-lab/synth>`
+  * sin, cos <- 'math', <- '@audio-lab/synth'
+    + reminds list comprehension with assignment
+    - conflict with arrow function ->
+
+  ? is there a change we're going to need to include generic binary fragments?
+
+  * importing all or is not nice pattern: that causes implicit conflict.
+    * it's better to always assign to a variable to make importable parts explicit.
+    - conflicts with notes. We need to import all of them.
