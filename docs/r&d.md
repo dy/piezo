@@ -17,7 +17,7 @@
 ## [x] `f(x, y) = x + y` standard classic way to define function in math
   + also as in F# or Elixir
 
-## [x] Ranges: f(x=100~0..100, y~0..100, p~0.001..5, shape~(tri,sin,tan)=sin)
+## [x] Ranges: f(x=100~=0..100, y~=0..100, p~=0.001..5, shape~=(tri,sin,tan)=sin)
 
   * `f(x=100 in 0..100, y=1 in 0..100, z in 1..100, p in 0.001..5) = ...`
     - conflicts with no-keywords policy
@@ -38,6 +38,11 @@
     ? shape ~ (tri, sin, tan)
       + matches direct groups
       + parens are just means to group items
+    + ~ punctuationally refers to range, but direct ~ is too little info
+
+  * `f(x = 100 ~= 0..100, y ~= 0..100 = 1, z ~= 1..100, p ~= 0.001..5, shape ~= (tri, sin, tan) = sin)`
+    + matches Ruby's regex-search operator, inversed
+    + matches "equals" as "clamp"
 
   * `f(x = 100 ~ {0..100}, y ~ {0..100} = 1, z ~ {1..100}, p ~ {0.001..5}, shape ~ {tri, sin, tan} = sin)`
     + less digit-y as above
@@ -49,6 +54,7 @@
 
   * `f(x = 100 -< 0..100, y -< 0..100 = 1, z -< 1..100, p -< 0.001..5, shape -< (tri, sin, tan) = sin)`
     + visually precise indication of what's going on
+    - false match with reduce operator
 
 ## [x] Enums
 
@@ -1251,9 +1257,11 @@
     + like django templates
   * {'math', 'latr', 'musi'}
     - occupies sets convention
-  * & 'math', 'latr', './my.son'
+  * `& 'math', 'latr', './my.son'`
     + semantically makes point as "with math"
     + et ≈ include
+    - no easy way to scope imports
+    - might be occupied by state
   * @ 'math', 'latr', './my.son'
     + at - better reflects
   * +'math', +'latr', +'musi', +'my-module':
@@ -1267,9 +1275,14 @@
     +~ reminds npm namespace convention
     + reminds CSS @import and other directives
     + relatively exceptional character, compared to #, :, &
+    - conflicts with npm namespaces `osc1, osc2 @ '@audio-lab/synt'`
   *! what if npm module namespace convention? `'@math/sin,cos'`, `'./my-sound.son/*'`
     ~ similar to just @
   * `'math' / sin, cos;`
     ? 'math' / *; ?
   * `'math' : sin,cos, 'latr' : *`
     - too pale, usual and conflicting
+  * `sin,cos =< 'math'`
+  * `sin,cos -< math`
+  * `'math'!sin,cos, '@audio-lab/synth'!, './my-sound.son'!`
+    - prefix is easier identifiable
