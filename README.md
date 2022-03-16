@@ -68,7 +68,7 @@ Features:
 Biquad filter processor for single channel input.
 
 ```fs
-sin, cos = 'math';
+# 'math';
 
 pi2 = pi*2;
 sampleRate = 44100;
@@ -96,7 +96,7 @@ lp([x0], freq = 100 ~= 1..10000, Q = 1.0 ~= 0.001..3.0) = (
 
 Features:
 
-* _import_ − organized via `a, b, c @ 'path/to/lib'` or `@ 'lib'`. Built-in libs are: `math`, `std`. Additional libs: `latr`, `musi` and [others]().
+* _import_ − organized via `# 'lib'` or `# 'path/to/lib'`. Built-in libs are: `math`, `std`. Additional libs: `latr`, `musi` and [others]().
 * _block scope_ − parens `()` permit defining variables within its scope, making `{}` redundant for blocks (like one-line arrow functions in JS).
 * _state_ − internal function state is persisted between fn calls via & operator `& state=initValue`. That is like language-level react hooks, an alternative to classes with instances.
 * _grouping_ − comma operator allows bulk operations on many variables, such as `a,b,c = d,e,f` → `a=d, b=e, c=f` or `a,b,c + d,e,f` → `a+d, b+e, c+f` etc.
@@ -107,7 +107,7 @@ Features:
 > `zzfx(...[,,1675,,.06,.24,1,1.82,,,837,.06])`:
 
 ```fs
-'math';
+# 'math';
 
 pi2 = pi*2;
 sampleRate = 44100;
@@ -162,9 +162,7 @@ Features:
 ## [Freeverb](https://github.com/opendsp/freeverb/blob/master/index.js)
 
 ```fs
-'./combfilter.son';
-'./allpass.son';
-'math';
+# './combfilter.son', './allpass.son', 'math';
 
 sampleRate = 44100;
 
@@ -198,7 +196,7 @@ This features:
 Transpiled floatbeat/bytebeat song:
 
 ```fs
-sin,cos,floor @ 'math';
+# 'math';
 
 sampleRate = 44100
 

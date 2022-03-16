@@ -1243,9 +1243,14 @@
   * #['math']; (Rusti)
   * `# 'math', './my-mod.son', 'musi'`
     + like md title
+    + shortcut from #include, #import in C, C++, Obj C
+    + `# 'math': sin, cos;`
+    + shebang starts as `#!`
+  * shebang `#!'math'`
   * ... 'math', 'latr', 'musi';
-  * << 'math', 'latr', 'musi'; (mathematica, wolfram)
-  * <- 'math', 'latr', 'musi';
+  * << 'math', 'latr', 'musi';
+    + (mathematica, wolfram)
+    + C-streams like
   * ! 'math', 'latr', 'musi'
     + matches doctype delcaration
     + reversed i
