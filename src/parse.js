@@ -4,7 +4,7 @@ import parse, { isId, set as token, lookup, skip, cur, idx, err, expr } from 'su
 export default parse
 
 const OPAREN=40, CPAREN=41, OBRACK=91, CBRACK=93, SPACE=32, DQUOTE=34, PERIOD=46, _0=48, _9=57,
-PREC_SEQ=1, PREC_ASSIGN=2, PREC_FUNC=2, PREC_LOOP=2, PREC_COND=3, PREC_SOME=4, PREC_EVERY=5, PREC_OR=6, PREC_XOR=7, PREC_AND=8,
+PREC_SEQ=1, PREC_END=1.5, PREC_ASSIGN=2, PREC_FUNC=2, PREC_LOOP=2, PREC_COND=3, PREC_SOME=4, PREC_EVERY=5, PREC_OR=6, PREC_XOR=7, PREC_AND=8,
 PREC_EQ=9, PREC_COMP=10, PREC_SHIFT=11, PREC_SUM=12, PREC_MULT=13, PREC_EXP=14, PREC_UNARY=15, PREC_POSTFIX=16, PREC_CALL=18, PREC_GROUP=19, PREC_TOKEN=20
 
 
@@ -43,7 +43,7 @@ Array(10).fill(0).forEach((_,i)=>lookup[(''+i).charCodeAt(0)] = num)
 token('^', PREC_TOKEN, a => ['^'])
 
 // end token
-token('.', PREC_SEQ, a => a)
+token('.', PREC_END, a => ['.', a])
 
 // comments
 token('//', PREC_TOKEN, (a, prec) => (skip(c => c >= SPACE), a||expr(prec)))
@@ -75,7 +75,7 @@ binary('<=', PREC_COMP)
 binary('>>', PREC_SHIFT)
 binary('>>>', PREC_SHIFT)
 binary('<<', PREC_SHIFT)
-binary('in', PREC_COMP )
+binary('~=', PREC_COMP )
 binary('**', -PREC_EXP)
 
 binary('=', -PREC_ASSIGN)
@@ -94,6 +94,12 @@ unary('+', PREC_UNARY)
 unary('-', PREC_UNARY)
 unary('!', PREC_UNARY)
 unary('~',  PREC_UNARY)
+
+// &a
+unary('&', PREC_UNARY)
+
+// # "ab";
+unary('#', PREC_ASSIGN)
 
 // increments
 // ++a → [++, a], a++ → [-,[++,a],1]
@@ -122,11 +128,4 @@ token('(', PREC_CALL, a => a && ['(', a, expr(0,CPAREN)||''])
 // ranges
 token('..', PREC_CALL, a => ['..', a || '', expr(PREC_CALL)])
 
-// ...a,b,c
-unary('...', PREC_UNARY)
-
-// import a,b from "ab";
-unary('import', PREC_ASSIGN)
-binary('from', PREC_SEQ)
-unary('export', PREC_ASSIGN)
 

@@ -10,7 +10,7 @@ t('common expressions', t => {
 
 t('identifiers', t => {
   // permit @#$_
-  is(parse('a@a, #b#, c_c, $d$'), [',', 'a@a', '#b#','c_c','$d$'])
+  is(parse('a@a, _b#, c_c, $d$'), [',', 'a@a', '_b#','c_c','$d$'])
 
   // disregard casing
   is(parse('A, Bc, d_E'), [',', 'a', 'bc','d_e'])
@@ -24,17 +24,17 @@ t('readme: audio-gain', t => {
   is(unbox(parse(`
     range = 0..1000;
 
-    gain([left], volume in range) = [left * volume];
-    gain([left, right], volume in range) = [left * volume, right * volume];
-    //gain([..channels], volume in range) = [..channels * volume];
+    gain([left], volume ~= range) = [left * volume];
+    gain([left, right], volume ~= range) = [left * volume, right * volume];
+    //gain([..channels], volume ~= range) = [..channels * volume];
 
-    export gain.
+    gain.
   `)), [';',
     ['=', 'range', ['..', '0', '1000']],
-    ['=', ['(', 'gain', [',', ['[', 'left'], ['in', 'volume', 'range']]], ['[', ['*', 'left', 'volume']]],
+    ['=', ['(', 'gain', [',', ['[', 'left'], ['~=', 'volume', 'range']]], ['[', ['*', 'left', 'volume']]],
 
-    ['=', ['(', 'gain', [',', ['[', [',','left','right']], ['in', 'volume', 'range']]], ['[', [',',['*', 'left', 'volume'],['*', 'right', 'volume']]]],
-    ['export', 'gain']
+    ['=', ['(', 'gain', [',', ['[', [',','left','right']], ['~=', 'volume', 'range']]], ['[', [',',['*', 'left', 'volume'],['*', 'right', 'volume']]]],
+    ['.', 'gain']
   ])
 })
 
