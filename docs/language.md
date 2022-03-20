@@ -52,11 +52,14 @@ So the main pain of JS for sound processing is GC. The rest is relatively ok.
 
 * Great reference for language design: [language_comparison](https://en.wikipedia.org/wiki/Comparison_of_programming_languages).
 * One toy wasm language as a base: [WebBS](https://github.com/j-s-n/WebBS)
-* ~~Walt − more serious layer language, very JSy: [Walt](https://github.com/ballercat/walt)~~ compiles to wrong wat
 * [chasm](https://github.com/ColinEberhardt/chasm/blob/master/src/emitter.ts)
 * [mono-lib](https://github.com/stagas/mono/blob/main/src/lib.wat.ts), [monolib](https://github.com/stagas/monolib/blob/main/src/index.ts)
 * [webassembly examples](https://openhome.cc/eGossip/WebAssembly/index.html)
+* Example wasm calculator https://crypto.stanford.edu/~blynn/asm/wasm.html
 
+* [wasm book](https://ontouchstart.pages.dev/chapter_wasm_binary)
+* [hackernoon](https://web.archive.org/web/20210215171830/https://hackernoon.com/webassembly-binary-format-explained-part-2-hj1t33yp?source=rss)
+* [wasm binary encoding](https://github.com/WebAssembly/design/blob/main/BinaryEncoding.md)
 
 ## Test cases
 

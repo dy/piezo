@@ -4,6 +4,7 @@
   . we need not immediately compile, we need intermediary state to codegenerate after.
   . parsing time can be improved via wasm version;
   * [x] ~~make subscript generate wasm binary for evaluator.~~ nah, later
+    * Example: https://crypto.stanford.edu/~blynn/asm/wasm.html
 
 * [ ] @audio/gain module
   * compiles basic son file to multicased function `gain`

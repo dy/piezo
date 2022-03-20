@@ -576,12 +576,18 @@
 ## [x] ? Should it compile to wat or to wasm? → wat for now
 
   - wasm is faster
-  - wasm allows web compilation
+  - wasm allows web compilation: doesn't require heavy wabt dependency
+  - wasm is "true" direct way
+  - wasm is something new to learn
   + wat allows wat2wasm compiler optimizations
+    ~ can be done via wasm too
   + wat allows debugging, bytecode can be hardstone
+    ~- wasm2wat also allows debugging
+      ~+ still reverse compilation can lose variable/function names
   + wat can be done via wat-compiler and other better fit for that mappers
+    - wat-compiler is stale and unlikely to improve
 
-  * ? Can be both I suppose, but needs researching wat format - mb we can utilize fn tables in better way
+  * ? Can be both I suppose, but needs researching wasm format - mb we can utilize fn tables in better way
 
 ## [x] Scope or not to scope? → make () a block if new variables are defined there
 
@@ -1240,12 +1246,14 @@
 ## [x] Import no-keyword? sin,cos @ 'math'
 
   * No need to define scope: imports full contents
-  * #['math']; (Rusti)
+  * #[math]; (Rusti)
   * `# 'math', './my-mod.son', 'musi'`
     + like md title
     + shortcut from #include, #import in C, C++, Obj C
     + `# 'math': sin, cos;`
     + shebang starts as `#!`
+    + music sheets start with # and b
+    + similar to Rust
   * shebang `#!'math'`
   * ... 'math', 'latr', 'musi';
   * << 'math', 'latr', 'musi';
