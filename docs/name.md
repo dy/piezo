@@ -37,10 +37,16 @@
    + like "sounds fun" phrase.
 
 * sonf?
-  + sound-functions
-  + sound-fun
-  + sound-fu
-  + sound-formulas
+   + sound-functions
+   + sound-fun
+   + sound-fu
+   + sound-formulas
 
 * sonr?
-  . maybe we should just keep name: it is short, clear, keeps .son files, playground
+   . maybe we should just keep name: it is short, clear, keeps .son files, playground
+
+* soun?
+   + short from sound
+   +~ soul
+   +~ sone
+   +~ sour

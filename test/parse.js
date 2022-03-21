@@ -1,7 +1,6 @@
 import t, { is, ok, same } from 'tst'
 import parse from '../src/parse.js'
 
-const unbox = list => list.map(item => Array.isArray(item) ? unbox(item) : item+'')
 
 t('common expressions', t => {
   is(unbox(parse('1+1')), ['+', '1', '1'])
@@ -56,3 +55,5 @@ t('end operator', t => {
   // must throw if anything comes after . in body
   // throws if anything comes after . in
 })
+
+const unbox = list => list.map(item => Array.isArray(item) ? unbox(item) : item+'')
