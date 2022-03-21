@@ -63,20 +63,3 @@ t('wasm: export mem/func', t => {
   00 01 66 00 00 0a 0d 01 0b 00 20 00 20 01 36 02
   00 20 01 0b `)
 })
-
-t.only('readme: audio-gain', t => {
-  is(compile(parse(`
-    range = 0..1000;
-
-    gain([left], volume ~= range) = [left * volume];
-    gain([left, right], volume ~= range) = [left * volume, right * volume];
-    //gain([..channels], volume ~= range) = [..channels * volume];
-
-    gain.
-  `)), hex`00 00 00`)
-})
-
-t('end operator', t => {
-  // must throw if anything comes after . in body
-  // throws if anything comes after . in
-})

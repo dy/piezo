@@ -49,12 +49,11 @@ token('.', PREC_END, a => ['.', a])
 token('//', PREC_TOKEN, (a, prec) => (skip(c => c >= SPACE), a||expr(prec)))
 
 // sequences
-const sequence = (op, prec) => token(op, prec, (a, b) => a && (b=expr(prec)) && (a[0] === op && a[2] ? (a.push(b), a) : [op,a,b]))
-sequence(',', PREC_SEQ)
+const sequence = (op, prec, bin=true) => token(op, prec, (a, b) => a && (b=expr(prec), bin&&!b&&err(), a[0] === op && a[2] ? (a.push(b), a) : [op,a,b]))
 sequence('||', PREC_SOME)
 sequence('&&', PREC_EVERY)
-// sequence(';', PREC_SEQ, (a, b) => a && (b=expr(prec, PERIOD)) && (a[0] === op && a[2] ? (a.push(b), a) : [op,a,b]))
-sequence(';', PREC_SEQ)
+sequence(',', PREC_SEQ, false)
+sequence(';', PREC_SEQ, false)
 
 // binaries
 const binary = (op, prec, right=prec<0?(prec=-prec,.1):0) => token(op, prec, (a, b) => a && (b=expr(prec-right)) && ([op,a,b]))

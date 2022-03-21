@@ -1,25 +1,6 @@
-let fns
 
 export default (tree) => {
-  // reset IR
-  fns = {}
-
-  // we have to transform our input tree into wasm-level tree.
-  statements(tree)
-
-  function statements([_, ...exprs]) {
-    exprs.forEach(node => {
-      const [type, sig, body] = node
-      console.log(node)
-      // collect function definitions
-      if (type === '=' && sig[0] === '(') {
-        const [_, name, args] = sig
-        ;(fns[name] ||= []).push(args)
-      }
-    })
-  }
-
-  console.log(fns)
+  console.log(ir)
 
   // ref: https://ontouchstart.pages.dev/chapter_wasm_binary
   const magic = [0x00, 0x61, 0x73, 0x6d];

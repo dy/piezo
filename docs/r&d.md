@@ -535,8 +535,6 @@
 
   * https://twitter.com/bloomofthehours/status/1491797450595528713?s=20&t=1aJpwIDrbNhIjwIohsvxiw
 
-## [x] Minimum if not 0 keywords: for(a,b,c) is valid fn; if(a,b) is valid fn;
-
 ## [x] Groups
 
   * `a,b = b,a`
@@ -1237,13 +1235,15 @@
 
 ## [x] No-keywords? Let's try. i18n is a good call.
 
+  * for(a,b,c) is valid fn; if(a,b) is valid fn;
   + It allows compressing code to no-spaces, which can be nice for serialization to/from string;
   + Natural languages or math equations don't have keywords in punctuation. Imagine if we had to write sentences where some of words were syntactic. It's fine - everyone got used to punctuational conventions and even don't mix up ...a and a..b
   + From ancient times scientists separated meta-meaning (take music staff notation) from actual content by different kind of notation.
   + No-keywords removes English language bias, allowing real i18 code.
   + It frees user from caring about variable name conflict. `in`, `from`, `if`, `for`, `at` can be useful variable bits.
+  + JS keywords are ridiculous: they block many good names pushing user use marginal names.
 
-## [x] Import no-keyword? sin,cos @ 'math'
+## [x] Import no-keyword? # 'math';
 
   * No need to define scope: imports full contents
   * #[math]; (Rusti)
@@ -1311,3 +1311,10 @@
   * importing all or is not nice pattern: that causes implicit conflict.
     * it's better to always assign to a variable to make importable parts explicit.
     - conflicts with notes. We need to import all of them.
+
+## Wasmtree instead of IR would be simpler:
+
+  * ['module', ['func', '$name', ['param', 'a', 'b'], ...statements], ['global'], ['exports']]
+  + it would allow to just apply a bunch of transforms to inputs, keeping the format
+  + it takes less space and less computation
+  + it is easier serializable

@@ -38,6 +38,20 @@ t('readme: audio-gain', t => {
   ])
 })
 
+t('module: ending', t => {
+  is(unbox(parse(`
+    x() = 1+2
+  `)), ['=', ['(', 'x'], ['+', 1, 2]])
+
+  is(unbox(parse(`
+    x() = 1+2.
+  `)), ['.',['=', ['(', 'x'], ['+', 1, 2]]])
+
+  is(unbox(parse(`
+    x() = 1+2;
+  `)), [';',['=', ['(', 'x'], ['+', 1, 2]]])
+})
+
 t('end operator', t => {
   // must throw if anything comes after . in body
   // throws if anything comes after . in
