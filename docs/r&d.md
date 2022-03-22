@@ -1322,3 +1322,4 @@
 ### [x] sonscript → sontree → Wattree → wasm
 
   + also allows sontree → jstree, just a set of transforms
+  * maybe we may need generalizing transformers
