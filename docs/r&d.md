@@ -1312,9 +1312,13 @@
     * it's better to always assign to a variable to make importable parts explicit.
     - conflicts with notes. We need to import all of them.
 
-## Wasmtree instead of IR would be simpler:
+## [x] Wasmtree instead of IR would be simpler:
 
   * ['module', ['func', '$name', ['param', 'a', 'b'], ...statements], ['global'], ['exports']]
   + it would allow to just apply a bunch of transforms to inputs, keeping the format
   + it takes less space and less computation
   + it is easier serializable
+
+### [x] sonscript → sontree → Wattree → wasm
+
+  + also allows sontree → jstree, just a set of transforms
