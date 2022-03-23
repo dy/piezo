@@ -52,10 +52,12 @@ t('watify module: oneliners', t => {
   ])
 })
 
-t.todo('watify module: errors', t => {
-  throws(() => watify(parse(`
-    a,b,c.
-  `)))
+t('watify module: errors', t => {
+  throws(() =>
+    watify(parse(`
+      a,b,c.
+    `))
+  )
   // must throw if anything comes after . in body
   // throws if anything comes after . in
 })

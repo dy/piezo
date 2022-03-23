@@ -6,25 +6,49 @@ const transformModule = node => {
   if (node[0] !== ';') node = [';', node]
   let [_, ...nodes] = node
 
-  let statements = [], exports = []
+  let exports = [], toExport = new Set(), functions = [], globals = []
 
-  for (let node of nodes.filter(Boolean)) {
-    // ∀. → (export ∀)
-    let exported = false
-    if (node[0] === '.') node = node[1], exported = true
+  // unmap & handle explicit exports
+  nodes = nodes.filter(Boolean).map(node => {
+    if (node[0] !== '.') return node
+    let def = node[1]
 
+    // a,b,c.
+    if (def[0] === ',') def.slice(1).map(name => toExport.add(name))
+
+    else if (def[0] === '=') {
+      let l = def[1]
+      // a(x)=b.
+      if (l[0] === '(') toExport.add(l[1])
+
+      // a,b,c=d.
+      else if (l[0] === ',') def.slice(1).map(name => toExport.add(name))
+
+      // a=b.
+      else if (!Array.isArray(l)) toExport.add(l)
+
+      else throw SyntaxError('Unknown definintion', def)
+    }
+
+    return def
+  })
+
+  // collect functions
+  for (let node of nodes) {
     let [op, l, r] = node
     // a(x) = b → (func params, body)
     if (op === '=') {
       if (l[0] === '(') {
         let [_,fnName,params] = l
-        statements.push(transformFunction(fnName, params, r))
-        if (exported) exports.push(['export', fnName, ['func', fnName]])
+        functions.push(transformFunction(fnName, params, r))
+        if (toExport.has(fnName)) toExport.delete(fnName), exports.push(['export', fnName, ['func', fnName]])
       }
     }
   }
 
-  return ['module', ...statements, ...exports]
+  if (toExport.size) throw SyntaxError('Exporting unknown ' + [...toExport.entries()].map(e => e[1]).join(', '))
+
+  return ['module', ...functions, ...exports]
 };
 
 const transformFunction = (fnName, params, nodes) => {
