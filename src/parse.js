@@ -4,8 +4,8 @@ import parse, { isId, set as token, lookup, skip, cur, idx, err, expr } from 'su
 export default parse
 
 const OPAREN=40, CPAREN=41, OBRACK=91, CBRACK=93, SPACE=32, DQUOTE=34, PERIOD=46, _0=48, _9=57,
-PREC_SEQ=1, PREC_END=1.5, PREC_ASSIGN=2, PREC_FUNC=2, PREC_LOOP=2, PREC_COND=3, PREC_SOME=4, PREC_EVERY=5, PREC_OR=6, PREC_XOR=7, PREC_AND=8,
-PREC_EQ=9, PREC_COMP=10, PREC_SHIFT=11, PREC_SUM=12, PREC_MULT=13, PREC_EXP=14, PREC_UNARY=15, PREC_POSTFIX=16, PREC_CALL=18, PREC_GROUP=19, PREC_TOKEN=20
+PREC_SEQ=1, PREC_END=1.5, PREC_ASSIGN=2, PREC_FUNC=2, PREC_LOOP=2, PREC_GROUP=3, PREC_COND=3, PREC_SOME=4, PREC_EVERY=5, PREC_OR=6, PREC_XOR=7, PREC_AND=8,
+PREC_EQ=9, PREC_COMP=10, PREC_SHIFT=11, PREC_SUM=12, PREC_MULT=13, PREC_EXP=14, PREC_UNARY=15, PREC_POSTFIX=16, PREC_CALL=18, PREC_TOKEN=20
 
 
 // extended id definition
@@ -52,7 +52,7 @@ token('//', PREC_TOKEN, (a, prec) => (skip(c => c >= SPACE), a||expr(prec)))
 const sequence = (op, prec, bin=true) => token(op, prec, (a, b) => a && (b=expr(prec), bin&&!b&&err(), a[0] === op && a[2] ? (a.push(b), a) : [op,a,b]))
 sequence('||', PREC_SOME)
 sequence('&&', PREC_EVERY)
-sequence(',', PREC_SEQ, false)
+sequence(',', PREC_GROUP, false)
 sequence(';', PREC_SEQ, false)
 
 // binaries
@@ -122,7 +122,7 @@ token('.', PREC_CALL, (a,b) => a && (b=expr(PREC_CALL)) && ['.',a,b])
 token('(', PREC_CALL, a => !a && ['(', expr(0,CPAREN)||err()])
 
 // a(b,c,d), a()
-token('(', PREC_CALL, a => a && ['(', a, expr(0,CPAREN)||''])
+token('(', PREC_CALL, (a,b) => a && ((b=expr(0, CPAREN)) ? ['(', a, b] : ['(', a]))
 
 // ranges
 token('..', PREC_CALL, a => ['..', a || '', expr(PREC_CALL)])

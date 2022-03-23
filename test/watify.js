@@ -1,8 +1,8 @@
-import t, { is, ok, same } from 'tst'
+import t, { is, ok, same, throws } from 'tst'
 import parse from '../src/parse.js'
 import watify from '../src/watify.js'
 
-t('module: mult(a, b) = a * b.', t => {
+t('watify module: oneliners', t => {
   // (module
   //   (func $mult (param $a f64) (param $b f64))
   //   (export "mult" (func $mult))
@@ -10,48 +10,59 @@ t('module: mult(a, b) = a * b.', t => {
   is(watify(unbox(parse(`
     mult(a, b) = a * b.
   `))), ['module',
-    ['func', 'mult', ['param', 'a', 'f64'], ['param', 'b', 'f64'], ['f64.mul', 'a', 'b']],
+    ['func', 'mult', ['param', 'a', 'f64'], ['param', 'b', 'f64'], ['result', 'f64'],
+      ['f64.mul', ['local.get', 'a'], ['local.get', 'b']]
+    ],
     ['export', 'mult', ['func', 'mult']]
   ])
-})
 
-t.skip('module: mult(a, b) = (a * b.)', t => {
   is(watify(unbox(parse(`
-    mult(a, b) = (a * b.)
+    mult(a, b) = (a * b)
   `))), ['module',
-    ['func', 'mult', ['param', 'a', 'f64'], ['param', 'b', 'f64'], ['f64.mul', 'a', 'b']],
-    ['export', 'mult', ['func', 'mult']]
+    ['func', 'mult', ['param', 'a', 'f64'], ['param', 'b', 'f64'], ['result', 'f64'],
+      ['f64.mul', ['local.get', 'a'], ['local.get', 'b']]
+    ]
   ])
-})
 
-t('module: mult(a, b) = (a * b);', t => {
   is(watify(unbox(parse(`
     mult(a, b) = (a * b);
   `))), ['module',
-    ['func', 'mult', ['param', 'a', 'f64'], ['param', 'b', 'f64'], ['f64.mul', 'a', 'b']]
+    ['func', 'mult', ['param', 'a', 'f64'], ['param', 'b', 'f64'], ['result', 'f64'],
+      ['f64.mul', ['local.get', 'a'], ['local.get', 'b']]
+    ]
   ])
-})
 
-t('module: mult(a, b) = (a * b; b.)', t => {
   is(watify(unbox(parse(`
-    mult(a, b) = (a * b; b.).
+    mult(a, b) = (a * b; b).
   `))), ['module',
-    ['func', 'mult', ['param', 'a', 'f64'], ['param', 'b', 'f64'], ['f64.mul', 'a', 'b'], ['return', 'b']],
+    ['func', 'mult', ['param', 'a', 'f64'], ['param', 'b', 'f64'], ['result', 'f64'],
+      ['f64.mul', ['local.get', 'a'], ['local.get', 'b']],
+      ['local.get', 'b']
+    ],
     ['export', 'mult', ['func', 'mult']]
   ])
-})
 
-t('module: mult(a, b) = a * b; mult.', t => {
   is(watify(unbox(parse(`
     mult(a, b) = a * b.
   `))), ['module',
-    ['func', 'mult', ['param', 'a', 'f64'], ['param', 'b', 'f64'], ['f64.mul', 'a', 'b']],
+    ['func', 'mult', ['param', 'a', 'f64'], ['param', 'b', 'f64'], ['result', 'f64'],
+      ['f64.mul', ['local.get', 'a'], ['local.get', 'b']]
+    ],
     ['export', 'mult', ['func', 'mult']]
   ])
 })
 
+t.todo('watify module: errors', t => {
+  throws(() => watify(parse(`
+    a,b,c.
+  `)))
+  // must throw if anything comes after . in body
+  // throws if anything comes after . in
+})
+
+
 t.todo('readme: audio-gain', t => {
-  is(watify(parse(`
+  is(watify(unbox(parse(`
     range = 0..1000;
 
     gain([left], volume ~= range) = [left * volume];
@@ -59,13 +70,11 @@ t.todo('readme: audio-gain', t => {
     //gain([..channels], volume ~= range) = [..channels * volume];
 
     gain.
-  `)), hex`00 00 00`)
+  `))), [
+    ['module', '']
+  ])
 })
 
-t('end operator', t => {
-  // must throw if anything comes after . in body
-  // throws if anything comes after . in
-})
 
 
 const unbox = list => list.map(item => Array.isArray(item) ? unbox(item) : item ? item+'' : null)
