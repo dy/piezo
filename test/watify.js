@@ -2,7 +2,7 @@ import t, { is, ok, same } from 'tst'
 import parse from '../src/parse.js'
 import watify from '../src/watify.js'
 
-t('function: mult(a, b) = a * b.', t => {
+t('module: mult(a, b) = a * b.', t => {
   // (module
   //   (func $mult (param $a f64) (param $b f64))
   //   (export "mult" (func $mult))
@@ -15,7 +15,7 @@ t('function: mult(a, b) = a * b.', t => {
   ])
 })
 
-t.skip('function: mult(a, b) = (a * b.)', t => {
+t.skip('module: mult(a, b) = (a * b.)', t => {
   is(watify(unbox(parse(`
     mult(a, b) = (a * b.)
   `))), ['module',
@@ -24,7 +24,7 @@ t.skip('function: mult(a, b) = (a * b.)', t => {
   ])
 })
 
-t('function: mult(a, b) = (a * b);', t => {
+t('module: mult(a, b) = (a * b);', t => {
   is(watify(unbox(parse(`
     mult(a, b) = (a * b);
   `))), ['module',
@@ -32,11 +32,20 @@ t('function: mult(a, b) = (a * b);', t => {
   ])
 })
 
-t('function: mult(a, b) = (a * b; b.)', t => {
+t('module: mult(a, b) = (a * b; b.)', t => {
   is(watify(unbox(parse(`
     mult(a, b) = (a * b; b.).
   `))), ['module',
     ['func', 'mult', ['param', 'a', 'f64'], ['param', 'b', 'f64'], ['f64.mul', 'a', 'b'], ['return', 'b']],
+    ['export', 'mult', ['func', 'mult']]
+  ])
+})
+
+t('module: mult(a, b) = a * b; mult.', t => {
+  is(watify(unbox(parse(`
+    mult(a, b) = a * b.
+  `))), ['module',
+    ['func', 'mult', ['param', 'a', 'f64'], ['param', 'b', 'f64'], ['f64.mul', 'a', 'b']],
     ['export', 'mult', ['func', 'mult']]
   ])
 })
