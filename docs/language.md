@@ -57,10 +57,6 @@ So the main pain of JS for sound processing is GC. The rest is relatively ok.
 * [webassembly examples](https://openhome.cc/eGossip/WebAssembly/index.html)
 * Example wasm calculator https://crypto.stanford.edu/~blynn/asm/wasm.html
 
-* [wasm book](https://ontouchstart.pages.dev/chapter_wasm_binary)
-* [hackernoon](https://web.archive.org/web/20210215171830/https://hackernoon.com/webassembly-binary-format-explained-part-2-hj1t33yp?source=rss)
-* [wasm binary encoding](https://github.com/WebAssembly/design/blob/main/BinaryEncoding.md)
-
 ## Test cases
 
 * sonr expressions
