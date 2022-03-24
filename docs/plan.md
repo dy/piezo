@@ -12,6 +12,8 @@
   * [ ] Compare vs wabt, wat-compiler
   * [ ] Repl with compiler selector
 
+* [ ] stdlib
+  * cos, sin, pow, mod
 
 * [ ] @audio/gain module
   * compiles basic son file to multicased function `gain`
