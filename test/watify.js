@@ -2,7 +2,7 @@ import t, { is, ok, same, throws } from 'tst'
 import parse from '../src/parse.js'
 import watify from '../src/watify.js'
 
-t('watify module: oneliners', t => {
+t('watify: oneliners', t => {
   // (module
   //   (func $mult (param $a f64) (param $b f64))
   //   (export "mult" (func $mult))
@@ -52,16 +52,22 @@ t('watify module: oneliners', t => {
   ])
 })
 
-t('watify module: errors', t => {
+t('watify: errors', t => {
+  // undefined exports
   throws(() =>
-    watify(parse(`
-      a,b,c.
-    `))
-  )
-  // must throw if anything comes after . in body
-  // throws if anything comes after . in
+    watify(parse(`a,b,c.`))
+  , /Exporting unknown/)
 })
 
+t.todo('watify: batch processing', t => {
+  is(watify(unbox(parse(`a([b],c) = b*c;`))),
+    ['module', '']
+  )
+
+  is(watify(unbox(parse(`a(b) = [c];`))),
+    ['module', '']
+  )
+})
 
 t.todo('readme: audio-gain', t => {
   is(watify(unbox(parse(`

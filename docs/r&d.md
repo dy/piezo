@@ -247,7 +247,7 @@
   * 1s, 1m, 1h
   * 0:12
 
-  - .5pi/2 etc - complicates parsing, makes formulas unusual occupies 0xa, 12n, 0b2 namespaces.
+  - .5pi/2 etc - complicates parsing, makes formulas unusual, occupies 0xa, 12n, 0b2 namespaces.
     → very simple to instead do 1/2*pi, 60*h + 10*m
   - we can't include all units anyways, it's pointless
 
@@ -270,6 +270,9 @@
       - sheer redundance
   * ? it can act both as "return" and "save state" indicator for scoped blocks.
     + enforces semicolons and adds clarity.
+    - both are unnecessary; it's natural to return last item without indicator
+    - makes confusion
+  * ? + can be used as export marker in a module.
 
 ## [x] State management → function state identified by callsite
 
@@ -287,19 +290,9 @@
     - ostensibly conflicts with ranges (imo no)
     - possibly doesn't indicate well enough if ... is applied to group or first item
       ~ to a group
-  2. `^x1, ^y1, ^x2, ^y2`
-    + topical reference enjoining with the last value
-    - too many meanings to topical operator
-  3. `*x1, *x2, *y1, *y2`
-    - C pointers are a mess. User doesn't need to know that.
-  4. `#x1, #x2, #y1, #y2`
-    + internal, private state, act as instance private properties
-    + indicator of special meaning
-    ~ conflict with note names
-    - pollutes the code:
     ```
     lp([x0], freq = 100 in 1..10000, Q = 1.0 in 0.001..3.0) = (
-      #x1, #x2, #y1, #y2 = 0;    // internal state
+      ...x1, x2, y1, y2 = 0;    // internal state
 
       w = pi2 * freq / sampleRate;
       sin_w, cos_w = sin(w), cos(w);
@@ -310,14 +303,24 @@
 
       b0, b1, b2, a1, a2 *= 1.0 / a0;
 
-      y0 = b0*x0 + b1*#x1 + b2*#x2 - a1*#y1 - a2*#y2;
+      y0 = b0*x0 + b1*x1 + b2*x2 - a1*y1 - a2*y2;
 
-      #x1, #x2 = x0, #x1;
-      #y1, #y2 = y0, #y1;
+      x1, x2 = x0, x1;
+      y1, y2 = y0, y1;
 
-      [y0].
+      [y0]
     )
     ```
+  2. `^x1, ^y1, ^x2, ^y2`
+    + topical reference enjoining with the last value
+    - too many meanings to topical operator
+  3. `*x1, *x2, *y1, *y2`
+    - C pointers are a mess. User doesn't need to know that.
+  4. `#x1, #x2, #y1, #y2`
+    + internal, private state, act as instance private properties
+    + indicator of special meaning
+    ~ conflict with note names
+    - pollutes the code with #x1 etc.
     - often means compiler directive or comment
     - may conflict with cardinal number operator
 
@@ -339,14 +342,63 @@
   10. `&x1, &x2, &y1, &y2`
     + means "arguments and x1, x2, y1, y2"
     + gives reference to C dereference
-    + doesn't indicate & as part of name
+    + doesn't indicate & as part of name, more operator-y
+    - conceptually diifferent from binary / boolean operator, looks same
+    ```
+    lp([x0], freq = 100 in 1..10000, Q = 1.0 in 0.001..3.0) = (
+      &x1, &x2, &y1, &y2 = 0;    // internal state
 
-## [ ] Named array items
+      w = pi2 * freq / sampleRate;
+      sin_w, cos_w = sin(w), cos(w);
+      a = sin_w / (2.0 * Q);
+
+      b0, b1, b2 = (1.0 - cos_w) / 2.0, 1.0 - cos_w, b0;
+      a0, a1, a2 = 1.0 + a, -2.0 * cos_w, 1.0 - a;
+
+      b0, b1, b2, a1, a2 *= 1.0 / a0;
+
+      y0 = b0*x0 + b1*x1 + b2*x2 - a1*y1 - a2*y2;
+
+      x1, x2 = x0, x1;
+      y1, y2 = y0, y1;
+
+      [y0]
+    )
+    ```
+
+  11. `@x1, @x2, @y1, @y2`
+    + 'at' means current scope, 'at this'
+    + more wordy - less operator-y, as if part of id
+    ```
+    lp([x0], freq = 100 in 1..10000, Q = 1.0 in 0.001..3.0) = (
+      @x1, @x2, @y1, @y2 = 0;    // internal state
+
+      w = pi2 * freq / sampleRate;
+      sin_w, cos_w = sin(w), cos(w);
+      a = sin_w / (2.0 * Q);
+
+      b0, b1, b2 = (1.0 - cos_w) / 2.0, 1.0 - cos_w, b0;
+      a0, a1, a2 = 1.0 + a, -2.0 * cos_w, 1.0 - a;
+
+      b0, b1, b2, a1, a2 *= 1.0 / a0;
+
+      y0 = b0*x0 + b1*x1 + b2*x2 - a1*y1 - a2*y2;
+
+      x1, x2 = x0, x1;
+      y1, y2 = y0, y1;
+
+      [y0]
+    )
+    ```
+
+## [x] Named array items
 
   * named properties in arrays? `[1,2,3,a:4,b:5]`
     ~ reminds typescript named tuples
     ~ should find exactly where we'd need that
   ? Maybe can be done purely as aliases for position? Let's see for use-case
+  + in JS that's frequent good-to-have
+  + that would organically introduce pattern of named fn arguments either `gain(volume: 1)`
 
 ## [x] Elvis operator: `a ?: b` instead of jsy `a ?? b`
   * ~ equivalent to a ? #0 : b

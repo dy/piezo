@@ -1,7 +1,5 @@
-
+// convert wat tree to wasm binary
 export default (tree) => {
-  console.log(ir)
-
   // ref: https://ontouchstart.pages.dev/chapter_wasm_binary
   const magic = [0x00, 0x61, 0x73, 0x6d];
   const version = [0x01, 0x00, 0x00, 0x00];

@@ -6,6 +6,13 @@
   * [x] ~~make subscript generate wasm binary for evaluator.~~ nah, later
     * Example: https://crypto.stanford.edu/~blynn/asm/wasm.html
 
+* [ ] Watr
+  * [ ] compiler
+  * [ ] parser: very basic commands, no legacy
+  * [ ] Compare vs wabt, wat-compiler
+  * [ ] Repl with compiler selector
+
+
 * [ ] @audio/gain module
   * compiles basic son file to multicased function `gain`
   * [ ] wasm gain node: browser
@@ -14,7 +21,8 @@
 * [ ] Minimal set:
   * [ ] common expressions
   * [ ] name(a,b,c) = body.
-  * [ ] ...state
+  * [ ] &state
+    * [ ] instances state can be allocated as global variables in advance by stacktrace
   * [ ] . end operator
 
 * [ ] compile every trick from basic wasm tutorial
@@ -23,8 +31,6 @@
   * `sin(432 + 10*sin(8)) * adsr(0, 0, .4, 0)`
 
 * [ ] implement zzfx
-
-* [ ] compile common subscript syntax to wasm
 
 * [ ] web-audio-api
 

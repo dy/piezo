@@ -12,9 +12,7 @@ const hex = (str, ...fields) =>
 
 
 t('wasm: empty', t => {
-  let tree = parse('')
-  let { binary } = compile(tree)
-  is(binary, hex`
+  is(compile(['module']), hex`
     00 61 73 6d
     01 00 00 00
   `)
