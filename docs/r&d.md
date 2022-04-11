@@ -17,7 +17,7 @@
 ## [x] `f(x, y) = x + y` standard classic way to define function in math
   + also as in F# or Elixir
 
-## [x] Ranges: f(x=100~=0..100, y~=0..100, p~=0.001..5, shape~=(tri,sin,tan)=sin)
+## [x] Ranges: f(x=100~0..100, y~0..100, p~0.001..5, shape~(tri,sin,tan)=sin)
 
   * `f(x=100 in 0..100, y=1 in 0..100, z in 1..100, p in 0.001..5) = ...`
     - conflicts with no-keywords policy
@@ -43,6 +43,7 @@
   * `f(x = 100 ~= 0..100, y ~= 0..100 = 1, z ~= 1..100, p ~= 0.001..5, shape ~= (tri, sin, tan) = sin)`
     + matches Ruby's regex-search operator, inversed
     + matches "equals" as "clamp"
+    → too much `=` noise - not clear associativity; `~` shows better contrast.
 
   * `f(x = 100 ~ {0..100}, y ~ {0..100} = 1, z ~ {1..100}, p ~ {0.001..5}, shape ~ {tri, sin, tan} = sin)`
     + less digit-y as above
@@ -51,6 +52,7 @@
     - confuses of 0..10 and {0..10}
     + allows joining ranges {0..10, 20..30}
       ~ can be solved as 0..10 + 20..30
+    - too curvy
 
   * `f(x = 100 -< 0..100, y -< 0..100 = 1, z -< 1..100, p -< 0.001..5, shape -< (tri, sin, tan) = sin)`
     + visually precise indication of what's going on
@@ -109,17 +111,20 @@
 
   1.1 ✱ What if we get rid of pipe operator and just use "last expression" placeholder?
     * `a; ^ + 1;`
-    + looks sick & clean
-    + most compact
-    + no legacy pipes
+    + clean, compact
+    + caret character literally defines as "insertion point"
+    + wikipedia uses ^ for referencing
+    + comes well with "last expression result" logic.
     - doesn't allow easy use in initializer
       ~+ unless we do ...a=(x;^+y)
     - not clear how to apply to group
       ~+ ...a=(x1,x2,x3;^+y) - does it apply to sequence?
+        ~ yes, to get n-th member do ^[0] or ^.0
         ~ semic is noisy here.
     -~ doesn't make much difference with just ...a=(tmp=x;tmp=tmp+y), only shorter
     ~ can possibly do `^2`, `^3` in wasm-style access to stack variables
     - enforces redundant parens, compared to `...a=x|>add(y)`
+    - can't go as single fn argument a(b; c(^, d)) vs a(b | c(d))
 
   2. ~~Pass first argument[s] to pipe operator (elixir/R-like): `source |> lp(frq, Q)`?~~
     + That would be just direct R/elixir pipes.
@@ -251,7 +256,7 @@
     → very simple to instead do 1/2*pi, 60*h + 10*m
   - we can't include all units anyways, it's pointless
 
-## [x] End operator → no much sense but decorative for now.
+## [x] End operator → indicator of return/export statement.
 
   * `.` operator can finish function body and save state. `delay(x,y) = ...d=[1s], z=0; d[z++]=x; d[z-y].`
   * ? is it optional?
@@ -273,6 +278,20 @@
     - both are unnecessary; it's natural to return last item without indicator
     - makes confusion
   * ? + can be used as export marker in a module.
+  * + we may need early return as a() = (a?b. c+d.)
+  → (a,b,c) returns group; (a;b;c) returns last; (a;b.c;) returns b but requires ; as `(a;b.;c;)`; (a?b.:c;d) returns b or d.
+    * the logic is: group figures out result based on end indicator, else takes full internal value.
+
+### [x] early return?
+
+  * can often see `if (a) return;` - useful construct. How's that in sonl?
+  1. `a ? value.`
+    * There doesn't seem to be other options.
+    → `a ? b.;` expects `;` at the end.
+      * skipping ; means node is the last element: `(a;b;c.)`
+  2. not supporting that.
+    + simpler flow/logic
+    + no (b.c;d) case
 
 ## [x] State management → function state identified by callsite
 
@@ -281,15 +300,16 @@
     + that solves problem of instancing
     + identified by callstack
 
-### [ ] Load state syntax
+### [x] Load state syntax → `...` seems to be unconflicting meaningfulness.
 
   * There's disagreement on `...` is best candidate for loading prev state. Let's consider alternatives.
   1. `...x1,y1,x2,y2`
     + clear
     + matches punctuation meaning
-    - ostensibly conflicts with ranges (imo no)
+    - ostensibly conflicts with ranges .. (imo no)
     - possibly doesn't indicate well enough if ... is applied to group or first item
-      ~ to a group
+      + to a group. It is super-useful to have list of stateful variables.
+    + doesn't pollute variables with any prefixes
     ```
     lp([x0], freq = 100 in 1..10000, Q = 1.0 in 0.001..3.0) = (
       ...x1, x2, y1, y2 = 0;    // internal state
@@ -1222,13 +1242,15 @@
   * Ref https://en.wikipedia.org/wiki/Cardinality
   * Lua, J langs propose # operator for length
     + Math #S indicates cardinality. (number of something)
+    + `#` is `number of` (in Russian №)
+    - `#str` in module space means "load module", `#str` in function scope means `length of function`
   * Icon, Unicon propose * operator for length
-  * Math notation is |a|
   * ? `melody_string[]`
     ~+ sort of math association
     ~+ sort of #, but not as generic
-    + empty array is unused anyways
+    ~+ empty array is unused anyways
   * ? We can do |a| operator for abs(a) or a.length
+    + Math notation is |a|
     - fn syntax is waaay more familiar
     - higher entropy compared to other ops
     - symmetricity causes special parsing requirements as prefix/postfix: `|a + |b * c| / d|`
@@ -1241,6 +1263,8 @@
       ~ not a big deal: that's just an alias
     - .length isn't nice for groups
       ~ that's fine too
+    + we use aliases in fn arguments, in arrays anyways
+    + that's strongest convention
   * channels | len
     - precedence isn't nice
 
@@ -1256,25 +1280,30 @@
     + shorter conditioning a & b | c
     - unconventional
 
-## [ ] JSify, Cify
-  Draft is ready, needs polishing corners and reaching the planned feeling.
-  Taking r&d issues and aligning them.
+## [ ] ASI: semicolons or not?
 
-  * Don't enforce `;` everywhere. Recognize newline intelligently.
+  1. Don't enforce `;` everywhere. Recognize newline intelligently.
     - C/Java-family has them mandatory; Also many JS folk tend to make it mandatory also.
     - It's just simpler and more explicit to have them everywhere
     - It's also a bit low-level-y feeling, which is rather good
     - easier to parse via ;
       ~ prohibits empty statements
-    - no JS problems associated with that, like newline etc.
+    - no ASI JS problems
+    - there's no that blankline intuition in natural languages nor math:
+      newline continues prev line.
     + "bullshit" noise
+
+## [ ] JSify, Cify
+
+  Draft is ready, needs polishing corners and reaching the planned feeling.
+  Taking r&d issues and aligning them.
 
   * There are 4 types available: numbers, functions, booleans, strings. Build around that and reinforce that.
 
   * |>, ->, >-, -<, :> is group of similar operators, they should build intuitionn around. "Would be cool if JS had them"
     * |: → :>, <: loop
-    * `>- is reducer
-    * -> is lambda
+    * `>-` is reducer
+    * `->` is lambda
 
   * Don't extend conditionals, elvis `?:` is enough, the rest is &&, ||
 
@@ -1375,3 +1404,4 @@
 
   + also allows sontree → jstree, just a set of transforms
   * maybe we may need generalizing transformers
+

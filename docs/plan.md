@@ -40,3 +40,5 @@
 * [ ] [sndkit](https://github.com/paulbatchelor/sndkit)
 
 * [ ] Compare to alternatives: rust, soul, elementary-audio
+
+* [ ] fourier-transform
