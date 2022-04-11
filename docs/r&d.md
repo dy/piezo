@@ -4,7 +4,7 @@
 
   * like glsl (data views to underlying block buffer), with [standard channel ids](https://en.wikipedia.org/wiki/Surround_sound#Standard_speaker_channels); swizzles as `a.l, a.r = a.r, a.l; a.fl, a.fr = a.fl`
 
-## [x] `import a,b,c from 'lib'`, `import sin from 'stdlib'`
+## [x] `import a,b,c from 'lib'`, `import sin from 'stdlib'` → `# 'stdlib': sin`, `# 'lib': a,b,c;`
 
   * ? How do we redefine eg. sin from stdlib?
     ? Just reassign to var or give another name? Every fn has unique name?
@@ -40,6 +40,12 @@
       + parens are just means to group items
     + ~ punctuationally refers to range, but direct ~ is too little info
 
+  * `f(x = 100: 0..100, y: 0..100 = 1, z: 1..100, p: 0.001..5, shape: (tri, sin, tan) = sin)`
+    + `:` is a bit more standard type definition
+    - doesn't play well after value.
+    + better fits for loops: `i: 0..100 ?.. i*2` vs `i ~ 0..100 ?.. i*2`
+      - nah, inverting ?: as :? can lead to hell.
+
   * `f(x = 100 ~= 0..100, y ~= 0..100 = 1, z ~= 1..100, p ~= 0.001..5, shape ~= (tri, sin, tan) = sin)`
     + matches Ruby's regex-search operator, inversed
     + matches "equals" as "clamp"
@@ -58,7 +64,7 @@
     + visually precise indication of what's going on
     - false match with reduce operator
 
-## [x] Enums
+## [x] Enums → try avoiding explicit notation
 
   * ? for enums and ranges `{a,b,c}` seems to be the best:
     ref: https://en.wikipedia.org/wiki/Enumerated_type#Syntax_in_several_programming_languages
@@ -76,7 +82,7 @@
 
 ## [x] !? erlang strings: "hello" === [104,101,108,108,111]
 
-## [ ] !? erlang atoms: 'hello' (not string)
+## [x] !? erlang atoms: 'hello' (not string)
   * Atoms are useful for referencing:
     + function instances
       ~ we have funcref type, not necessary
@@ -85,11 +91,12 @@
     + file paths
   * ? we can use i64 for them
   * ? or we can use f64 for all numbers by default and keep rest of types free
+  + ok, can be useful for special syntax with non-string meaning, like paths, dates and other atoms.
 
-## [x] Numbers: float64 by default, unless it's statically inferrable as int64, like ++, +-1 etc ops only
+## [x] Numbers: float64 by default, unless it's statically inferrable as int32, like ++, +-1 etc ops only
   * Boolean operators turn float64 into int64
 
-## [x] Pipes: → let's try basics: lambdas, then pipe overload, then topic reference between expressions, and maybe then pipe operator
+## [x] Pipes: → let's try basics: lambdas, then pipe overload, then topic reference between expressions
 
   1. Placeholder as `x |> #*0.6 + reverb() * 0.4`, `source |> lp($, frq, Q)`?
     ? can there be multiple args to pipe operator? a,b |> runs 2 pipes, not multiarg.
@@ -423,14 +430,14 @@
 ## [x] Elvis operator: `a ?: b` instead of jsy `a ?? b`
   * ~ equivalent to a ? #0 : b
 
-## [x] Init operator: `a ?:= b`
+## [x] Init operator: too monstrous, no
   - pointless: `a = a && b` is a bit meaningless construct, isn't it, we need `a = a ? a : b`, `a = a ?: b`, or `a ?:= b`
 
-## [x] short ternary operators as ` a > b ? a = 1;` → use elvis `?:` or direct JS `a && b`
+## [x] Short ternary operators as ` a > b ? a = 1;` → use elvis `?:` or direct JS `a && b`
   + it not only eliminates else, but also augments null-path operator `a.b?.c`, which is for no-prop just `a.b?c` case.
   - weirdly confusing, as if very important part is lost. Maybe just introduce elvis `a>b ? a=1` → `a<=b ?: a=1`
 
-## [x] Loops: `i in 0..10 :> a,b,c`, `i in src :> a`, `[x*2 <: x in 1,2,3]`
+## [x] Loops: `i ~ 0..10 |: a,b,c`, `i ~ src |: a`, `[x ~ 1,2,3 |: x*2]`
   * `for i in 0..10 (a,b,c)`, `for i in src a;`
   * alternatively as elixir does: `item <- 0..10 a,b,c`
     + also erlang list comprehension is similar: `[x*2 || x <- [1,2,3]]`
@@ -466,8 +473,10 @@
       - mess at the end
   * ? `[ x in 1,2,3 :| x*2 ]` or the vice-versa `[ x * 2 |: x in 1,2,3 ]`
     + vertical bar is used in math notations {x∈R∣x<0}, {x∈R:x<0}
+    + list comprehension uses | or : in many langs
     + `:|` is musical repeat indicator
     + `:` or `|` itself is not enough, it's too overloady or conflicting with ternary.
+    + syntax space has no associations in languages.
     * `i%3 == 0 :| i++`, `a :| b`, `i++ |: i%3 == 0`
     a.`x < 5 :| x++`,  `x++ |: x < 5`, `[ x in 1,2,3 :| x*2 ]`, `[ x * 2 |: x in 1,2,3 ]`
       + reminds label a: ...
@@ -476,30 +485,31 @@
       - it subtly conflicts with elvis operator `x in 1..10 ?: body`, but `x in 1..10 :| body`
         ~ not necessarily - elvis has inversed intuition
       + `x * 2 |` is close intuition to standard list comprehension syntax
-    b. `x < 5 |: x++`,  `x++ :| x < 5`, `[ x in 1,2,3 |: x*2 ]`, `[ x * 2 :| x in 1,2,3 ]`
+    b. `x < 5 |: x++`,  `x++ :| x < 5`, `[ x ~ 1,2,3 |: x*2 ]`, `[ x * 2 :| x ~ 1,2,3 ]`
       + refer to looping body, not condition, which is better by musical intuition
       + it matches elvis operator `x < 5 ?: x++`, `x < 5 |: x++`
         + muscle memory of ternary/elvis
         - it's not elvis by meaning: elvis does "else" branch, when condition is not true, whereas loop does "true" condition.
       + has pipe operator intuition: by some condition produce the following `whileTrue |: produceItem`, `item :| whileTrue`
         + colon gives hint as "multiple" instances created on the right, following `|>` operator intuition
-    - something's off...
+      + like pipe with repeat
   * ? We can take almost purely math convention instead of objects `{ x < 5: x++ }` - procedural call
     ~- with same success can be used without {} - these brackets don't make much sense here only visually
   * ? We can take even simpler convention: { x < 5; x++ } - loops over until last condition is true.
     - do..until version, not much useful on its own. Can be used as combo with above.
   * `x < 5 -< x++`,  `x++ >- x < 5`, `[ x in 1,2,3 -< x*2 ]`, `[ x * 2 >- x in 1,2,3 ]`
     `x < 5 >- x++`,  `x++ -< x < 5`, `[ x in 1,2,3 >- x*2 ]`, `[ x * 2 -< x in 1,2,3 ]`
-  * → ? `x < 5 :> x++`,  `x++ <: x < 5`, `[ x in 1,2,3 :> x*2 ]`, `[ x * 2 <: x in 1,2,3 ]`
+  * → ? `x < 5 :> x++`,  `x++ <: x < 5`, `[ x ~ 1,2,3 :> x*2 ]`, `[ x * 2 <: x ~ 1,2,3 ]`
     + result direction indicator
     + aligns with math, label reference
-    + indicates "many"
-    + less conflict with boolean in condition
+    + indicates "many" (by colon?)
+    + less conflict with boolean in condition, (compared to |:?)
     + adds sense of flow
     + association with <> condition block
     - conflicts with F#'s :> operator
-      ~ we don't deal with explicit types and don't use : in any meaning of types
-  * ? `x < 5 <: x++`,  `x++ :> x < 5`, `[ x in 1,2,3 <: x*2 ]`, `[ x * 2 :> x in 1,2,3 ]`
+      ~ we don't deal with explicit types and don't use : in meaning of types
+    - conflicts visually with leq, geq conditions: `a >= b :> a+b` - unnecessary direction vs `a >= b |: a+b`
+  * ? `x < 5 <: x++`,  `x++ :> x < 5`, `[ x ~ 1,2,3 <: x*2 ]`, `[ x * 2 :> x ~ 1,2,3 ]`
     + meaning of <> block
     + musical reference |:
     + 1:M relation
@@ -521,6 +531,7 @@
     ~+ scala, ~+ elixir, ~+ erlang (~- not exactly them)
   * ? `x < 5 ::> x++`,  `x++ <:: x < 5`, `[ x in 1,2,3 ::> x*2 ]`, `[ x * 2 <:: x in 1,2,3 ]`
     + gives taste of .., : and direction.
+    - too powerful blast
   * ? `x < 5 *> x++`,  `x++ <* x < 5`, `[ x in 1,2,3 *> x*2 ]`, `[ x * 2 <* x in 1,2,3 ]`
   * ? `x < 5 ~> x++`,  `x++ <~ x < 5`, `[ x in 1,2,3 ~> x*2 ]`, `[ x * 2 <~ x in 1,2,3 ]`
   * ? `x < 5 |:> x++`,  `x++ <:| x < 5`, `[ x in 1,2,3 |:> x*2 ]`, `[ x * 2 <:| x in 1,2,3 ]`
@@ -530,6 +541,8 @@
   * ? `x < 5 ?.. x++`,  `[ x in 1,2,3 ?.. x*2 ]`
     + intuition for condition and spread
     + reminds [..len] array creation, but [x in arr ?.. x*2]
+    - doesn't play as nice with ~ instead of in: [x ~ arr ?.. x*2]
+    - clashes/conflicts with `?.` - has nothing similar in intuition
   * ? `x < 5 ..? x++`, `[ x in 1,2,3 ..? x*2 ]`
     + semantic is close to punctuation combo
     + intuition for condition and spread
@@ -539,7 +552,12 @@
     + reminds UML <> block with condition inside
   * ? `x < 5 <:> x++`, `[ x in 1,2,3 <:> x*2 ]`
   * ? `x < 5 :.. x++`,  `x++ ..: x < 5`, `[ x in 1,2,3 ..: x*2 ]`, `[ x * 2 :.. x in 1,2,3 ]`
-  * ? `x < 5 :: x++`,  `x++ :: x < 5`, `[ x in 1,2,3 :: x*2 ]`, `[ x * 2 :: x in 1,2,3 ]`
+  * ? `x < 5 :: x++`,  `x++ :: x < 5`, `[ x ~ 1,2,3 :: x*2 ]`, `[ x * 2 :: x ~ 1,2,3 ]`
+    + "array" intuition (many dots)
+    + reminds : as in label
+    + reminds math notation for list comprehension or set builder
+    + reminds a bit musical meaning for loops
+    - conflict with Java/C's scope resolution operator https://en.wikipedia.org/wiki/Scope_resolution_operator
   * ? `x < 5 <> x++`,  `x++ <> x < 5`, `[ x in 1,2,3 <> x*2 ]`, `[ x * 2 <> x in 1,2,3 ]`
   * ? Do we need reverse direction? - Until is very rarely used, - until style is incompatible for list comprehension
 
@@ -672,7 +690,7 @@
     + we may require block if new variables are defined, else args must be used.
     + () makes warmer inside, sort of nest in literal sense.
 
-## [ ] Inlining / Mangling / compressing
+## [x] Inlining / Mangling / compressing
 
   * language should not break inline composability, like it does python or livescript: you can tightly pack code into a single line.
   * language should be mangle-able, therefore names should not have prefixes
@@ -865,7 +883,7 @@
 
 
 ## [x] Clauses/function overload: → optional, but can select by argument type (pointer vs value)
-  + (input, aParam, kParam) signarure handles any-channels input
+  + (input, aParam, kParam) signature handles any-channels input
   + (i1, i2, i3, a, k) handles multiple inputs
   + ((l, r), a, k) handles per-channel input
   + return a, b, c - returns multiple outputs
@@ -926,7 +944,7 @@
     - needs separate type parsing/tracking subsystem, whereas name immediately reflects type
     + allows multitype definition as `frequency:aParam|kParam`
       + this solves redirection problem
-  3. ✱ use csound-like prefixing for identifying params: ifrequency, ainput, gi
+  3. use csound-like prefixing for identifying params: ifrequency, ainput, gi
     + melds in global params organically `gTime, gSampleRate` (which is glsl-familiar)
     + name reflects type constantly
     + shortness
@@ -1219,7 +1237,7 @@
 
 
 ## [x] Output number of channels can be detected from the last operator in fn body.
-  * gain((..in), amp) = (..in)*amp
+  * gain([..in], amp) = [..in]*amp
 
 ## [x] Batching
 
@@ -1237,18 +1255,22 @@
   * latr can provide alloc and other common helpers
   - not latr nut std. Latr is generic synthesis
 
-## [ ] Array/string length →
+## [x] Array/string length → not abs, but #(a,b,c) or #arr for number of items
   * Ref https://en.wikipedia.org/wiki/Comparison_of_programming_languages_(array)
   * Ref https://en.wikipedia.org/wiki/Cardinality
   * Lua, J langs propose # operator for length
     + Math #S indicates cardinality. (number of something)
     + `#` is `number of` (in Russian №)
     - `#str` in module space means "load module", `#str` in function scope means `length of function`
+    - `#str` doesn't work well as "length of string"
+    -~ `abs()` allows group inside, making # a unary operator would create `#(a,b,c)` stuff, which has strong intuition as records-ish
+      - `#(a,b,c)` doesn't make clear if that's number of items or abs values of all internals (likely the second)
   * Icon, Unicon propose * operator for length
   * ? `melody_string[]`
     ~+ sort of math association
     ~+ sort of #, but not as generic
     ~+ empty array is unused anyways
+    - `(a,b,c)[]` is a mess, `#(a,b,c)` is fine.
   * ? We can do |a| operator for abs(a) or a.length
     + Math notation is |a|
     - fn syntax is waaay more familiar
@@ -1258,17 +1280,18 @@
     ~ not a big deal tbh, arr[-1] is good for last el
   * ? We can do a[0] for array length, and start items from 1: a[1], ...
     + last element coincides with length, a[a.0] === last
-  * ~ we still may want to have .last, .length aliases
+  * ? we still may want to have .last, .length aliases
     - .length can shadow named array properties.
       ~ not a big deal: that's just an alias
     - .length isn't nice for groups
       ~ that's fine too
     + we use aliases in fn arguments, in arrays anyways
     + that's strongest convention
+    - that violates no-keywords principle somewhat, forcing generic structures into latin range
   * channels | len
     - precedence isn't nice
 
-## [ ] Binary operators
+## [x] Binary operators → let's stick to common syntax and not break it
 
   1. JS convention: a|b, a&b, a^b
     - occupies significant operators with secondary operations
@@ -1280,7 +1303,7 @@
     + shorter conditioning a & b | c
     - unconventional
 
-## [ ] ASI: semicolons or not?
+## [x] ASI: semicolons or not? → enforce semicolons.
 
   1. Don't enforce `;` everywhere. Recognize newline intelligently.
     - C/Java-family has them mandatory; Also many JS folk tend to make it mandatory also.
@@ -1290,7 +1313,7 @@
       ~ prohibits empty statements
     - no ASI JS problems
     - there's no that blankline intuition in natural languages nor math:
-      newline continues prev line.
+      newline continues prev line, explicit convention
     + "bullshit" noise
 
 ## [ ] JSify, Cify
@@ -1309,10 +1332,19 @@
 
 ## [x] Make channeled input an array: `gain([left, right], amp)` instead of group destructuring `gain((left, right), amp)`?
 
-  + array better refers to memory send to input, not some internal grouping - so it's "frame"
-  + it allows more clearly indicate output signal, opposed just grouped value:
+  + array better refers to memory send to input, not some internal grouping - so it's a "frame"
+  + it allows more clearly indicate output signal, opposed to just grouped value:
    * `phase -> (sin(phase))` === `phase -> sin(phase)` - because group of 1 element is that element;
    * `phase -> [sin(phase)]` - that's output signal.
+  - [..ch]. vs [..size] − conflict with array creation.
+    - [a] means frame with 1 channel, [a] also means array with 1 item.
+    - [..a] means frame with `a` channels, [..a] also means array with `a` items.
+    ? prohibit array signature in favor of groups: `(..size)` can define a group as well...
+      - nah, groups are just syntax sugar, they don't have serialization or own taste, whereas arrays do.
+    ~ if blockSize === 1, block frame becomes identical to array
+    - when we return [a,b,c] it implies frame, but we may want non-batch array result, do we?
+      ~ worst case it creates redundant block, but the way value is read from it is still array-like frame.
+    → ok, let's keep same for now: it seems array===frame is not a crime
 
 ## [x] No-keywords? Let's try. i18n is a good call.
 
