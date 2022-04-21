@@ -39,6 +39,9 @@
       + matches direct groups
       + parens are just means to group items
     + ~ punctuationally refers to range, but direct ~ is too little info
+    - `i ~ 0..x :|` not the most apparent indicator of assigning to i, intuition wants assignment to be here
+      ~+ can be
+    + less characters than ~=
 
   * `f(x = 100: 0..100, y: 0..100 = 1, z: 1..100, p: 0.001..5, shape: (tri, sin, tan) = sin)`
     + `:` is a bit more standard type definition
@@ -49,6 +52,7 @@
   * `f(x = 100 ~= 0..100, y ~= 0..100 = 1, z ~= 1..100, p ~= 0.001..5, shape ~= (tri, sin, tan) = sin)`
     + matches Ruby's regex-search operator, inversed
     + matches "equals" as "clamp"
+    - isn't interchangable with `=`, has different meaning
     → too much `=` noise - not clear associativity; `~` shows better contrast.
 
   * `f(x = 100 ~ {0..100}, y ~ {0..100} = 1, z ~ {1..100}, p ~ {0.001..5}, shape ~ {tri, sin, tan} = sin)`
@@ -307,7 +311,7 @@
     + that solves problem of instancing
     + identified by callstack
 
-### [x] Load state syntax → `...` seems to be unconflicting meaningfulness.
+## [x] Load state syntax → `*` seems to match "save value" pointers intuition
 
   * There's disagreement on `...` is best candidate for loading prev state. Let's consider alternatives.
   1. `...x1,y1,x2,y2`
@@ -339,42 +343,28 @@
       [y0]
     )
     ```
-  2. `^x1, ^y1, ^x2, ^y2`
+    - `song()=(...t=0;)`
+  2. ~~`^x1, ^y1, ^x2, ^y2`~~
     + topical reference enjoining with the last value
     - too many meanings to topical operator
-  3. `*x1, *x2, *y1, *y2`
-    - C pointers are a mess. User doesn't need to know that.
-  4. `#x1, #x2, #y1, #y2`
-    + internal, private state, act as instance private properties
-    + indicator of special meaning
-    ~ conflict with note names
-    - pollutes the code with #x1 etc.
-    - often means compiler directive or comment
-    - may conflict with cardinal number operator
-
-  5. `[x1, x2, y1, y2] = #`
-    + involves destructuring syntax
-    - introduces unnecessary token
-    - `#` is hardly works on its own not in conjunction
-  6. `#(x1, x2, y1, y2)`
-  7. `<x1, x2, y1, y2>`
-  8. Introduce keywords? Not having if (a) b can be too cryptic.
-
-  9. `$x1, $x2, $y1, $y2`
-    + $ means "save"
-    + $ means "state"
-    + $ means "self"
-    ± $ means money
-    - speaks little about persistency, perceived as var name
-
-  10. `&x1, &x2, &y1, &y2`
-    + means "arguments and x1, x2, y1, y2"
-    + gives reference to C dereference
-    + doesn't indicate & as part of name, more operator-y
-    - conceptually diifferent from binary / boolean operator, looks same
+  → 3. `*x1, *x2, *y1, *y2`
+    + existing convention
+    . C / Rust / Go pointers are the same.
+      > It (* - dereference operator) can be used to access or manipulate the data stored at the memory location, which is pointed by the pointer.
+      > Any operation applied to the dereferenced pointer will directly affect the value of the variable that it points to.
+      . `int x=9, y; int *ptr; ptr = &x; y=*ptr; *ptr = 8`
+        - * implies variable is pointer, & implies variable is value.
+        + * is more ambiguous than &: & gets address of a value, * indicates pointer declaration, as well as assigns (saves) value: it acts almost as part of variable name.
+      + C intuition for "save" value by pointer is `*value = 123`
+    + Go pointers don't have pointers arithmetic, so we're not going to need pointer assignment
+    - no group
+      ~+ group can be defined as `*(a=0,b=1)`
+    ~ `song()=(*t=0;)`
+    + used in JS for generators and other "additional" stuff
+    - a bit hard to "find all"
     ```
     lp([x0], freq = 100 in 1..10000, Q = 1.0 in 0.001..3.0) = (
-      &x1, &x2, &y1, &y2 = 0;    // internal state
+      *(x1, x2, y1, y2) = 0;    // internal state
 
       w = pi2 * freq / sampleRate;
       sin_w, cos_w = sin(w), cos(w);
@@ -393,8 +383,65 @@
       [y0]
     )
     ```
+    ~ `song()=(*t=0;)`
+  3.1 ~~`x1*, x2*, y1*, y2*`~~
+    + typographic meaning as footnote
+    - `x1*=2`
+  4. ~~`#x1, #x2, #y1, #y2`~~
+    + internal, private state, act as instance private properties
+    + indicator of special meaning
+    ~ conflict with note names
+    - pollutes the code with #x1 etc.
+    - often means compiler directive or comment
+    - may conflict with cardinal number (count) operator
+  5. ~~`[x1, x2, y1, y2] = #`~~
+    + involves destructuring syntax
+    - introduces unnecessary token
+    - `#` is hardly works on its own not in conjunction
+    - `#` is reserved for too many things: count, import, comment.
+  6. ~~`#(x1, x2, y1, y2)`~~
+  7. `<x1, x2, y1, y2>`
+  8. Introduce keywords? Not having if (a) b can be too cryptic.
 
-  11. `@x1, @x2, @y1, @y2`
+  9. `$x1, $x2, $y1, $y2`
+    + $ means "save"
+    + $ means "state"
+    + $ means "self"
+    ± $ means money
+    - speaks little about persistency
+    - perceived as var name, not an operator
+  9.1 `$(x1, x2, y1, y2)`
+    - perceived as fn call, not operator
+
+  10. `&x1, &x2, &y1, &y2`
+    + means "arguments and x1, x2, y1, y2"
+    - from C logic means "get address of value"
+    + doesn't indicate & as part of name, more operator-y
+    - conceptually different from binary / boolean operator, looks same
+    ```
+    lp([x0], freq = 100 in 1..10000, Q = 1.0 in 0.001..3.0) = (
+      &(x1, x2, y1, y2) = 0;    // internal state
+
+      w = pi2 * freq / sampleRate;
+      sin_w, cos_w = sin(w), cos(w);
+      a = sin_w / (2.0 * Q);
+
+      b0, b1, b2 = (1.0 - cos_w) / 2.0, 1.0 - cos_w, b0;
+      a0, a1, a2 = 1.0 + a, -2.0 * cos_w, 1.0 - a;
+
+      b0, b1, b2, a1, a2 *= 1.0 / a0;
+
+      y0 = b0*x0 + b1*x1 + b2*x2 - a1*y1 - a2*y2;
+
+      x1, x2 = x0, x1;
+      y1, y2 = y0, y1;
+
+      [y0]
+    )
+    ```
+    ~ `song()=(&t=0;)`
+
+  11. ~~`@x1, @x2, @y1, @y2`~~
     + 'at' means current scope, 'at this'
     + more wordy - less operator-y, as if part of id
     ```
@@ -419,12 +466,22 @@
     )
     ```
   12. `:> x1, x2, y1, y2`
+    ~ `song()=(:>t=0;)`
   13. `:: x1, x2, y1, y2`
+    ~ `song()=(::t=0;)`
   14. `<< x1, x2, y1, y2`
     + Matches ^
       +~ ASCII in 1962 had <- character for _, which was alternative to ^
+    - `song()=(<<t=0;)`
+    - opens tag
 
-## [x] Named array items
+## [x] Binding/referencing variables via pointers? → no
+
+  * Purpose of pointers in go is to pass value by address, rather than copying.
+  * Also it can create references to a variable in memory.
+  * We use arrays for that purpose, therefore we don't need pointers syntax replica.
+
+## [x] Named array items → yes, useful and organic replacement for object structs
 
   * named properties in arrays? `[1,2,3,a:4,b:5]`
     ~ reminds typescript named tuples
@@ -443,7 +500,7 @@
   + it not only eliminates else, but also augments null-path operator `a.b?.c`, which is for no-prop just `a.b?c` case.
   - weirdly confusing, as if very important part is lost. Maybe just introduce elvis `a>b ? a=1` → `a<=b ?: a=1`
 
-## [x] Loops: `i ~ 0..10 |: a,b,c`, `i ~ src |: a`, `[x ~ 1,2,3 |: x*2]`
+## [x] Loops: `i ~= 0..10 :| a,b,c`, `i ~= ..list :| a`, `[x ~= 1,2,3 :| x*2]`
   * `for i in 0..10 (a,b,c)`, `for i in src a;`
   * alternatively as elixir does: `item <- 0..10 a,b,c`
     + also erlang list comprehension is similar: `[x*2 || x <- [1,2,3]]`
@@ -478,7 +535,7 @@
     * `a ? b :|`, `x = [x in 1,2,3 ? x*2 :|]`
       - mess at the end
   * ? `[ x in 1,2,3 :| x*2 ]` or the vice-versa `[ x * 2 |: x in 1,2,3 ]`
-    + vertical bar is used in math notations {x∈R∣x<0}, {x∈R:x<0}
+    + vertical bar is used in math notations: set builder, list comprehension {x∈R∣x<0}, {x∈R:x<0}
     + list comprehension uses | or : in many langs
     + `:|` is musical repeat indicator
     + `:` or `|` itself is not enough, it's too overloady or conflicting with ternary.
@@ -487,18 +544,35 @@
     a.`x < 5 :| x++`,  `x++ |: x < 5`, `[ x in 1,2,3 :| x*2 ]`, `[ x * 2 |: x in 1,2,3 ]`
       + reminds label a: ...
       + keeps body visually clean after bar, as if returning result, condition clarifies body: `[x*2]` → `[x*2 |: x in 1..10]`
-      ~ `|:` sounds like `|` such `:` that, swoooch th th
+      + `|:` sounds like `|` such `:` that, swoooch th th
+        + matches set builder `x++ |: x < 5` as `x++ such that x < 5`
       - it subtly conflicts with elvis operator `x in 1..10 ?: body`, but `x in 1..10 :| body`
         ~ not necessarily - elvis has inversed intuition
       + `x * 2 |` is close intuition to standard list comprehension syntax
+      + since condition is usually smaller than the body, `i ~= 1..100 :|` better indicates repeating part than empty line after condition
+      + musically loop may have multiple ends and end mark `:|` place is uncertain, but `|:` is unambiguously at the beginning of loop.
     b. `x < 5 |: x++`,  `x++ :| x < 5`, `[ x ~ 1,2,3 |: x*2 ]`, `[ x * 2 :| x ~ 1,2,3 ]`
       + refer to looping body, not condition, which is better by musical intuition
+        - it disjoints condition from repeating part. In music |: denotes the beginning of loop, whereas here it stands in the middle.
       + it matches elvis operator `x < 5 ?: x++`, `x < 5 |: x++`
         + muscle memory of ternary/elvis
-        - it's not elvis by meaning: elvis does "else" branch, when condition is not true, whereas loop does "true" condition.
+        - it's not elvis by meaning: elvis does "else" branch, when condition is not true, whereas loop runs "true" condition.
       + has pipe operator intuition: by some condition produce the following `whileTrue |: produceItem`, `item :| whileTrue`
         + colon gives hint as "multiple" instances created on the right, following `|>` operator intuition
-      + like pipe with repeat
+        ~ same can be said about `i ~= 0..100 :| x+=i` - multiple left parts are piped to right
+      - often |: stands at the end of loop line, and looks like
+      ```
+      i ~= 0..100 |:(
+        a++;
+        b+=2
+      )
+      // vs
+      i ~= 0..100 :|
+      (
+        a++;
+        b+=2
+      )
+      ```
   * ? We can take almost purely math convention instead of objects `{ x < 5: x++ }` - procedural call
     ~- with same success can be used without {} - these brackets don't make much sense here only visually
   * ? We can take even simpler convention: { x < 5; x++ } - loops over until last condition is true.
@@ -547,7 +621,7 @@
   * ? `x < 5 ?.. x++`,  `[ x in 1,2,3 ?.. x*2 ]`
     + intuition for condition and spread
     + reminds [..len] array creation, but [x in arr ?.. x*2]
-    - doesn't play as nice with ~ instead of in: [x ~ arr ?.. x*2]
+    - doesn't play as nice with ~ instead of in: [x ~= arr ?.. x*2]
     - clashes/conflicts with `?.` - has nothing similar in intuition
   * ? `x < 5 ..? x++`, `[ x in 1,2,3 ..? x*2 ]`
     + semantic is close to punctuation combo
@@ -1362,7 +1436,7 @@
   + It frees user from caring about variable name conflict. `in`, `from`, `if`, `for`, `at` can be useful variable bits.
   + JS keywords are ridiculous: they block many good names pushing user use marginal names.
 
-## [x] Import no-keyword? @ 'math';
+## [x] Import no-keyword? @ 'math#floor';
 
   * No need to define scope: imports full contents
   * #[math]; (Rusti)
@@ -1433,6 +1507,30 @@
   * importing all or is not nice pattern: that causes implicit conflict.
     * it's better to always assign to a variable to make importable parts explicit.
     - conflicts with notes. We need to import all of them.
+
+### [x] Import subparts → try `@ 'math#floor,cos,sin'`
+
+  1. `@ 'math': sin, cos`
+    + defines global functions
+
+  2. `@ 'math#sin,cos'`
+    + [qwik](https://www.builder.io/blog/hydration-is-pure-overhead)-like
+    + URL notation
+    + SVG `<use href="#ref-to-part">`
+    + no `:` overloading.
+    - global functions come as part of atom
+      ~ they're not really global
+    + easier to type
+    - list `#a,b,c` is non-standard-ish.
+    - disallows spaces: `@ 'math#pi,sin,abs';` looks messy, if imports many items
+      ~ maybe that's nice, since it's not full-fledged syntax anyways
+      ~ besides URLs are like that yep, have a look at font imports.
+      + smaller
+    + looks cleaner as a single "addressing" token.
+    + easier to indicate "import all" as just `@ 'math'`
+
+  2.1 `@math#sin,cos`, `@./path/to/file.son#a,b,c`
+    - messes up with native syntax - paths are not part of it.
 
 ## [x] Wasmtree instead of IR would be simpler:
 
