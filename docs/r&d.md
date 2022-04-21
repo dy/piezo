@@ -68,6 +68,11 @@
     + visually precise indication of what's going on
     - false match with reduce operator
 
+  * `f(x = 100 <- 0..100, y <- 0..100 = 1, z <- 1..100, p <- 0.001..5, shape <- (tri, sin, tan) = sin)`
+    + literally elixir/haskel/erlang/R/Scala's list comprehension assigner
+    + stands in-place for "in" operator
+    + similar to -<
+
 ## [x] Enums → try avoiding explicit notation
 
   * ? for enums and ranges `{a,b,c}` seems to be the best:
@@ -500,7 +505,7 @@
   + it not only eliminates else, but also augments null-path operator `a.b?.c`, which is for no-prop just `a.b?c` case.
   - weirdly confusing, as if very important part is lost. Maybe just introduce elvis `a>b ? a=1` → `a<=b ?: a=1`
 
-## [x] Loops: `i ~= 0..10 :| a,b,c`, `i ~= ..list :| a`, `[x ~= 1,2,3 :| x*2]`
+## [x] Loops: `i <- 0..10 -< a + i`, `i <- ..list -< a`, `[x <- 1,2,3 -< x*2]`
   * `for i in 0..10 (a,b,c)`, `for i in src a;`
   * alternatively as elixir does: `item <- 0..10 a,b,c`
     + also erlang list comprehension is similar: `[x*2 || x <- [1,2,3]]`
@@ -541,7 +546,7 @@
     + `:` or `|` itself is not enough, it's too overloady or conflicting with ternary.
     + syntax space has no associations in languages.
     * `i%3 == 0 :| i++`, `a :| b`, `i++ |: i%3 == 0`
-    a.`x < 5 :| x++`,  `x++ |: x < 5`, `[ x in 1,2,3 :| x*2 ]`, `[ x * 2 |: x in 1,2,3 ]`
+    a.`x < 5 :| x++`,  `x++ |: x < 5`, `[ x <- 1,2,3 :| x*2 ]`, `[ x * 2 |: x in 1,2,3 ]`
       + reminds label a: ...
       + keeps body visually clean after bar, as if returning result, condition clarifies body: `[x*2]` → `[x*2 |: x in 1..10]`
       + `|:` sounds like `|` such `:` that, swoooch th th
@@ -573,12 +578,17 @@
         b+=2
       )
       ```
+    - overall both of these seem a bit confusing and unclear, and do not stand nice with parens.
   * ? We can take almost purely math convention instead of objects `{ x < 5: x++ }` - procedural call
     ~- with same success can be used without {} - these brackets don't make much sense here only visually
   * ? We can take even simpler convention: { x < 5; x++ } - loops over until last condition is true.
     - do..until version, not much useful on its own. Can be used as combo with above.
-  * `x < 5 -< x++`,  `x++ >- x < 5`, `[ x in 1,2,3 -< x*2 ]`, `[ x * 2 >- x in 1,2,3 ]`
-    `x < 5 >- x++`,  `x++ -< x < 5`, `[ x in 1,2,3 >- x*2 ]`, `[ x * 2 -< x in 1,2,3 ]`
+  * ! `x < 5 -< x++`, `[ x <- 1,2,3 -< x*2 ]`
+    + ridiculously hilarious and flowy from design perspective
+    + `in` operator is literally in many languages just `i <- list` from list comprehension
+    + `-<` operator is literally opposite of fold: for list comprehension formula it generates many items
+      + and loop is no-array generalization
+    + `-<` somehow reminds loop block from UML diagrams
   * → ? `x < 5 :> x++`,  `x++ <: x < 5`, `[ x ~ 1,2,3 :> x*2 ]`, `[ x * 2 <: x ~ 1,2,3 ]`
     + result direction indicator
     + aligns with math, label reference
@@ -675,11 +685,13 @@
     - nah, just do `(a,b,c) = d`
     ? Alternatively: do we need nested structures at all? Maybe just flat all the time?
 
-## [ ] -< operator: splits list by some sorter: `a,b,c -< v -> v`
+## [x] -< operator
 
+  * ? splits list by some sorter: `a,b,c -< v -> v`
   * ? or in fact multiplexor? selects input by condition? like a,b,c -< x -> x > 2 ? 1 : 0
-  * ? ~~what if we use it as loop? [ x in 1,2,3 -< x * 2]~~ → use <:
-  * maybe that's just inverse reduce operator. a = sum -< a,b,c
+  * ? what if we use it as loop? [ x <- 1,2,3 -< x * 2]
+    + matches that arrow madness
+  * ? maybe that's just inverse reduce operator. a = sum -< a,b,c
 
 ## [x] comments: //, /* vs ;; and (; ;) → use // without /*
   + ;; make more sense, since ; is separator, and everything behind it doesnt matter

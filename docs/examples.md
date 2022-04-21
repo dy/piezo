@@ -9,7 +9,7 @@
 pi2 = pi*2;
 
 // by default input/params are a-rate
-lp(x0, freq = 100 ~ 1..1k, Q = 1.0 ~ 0.001..3.0) = (
+lp(x0, freq = 100 <- 1..1k, Q = 1.0 <- 0.001..3.0) = (
   $(x1, x2, y1, y2);
 
   w = pi2 * freq / sampleRate;
@@ -47,7 +47,7 @@ noise(x) = sin((x + 10.0) * sin((x + 10.0) ** fract(x) + 10.0));
 main(x) = (
   *t=0; time = ++t / sampleRate / 4.0;
   a = 0, j = 0;
-  j++ < 13 :|
+  j++ < 13 -<
     a += sin((2100 + (noise((j + 2) + floor(time)) * 2500)) * time) *
     (1 - fract(time * floor(mix(1, 5, noise((j + 5.24) + floor(time))))));
 
@@ -70,7 +70,7 @@ expr = (prec=0, end, cc, token, newNode, fn) => (
     lookup[cc]?.(token, prec) ||    // if operator with higher precedence isn't found
     !token && lookup[0]()            // parse literal or quit. token seqs are forbidden: `a b`, `a "b"`, `1.32 a`
   )
-  :| token = newToken
+  -< token = newToken
 
   // check end character
   // FIXME: can't show "Unclose paren", because can be unknown operator within group as well
@@ -80,14 +80,14 @@ expr = (prec=0, end, cc, token, newNode, fn) => (
 );
 
 // skip space chars, return first non-space character
-space(cc) = ((cc = cur.charCodeAt(idx)) <= SPACE :| idx++; cc).
+space(cc) = ((cc = cur.charCodeAt(idx)) <= SPACE -< idx++; cc).
 
 ```
 
 ## AudioGain
 
 ```fs
-gain(frame, amp=1 ~ 0..1) = frame*amp.
+gain(frame, amp=1 <- 0..1) = frame*amp.
 ```
 
 ## Delay
@@ -96,7 +96,7 @@ gain(frame, amp=1 ~ 0..1) = frame*amp.
 ```fs
 // opendsp version: https://github.com/opendsp/delay/blob/master/index.js
 
-dly(delay ~ 1..10, feedback ~ 1..10) = (
+dly(delay <- 1..10, feedback <- 1..10) = (
   *(size=512, buffer=[..size], count=0);
 
   back = count - delay * sampleRate;
@@ -126,9 +126,9 @@ dly(delay ~ 1..10, feedback ~ 1..10) = (
 ## Oscillator
 
 ```fs
-sine(f=432 ~ 0..20k) = sin(f * t * 2pi).
+sine(f=432 <- 0..20k) = sin(f * t * 2pi).
 
-saw(f=432 ~ 0..20k) = 1 - 2 * (t % (1 / f)) * f.
+saw(f=432 <- 0..20k) = 1 - 2 * (t % (1 / f)) * f.
 
 ramp(f) = 2 * (t % (1 / f)) * f - 1.
 
@@ -361,7 +361,8 @@ noise(x) = sin((x + 10) * sin((x + 10) ** (fract(x) + 10)));
 melodytest(time) = (
 	melodyString = "00040008";
 	melody = 0;
-	i = 0; i++ < 5 :|
+	i = 0;
+  i++ < 5 -< (
     melody += tri(
       time * mix(
         200 + (i * 900),
@@ -369,6 +370,7 @@ melodytest(time) = (
         melodyString[floor(time * 2) % #melodyString] / 16
       )
     ) * (1 - fract(time * 4));
+  )
 	melody;
 )
 hihat(time) = noise(time) * (1 - fract(time * 4)) ** 10;
@@ -408,7 +410,7 @@ play() = (
 
   // how would we organize statically compiling loops with dynamic access?
   // similar to GLSL, fully unrolling into linear instructions?
-  c ~ 0..#s :| (
+  c <- 0..#s -<
     sc = s[c], tc = t[c]
 
     tc > 0 ? (      // if trigger c-th is active
@@ -419,7 +421,6 @@ play() = (
       x += sc[tc]   // add sample to output
 
     ) : tc = 0
-  )
 
   i++;
   [x].

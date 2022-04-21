@@ -50,3 +50,10 @@
    +~ soul
    +~ sone
    +~ sour
+
+* line noise (lino)
+   + looks like line noise
+   + produces line noise
+   + matches `mono`
+   + lino is beginning of "linotype"
+
