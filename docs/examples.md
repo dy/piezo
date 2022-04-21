@@ -385,6 +385,8 @@ song() = (
 
 ## Sampler
 
+Plays samples when a signal from inputs come.
+
 ```fs
 @ 'sonr#src';
 
@@ -406,9 +408,18 @@ play() = (
 
   // how would we organize statically compiling loops with dynamic access?
   // similar to GLSL, fully unrolling into linear instructions?
-  c ~ 0..#s :|
-    t[i] ? t[i]++, x += s[c][i] :
-      t[i] = 0;
+  c ~ 0..#s :| (
+    sc = s[c], tc = t[c]
+
+    tc > 0 ? (      // if trigger c-th is active
+
+      i >= #sc ? (  // if end of c-th sound
+        t[c] = 0    // reset trigger
+      ) :
+      x += sc[tc]   // add sample to output
+
+    ) : tc = 0
+  )
 
   i++;
   [x].

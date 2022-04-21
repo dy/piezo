@@ -1435,6 +1435,7 @@
   + No-keywords removes English language bias, allowing real i18 code.
   + It frees user from caring about variable name conflict. `in`, `from`, `if`, `for`, `at` can be useful variable bits.
   + JS keywords are ridiculous: they block many good names pushing user use marginal names.
+  + keywords play role of comments anyways. It's better to put freeword explanation into comments rather than pollute language.
 
 ## [x] Import no-keyword? @ 'math#floor';
 
