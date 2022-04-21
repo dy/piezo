@@ -21,16 +21,16 @@ t('parse: audio-gain', t => {
   is(unbox(parse(`
     range = 0..1000;
 
-    gain([left], volume ~= range) = [left * volume];
-    gain([left, right], volume ~= range) = [left * volume, right * volume];
-    //gain([..channels], volume ~= range) = [..channels * volume];
+    gain([left], volume ~ range) = [left * volume];
+    gain([left, right], volume ~ range) = [left * volume, right * volume];
+    //gain([..channels], volume ~ range) = [..channels * volume];
 
     gain.
   `)), [';',
     ['=', 'range', ['..', '0', '1000']],
-    ['=', ['(', 'gain', [',', ['[', 'left'], ['~=', 'volume', 'range']]], ['[', ['*', 'left', 'volume']]],
+    ['=', ['(', 'gain', [',', ['[', 'left'], ['~', 'volume', 'range']]], ['[', ['*', 'left', 'volume']]],
 
-    ['=', ['(', 'gain', [',', ['[', [',','left','right']], ['~=', 'volume', 'range']]], ['[', [',',['*', 'left', 'volume'],['*', 'right', 'volume']]]],
+    ['=', ['(', 'gain', [',', ['[', [',','left','right']], ['~', 'volume', 'range']]], ['[', [',',['*', 'left', 'volume'],['*', 'right', 'volume']]]],
     ['.', 'gain']
   ])
 })

@@ -1,5 +1,5 @@
 // parser converts syntax into AST/calltree
-import parse, { isId, set as token, lookup, skip, cur, idx, err, expr } from 'subscript/parse.js'
+import parse, { isId, lookup, skip, cur, idx, err, expr, token, unary, binary, nary } from 'subscript/parse.js'
 
 export default parse
 
@@ -9,8 +9,9 @@ PREC_EQ=9, PREC_COMP=10, PREC_SHIFT=11, PREC_SUM=12, PREC_MULT=13, PREC_EXP=14, 
 
 
 // extended id definition
-lookup[0] = ()=>skip(c => isId(c) || c == 35 || c == 64).toLowerCase() // #, @ are parts of id
+parse.id = ()=>skip(c => isId(c) || c == 35 || c == 64).toLowerCase() // #, @ are parts of id
 
+// FIXME:
 const string = q => (qc, c, str='') => {
   qc&&err('Unexpected string') // must not follow another token
   skip()
@@ -35,28 +36,23 @@ const num = (a,fract) => a ? err() : new Number((
 // .1
 // '.',, a=>!a && num(),
 // 0-9
-Array(10).fill(0).forEach((_,i)=>lookup[(''+i).charCodeAt(0)] = num)
+for (let i = 0; i<=9; i++) lookup[_0+i] = num;
 
-
-
-// topic reference
-token('^', PREC_TOKEN, a => ['^'])
-
-// end token
-token('.', PREC_END, a => ['.', a])
 
 // comments
 token('//', PREC_TOKEN, (a, prec) => (skip(c => c >= SPACE), a||expr(prec)))
 
 // sequences
-const sequence = (op, prec, bin=true) => token(op, prec, (a, b) => a && (b=expr(prec), bin&&!b&&err(), a[0] === op && a[2] ? (a.push(b), a) : [op,a,b]))
-sequence('||', PREC_SOME)
-sequence('&&', PREC_EVERY)
-sequence(',', PREC_GROUP, false)
-sequence(';', PREC_SEQ, false)
+nary(',', PREC_GROUP)
+nary(';', PREC_SEQ)
+nary('||', PREC_SOME)
+nary('&&', PREC_EVERY)
 
 // binaries
-const binary = (op, prec, right=prec<0?(prec=-prec,.1):0) => token(op, prec, (a, b) => a && (b=expr(prec-right)) && ([op,a,b]))
+binary('~', PREC_COMP )
+binary('**', PREC_EXP, true)
+binary('=', PREC_ASSIGN, true)
+
 binary('+', PREC_SUM)
 binary('-', PREC_SUM)
 binary('*', PREC_MULT)
@@ -74,36 +70,45 @@ binary('<=', PREC_COMP)
 binary('>>', PREC_SHIFT)
 binary('>>>', PREC_SHIFT)
 binary('<<', PREC_SHIFT)
-binary('~=', PREC_COMP )
-binary('**', -PREC_EXP)
-
-binary('=', -PREC_ASSIGN)
 
 // a,b->b,a
 binary('->', PREC_FUNC)
 // a,b>-c
 binary('>-', PREC_FUNC)
-// a ?.. b
-binary('?..', PREC_LOOP)
+// a |: b
+binary('|:', PREC_LOOP)
 
 
 // unaries
-const unary = (op, prec) => token(op, prec, a => !a && (a=expr(prec-1)) && [op, a])
 unary('+', PREC_UNARY)
 unary('-', PREC_UNARY)
 unary('!', PREC_UNARY)
 unary('~',  PREC_UNARY)
+unary('++', PREC_UNARY)
+unary('--', PREC_UNARY)
+token('++', PREC_UNARY, a => a && ['-',['++',a],1])
+token('--', PREC_UNARY, a => a && ['+',['--',a],1])
 
-// &a
-unary('&', PREC_UNARY)
+// topic reference: ^ a
+unary('^', PREC_TOKEN)
+
+// end token
+unary('.', PREC_END, true)
+
+// a.b
+token('.', PREC_CALL, (a,b) => a && (b=expr(PREC_CALL)) && ['.', a, b])
+
+// a..b, ..b, a..
+token('..', PREC_CALL, a => ['..', a || '', expr(PREC_CALL)])
+
+// ...a
+unary('...', PREC_UNARY)
 
 // # "ab";
 unary('#', PREC_ASSIGN)
 
-// increments
-// ++a → [++, a], a++ → [-,[++,a],1]
-token('++', PREC_UNARY, a => a ? ['-',['++',a],['',1]] : ['++', expr(PREC_UNARY-1)])
-token('--', PREC_UNARY, a => a ? ['+',['--',a],['',1]] : ['--', expr(PREC_UNARY-1)])
+// @ 'ab'
+unary('@', PREC_ASSIGN)
 
 // ?:
 token('?', PREC_COND, (a, b, c) => a && (b=expr(2,58)) && (c=expr(3), ['?', a, b, c]))
@@ -115,16 +120,9 @@ token('[', PREC_CALL,  a => a && ['[', a, expr(0,CBRACK)||err()])
 token('[', PREC_TOKEN, (a) => !a && ['[', expr(0,93)||''])
 token(':', 1.1, (a, b) => (b=expr(1.1)||err(), [':',a,b]))
 
-// a.b
-token('.', PREC_CALL, (a,b) => a && (b=expr(PREC_CALL)) && ['.',a,b])
-
 // (a,b,c), (a)
 token('(', PREC_CALL, a => !a && ['(', expr(0,CPAREN)||err()])
 
 // a(b,c,d), a()
 token('(', PREC_CALL, (a,b) => a && ((b=expr(0, CPAREN)) ? ['(', a, b] : ['(', a]))
-
-// ranges
-token('..', PREC_CALL, a => ['..', a || '', expr(PREC_CALL)])
-
 

@@ -1,3 +1,5 @@
+import watr from 'watr'
+
 // convert sonr source to wat source
 
 // module-level parser
@@ -67,8 +69,7 @@ const transformFunction = (fnName, params, nodes) => {
 // function-level operators
 const transform = {
   ';': ([_, ...statements], ctx) => {
-      // wat doesn't require special order of declarations
-      // return ['module', types, imports, functions, tables, memorys, globals, exports, starts, elements, codes, datas]
+
   },
 
   '=': ([op, l, r]) => {

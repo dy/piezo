@@ -314,6 +314,7 @@
     + clear
     + matches punctuation meaning
     - ostensibly conflicts with ranges .. (imo no)
+    - goes against spread convention
     - possibly doesn't indicate well enough if ... is applied to group or first item
       + to a group. It is super-useful to have list of stateful variables.
     + doesn't pollute variables with any prefixes
@@ -417,6 +418,11 @@
       [y0]
     )
     ```
+  12. `:> x1, x2, y1, y2`
+  13. `:: x1, x2, y1, y2`
+  14. `<< x1, x2, y1, y2`
+    + Matches ^
+      +~ ASCII in 1962 had <- character for _, which was alternative to ^
 
 ## [x] Named array items
 
@@ -1356,7 +1362,7 @@
   + It frees user from caring about variable name conflict. `in`, `from`, `if`, `for`, `at` can be useful variable bits.
   + JS keywords are ridiculous: they block many good names pushing user use marginal names.
 
-## [x] Import no-keyword? # 'math';
+## [x] Import no-keyword? @ 'math';
 
   * No need to define scope: imports full contents
   * #[math]; (Rusti)
@@ -1367,6 +1373,7 @@
     + shebang starts as `#!`
     + music sheets start with # and b
     + similar to Rust
+    - conflicts with cardinality (number) operator: #str literally means number of items in string.
   * shebang `#!'math'`
   * ... 'math', 'latr', 'musi';
   * << 'math', 'latr', 'musi';
@@ -1394,14 +1401,16 @@
     * overloaded + for atoms includes them
   * wildcard? 'math.*', 'latr.*', './my.son/*'
   * `* :: 'math', sin, cos :: 'math'`
-  * `@math: sin, cos; @latr *; @./my-lib.son *`
+  * `@math: sin, cos; @latr; @./my-lib.son`
     + at math: sin, cos
+    + @ has address intuition, which better fits for paths.
   * ✱ `sin, cos @ 'math', * @ 'latr'`
     + a,b at source
     +~ reminds npm namespace convention
-    + reminds CSS @import and other directives
+    + CSS @import, Objective C @import.
     + relatively exceptional character, compared to #, :, &
     - conflicts with npm namespaces `osc1, osc2 @ '@audio-lab/synt'`
+      ~ we may not necessarily want to resolve node_modules path, it's going to be either just `synth` or full path.
   *! what if npm module namespace convention? `'@math/sin,cos'`, `'./my-sound.son/*'`
     ~ similar to just @
   * `'math' / sin, cos;`
