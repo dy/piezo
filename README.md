@@ -1,8 +1,8 @@
 # lino
 
-> **Li**ne **no**ise is terse signal processing language compiling to WASM
+> Terse signal processing language
 
-_Line noise_ is designed primarily for writing sound formulas / audio processing code for various audio targets, such as [AudioWorkletProcessor](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), [audio engines](https://github.com/audiojs/web-audio-api), audio nodes, etc., but can be used for miscellaneous DSP and other batch processing needs.
+**Lino** (from _line noise_) is designed to primarily be used for sound formulas / audio processing code for various audio targets, such as [AudioWorkletProcessor](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), [audio engines](https://github.com/audiojs/web-audio-api), audio nodes, etc., but can be used for miscellaneous DSP and other batch processing needs.
 
 [Motivation](./docs/motivation.md)
 
@@ -15,20 +15,25 @@ Gain processor, providing k-rate amplification of mono, stereo or generic input.
 ```fs
 range = 0..1000;
 
+// mono
 gain([left], volume <- range) = [left * volume];
+
+// stereo
 gain([left, right], volume <- range) = [left * volume, right * volume];
+
+// multi-channel
 gain([..channels], volume <- range) = [..channels * volume];
 ```
 
-Mono/stereo clauses inform the compiler to provide shortcuts for better performance. Generally multi-channel case is enough.
+Mono/stereo clauses provide shortcuts for <span title="Autogenerating clauses from generic case would cause O(c^n) code size grow depending on number/type of arguments. So manual clauses is lower tax and allows better control.">better  performance*</span>, but generally multi-channel case is enough.
 
 Features:
 
 * _function overload_ − function clause is matched by call signature.
-* _channeled_ input/output − `[left]` for mono, `[left, right]` for stereo, `[..channels]` for any number of input channels<strong title="Note that channels is a group, not array, so output must be explicit array.">*</strong>.
-* _a-rate_/_k-rate param type_ − `[arg]` indicates <em title="Accurate, or audio-rate">a-rate</em> param passed as block, direct `arg` param is <em title="Controlling (historical artifact from CSound), ie. block-rate">k-rate</em>, passed as direct value per-block.
+* _channel input/output_ − `[left]` for mono, `[left, right]` for stereo, `[..channels]` for any number of input <span title="Output channels must be explicitly indicated.">channels*</span>.
+* _a-rate_/_k-rate param type_ − `[arg]` indicates <em title="Accurate, or audio-rate, ie. for each sample">a-rate*</em> param, direct `arg` is <em title="Controlling (historical artifact from CSound), blocK-rate − value is fixed for full block">k-rate*</em> param.
 * _range_ − is language-level primitive with `from..to`, `from..<to`, `from>..to` signature, useful in arguments validation, array initialization etc.
-* _validation_ − `a <- range` (`a` in `range`) asserts and clamps argument to provided range, to avoid blowing up volume.
+* _validation_ − `a <- range` (_a ∈ range_, _a in range_) asserts and clamps argument to provided range, to avoid blowing up volume.
 * _destructuring_ − collects array or group members as `[a,..bc] = [a,b,c]`.
 
 ### Biquad Filter
@@ -65,14 +70,15 @@ lp([x0], freq = 100 <- 1..10000, Q = 1.0 <- 0.001..3.0) = (
 Features:
 
 * _import_ − organized via `@ 'lib'` or `@ 'path/to/lib#a,b,c'`. If import members `#a,b,c` are not provided, it imports everything. Built-in libs are: _math_, _std_. Additional libs: _sonr_, _latr_, _musi_ and [others]().
-* _block scope_ − parens `()` may act as block scope, like one-line arrow functions in JS.
+* _scope_ − parens `()` may act as function scope, like one-line arrow functions in JS.
 * _state variables_ − defined as `*state=initValue`, persist value between fn calls. Like language-level react hooks.
-* _grouping_ − comma operator allows bulk operations on multiple operands, eg. `a,b = c,d` → `a=c, b=d`, `(a,b) + (c,d)` → `(a+b, c+d)` etc.
+* _grouping_ − comma operator is first-class citizen and used for <span title="Groups are syntax-level sugar, they're always flat and have no type. To provide language primitive or nesting, use arrays.">group operations*</span>, eg. `a,b = c,d` → `a=c, b=d`, `(a,b) + (c,d)` → `(a+b, c+d)` etc.
 * _end operator_ − `.` indicates return statement or module exports.
 
-### [ZZFX Coin](https://codepen.io/KilledByAPixel/full/BaowKzv)
+### ZZFX
 
-> `zzfx(...[,,1675,,.06,.24,1,1.82,,,837,.06])`:
+Full ZZFX is available in examples, we consider only [coin sound](https://codepen.io/KilledByAPixel/full/BaowKzv):
+> `zzfx(...[,,1675,,.06,.24,1,1.82,,,837,.06])`
 
 ```fs
 @ 'math';
@@ -123,10 +129,10 @@ coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
 
 Features:
 
-* _pipes_ − `|` operator is overloaded as function call for function types, `a | b` → `b(a)`.
-* _lambda functions_ − useful for organizing pipe transforms. <!-- Don't require parens for arguments, since `,` has higher precedence than `->`.-->
-* _named members_ − group members can get alias names as `(foo: a, bar: b)`.
-<!-- * _arrays_ − linear collection of same-type elements with fixed size. Useful for organizing enums, dicts, buffers etc. Arrays support alias name for items: `a = [first: 1, second: 2]` → `a[0] == a.first == 1`. -->
+* _pipes_ − `|` operator is overloaded for functions as `a | b` → `b(a)`.
+* _lambda functions_ − useful for organizing <span title="Don't require parens for arguments, since , has higher precedence than ->">pipe transforms*</span>.
+<!-- * _arrays_ − linear collection of elements. Useful for organizing enums, dicts, buffers etc. -->
+* _named members_ − group or array members can get alias names as `(foo: a, bar: b)`.
 
 ## [Freeverb](https://github.com/opendsp/freeverb/blob/master/index.js)
 
@@ -149,7 +155,7 @@ reverb([..input], room=0.5, damp=0.5) = (
   *combs_b = b0,b1,b2,b3 | stretch,
   *aps = p0,p1,p2,p3 | stretch;
 
-  // combs_a.pipe(a -> comb(a,input,room,damp)).reduce(sum)
+  // combs_a.map(a -> comb(a,input,room,damp)).reduce(sum)
   combs_a | a -> comb(a, input, room, damp) >- sum +
   combs_b | a -> comb(a, input, room, damp) >- sum;
 
@@ -159,9 +165,9 @@ reverb([..input], room=0.5, damp=0.5) = (
 
 Features:
 
-* _multiarg pipes_ − pipe transforms can be applied to multiple arguments. <!--also pipe accounts for transformer number of arguments.--> <!--(similar to jQuery style).-->
-* _fold operator_ − `a,b,c >- fn` acts as `reduce((a,b,c), fn)`, provides efficient way to reduce group or array to value.
-* _topic operator_ −  `^` refers to result of last expression to join in flow fashion without intermediary variables. <!--(that's similar to [Hack pipeline](https://docs.hhvm.com/hack/expressions-and-operators/pipe) or [JS pipeline](https://github.com/tc39/proposal-pipeline-operator), without special operator).-->
+* _multiarg pipes_ − pipe transforms can be applied to <span title="Pipe also accounts for transformer number of arguments">multiple arguments*</span>.
+* _fold operator_ − `a,b,c >- fn` acts as `reduce(a,b,c, fn)`, provides efficient way to reduce a group or array to single value.
+* _topic operator_ −  `^` refers to result of last expression, useful to join expressions in <span title="that's similar to Hack pipeline JS pipeline without special operator.">flow fashion*</span> without intermediary variables.
 
 ## [Floatbeat](https://dollchan.net/bytebeat/index.html#v3b64fVNRS+QwEP4rQ0FMtnVNS9fz9E64F8E38blwZGvWDbaptCP2kP3vziTpumVPH0qZyXzfzHxf8p7U3aNJrhK0rYHfgHAOZZkrlVVu0+saKbd5dTXazolRwnvlKuwNvvYORjiB/LpyO6pt7XhYqTNYZ1DP64WGBYgczuhAQgpiTXEtIwP29pteBZXqwTrB30jwc7i/i0jX2cF8g2WIGKlhriTRcPjSvcVMBn5NxvgCOc3TmqZ7/IdmmEnAMkX2UPB3oMHdE9WcKqVK+i5Prz+PKa98uOl60RgE6zP0+wUr+qVpZNsDUjKhtyLkKvS+LID0FYVSrJql8KdSMptKKlx9eTIbcllvdf8HxabpaJrIXEiycV7WGPeEW9Y4v5CBS07WBbUitvRqVbg7UDtQRRG3dqtZv3C7bsBbFUVcALvwH86MfSDws62fD7CTb0eIghE/mDAPyw9O9+aoa9h63zxXl2SW/GKOFNRyxbyF3N+FA8bPyzFb5misC9+J/XCC14nVKfgRQ7RY5ivKeKmmjOJMaBJSbEZJoiZZMuj2pTEPGunZhqeatOEN3zadxrXRmOw+AA==)
 
@@ -205,7 +211,6 @@ Features:
 
 * _loop operator_ − `cond -< expr` acts as _while_ loop, calling expression until condition holds true. Also used in [list comprehension](./docs/reference#list-comprehension).
 * _string literal_ − `"abc"` acts as array with ASCII codes.
-
 
 ## Language Reference
 
