@@ -42,7 +42,7 @@ pi2 = pi*2;
 sampleRate = 44100;
 
 lp([x0], freq = 100 <- 1..10000, Q = 1.0 <- 0.001..3.0) = (
-  *x1, *x2, *y1, *y2 = 0;    // internal state
+  *x1, *x2, *y1, *y2 = 0;    // state variables - persist values between calls
 
   w = pi2 * freq / sampleRate;
   sin_w, cos_w = sin(w), cos(w);
@@ -64,7 +64,7 @@ lp([x0], freq = 100 <- 1..10000, Q = 1.0 <- 0.001..3.0) = (
 
 Features:
 
-* _import_ − organized via `# 'lib'` or `# 'path/to/lib'`. Built-in libs are: `math`, `std`. Additional libs: `latr`, `musi` and [others]().
+* _import_ − organized via `@ 'lib'` or `@ 'path/to/lib'`. Built-in libs are: `math`, `std`. Additional libs: `latr`, `musi` and [others]().
 * _block scope_ − parens `()` permit defining variables within its scope, making `{}` redundant for blocks (like one-line arrow functions in JS).
 * _state_ − internal function state is persisted between fn calls via & operator `& state=initValue`. That is like language-level react hooks, an alternative to classes with instances.
 * _grouping_ − comma operator allows bulk operations on many variables, such as `a,b,c = d,e,f` → `a=d, b=e, c=f` or `a,b,c + d,e,f` → `a+d, b+e, c+f` etc.
@@ -75,20 +75,20 @@ Features:
 > `zzfx(...[,,1675,,.06,.24,1,1.82,,,837,.06])`:
 
 ```fs
-# 'math';
+@ 'math';
 
 pi2 = pi*2;
 sampleRate = 44100;
 
 // waveshape generators
-oscillator = [
+oscillator = (
   phase -> [1 - 4 * abs( round(phase/pi2) - phase/pi2 )],
   phase -> [sin(phase)]
-];
+);
 
 // adsr weighting
 adsr(x, a, d, (s, sv), r) = (
-  &i=0;
+  *i=0;
   t=i++/sampleRate;
 
   a = max(a, 0.0001);                // prevent click
@@ -112,7 +112,7 @@ curve(amt) = x -> curve(x, amt);
 
 // coin = triangle with pitch jump
 coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
-  &i=0, &phase=0;
+  *i=0, *phase=0;
 
   t = i++/sampleRate;
   phase += (freq + t > delay ? jump : 0) * pi2 / sampleRate;
@@ -130,7 +130,9 @@ Features:
 ## [Freeverb](https://github.com/opendsp/freeverb/blob/master/index.js)
 
 ```fs
-# './combfilter.son', './allpass.son', 'math';
+@ './combfilter.son';
+@ './allpass.son'
+@ 'math';
 
 sampleRate = 44100;
 
@@ -142,9 +144,9 @@ stretch(n) = floor(n * sampleRate / 44100);
 sum(a, b) = a + b;
 
 reverb([..input], room=0.5, damp=0.5) = (
-  &combs_a = (a0,a1,a2,a3 | stretch),
-  &combs_b = (b0,b1,b2,b3 | stretch),
-  &aps = (p0,p1,p2,p3 | stretch);
+  *combs_a = (a0,a1,a2,a3 | stretch),
+  *combs_b = (b0,b1,b2,b3 | stretch),
+  *aps = (p0,p1,p2,p3 | stretch);
 
   (..combs_a | a -> comb(a, input, room, damp)) >- sum +
   (..combs_b | a -> comb(a, input, room, damp)) >- sum;
@@ -164,7 +166,7 @@ This features:
 Transpiled floatbeat/bytebeat song:
 
 ```fs
-# 'math';
+@ 'math';
 
 sampleRate = 44100
 
@@ -192,7 +194,7 @@ snare(time) = noise(floor((time) * 108000)) * (1 - fract(time + 0.5)) ** 12;
 melody(time) = melodytest(time) * fract(time * 2) ** 6 * 1;
 
 song() = (
-  &t=0; time = t++ / sampleRate;
+  *t=0; time = t++ / sampleRate;
   [(kick(time) + snare(time)*.15 + hihat(time)*.05 + melody(time)) / 4].
 ).
 ```
@@ -206,6 +208,13 @@ Features:
 ## Language Reference
 
 ...Coming
+
+
+## Alternatives
+
+* [mono](https://github.com/stagas/mono)
+* [soul](https://github.com/soul-lang/SOUL/blob/master/docs/SOUL_Language.md)
+* [elementary/audio](https://www.elementary.audio/docs/guides/Making_Sound)
 
 
 <p align=center><a href="https://github.com/krsnzd/license/">🕉</a></p>
