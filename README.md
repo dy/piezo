@@ -1,10 +1,13 @@
 # lino
 
-> Lino (*Li*ne *no*ise is sound language compiling to WASM
+> Lino (**Li**ne **no**ise is sound language compiling to WASM
 
-_Line noise_ is designed to be useful for writing sound formulas / audio processing code for various audio targets, such as [AudioWorkletProcessor](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), [audio engines](https://github.com/audiojs/web-audio-api), individual audio nodes etc.
+_Line noise_ is designed primarily for writing sound formulas / audio processing code for various audio targets, such as [AudioWorkletProcessor](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), [audio engines](https://github.com/audiojs/web-audio-api), individual audio nodes etc. But can be extended to non-audio environments.
 
-Initially inspired by [zzfx](https://github.com/KilledByAPixel/ZzFX), [bytebeat](https://github.com/greggman/html5bytebeat), [hxos](https://github.com/stagas/hxos), [web-audio-engine](https://ghub.io/web-audio-engine) and others, it became clear that JS limitations are no-go for sound processing and it needs something more foundational with better low-level control, which WASM perfectly provides.
+## Motivation
+
+Inspired by [zzfx](https://github.com/KilledByAPixel/ZzFX), [bytebeat](https://github.com/greggman/html5bytebeat), [hxos](https://github.com/stagas/hxos), [web-audio-engine](https://ghub.io/web-audio-engine), [mono](https://github.com/stagas/mono) and others, it became clear that JS limitations are no-go for sound processing. It needs foundational layer with better low-level control, like WASM.
+Besides, I had a list of language wishes ([eg.](https://twitter.com/DimaYv/status/1489066335980208141)) from Erlang times and just tired of JavaScript trends.
 
 ## Goals
 
@@ -14,18 +17,19 @@ Initially inspired by [zzfx](https://github.com/KilledByAPixel/ZzFX), [bytebeat]
 * 0 runtime, types predictable in advance, static memory.
 * Compiling to WASM.
 
-## Key concepts
+## Principles
 
 * No-keywords.
 * No implicit globals.
-* Any-case variable names.
-* Comprehensive type inference.
+* Implicit type inference.
+* Case-agnostic variable names.
+* Function overloading.
+* Built-in types operator overloading.
 * State variables instead of OOP.
-* Function overloading by args number.
-* Built-in non-redefinable operator overloading for core types.
 * Groups as first-class citizen: multiple returns, multiple operands.
 
-<!--
+<!-- See [react-hoooks prior art](https://reactjs.org/docs/hooks-faq.html#what-is-the-prior-art-for-hooks) -->
+
 ## Use cases
 
 - describing sounds with tiny footprint (copy-pasteable string);
@@ -33,7 +37,6 @@ Initially inspired by [zzfx](https://github.com/KilledByAPixel/ZzFX), [bytebeat]
 - alternative to heavy soundfonts ([like this](https://magenta.github.io/magenta-js/music/index.html#soundfonts));
 - variable sounds (by analogy with [variable fonts](https://en.wikipedia.org/wiki/Variable_font)) − in reality sounds _are_ variable;
 - fun.
--->
 
 <!-- * drop `source | filter() | reverb() | fx()` and get controls with defaults; changing controls changes values; -->
 
