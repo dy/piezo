@@ -1,8 +1,8 @@
 # lino
 
-> **Li**ne **no**ise is sound language compiling to WASM
+> **Li**ne **no**ise is signal processing language
 
-_Line noise_ is designed primarily for writing sound formulas / audio processing code for various audio targets, such as [AudioWorkletProcessor](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), [audio engines](https://github.com/audiojs/web-audio-api), audio nodes and other batch-processing contexts.
+_Line noise_ is designed primarily for writing sound formulas / audio processing code for various audio targets, such as [AudioWorkletProcessor](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), [audio engines](https://github.com/audiojs/web-audio-api), audio nodes, but can be used for DSP and other efficient batch-processing needs.
 
 [Motivation](./docs/motivation.md)
 
