@@ -4,7 +4,7 @@
 
 _Line noise_ is designed to be useful for writing sound formulas / audio processing code for various audio targets, such as [AudioWorkletProcessor](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), [audio engines](https://github.com/audiojs/web-audio-api), individual audio nodes etc.
 
-Initially inspired by [zzfx](https://github.com/KilledByAPixel/ZzFX), [bytebeat](https://github.com/greggman/html5bytebeat), [hxos](https://github.com/stagas/hxos), [web-audio-engine](https://ghub.io/web-audio-engine) and others, but soon it became clear that JS limitations are no-go for sound processing and it needs something more foundational with better low-level control, which WASM perfectly provides.
+Initially inspired by [zzfx](https://github.com/KilledByAPixel/ZzFX), [bytebeat](https://github.com/greggman/html5bytebeat), [hxos](https://github.com/stagas/hxos), [web-audio-engine](https://ghub.io/web-audio-engine) and others, it became clear that JS limitations are no-go for sound processing and it needs something more foundational with better low-level control, which WASM perfectly provides.
 
 ## Goals
 
@@ -20,10 +20,10 @@ Initially inspired by [zzfx](https://github.com/KilledByAPixel/ZzFX), [bytebeat]
 * No implicit globals.
 * Any-case variable names.
 * Comprehensive type inference.
+* State variables instead of OOP.
 * Function overloading by args number.
 * Built-in non-redefinable operator overloading for core types.
-* Hooks-like state instead of OOP.
-* Groups as language primitive (multiple returns, multiple operands).
+* Groups as first-class citizen: multiple returns, multiple operands.
 
 <!--
 ## Use cases
