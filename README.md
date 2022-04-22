@@ -4,7 +4,8 @@
 
 _Line noise_ is designed primarily for writing sound formulas / audio processing code for various audio targets, such as [AudioWorkletProcessor](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), [audio engines](https://github.com/audiojs/web-audio-api), individual audio nodes etc. But can be extended to non-audio environments.
 
-## Motivation
+<details>
+<summary>Motivation<summary>
 
 Inspired by [zzfx](https://github.com/KilledByAPixel/ZzFX), [bytebeat](https://github.com/greggman/html5bytebeat), [hxos](https://github.com/stagas/hxos), [web-audio-engine](https://ghub.io/web-audio-engine), [mono](https://github.com/stagas/mono) and others, it became clear that JS limitations are no-go for sound processing. It needs foundational layer with better low-level control, like WASM.
 Besides, I had a list of language wishes ([eg.](https://twitter.com/DimaYv/status/1489066335980208141)) from Erlang times and just tired of JavaScript trends.
@@ -32,14 +33,13 @@ Besides, I had a list of language wishes ([eg.](https://twitter.com/DimaYv/statu
 
 ## Use cases
 
-- describing sounds with tiny footprint (copy-pasteable string);
-- reproducing synthesizers;
-- alternative to heavy soundfonts ([like this](https://magenta.github.io/magenta-js/music/index.html#soundfonts));
-- variable sounds (by analogy with [variable fonts](https://en.wikipedia.org/wiki/Variable_font)) − in reality sounds _are_ variable;
-- fun.
+- Descre sounds with tiny footprint (copy-pasteable string);
+- Reproducing synthesizers;
+- Alternative to heavy soundfonts ([like this](https://magenta.github.io/magenta-js/music/index.html#soundfonts));
+- Variable sounds (by analogy with [variable fonts](https://en.wikipedia.org/wiki/Variable_font)) − in reality sounds _are_ variable;
+- drop `source | filter() | reverb() | fx()` and get controls with defaults; changing controls changes values;
 
-<!-- * drop `source | filter() | reverb() | fx()` and get controls with defaults; changing controls changes values; -->
-
+</details>
 
 ## Examples
 
