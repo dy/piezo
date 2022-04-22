@@ -669,15 +669,17 @@
         → easiest would be to provide JS wrapper. The variety of WASM export forms is huge.
   * Export area solves the issue: `gain()=...; export gain`
 
-## [ ] Arrays: should have standard map, filter, reduce methods or not?
+## [ ] Arrays: to be or not to be? → for complex / arbitrary-length / nested structures?
   * ? what if we don't deal with arbitrary-length arrays?
     + it guarantees memory limitation, "embeds" into syntax
     + it removes much need in syntax around arrays like map, filer: it can be as `(a,b,c) | map`
+    - that can be covered by groups
   → ok, for map use groups `(a,b,c)(fn)` or `a,b,c | i->i**.5`
     . for reduce use `a,b,c >- fn` or `a,b,c >- a,b -> a+b`
     ! that is in fact mixing operator! a,b,c >- mix
     !? we can reduce based on reducer's number of args
   * I think we should overload these operators |, >-
+  ?! Groups are flat, small and fixed-size; Arrays are nested and any-length.
 
 ## [x] Concat/flat groups → no need to flattening/deep nesting
   * ?is done via range operator a, ..b, c..d, e (shortened spread)
@@ -1447,15 +1449,16 @@
       newline continues prev line, explicit convention
     + "bullshit" noise
 
-## [ ] JSify, Cify
+## [x] Flowy operators
 
   Draft is ready, needs polishing corners and reaching the planned feeling.
   Taking r&d issues and aligning them.
 
   * There are 4 types available: numbers, functions, booleans, strings. Build around that and reinforce that.
 
-  * |>, ->, >-, -<, :> is group of similar operators, they should build intuitionn around. "Would be cool if JS had them"
-    * |: → :>, <: loop
+  * <-, ->, >-, -< is group of similar operators, they should build intuition around. "Would be cool if JS had them"
+    * |: → :>, <: loop → nah, `-<` is nicer for loop
+    * `<-` is in operator
     * `>-` is reducer
     * `->` is lambda
 
