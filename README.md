@@ -159,9 +159,9 @@ reverb([..input], room=0.5, damp=0.5) = (
 
 Features:
 
-* _multiarg pipes_ − pipe transforms can be applied to multiple arguments; also pipe accounts for transformer number of arguments. <!--(similar to jQuery style).-->
-* _fold operator_ − `a,b,c >- fn` acts as `reduce((a,b,c), fn)`, provides efficient way to fold a group or an array to a single value.
-* _topic operator_ −  `^` refers to result of last expression, to be joined in flow fashion without intermediary variables. <!--(that's similar to [Hack pipeline](https://docs.hhvm.com/hack/expressions-and-operators/pipe) or [JS pipeline](https://github.com/tc39/proposal-pipeline-operator), without special operator).-->
+* _multiarg pipes_ − pipe transforms can be applied to multiple arguments. <!--also pipe accounts for transformer number of arguments.--> <!--(similar to jQuery style).-->
+* _fold operator_ − `a,b,c >- fn` acts as `reduce((a,b,c), fn)`, provides efficient way to reduce group or array to value.
+* _topic operator_ −  `^` refers to result of last expression to join in flow fashion without intermediary variables. <!--(that's similar to [Hack pipeline](https://docs.hhvm.com/hack/expressions-and-operators/pipe) or [JS pipeline](https://github.com/tc39/proposal-pipeline-operator), without special operator).-->
 
 ## [Floatbeat](https://dollchan.net/bytebeat/index.html#v3b64fVNRS+QwEP4rQ0FMtnVNS9fz9E64F8E38blwZGvWDbaptCP2kP3vziTpumVPH0qZyXzfzHxf8p7U3aNJrhK0rYHfgHAOZZkrlVVu0+saKbd5dTXazolRwnvlKuwNvvYORjiB/LpyO6pt7XhYqTNYZ1DP64WGBYgczuhAQgpiTXEtIwP29pteBZXqwTrB30jwc7i/i0jX2cF8g2WIGKlhriTRcPjSvcVMBn5NxvgCOc3TmqZ7/IdmmEnAMkX2UPB3oMHdE9WcKqVK+i5Prz+PKa98uOl60RgE6zP0+wUr+qVpZNsDUjKhtyLkKvS+LID0FYVSrJql8KdSMptKKlx9eTIbcllvdf8HxabpaJrIXEiycV7WGPeEW9Y4v5CBS07WBbUitvRqVbg7UDtQRRG3dqtZv3C7bsBbFUVcALvwH86MfSDws62fD7CTb0eIghE/mDAPyw9O9+aoa9h63zxXl2SW/GKOFNRyxbyF3N+FA8bPyzFb5misC9+J/XCC14nVKfgRQ7RY5ivKeKmmjOJMaBJSbEZJoiZZMuj2pTEPGunZhqeatOEN3zadxrXRmOw+AA==)
 
@@ -203,7 +203,7 @@ song() = (
 
 Features:
 
-* _loop operator_ − `cond -< expr` acts as _while_ loop, calling expression until condition holds true. Used in list comprehension as `[x <- 0..10 -< x*2]`.
+* _loop operator_ − `cond -< expr` acts as _while_ loop, calling expression until condition holds true. Also used in [list comprehension](./docs/reference#list-comprehension).
 * _string literal_ − `"abc"` acts as array with ASCII codes.
 
 
