@@ -248,7 +248,7 @@
         → `Comb(a) = x -> x + a` → `CombArr(a,x) = x+a;  Comb(a) = CombArr.bind(a)`
   ! → operator must uniquely identify type and be macros
 
-## [x] Reduce operator: converts into single expression (fixed length) OR applies reduce
+## [x] Reduce/fold operator: unrols into single expression for groups OR applies reduce/fold for arrays. Acts as convolver also.
 
   * ? Reduce operator? It can be eg. `:>` (2 become 1), or `=>`.
     * ? `a,b,c :> reducer`, like `signals :> #0 + #1`
@@ -494,6 +494,7 @@
   ? Maybe can be done purely as aliases for position? Let's see for use-case
   + in JS that's frequent good-to-have
   + that would organically introduce pattern of named fn arguments either `gain(volume: 1)`
+  + named group items are also useful: `oscillators = (a: x->y, b: x-y)`
 
 ## [x] Elvis operator: `a ?: b` instead of jsy `a ?? b`
   * ~ equivalent to a ? #0 : b
@@ -685,7 +686,7 @@
     - nah, just do `(a,b,c) = d`
     ? Alternatively: do we need nested structures at all? Maybe just flat all the time?
 
-## [x] -< operator
+## [x] -< operator: useful for loops
 
   * ? splits list by some sorter: `a,b,c -< v -> v`
   * ? or in fact multiplexor? selects input by condition? like a,b,c -< x -> x > 2 ? 1 : 0
@@ -717,7 +718,7 @@
 
   * https://twitter.com/bloomofthehours/status/1491797450595528713?s=20&t=1aJpwIDrbNhIjwIohsvxiw
 
-## [x] Groups
+## [x] Groups: basic operations
 
   * `a,b = b,a`
   * `a,b,c + d,e,f → (a+d, b+e, c+f)`
@@ -727,11 +728,11 @@
   . a,b,c = d,e,f       → a=d,b=e,c=f
   . (a,b,c) = (d,e,f)   → a=d, b=e, c=f          // destructured-assembled
   . (a,b,c) = d         → a=d[0], b=d[1], c=d[2] // destructure
-  . (a,b,c) = d,e,f     → a=f[0], b=f[1], c=f[2] // or destructure first? last seems to be convention everywhere
-    . ok, from ↓ logic it's (a,b,c) = (d,e,f)
+  . (a,b,c) = d,e,f     → a=f[0], b=f[1], c=f[2] // destructure group on the right
   . a = b,c,d           → a=(b,c,d)
   . a,b,c = (d,e,f)     → a=(d,e,f),b=(d,e,f),c=(d,e,f)
     - contradicts to js intuition where only c = (d,e,f)
+    + follows local meaning where members on the left get value from the right
   → so there are 2 meanings:
     . () makes group a single component
     . , makes group, but separate components
@@ -740,6 +741,44 @@
   . (a,b,..cd) = (a,b,c,d) → a=a,b=b,cd=(c,d)
   . (a,b,c,d) = (a,b,..cd)
   . (a,..bcd) = e → a=e[0], bdc=e[1..]
+
+## [x] Groups: always-flat? yes, but pipe function accounts for number of args in mapper
+
+  * It seems nested grouping creates more syntax confusion than resolves, like `..combs | a -> comb(a,b,c) >- a,b -> a+b`.
+    - not clear if that's supposed to pass a group or a single value.
+    . Nested structures better be solved via arrays.
+  * Instead, groups can always do flattening, eg. `(a, (b, c), d)` === `(a,b,c,d)` === `a,b,c,d`
+    + that would prove them to be just syntax sugar
+    + that would make them lightweight like a cloud, without rigid type checking
+      * sort of "fluent" type, existing on the time of syntax analyser
+    + that would simplify fold / pipe logic, meaning they always get applied to each member `combs | a -> comb(a,b)`
+    ? how to pass all group arguments to piping function? (a,b) | (a,b) -> a + b
+      ? maybe extending fold operator to account for processor arguments? eg.
+        * a,b,c >- a -> a * 2  →  a*2, b*2, c*2
+          - nah, following fold logic must return only c*2
+        * a,b,c >- a,b -> a+b  →  (a+b) + c
+        * a,b,c >- a,b,c -> a+b+c → a+b+c
+          - unclear how to shift these args.
+          - index comes as third argument usually
+        ? it generalizes then as "convolve", where window is defined by number of arguments
+          - not really: convolver doesn't fold signal
+      ? or - loop operator with function may act as map
+        * a,b,c -< a -> a*2
+      ? or - we can pass all args depending on args count in pipe transform:
+        * `a,b,c | a,b -> a+b`  means  `((a,b) | a,b->a+b, (b,c) | a,b->a+B)`
+        + yep. seems like a way to go,
+        + establishes operator-overloading pattern
+      ? do we need index argument for pipe transformer
+        - no, pipe is not mapper...
+        ? how do we map arrays then
+          * list comprehension: i <- arr -< i * 10
+
+## [ ] Convolver operator?
+
+  * Fold operator gives thought to convolver operator which slides window depending on number of arguments,
+    samples ^ (a,b,c,d,e) -> a*0.1 + b*0.2 + c*0.4 + d*0.2 + e*0.1 returns all same samples weighted with a formula
+    - can be too hard for big kernels
+    - debases point of arguments spread: `samples ^ (...kernel) ->` - what's supposed kernel size?
 
 ## [x] Array slice takes ranges a[1..3], unlike python
 
