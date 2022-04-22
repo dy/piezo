@@ -131,8 +131,8 @@ Features:
 
 * _pipes_ − `|` operator is overloaded for functions as `a | b` → `b(a)`.
 * _lambda functions_ − useful for organizing <span title="Don't require parens for arguments, since , has higher precedence than ->">pipe transforms*</span>.
-<!-- * _arrays_ − linear collection of elements. Useful for organizing enums, dicts, buffers etc. -->
 * _named members_ − group or array members can get alias names as `(foo: a, bar: b)`.
+<!-- * _arrays_ − linear collection of elements. Useful for organizing enums, dicts, buffers etc. -->
 
 ## [Freeverb](https://github.com/opendsp/freeverb/blob/master/index.js)
 
