@@ -21,11 +21,11 @@ Besides, I had a list of language wishes ([eg.](https://twitter.com/DimaYv/statu
 
 * No-keywords.
 * No implicit globals.
+* Function overloading.
 * Implicit type inference.
 * Case-agnostic variable names.
-* Function overloading.
-* Built-in types operator overloading.
 * State variables instead of OOP.
+* Built-in types operator overloading.
 * Groups as first-class citizen: multiple returns, multiple operands.
 
 <!-- See [react-hoooks prior art](https://reactjs.org/docs/hooks-faq.html#what-is-the-prior-art-for-hooks) -->
