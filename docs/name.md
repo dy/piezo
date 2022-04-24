@@ -52,8 +52,10 @@
    +~ sour
 
 * line noise (lino)
+   + sonlang can be more generic than just sound: any linear signals
    + looks like line noise
    + produces line noise
    + matches `mono`
    + lino is beginning of "linotype"
-
+   - .son extension is missing
+      + .lin extension is pretty cool too, like flax

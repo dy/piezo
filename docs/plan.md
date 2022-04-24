@@ -6,10 +6,10 @@
   * [x] ~~make subscript generate wasm binary for evaluator.~~ nah, later
     * Example: https://crypto.stanford.edu/~blynn/asm/wasm.html
 
-* [ ] Watr
-  * [ ] compiler
-  * [ ] parser: very basic commands, no legacy
-  * [ ] Compare vs wabt, wat-compiler
+* [x] Watr
+  * [x] compiler
+  * [x] parser: very basic commands, no legacy
+  * [x] Compare vs wabt, wat-compiler
   * [ ] Repl with compiler selector
 
 * [ ] stdlib
@@ -23,7 +23,7 @@
 * [ ] Minimal set:
   * [ ] common expressions
   * [ ] name(a,b,c) = body.
-  * [ ] &state
+  * [ ] *state
     * [ ] instances state can be allocated as global variables in advance by stacktrace
   * [ ] . end operator
 

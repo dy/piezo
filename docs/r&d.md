@@ -298,7 +298,7 @@
   → (a,b,c) returns group; (a;b;c) returns last; (a;b.c;) returns b but requires ; as `(a;b.;c;)`; (a?b.:c;d) returns b or d.
     * the logic is: group figures out result based on end indicator, else takes full internal value.
 
-### [x] early return?
+## [x] Early return?
 
   * can often see `if (a) return;` - useful construct. How's that in sonl?
   1. `a ? value.`
@@ -308,6 +308,18 @@
   2. not supporting that.
     + simpler flow/logic
     + no (b.c;d) case
+
+## [ ] Return operator: alternatives
+
+  1. `.`
+    + erlang-y
+    + very natural
+    - early return is weak `a ? b.;`
+      - can't suppress semicolon: `a ? b. c + d;`
+    - exported global is confusing `sampleRate = 44100.;`
+  * `a ? b...;`, `sampleRate = 44100...;`
+  * `a ? b!;`, `sampleRate = 44100!;`
+  * `a ? b :| c + d`, `sampleRate = 44100:|;`
 
 ## [x] State management → function state identified by callsite
 

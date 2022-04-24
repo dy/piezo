@@ -1,9 +1,9 @@
 import watr from 'watr'
 
-// convert sonr source to wat source
+// convert lino source to wat source
 
 // module-level parser
-const transformModule = node => {
+const buildModule = node => {
   //a. → //a.;
   if (node[0] !== ';') node = [';', node]
   let [_, ...nodes] = node
@@ -53,7 +53,7 @@ const transformModule = node => {
   return ['module', ...functions, ...exports]
 };
 
-const transformFunction = (fnName, params, nodes) => {
+const buildFunc = (fnName, params, nodes) => {
   // =b, =(a+b.), =(a+b;b.)
   nodes = nodes[0] === '(' ?  nodes[1][0] === ';' ? nodes[1].slice(1) : [nodes[1]] : [nodes]
   params = params[0] === ',' ? params.slice(1) : params ? [params] : []

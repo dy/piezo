@@ -13,6 +13,7 @@ Besides, I had a list of language wishes ([eg.](https://twitter.com/DimaYv/statu
 * sound-formulas
 * function params can be signals themselves
 * importable DSP libs: sound design, melody design, synth design, analysis, live, stdlib etc.
+* Compiles to different targets
 
 ## Principles
 
