@@ -6,7 +6,11 @@
 
 [Motivation](./docs/motivation.md) | [Intro](./docs/intro.md) | [Documentation](./docs/reference.md) | [Examples](./docs/examples.md).
 
-## Examples
+## Intro
+
+_Lino_ operates in [block]() processing context: each function takes either a-param or k-param arguments with block of channel data and may have internal state persisted between calls. In result it compiles to optimized WASM code that can be called from eg. JS side.
+
+Let's consider language features through examples.
 
 ### Gain
 
@@ -29,7 +33,7 @@ Mono/stereo clauses provide shortcuts for <span title="Autogenerating clauses fr
 
 Features:
 
-* _function overload_ − function clause is matched by call signature.
+* _function overload_ − function clause is matched by call signature in compile-time.
 * _channel input/output_ − `[left]` for mono, `[left, right]` for stereo, `[..channels]` for any number of input <span title="Output channels must be explicitly indicated.">channels*</span>.
 * _a-rate_/_k-rate param type_ − `[arg]` indicates <em title="Accurate, or audio-rate, ie. for each sample">a-rate*</em> param, direct `arg` is <em title="Controlling (historical artifact from CSound), blocK-rate − value is fixed for full block">k-rate*</em> param.
 * _range_ − is language-level primitive with `from..to`, `from..<to`, `from>..to` signature, useful in arguments validation, array initialization etc.
