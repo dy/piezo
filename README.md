@@ -75,7 +75,7 @@ Features:
 
 * _import_ − organized via `@ 'lib'` or `@ 'path/to/lib#a,b,c'`. If import members `#a,b,c` are not provided, it imports everything. Built-in libs are: _math_, _std_. Additional libs: _sonr_, _latr_, _musi_ and [others]().
 * _scope_ − parens `()` may act as function scope, like one-line arrow functions in JS.
-* _state variables_ − defined as `*state=initValue`, persist value between fn calls. Like language-level react hooks.
+* _state variables_ − defined as `*state=init` persist value between <span title="Detected by callsite or module instance">fn calls*</span>.
 * _grouping_ − comma operator is first-class citizen and used for <span title="Groups are syntax-level sugar, they're always flat and have no type. To provide language primitive or nesting, use arrays.">group operations*</span>, eg. `a,b = c,d` → `a=c, b=d`, `(a,b) + (c,d)` → `(a+b, c+d)` etc.
 * _end operator_ − `.` indicates return statement or module exports.
 
