@@ -1,10 +1,10 @@
 // parser converts syntax into AST/calltree
 import parse, { isId, lookup, skip, cur, idx, err, expr, token, unary, binary, nary } from 'subscript/parse.js'
 
-export default parse
+export default (src) => parse(src)
 
-const OPAREN=40, CPAREN=41, OBRACK=91, CBRACK=93, SPACE=32, DQUOTE=34, PERIOD=46, _0=48, _9=57,
-PREC_SEQ=1, PREC_END=1.5, PREC_ASSIGN=2, PREC_FUNC=2, PREC_LOOP=2, PREC_GROUP=3.14, PREC_COND=3, PREC_SOME=4, PREC_EVERY=5, PREC_OR=6, PREC_XOR=7, PREC_AND=8,
+const OPAREN=40, CPAREN=41, OBRACK=91, CBRACK=93, SPACE=32, QUOTE=39, DQUOTE=34, PERIOD=46, BSLASH=92, _0=48, _9=57,
+PREC_SEQ=1, PREC_END=1, PREC_ASSIGN=2, PREC_FUNC=2, PREC_LOOP=2, PREC_GROUP=3.14, PREC_COND=3, PREC_SOME=4, PREC_EVERY=5, PREC_OR=6, PREC_XOR=7, PREC_AND=8,
 PREC_EQ=9, PREC_COMP=10, PREC_SHIFT=11, PREC_SUM=12, PREC_MULT=13, PREC_EXP=14, PREC_UNARY=15, PREC_POSTFIX=16, PREC_CALL=18, PREC_TOKEN=20
 
 
@@ -20,19 +20,20 @@ const string = q => (qc, c, str='') => {
     else str += skip()
   }
   skip()
-  return new String(str)
+  return [String.fromCharCode(q),str]
 },
 escape = {n:'\n', r:'\r', t:'\t', b:'\b', f:'\f', v:'\v'}
-token('"', PREC_TOKEN, string(DQUOTE))
+lookup[DQUOTE] = string(DQUOTE)
+lookup[QUOTE] = string(QUOTE)
 
 // 'true', 20, a => a ? err() : ['',true],
 // 'false', 20, a => a ? err() : ['',false],
 
-const num = (a,fract) => a ? err() : new Number((
+const num = (a,fract) => a ? err() : ['float', (
   a = skip(c => c>=_0 && c<=_9),
   cur[idx]==='.' && (fract = skip(c => c>=_0 && c<=_9)) && (a += fract),
   (a=+a)!=a?err('Bad number', a) : a
-))
+)]
 // .1
 // '.',, a=>!a && num(),
 // 0-9
@@ -94,6 +95,9 @@ unary('^', PREC_TOKEN)
 
 // end token
 unary('.', PREC_END, true)
+
+// import
+unary('@', PREC_TOKEN)
 
 // a.b
 token('.', PREC_CALL, (a,b) => a && (b=expr(PREC_CALL)) && ['.', a, b])

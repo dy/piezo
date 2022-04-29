@@ -12,6 +12,8 @@
   * [x] Compare vs wabt, wat-compiler
   * [ ] Repl with compiler selector
 
+* [ ] mono sine wave + gain case
+
 * [ ] stdlib
   * cos, sin, pow, mod
 

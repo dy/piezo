@@ -3,10 +3,10 @@ import parse from '../src/parse.js'
 
 
 t('parse: common', t => {
-  is(unbox(parse('1+1')), ['+', '1', '1'])
+  is(parse('1+1'), ['+', ['float', 1], ['float', 1]])
   is(parse('a+b-c'), ['-',['+', 'a', 'b'],'c'])
 
-  is(unbox(parse(`x([left], v)`)), ['(','x',[',',['[','left'],'v']])
+  is(parse(`x([left], v)`), ['(','x',[',',['[','left'],'v']])
 })
 
 t('parse: identifiers', t => {
@@ -18,7 +18,7 @@ t('parse: identifiers', t => {
 })
 
 t('parse: audio-gain', t => {
-  is(unbox(parse(`
+  is(parse(`
     range = 0..1000;
 
     gain([left], volume ~ range) = [left * volume];
@@ -26,7 +26,7 @@ t('parse: audio-gain', t => {
     //gain([..channels], volume ~ range) = [..channels * volume];
 
     gain.
-  `)), [';',
+  `), [';',
     ['=', 'range', ['..', '0', '1000']],
     ['=', ['(', 'gain', [',', ['[', 'left'], ['~', 'volume', 'range']]], ['[', ['*', 'left', 'volume']]],
 
@@ -36,25 +36,31 @@ t('parse: audio-gain', t => {
 })
 
 t('parse: end operator precedence', t => {
-  is(unbox(parse(`
+  is(parse(`
     x() = 1+2
-  `)), ['=', ['(', 'x'], ['+', '1', '2']])
+  `), ['=', ['(', 'x'], ['+', ['float',1], ['float',2]]])
 
-  is(unbox(parse(`
+  is(parse(`
     x() = 1+2.
-  `)), ['.',['=', ['(', 'x'], ['+', '1', '2']]])
+  `), ['.',['=', ['(', 'x'], ['+', ['float',1], ['float',2]]]])
 
-  is(unbox(parse(`
-    x() = 1+2;
-  `)), [';',['=', ['(', 'x'], ['+', '1', '2']], null])
+  // TODO: semic tests
+  // is(parse(`
+  //   x() = 1+2;
+  // `), [';',['=', ['(', 'x'], ['+', ['float',1], ['float',2]]], null])
 
-  is(unbox(parse(`
-    a,b,c;
-  `)), [';',[',','a','b','c'], null])
+  // is(parse(`
+  //   a,b,c;
+  // `), [';',[',','a','b','c'], null])
 
-  is(unbox(parse(`
+  is(parse(`
     a,b,c.
-  `)), ['.',[',','a','b','c']])
+  `), ['.',[',','a','b','c']])
 })
 
-const unbox = list => list.map(item => Array.isArray(item) ? unbox(item) : !item ? null : item+'')
+t('parse: import', t => {
+  is(parse(`@'math'`), ['@', ['\'','math']])
+  is(parse(`@'math#a'`), ['@', ['\'','math#a']])
+  is(parse(`@'math#a,b,c'`), ['@', ['\'','math#a,b,c']])
+})
+

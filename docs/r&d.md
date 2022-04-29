@@ -259,18 +259,28 @@
     → `(a,b,c) >- a,b -> a+b` (crazy!)
   ! >- operator can be statically analyzable if group length is known (it should be known)
 
-## [x] Units → makes formulas too noisy.
+## [ ] Units
 
   * Units possibly intrudoced as `10k`, `1s`, `1hz`, `1khz`
 
   * ? 1pi, 2pi, 3pi, 3.4pi etc.
-  * 1k, 1M, etc.
-  * 1s, 1m, 1h
-  * 0:12
+    + theoretically fractional type would introduce max precision
+    ~ more natural convention would be pi2, pi3 etc. which can be simply precalculated.
+  * ✓ 1k, 1M, 1G, 1T
+  * ✓ 1s, 1m, 1h
+    * ? 1h12m1s - is it a separate type?
+  * ✗ 0:12
 
   - .5pi/2 etc - complicates parsing, makes formulas unusual, occupies 0xa, 12n, 0b2 namespaces.
-    → very simple to instead do 1/2*pi, 60*h + 10*m
+    → very simple to instead do .5*pi, 60*h + 10*m
+    ~ occupying that namespace is fine: it still serves similar purpose
+    ~ 0.5pi is nice notation too. Same as would be 0.5i.
   - we can't include all units anyways, it's pointless
+    ~ we don't need all, whereas 2k..20k is very elegant, instead of legacy 2e3..20e3
+
+## [ ] Number types: fractions, complex numbers
+
+  + improves precision
 
 ## [x] End operator → indicator of return/export statement.
 
@@ -309,7 +319,7 @@
     + simpler flow/logic
     + no (b.c;d) case
 
-## [ ] Return operator: alternatives
+## [x] Return operator: alternatives → no alternatives, use .
 
   1. `.`
     + erlang-y
@@ -1611,3 +1621,8 @@
   + also allows sontree → jstree, just a set of transforms
   * maybe we may need generalizing transformers
 
+
+## [x] Exported function clause naming → gain_a2_k, gain_a2_a (k1==k, a1==a)
+
+  * There's no way to differentiate gain(channels, aParam) and gain(channels, kParam) not constructing kParam as separate type.
+  * Seems it's nice to export under different names: gain_a_k, gain_a2_k, gain_a1_a1 - no conflicts, no perf tax, scalability (say, another input type), relatively simple convention.

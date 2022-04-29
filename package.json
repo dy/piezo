@@ -4,7 +4,7 @@
     "wabt": "^1.0.27"
   },
   "dependencies": {
-    "subscript": "^7.0.7"
+    "subscript": "^7.2.0"
   },
   "name": "sonscript",
   "description": "> Sound language",
