@@ -2,7 +2,7 @@
 
 > Terse signal processing language
 
-**Lino** (from _line noise_) is designed to primarily be used for sound formulas / audio processing code for various audio targets, such as [AudioWorkletProcessor](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), [audio engines](https://github.com/audiojs/web-audio-api), audio nodes, etc., but can be used for miscellaneous DSP and other batch processing needs.
+**Lino** (*li*ne *no*ise) is designed to primarily be used for sound formulas / audio processing code for various audio targets, such as [AudioWorkletProcessor](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), [audio engines](https://github.com/audiojs/web-audio-api), audio nodes, etc., but can be used for miscellaneous DSP and other batch processing needs.
 
 [Motivation](./docs/motivation.md)
 
