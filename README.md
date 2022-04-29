@@ -4,13 +4,13 @@
 
 **Lino** (*li*ne *no*ise) is designed to primarily be used for sound formulas / audio processing code for various audio targets, such as [AudioWorkletProcessor](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), [audio engines](https://github.com/audiojs/web-audio-api), audio nodes, etc., but can be used for miscellaneous DSP and other batch processing needs.
 
-[Motivation](./docs/motivation.md) | [Intro](./docs/intro.md) | [Documentation](./docs/reference.md) | [Examples](./docs/examples.md).
+[Motivation](./docs/motivation.md)  |  [Documentation](./docs/reference.md)  |  [Examples](./docs/examples.md).
 
 ## Intro
 
-_Lino_ operates in [block]() processing context: each function takes either a-param or k-param arguments with block of channel data and may have internal state persisted between calls. In result it compiles to optimized WASM code that can be called from eg. JS side.
+_Lino_ operates in batch processing context: functions take either a-param (block of samples) or k-param (single value) arguments and may have internal state persisted between calls. That compiles to optimized WASM code that can be called from eg. JS side.
 
-Let's consider language features through examples.
+Let's consider language features by examples.
 
 ### Gain
 
