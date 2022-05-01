@@ -74,8 +74,8 @@ lp([x0], freq = 100 <- 1..10000, Q = 1.0 <- 0.001..3.0) = (
 Features:
 
 * _import_ − organized via `@ 'lib'` or `@ 'path/to/lib#a,b,c'`. If import members `#a,b,c` are not provided, it imports everything. <!--Built-in libs are: _math_, _std_. Additional libs: _sonr_, _latr_, _musi_ and [others]().-->
-* _scope_ − parens `()` may act as function scope, like one-line arrow functions in JS.
-* _state variables_ − defined as `*state=init` persist value between <span title="Detected by callsite or module instance">fn calls*</span>.
+* _scope_ − parens `()` may act as function scope, like one-line arrow functions in <span title="{} notation is not used for that purpose.">JS*</span>.
+* _state variables_ − defined as `*state=init` <span title="Like language-level react hooks or display script state variables.">persist value between fn calls (based on callsite)*</span>.
 * _grouping_ − comma operator is first-class citizen and used for <span title="Groups are syntax-level sugar, they're always flat and have no type. To provide language primitive or nesting, use arrays.">group operations*</span>, eg. `a,b = c,d` → `a=c, b=d`, `(a,b) + (c,d)` → `(a+b, c+d)` etc.
 * _end operator_ − `.` indicates return statement or module exports.
 
@@ -91,10 +91,10 @@ pi2 = pi*2;
 sampleRate = 44100;
 
 // waveshape generators
-oscillator = (
+oscillator = [
   saw: phase -> [1 - 4 * abs( round(phase/pi2) - phase/pi2 )],
   sine: phase -> [sin(phase)]
-);
+];
 
 // adsr weighting
 adsr(x, a, d, (s, sv), r) = (
@@ -134,9 +134,9 @@ coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
 Features:
 
 * _pipes_ − `|` operator is overloaded for functions as `a | b` → `b(a)`.
-* _lambda functions_ − useful for organizing <span title="Don't require parens for arguments, since , has higher precedence than ->">pipe transforms*</span>.
-* _named members_ − group or array members can get alias names as `(foo: a, bar: b)`.
-<!-- * _arrays_ − linear collection of elements. Useful for organizing enums, dicts, buffers etc. -->
+* _lambda functions_ − useful for organizing <span title="Don't require parens for arguments, since `,` has higher precedence than `->`.">pipe transforms*</span>.
+* _arrays_ − linear collection of elements: numbers, functions or other arrays. Unlike groups, elements are stored in memory.
+* _named members_ − group or array members can get <span title="Just syntax sugar">alias names*</span> as `[foo: a, bar: b]`.
 
 ## [Freeverb](https://github.com/opendsp/freeverb/blob/master/index.js)
 
@@ -169,9 +169,9 @@ reverb([..input], room=0.5, damp=0.5) = (
 
 Features:
 
-* _multiarg pipes_ − pipe transforms can be applied to <span title="Pipe also accounts for transformer number of arguments">multiple arguments*</span>.
+* _multiarg pipes_ − pipe transforms can be applied to multiple arguments. Depending on arity of pipe target it can act as <span title="`a,b,c | a,b -> a+b` becomes  `(a,b | a,b->a+b), (b,c | a,b->a+b)`">convolver*</span>.
 * _fold operator_ − `a,b,c >- fn` acts as `reduce(a,b,c, fn)`, provides efficient way to reduce a group or array to single value.
-* _topic operator_ −  `^` refers to result of last expression, useful to join expressions in <span title="that's similar to Hack pipeline JS pipeline without special operator.">flow fashion*</span> without intermediary variables.
+* _topic operator_ −  `^` refers to result of last expression, useful to join expressions in <span title="Similar to Hack pipeline or JS pipeline without special operator.">flow fashion*</span> without intermediary variables.
 
 ## [Floatbeat](https://dollchan.net/bytebeat/index.html#v3b64fVNRS+QwEP4rQ0FMtnVNS9fz9E64F8E38blwZGvWDbaptCP2kP3vziTpumVPH0qZyXzfzHxf8p7U3aNJrhK0rYHfgHAOZZkrlVVu0+saKbd5dTXazolRwnvlKuwNvvYORjiB/LpyO6pt7XhYqTNYZ1DP64WGBYgczuhAQgpiTXEtIwP29pteBZXqwTrB30jwc7i/i0jX2cF8g2WIGKlhriTRcPjSvcVMBn5NxvgCOc3TmqZ7/IdmmEnAMkX2UPB3oMHdE9WcKqVK+i5Prz+PKa98uOl60RgE6zP0+wUr+qVpZNsDUjKhtyLkKvS+LID0FYVSrJql8KdSMptKKlx9eTIbcllvdf8HxabpaJrIXEiycV7WGPeEW9Y4v5CBS07WBbUitvRqVbg7UDtQRRG3dqtZv3C7bsBbFUVcALvwH86MfSDws62fD7CTb0eIghE/mDAPyw9O9+aoa9h63zxXl2SW/GKOFNRyxbyF3N+FA8bPyzFb5misC9+J/XCC14nVKfgRQ7RY5ivKeKmmjOJMaBJSbEZJoiZZMuj2pTEPGunZhqeatOEN3zadxrXRmOw+AA==)
 
