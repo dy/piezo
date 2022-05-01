@@ -12,9 +12,9 @@ _Lino_ operates in batch processing context: functions take either a-param (bloc
 
 Let's consider language features by examples.
 
-### Gain
+### Gain Processor
 
-Gain processor, providing k-rate amplification of mono, stereo or generic input.
+Provides k-rate amplification of mono, stereo or generic input.
 
 ```fs
 range = 0..1000;
@@ -29,7 +29,7 @@ gain([left, right], volume <- range) = [left * volume, right * volume];
 gain([..channels], volume <- range) = [..channels * volume];
 ```
 
-Mono/stereo clauses provide shortcuts for <span title="Autogenerating clauses from generic case would cause O(c^n) code size grow depending on number/type of arguments. So manual clauses is lower tax and allows better control.">better  performance*</span>, but generally multi-channel case is enough.
+Mono/stereo clauses provide shortcuts for <span title="Autogenerating clauses from generic case would cause O(c^n) code size grow depending on number/type of arguments. So manual clauses is lower tax and allows better control over output.">better  performance*</span>, but generally multi-channel case is enough.
 
 Features:
 
