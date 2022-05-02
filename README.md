@@ -189,9 +189,9 @@ mix(a, b, c) = (a * (1 - c)) + (b * c);
 tri(x) = 2 * asin(sin(x)) / pi;
 noise(x) = sin((x + 10) * sin((x + 10) ** (fract(x) + 10)));
 melodytest(time) = (
-	melodyString = "00040008",
-	melody = 0;
-	i = 0;
+  melodyString = "00040008",
+  melody = 0;
+  i = 0;
   (i++ < 5) -< (
     melody += tri(
       time * mix(
@@ -202,7 +202,7 @@ melodytest(time) = (
     ) * (1 - fract(time * 4))
   )
 
-	melody.
+  melody.
 )
 hihat(time) = noise(time) * (1 - fract(time * 4)) ** 10;
 kick(time) = sin((1 - fract(time * 2)) ** 17 * 100);
