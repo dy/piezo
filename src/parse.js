@@ -4,7 +4,7 @@ import parse, { isId, lookup, skip, cur, idx, err, expr, token, unary, binary, n
 export default (src) => parse(src)
 
 const OPAREN=40, CPAREN=41, OBRACK=91, CBRACK=93, SPACE=32, QUOTE=39, DQUOTE=34, PERIOD=46, BSLASH=92, _0=48, _9=57,
-PREC_SEQ=1, PREC_END=1, PREC_ASSIGN=2, PREC_FUNC=2, PREC_LOOP=2, PREC_GROUP=3.14, PREC_COND=3, PREC_SOME=4, PREC_EVERY=5, PREC_OR=6, PREC_XOR=7, PREC_AND=8,
+PREC_SEQ=1, PREC_END=.5, PREC_ASSIGN=2, PREC_FUNC=2, PREC_LOOP=2, PREC_GROUP=3.14, PREC_COND=3, PREC_SOME=4, PREC_EVERY=5, PREC_OR=6, PREC_XOR=7, PREC_AND=8,
 PREC_EQ=9, PREC_COMP=10, PREC_SHIFT=11, PREC_SUM=12, PREC_MULT=13, PREC_EXP=14, PREC_UNARY=15, PREC_POSTFIX=16, PREC_CALL=18, PREC_TOKEN=20
 
 
@@ -29,11 +29,16 @@ lookup[QUOTE] = string(QUOTE)
 // 'true', 20, a => a ? err() : ['',true],
 // 'false', 20, a => a ? err() : ['',false],
 
-const num = (a,fract) => a ? err() : ['float', (
-  a = skip(c => c>=_0 && c<=_9),
-  cur[idx]==='.' && (fract = skip(c => c>=_0 && c<=_9)) && (a += fract),
-  (a=+a)!=a?err('Bad number', a) : a
-)]
+const num = (a) => {
+  let fract
+  if (a) err();
+  a = skip(c => c>=_0 && c<=_9);
+  if (cur[idx]==='.') {
+    if (fract = skip(c => c>=_0 && c<=_9)) (a += fract);
+  }
+  if ((a=+a)!=a) err('Bad number', a)
+  return [fract ? 'float' : 'int', a]
+}
 // .1
 // '.',, a=>!a && num(),
 // 0-9
@@ -50,7 +55,7 @@ nary('||', PREC_SOME)
 nary('&&', PREC_EVERY)
 
 // binaries
-binary('~', PREC_COMP )
+binary('<-', PREC_COMP )
 binary('**', PREC_EXP, true)
 binary('=', PREC_ASSIGN, true)
 
@@ -72,13 +77,9 @@ binary('>>', PREC_SHIFT)
 binary('>>>', PREC_SHIFT)
 binary('<<', PREC_SHIFT)
 
-// a,b->b,a
-binary('->', PREC_FUNC)
-// a,b>-c
-binary('>-', PREC_FUNC)
-// a |: b
-binary('|:', PREC_LOOP)
-
+binary('->', PREC_FUNC) // a,b->b,a
+binary('>-', PREC_FUNC) // a,b>-c
+binary('-<', PREC_LOOP) // a -< b
 
 // unaries
 unary('+', PREC_UNARY)
@@ -90,23 +91,18 @@ unary('--', PREC_UNARY)
 token('++', PREC_UNARY, a => a && ['-',['++',a],1])
 token('--', PREC_UNARY, a => a && ['+',['--',a],1])
 
-// topic reference: ^ a
-unary('^', PREC_TOKEN)
 
-// end token
-unary('.', PREC_END, true)
-
-// import
-unary('@', PREC_TOKEN)
+unary('^', PREC_TOKEN) // topic reference / pin: ^ a
+unary('.', PREC_END, true) // end token
 
 // a.b
-token('.', PREC_CALL, (a,b) => a && (b=expr(PREC_CALL)) && ['.', a, b])
+token('.', PREC_CALL, (a,b) => a && (b=expr(PREC_CALL), console.log()) && ['.', a, b])
 
 // a..b, ..b, a..
 token('..', PREC_CALL, a => ['..', a || '', expr(PREC_CALL)])
 
-// ...a
-unary('...', PREC_UNARY)
+// *a
+unary('*', PREC_UNARY)
 
 // # "ab";
 unary('#', PREC_ASSIGN)

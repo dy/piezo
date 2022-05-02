@@ -2,13 +2,13 @@
 
 > Terse signal processing language
 
-**Lino** (*li*ne *no*ise) is designed to primarily be used for sound formulas / audio processing code for various audio targets, such as [AudioWorkletProcessor](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), [audio engines](https://github.com/audiojs/web-audio-api), audio nodes, etc., but can be used for miscellaneous DSP and other batch processing needs.
+**Lino** (*li*ne *no*ise) audio processing language for various audio targets, such as [AudioWorkletProcessor](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), [audio engines](https://github.com/audiojs/web-audio-api), audio nodes, etc. It's designed to express sound formulas and DSP processors in short, fluent and intuitive form with ability to compile to optimized bytecode.
 
 [Motivation](./docs/motivation.md)  |  [Documentation](./docs/reference.md)  |  [Examples](./docs/examples.md).
 
 ## Intro
 
-_Lino_ operates in batch processing context: functions take either a-param (block of samples) or k-param (single value) arguments and may have internal state persisted between calls. That compiles to optimized WASM code that can be called from eg. JS side.
+_Lino_ operates in batch processing context: functions take either a-param or k-param arguments and may have internal state persisted between calls. That compiles to optimized byte code (eg. WASM) that can be called from API (eg. JS) side for blocks of samples.
 
 Let's consider language features by examples.
 
@@ -26,19 +26,20 @@ gain([left], volume <- range) = [left * volume];
 gain([left, right], volume <- range) = [left * volume, right * volume];
 
 // multi-channel
-gain([..channels], volume <- range) = [..channels * volume];
+gain([..channels], volume <- range) = [..channels * volume].
 ```
 
 Mono/stereo clauses provide shortcuts for <span title="Autogenerating clauses from generic case would cause O(c^n) code size grow depending on number/type of arguments. So manual clauses is lower tax and allows better control over output.">better  performance*</span>, but generally multi-channel case is enough.
 
 Features:
 
-* _function overload_ − function clause is matched by call signature in <span title="On export each clause gets name extension as gain_1a_1k, gain_2a_1k etc.">compile-time*</span>. 
+* _function overload_ − function clause is matched by call signature in <span title="On export each clause gets name extension as gain_1a_1k, gain_2a_1k etc.">compile-time*</span>.
 * _channel input/output_ − `[left]` for mono, `[left, right]` for stereo, `[..channels]` for any number of input <span title="Output channels must be explicitly indicated as [], otherwise single value is returned.">channels*</span>.
 * _a-rate_/_k-rate param type_ − `[arg]` indicates <em title="Accurate, or audio-rate, ie. for each sample">a-rate*</em> param, direct `arg` is <em title="Controlling (historical artifact from CSound), blocK-rate − value is fixed for full block">k-rate*</em> param.
 * _range_ − is language-level primitive with `from..to`, `from..<to`, `from>..to` signature, useful in arguments validation, array initialization etc.
 * _validation_ − `a <- range` (_a ∈ range_, _a in range_) asserts and clamps argument to provided range, to avoid blowing up volume.
 * _destructuring_ − collects array or group members as `[a,..bc] = [a,b,c]`.
+* _export_ − `.` after function or global definition indicates module exports.
 
 ### Biquad Filter
 
@@ -73,11 +74,11 @@ lp([x0], freq = 100 <- 1..10000, Q = 1.0 <- 0.001..3.0) = (
 
 Features:
 
-* _import_ − organized via `@ 'lib'` or `@ 'path/to/lib#a,b,c'`. If import members `#a,b,c` are not provided, it imports everything. <!--Built-in libs are: _math_, _std_. Additional libs: _sonr_, _latr_, _musi_ and [others]().-->
-* _scope_ − parens `()` may act as function scope, like one-line arrow functions in <span title="{} notation is not used for that purpose.">JS*</span>.
-* _state variables_ − defined as `*state=init` <span title="Like language-level react hooks or display script state variables.">persist value between fn calls (based on callsite)*</span>.
+* _import_ − organized via `@ 'lib'` or `@ 'path/to/lib#a,b,c'`. If import members `#a,b,c` are not provided, it imports everything. <!-- Built-in libs are: _math_, _std_. Additional libs: _sonr_, _latr_, _musi_ and [others]().-->
+* _scope_ − parens `()` may act as function scope, like one-line arrow functions in JS.
+* _state variables_ − defined as `*state=init` persist value between <span title="Detected by callsite">fn calls*</span>.
 * _grouping_ − comma operator is first-class citizen and used for <span title="Groups are syntax-level sugar, they're always flat and have no type. To provide language primitive or nesting, use arrays.">group operations*</span>, eg. `a,b = c,d` → `a=c, b=d`, `(a,b) + (c,d)` → `(a+b, c+d)` etc.
-* _end operator_ − `.` indicates return statement or module exports.
+* _end operator_ − `.` indicates return statement (besides module exports).
 
 ### ZZFX
 
@@ -104,14 +105,16 @@ adsr(x, a, d, (s, sv), r) = (
   a = max(a, 0.0001);                // prevent click
   total = a + d + s + r;
 
-  t >= total ? 0 : x * (
+  y = t >= total ? 0 : (
     t < a ? t/a :                    // attack
     t < a + d ?                      // decay
     1-((t-a)/d)*(1-sv) :             // decay falloff
     t < a  + d + s ?                 // sustain
     sv :                             // sustain volume
     (total - t)/r * sv
-  ).
+  ) * x
+
+  y.
 );
 adsr(x, a, d, s, r) = adsr(x, a, d, (s, 1), r);   // no-sv alias
 adsr(a, d, s, r) = x -> adsr(x, a, d, s, r);      // pipe
@@ -160,10 +163,10 @@ reverb([..input], room=0.5, damp=0.5) = (
   *aps = p0,p1,p2,p3 | stretch;
 
   // combs_a.map(a -> comb(a,input,room,damp)).reduce(sum)
-  combs_a | a -> comb(a, input, room, damp) >- sum +
-  combs_b | a -> comb(a, input, room, damp) >- sum;
+  (combs_a | a -> comb(a, input, room, damp) >- sum) +
+  (combs_b | a -> comb(a, input, room, damp) >- sum);
 
-  ^, aps >- input, coef -> p + allpass(p, coef, room, damp).
+  (^, aps) >- (input, coef) -> p + allpass(p, coef, room, damp).
 ).
 ```
 
@@ -190,14 +193,16 @@ melodytest(time) = (
 	melodyString = "00040008",
 	melody = 0;
 	i = 0;
-  i++ < 5 -<
+  (i++ < 5) -< (
     melody += tri(
       time * mix(
         200 + (i * 900),
         500 + (i * 900),
         melodyString[floor(time * 2) % melodyString.length] / 16
       )
-    ) * (1 - fract(time * 4));
+    ) * (1 - fract(time * 4))
+  )
+
 	melody.
 )
 hihat(time) = noise(time) * (1 - fract(time * 4)) ** 10;

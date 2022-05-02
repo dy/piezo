@@ -259,22 +259,22 @@
     → `(a,b,c) >- a,b -> a+b` (crazy!)
   ! >- operator can be statically analyzable if group length is known (it should be known)
 
-## [ ] Units
+## [x] Units: time primitive and short orders is natural: 1h2s, 20k
 
   * Units possibly intrudoced as `10k`, `1s`, `1hz`, `1khz`
 
   * ? 1pi, 2pi, 3pi, 3.4pi etc.
     + theoretically fractional type would introduce max precision
     ~ more natural convention would be pi2, pi3 etc. which can be simply precalculated.
+    - .5pi/2 etc - complicates parsing, makes formulas unusual, occupies 0xa, 12n, 0b2 namespaces.
+      → very simple to instead do .5*pi, 60*h + 10*m
+      ~ occupying that namespace is fine: it still serves similar purpose
+      ~ 0.5pi is nice notation too. Same as would be 0.5i.
   * ✓ 1k, 1M, 1G, 1T
   * ✓ 1s, 1m, 1h
     * ? 1h12m1s - is it a separate type?
   * ✗ 0:12
 
-  - .5pi/2 etc - complicates parsing, makes formulas unusual, occupies 0xa, 12n, 0b2 namespaces.
-    → very simple to instead do .5*pi, 60*h + 10*m
-    ~ occupying that namespace is fine: it still serves similar purpose
-    ~ 0.5pi is nice notation too. Same as would be 0.5i.
   - we can't include all units anyways, it's pointless
     ~ we don't need all, whereas 2k..20k is very elegant, instead of legacy 2e3..20e3
 
@@ -788,10 +788,11 @@
           - not really: convolver doesn't fold signal
       ? or - loop operator with function may act as map
         * a,b,c -< a -> a*2
-      ? or - we can pass all args depending on args count in pipe transform:
-        * `a,b,c | a,b -> a+b`  means  `((a,b) | a,b->a+b, (b,c) | a,b->a+B)`
+      !? or - we can pass all args depending on args count in pipe transform:
+        * `a,b,c | a,b -> a+b` means  `((a,b) | a,b->a+b, (b,c) | a,b->a+b)`
         + yep. seems like a way to go,
         + establishes operator-overloading pattern
+        + may act as convolver
       ? do we need index argument for pipe transformer
         - no, pipe is not mapper...
         ? how do we map arrays then
@@ -803,6 +804,9 @@
     samples ^ (a,b,c,d,e) -> a*0.1 + b*0.2 + c*0.4 + d*0.2 + e*0.1 returns all same samples weighted with a formula
     - can be too hard for big kernels
     - debases point of arguments spread: `samples ^ (...kernel) ->` - what's supposed kernel size?
+      ~ we not necessarily support args spread
+  * Pipe can be used as simple convolver (see above):
+    * `a,b,c | a,b -> a+b` means  `((a,b) | a,b->a+b, (b,c) | a,b->a+b)`
 
 ## [x] Array slice takes ranges a[1..3], unlike python
 
