@@ -200,7 +200,7 @@ melodytest(time) = (
         melodyString[floor(time * 2) % melodyString.length] / 16
       )
     ) * (1 - fract(time * 4))
-  )
+  );
 
   melody.
 )
