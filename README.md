@@ -1,8 +1,8 @@
 # lino
 
-> Terse signal processing language
+> Audio processing language
 
-**Lino** (*li*ne *no*ise) audio processing language for various audio targets, such as [AudioWorkletProcessor](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), [audio engines](https://github.com/audiojs/web-audio-api), audio nodes, etc. It's designed to express sound formulas and DSP processors in short, fluent and intuitive form with ability to compile to optimized bytecode.
+**Lino** (*li*ne *no*ise) is designed to express sound formulas and audio/signal processors code in short, fluent and intuitive form with ability to compile to optimized bytecode. Primarily targets [AudioWorkletProcessor](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), [audio engines](https://github.com/audiojs/web-audio-api), etc. 
 
 [Motivation](./docs/motivation.md)  |  [Documentation](./docs/reference.md)  |  [Examples](./docs/examples.md).
 
