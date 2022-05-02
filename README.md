@@ -39,7 +39,6 @@ Features:
 * _range_ − is language-level primitive with `from..to`, `from..<to`, `from>..to` signature, useful in arguments validation, array initialization etc.
 * _validation_ − `a <- range` (_a ∈ range_, _a in range_) asserts and clamps argument to provided range, to avoid blowing up volume.
 * _destructuring_ − collects array or group members as `[a,..bc] = [a,b,c]`.
-* _export_ − `.` after function or global definition indicates module exports.
 
 ### Biquad Filter
 
@@ -78,7 +77,7 @@ Features:
 * _scope_ − parens `()` may act as function scope, like one-line arrow functions in JS.
 * _state variables_ − defined as `*state=init` persist value between <span title="Detected by callsite">fn calls*</span>.
 * _grouping_ − comma operator is first-class citizen and used for <span title="Groups are syntax-level sugar, they're always flat and have no type. To provide language primitive or nesting, use arrays.">group operations*</span>, eg. `a,b = c,d` → `a=c, b=d`, `(a,b) + (c,d)` → `(a+b, c+d)` etc.
-* _end operator_ − `.` indicates return statement (besides module exports).
+* _end operator_ − `.` indicates return statement or module exports.
 
 ### ZZFX
 
