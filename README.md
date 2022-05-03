@@ -76,7 +76,7 @@ Features:
 * _import_ − organized via `@ 'lib'` or `@ 'path/to/lib#a,b,c'`. If import members `#a,b,c` are not provided, it imports everything. <!-- Built-in libs are: _math_, _std_. Additional libs: _sonr_, _latr_, _musi_ and [others]().-->
 * _scope_ − parens `()` may act as function scope, like one-line arrow functions in JS.
 * _state variables_ − defined as `*state=init` persist value between <span title="Detected by callsite">fn calls*</span>.
-* _groups_ − comma enables group operations as `a,b = c,d` → `a=c, b=d`, `(a,b) + (c,d)` → `(a+b, c+d)` etc. Groups are just syntax sugar and are always flat, for data structuring see arrays.
+* _groups_ − comma enables group operations as `a,b = c,d` → `a=c, b=d`, `(a,b) + (c,d)` → `(a+b, c+d)` etc. Groups are just syntax sugar and are always flat, for data structuring see _arrays_.
 * _end operator_ − `.` indicates return statement or module exports.
 
 ### ZZFX
