@@ -219,7 +219,7 @@ Features:
 
 * _loop operator_ − `cond -< expr` acts as _while_ loop, calling expression until condition holds true. Also used in list comprehension as `[i <- 0..10 -< i*2]`.
 * _string literal_ − `"abc"` acts as array with ASCII codes.
-* _cardinal operator_ − `#items` returns number of items of either an array, a string or a group. 
+* _cardinal (length) operator_ − `#items` returns number of items of either an array, a string or a group. 
 
 ## Language Reference
 
