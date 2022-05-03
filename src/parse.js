@@ -3,8 +3,8 @@ import parse, { isId, lookup, skip, cur, idx, err, expr, token, unary, binary, n
 
 export default (src) => parse(src)
 
-const OPAREN=40, CPAREN=41, OBRACK=91, CBRACK=93, SPACE=32, QUOTE=39, DQUOTE=34, PERIOD=46, BSLASH=92, _0=48, _9=57,
-PREC_SEQ=1, PREC_END=.5, PREC_ASSIGN=2, PREC_FUNC=2, PREC_LOOP=2, PREC_GROUP=3.14, PREC_COND=3, PREC_SOME=4, PREC_EVERY=5, PREC_OR=6, PREC_XOR=7, PREC_AND=8,
+const OPAREN=40, CPAREN=41, OBRACK=91, CBRACK=93, SPACE=32, QUOTE=39, DQUOTE=34, PERIOD=46, BSLASH=92, _0=48, _9=57, COLON=58,
+PREC_SEQ=1, PREC_END=4, PREC_ASSIGN=5, PREC_FUNC=2, PREC_LOOP=2, PREC_GROUP=6, PREC_COND=3, PREC_SOME=4, PREC_EVERY=5, PREC_OR=6, PREC_XOR=7, PREC_AND=8,
 PREC_EQ=9, PREC_COMP=10, PREC_SHIFT=11, PREC_SUM=12, PREC_MULT=13, PREC_EXP=14, PREC_UNARY=15, PREC_POSTFIX=16, PREC_CALL=18, PREC_TOKEN=20
 
 
@@ -96,7 +96,7 @@ unary('^', PREC_TOKEN) // topic reference / pin: ^ a
 unary('.', PREC_END, true) // end token
 
 // a.b
-token('.', PREC_CALL, (a,b) => a && (b=expr(PREC_CALL), console.log()) && ['.', a, b])
+token('.', PREC_CALL, (a,b) => a && (b=expr(PREC_CALL)) && ['.', a, b])
 
 // a..b, ..b, a..
 token('..', PREC_CALL, a => ['..', a || '', expr(PREC_CALL)])
@@ -110,8 +110,11 @@ unary('#', PREC_ASSIGN)
 // @ 'ab'
 unary('@', PREC_ASSIGN)
 
+// a?b
+binary('?', PREC_COND)
+
 // ?:
-token('?', PREC_COND, (a, b, c) => a && (b=expr(2,58)) && (c=expr(3), ['?', a, b, c]))
+token('?', PREC_COND, (a, b, c) => a && (b=expr(2)) && (cur[idx]===':'&&idx++) && (c=expr(3), ['?', a, b, c]))
 
 // a[b]
 token('[', PREC_CALL,  a => a && ['[', a, expr(0,CBRACK)||err()])

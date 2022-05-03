@@ -35,15 +35,37 @@ t('parse: audio-gain', t => {
   ])
 })
 
-t('parse: end operator precedence', t => {
-  is(parse(`
-    x() = 1+2
-  `), ['=', ['(', 'x'], ['+', ['float',1], ['float',2]]])
-
+t.only('parse: end operator precedence', t => {
   is(parse(`
     x() = 1+2.
-  `), ['.',['=', ['(', 'x'], ['+', ['float',1], ['float',2]]]])
+  `), ['.',['=', ['(', 'x'], ['+', ['int',1], ['int',2]]]])
 
+  is(parse(`
+    a,b,c.
+  `), ['.',[',','a','b','c']])
+
+  is(parse(`
+    x() = (1+2).
+  `), ['.',['=', ['(', 'x'], ['(', ['+', ['int',1], ['int',2]]]]])
+
+  is(parse(`
+    x() = (1+2.)
+  `), ['=', ['(', 'x'], ['(',['.', ['+', ['int',1], ['int',2]]]]])
+
+  is(parse(`
+    x() = (1+2.).
+  `), ['.',['=', ['(', 'x'], ['(',['.',['+', ['int',1], ['int',2]]]]]])
+
+  is(parse(`
+    x() = (a?b.;c)
+  `), ['=', ['(', 'x'], ['(',[';', ['?','a',['.','b']],'c']]])
+
+  is(parse(`
+    x() = (a?b.c)
+  `), ['=', ['(', 'x'], ['(',['?','a',['.','b','c']]]])
+})
+
+t('parse: semicolon', t => {
   // TODO: semic tests
   // is(parse(`
   //   x() = 1+2;
@@ -52,10 +74,6 @@ t('parse: end operator precedence', t => {
   // is(parse(`
   //   a,b,c;
   // `), [';',[',','a','b','c'], null])
-
-  is(parse(`
-    a,b,c.
-  `), ['.',[',','a','b','c']])
 })
 
 t('parse: import', t => {
