@@ -171,7 +171,7 @@ reverb([..input], room=0.5, damp=0.5) = (
 
 Features:
 
-* _multiarg pipes_ − pipe transforms can be applied to multiple arguments. Depending on arity of pipe target it can act as <span title="`a,b,c | a,b -> a+b` becomes  `(a,b | a,b->a+b), (b,c | a,b->a+b)`">convolver*</span>.
+* _multiarg pipes_ − pipe transforms can be applied to multiple arguments. Depending on arity of pipe target it can act as convolver: `a,b,c | (a,b) -> a+b` becomes  `(a,b | (a,b)->a+b), (b,c | (a,b)->a+b)`.
 * _fold operator_ − `a,b,c >- fn` acts as `reduce(a,b,c, fn)`, provides efficient way to reduce a group or array to single value.
 * _topic operator_ −  `^` refers to result of last expression, useful to join expressions in <span title="Similar to Hack pipeline or JS pipeline without special operator.">flow fashion*</span> without intermediary variables.
 
