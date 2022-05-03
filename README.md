@@ -1,8 +1,8 @@
 # lino
 
-> Terse signal processing language
+> Audio processing language
 
-**Lino** (*li*ne *no*ise) audio processing language for various audio targets, such as [AudioWorkletProcessor](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), [audio engines](https://github.com/audiojs/web-audio-api), audio nodes, etc. It's designed to express sound formulas and DSP processors in short, fluent and intuitive form with ability to compile to optimized bytecode.
+**Lino** (*li*ne *no*ise) is designed to express sound formulas and audio/signal processors code in short, fluent and intuitive form with ability to compile to optimized bytecode. Primarily targets [AudioWorkletProcessor](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), [audio engines](https://github.com/audiojs/web-audio-api), etc. 
 
 [Motivation](./docs/motivation.md)  |  [Documentation](./docs/reference.md)  |  [Examples](./docs/examples.md).
 
@@ -39,7 +39,6 @@ Features:
 * _range_ − is language-level primitive with `from..to`, `from..<to`, `from>..to` signature, useful in arguments validation, array initialization etc.
 * _validation_ − `a <- range` (_a ∈ range_, _a in range_) asserts and clamps argument to provided range, to avoid blowing up volume.
 * _destructuring_ − collects array or group members as `[a,..bc] = [a,b,c]`.
-* _export_ − `.` after function or global definition indicates module exports.
 
 ### Biquad Filter
 
@@ -78,7 +77,7 @@ Features:
 * _scope_ − parens `()` may act as function scope, like one-line arrow functions in JS.
 * _state variables_ − defined as `*state=init` persist value between <span title="Detected by callsite">fn calls*</span>.
 * _grouping_ − comma operator is first-class citizen and used for <span title="Groups are syntax-level sugar, they're always flat and have no type. To provide language primitive or nesting, use arrays.">group operations*</span>, eg. `a,b = c,d` → `a=c, b=d`, `(a,b) + (c,d)` → `(a+b, c+d)` etc.
-* _end operator_ − `.` indicates return statement (besides module exports).
+* _end operator_ − `.` indicates return statement or module exports.
 
 ### ZZFX
 
@@ -190,9 +189,9 @@ mix(a, b, c) = (a * (1 - c)) + (b * c);
 tri(x) = 2 * asin(sin(x)) / pi;
 noise(x) = sin((x + 10) * sin((x + 10) ** (fract(x) + 10)));
 melodytest(time) = (
-	melodyString = "00040008",
-	melody = 0;
-	i = 0;
+  melodyString = "00040008",
+  melody = 0;
+  i = 0;
   (i++ < 5) -< (
     melody += tri(
       time * mix(
@@ -201,9 +200,9 @@ melodytest(time) = (
         melodyString[floor(time * 2) % melodyString.length] / 16
       )
     ) * (1 - fract(time * 4))
-  )
+  );
 
-	melody.
+  melody.
 )
 hihat(time) = noise(time) * (1 - fract(time * 4)) ** 10;
 kick(time) = sin((1 - fract(time * 2)) ** 17 * 100);
