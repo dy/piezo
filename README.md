@@ -197,7 +197,7 @@ melodytest(time) = (
       time * mix(
         200 + (i * 900),
         500 + (i * 900),
-        melodyString[floor(time * 2) % melodyString.length] / 16
+        melodyString[floor(time * 2) % #melodyString] / 16
       )
     ) * (1 - fract(time * 4))
   );
@@ -217,8 +217,9 @@ song() = (
 
 Features:
 
-* _loop operator_ − `cond -< expr` acts as _while_ loop, calling expression until condition holds true. Also used in [list comprehension](./docs/reference#list-comprehension).
+* _loop operator_ − `cond -< expr` acts as _while_ loop, calling expression until condition holds true. Also used in list comprehension as `[i <- 0..10 -< i*2]`.
 * _string literal_ − `"abc"` acts as array with ASCII codes.
+* _cardinal operator_ − `#items` returns number of items of either an array, a string or a group. 
 
 ## Language Reference
 
