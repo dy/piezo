@@ -1,15 +1,12 @@
 // parser converts syntax into AST/calltree
-import parse, { isId, lookup, skip, cur, idx, err, expr, token, unary, binary, nary } from 'subscript/parse.js'
+import parse, { lookup, skip, cur, idx, err, expr, token, unary, binary, nary } from 'subscript/parse.js'
 
 export default (src) => parse(src)
 
-const OPAREN=40, CPAREN=41, OBRACK=91, CBRACK=93, SPACE=32, QUOTE=39, DQUOTE=34, PERIOD=46, BSLASH=92, _0=48, _9=57, COLON=58,
+const OPAREN=40, CPAREN=41, OBRACK=91, CBRACK=93, SPACE=32, QUOTE=39, DQUOTE=34, PERIOD=46, BSLASH=92, _0=48, _9=57, COLON=58, HASH=35, AT=64,
 PREC_SEQ=1, PREC_END=4, PREC_ASSIGN=5, PREC_FUNC=2, PREC_LOOP=2, PREC_GROUP=6, PREC_COND=3, PREC_SOME=4, PREC_EVERY=5, PREC_OR=6, PREC_XOR=7, PREC_AND=8,
 PREC_EQ=9, PREC_COMP=10, PREC_SHIFT=11, PREC_SUM=12, PREC_MULT=13, PREC_EXP=14, PREC_UNARY=15, PREC_POSTFIX=16, PREC_CALL=18, PREC_TOKEN=20
 
-
-// extended id definition
-parse.id = ()=>skip(c => isId(c) || c == 35 || c == 64).toLowerCase() // #, @ are parts of id
 
 // FIXME:
 const string = q => (qc, c, str='') => {

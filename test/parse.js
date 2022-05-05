@@ -10,11 +10,13 @@ t('parse: common', t => {
   is(parse(`x([left], v)`), ['(','x',[',',['[','left'],'v']])
 })
 
-t('parse: identifiers', t => {
+t.skip('parse: identifiers', t => {
   // permit @#$_
+  // OBSOLETE: nah, @ and # are operators
   is(parse('a@a, _b#, c_c, $d$'), [',', 'a@a', '_b#','c_c','$d$'])
 
   // disregard casing
+  // OBSOLETE: parser doesn't necessarily deal with lowcase semantic, that's analyzer or transform level thing
   is(parse('A, Bc, d_E'), [',', 'a', 'bc','d_e'])
 })
 
@@ -78,7 +80,7 @@ t('parse: sine gen', t => {
     ], ['(',
         [';',
           ['=',['*', 'phase'],['int',0]],
-          ['+=', 'phase', ['/', ['*', 'freq', 'pi2'], 'samplerate']],
+          ['+=', 'phase', ['/', ['*', 'freq', 'pi2'], 'sampleRate']],
           ['.',['[',['(', 'sin','phase']]]
         ]
       ]

@@ -1630,3 +1630,15 @@
 
   * There's no way to differentiate gain(channels, aParam) and gain(channels, kParam) not constructing kParam as separate type.
   * Seems it's nice to export under different names: gain_a_k, gain_a2_k, gain_a1_a1 - no conflicts, no perf tax, scalability (say, another input type), relatively simple convention.
+
+
+## [ ] Compile targets:
+
+  * WASM
+  * WAT
+  * JS
+    + can be useful in debugging
+    + can useful in direct (simple) JS processing
+    + can be useful for benchmarking
+  * Native bytecode
+  * others?
