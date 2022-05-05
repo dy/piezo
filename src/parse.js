@@ -29,12 +29,14 @@ lookup[QUOTE] = string(QUOTE)
 // 'true', 20, a => a ? err() : ['',true],
 // 'false', 20, a => a ? err() : ['',false],
 
+const isNum = c => c >= _0 && c <= _9
 const num = (a) => {
   let fract
   if (a) err();
-  a = skip(c => c>=_0 && c<=_9);
-  if (cur[idx]==='.') {
-    if (fract = skip(c => c>=_0 && c<=_9)) (a += fract);
+  a = skip(isNum);
+  if (cur.charCodeAt(idx)===PERIOD && isNum(cur.charCodeAt(idx+1))) {
+    skip()
+    if (fract = skip(isNum)) (a += '.' + fract);
   }
   if ((a=+a)!=a) err('Bad number', a)
   return [fract ? 'float' : 'int', a]
@@ -58,6 +60,8 @@ nary('&&', PREC_EVERY)
 binary('<-', PREC_COMP )
 binary('**', PREC_EXP, true)
 binary('=', PREC_ASSIGN, true)
+binary('+=', PREC_ASSIGN, true)
+binary('-=', PREC_ASSIGN, true)
 
 binary('+', PREC_SUM)
 binary('-', PREC_SUM)
