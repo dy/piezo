@@ -101,6 +101,8 @@
   * ? we can use i64 for them
   * ? or we can use f64 for all numbers by default and keep rest of types free
   + ok, can be useful for special syntax with non-string meaning, like paths, dates and other atoms.
+  + also can be used for special name variables maybe? like `'x-1' = 2; x0; x1;`
+    ? or use `x\-1 = 2` instead?
 
 ## [x] Numbers: float64 by default, unless it's statically inferrable as int32, like ++, +-1 etc ops only
   * Boolean operators turn float64 into int64

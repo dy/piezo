@@ -4,30 +4,62 @@ export default tree => {
   // `memory`/`table` sections are covered by arrays
   //
   let ir = {
-    func: [],
-    export: [],
-    import: [],
-    global: [],
-    data: [],
-    range: [] // is that needed?
+    func: {},
+    export: {},
+    import: {},
+    global: {},
+    data: {},
+    range: {} // is that needed?
   }
 
   // [., ...statement] → [;, [., ...statement]]
   // if (tree[0] !== ';') tree = [';',tree]
 
-  module[tree[0]](tree)
+  tm[tree[0]](tree, ir)
 
   return ir
 }
 
-const module = {
+// module-level transforms
+const tm = {
   ';': ([,...statements], ir) => {
-    for (let statement of statements) {
-      console.log(statement)
+    for (let statement of statements) tm[statement[0]](statement, ir)
+  },
+
+  // @ 'math#sin', @ 'path/to/lib'
+  '@': ([,[,path]], ir) => {
+    let url = new URL('import:'+path)
+    let {hash, pathname} = url
+    ir.import[pathname] = hash ? hash.slice(1).split(',') : []
+  },
+
+  // a = b., a() = b().
+  '.': ([,statement], ir) => {
+    // TODO: ir.export
+    tm[statement[0]](statement, ir)
+  },
+
+  '=': ([,left,right], ir) => {
+    // a() = b
+    if (left[0] === '(') {
+      let [, name, args] = left
+      console.log(name, args)
+      ir.func[name] = {
+        name,
+        args: args[0]===',' ? args : args ? [args] : [],
+        state: [],
+        output: null
+      }
     }
-  }
+    // a = b
+    else {
+      ir.global[left] = right
+    }
+  },
+
 }
 
-const func = {
+// function-level transforms
+const tf = {
   ';'(){}
 }
