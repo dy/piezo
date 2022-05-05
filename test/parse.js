@@ -66,18 +66,13 @@ t('parse: import', t => {
 })
 
 t('parse: sine gen', t => {
-  // console.log(parse(`
-  //   sine(freq) = (
-  //     *phase=0;
-  //     phase += freq * pi2 / sampleRate;
-  //     [sin(phase)].
-  // ).`)[1][2][1]);
-  is(parse(`
+  let tree = parse(`
     sine(freq) = (
       *phase=0;
       phase += freq * pi2 / sampleRate;
       [sin(phase)].
-  ).`), [
+  ).`);
+  is(tree, [
     '.', ['=',[
       '(', 'sine', 'freq'
     ], ['(',
@@ -91,9 +86,8 @@ t('parse: sine gen', t => {
   ])
 })
 
-
-t.skip('parse: audio-gain', t => {
-  is(parse(`
+t('parse: audio-gain', t => {
+  let tree = parse(`
     range = 0..1000;
 
     gain([left], volume <- range) = [left * volume];
@@ -101,7 +95,8 @@ t.skip('parse: audio-gain', t => {
     //gain([..channels], volume <- range) = [..channels * volume];
 
     gain.
-  `), [';',
+  `)
+  is(tree, [';',
     ['=', 'range', ['..', ['int',0], ['int',1000]]],
     ['=', ['(', 'gain', [',', ['[', 'left'], ['<-', 'volume', 'range']]], ['[', ['*', 'left', 'volume']]],
 

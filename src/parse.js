@@ -57,7 +57,6 @@ nary('||', PREC_SOME)
 nary('&&', PREC_EVERY)
 
 // binaries
-binary('<-', PREC_COMP )
 binary('**', PREC_EXP, true)
 binary('=', PREC_ASSIGN, true)
 binary('+=', PREC_ASSIGN, true)
@@ -81,6 +80,7 @@ binary('>>', PREC_SHIFT)
 binary('>>>', PREC_SHIFT)
 binary('<<', PREC_SHIFT)
 
+binary('<-', PREC_COMP ) // a <- b
 binary('->', PREC_FUNC) // a,b->b,a
 binary('>-', PREC_FUNC) // a,b>-c
 binary('-<', PREC_LOOP) // a -< b
