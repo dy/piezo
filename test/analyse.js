@@ -1,11 +1,11 @@
 import t, { is, ok, same, throws } from 'tst'
 import parse from '../src/parse.js'
-import watify from '../src/watify.js'
+import analyse from '../src/analyse.js'
 
 
-t.todo('compile wat: sine gen', t => {
-  compile(parse`
-    @'math#sin,pi,max';
+t.only('compile wat: sine gen', t => {
+  let ir = analyse(parse(`
+    @ 'math#sin,pi,max';
 
     pi2 = pi*2;
     sampleRate = 44100;
@@ -15,7 +15,11 @@ t.todo('compile wat: sine gen', t => {
       phase += freq * pi2 / sampleRate;
       [sin(phase)].
     ).
-  `)
+  `))
+  console.log(ir)
+  is(ir, {
+
+  })
 })
 
 t.todo('compile wat: zzfx coin', t => {
@@ -61,7 +65,7 @@ t.todo('compile wat: zzfx coin', t => {
   `)
 })
 
-t.only('compile wat: oneliners', t => {
+t('compile wat: oneliners', t => {
   // (module
   //   (func $mult (param $a f64) (param $b f64))
   //   (export "mult" (func $mult))

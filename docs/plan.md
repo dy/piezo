@@ -22,19 +22,14 @@
   * [ ] wasm gain node: browser
   * [ ] wasm gain node: node
 
-* [ ] Minimal set:
-  * [ ] common expressions
-  * [ ] name(a,b,c) = body.
-  * [ ] *state
-    * [ ] instances state can be allocated as global variables in advance by stacktrace
-  * [ ] . end operator
+* [ ] *state
+  * [ ] instances state can be allocated as global variables in advance by stacktrace
+* [ ] . end operator
 
-* [ ] compile every trick from basic wasm tutorial
-
-* [ ] implement sonr expressions
+* [ ] sonr expressions
   * `sin(432 + 10*sin(8)) * adsr(0, 0, .4, 0)`
 
-* [ ] implement zzfx
+* [ ] zzfx
 
 * [ ] web-audio-api
 
