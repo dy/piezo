@@ -23,7 +23,7 @@ export default tree => {
 // module-level transforms
 const tm = {
   ';': ([,...statements], ir) => {
-    for (let statement of statements) tm[statement[0]](statement, ir)
+    for (let statement of statements) tm[statement[0]]?.(statement, ir)
   },
 
   // @ 'math#sin', @ 'path/to/lib'
@@ -36,7 +36,7 @@ const tm = {
   // a = b., a() = b().
   '.': ([,statement], ir) => {
     // TODO: ir.export
-    tm[statement[0]](statement, ir)
+    tm[statement[0]]?.(statement, ir)
   },
 
   '=': ([,left,right], ir) => {
