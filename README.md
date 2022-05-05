@@ -8,7 +8,7 @@
 
 ## Intro
 
-_Lino_ operates in batch processing context: functions take either a-param or k-param arguments and may have internal state persisted between calls. That compiles to optimized byte code (eg. WASM) that can be called from API (eg. JS) side for blocks of samples.
+_Lino_ operates in batch processing context: functions take either a-param or k-param arguments and may have internal state persisted between calls. That compiles to optimized byte code (eg. WASM) that can be called for blocks of samples.
 
 Let's consider language features by examples.
 
@@ -76,7 +76,7 @@ Features:
 * _import_ − organized via `@ 'lib'` or `@ 'path/to/lib#a,b,c'`. If import members `#a,b,c` are not provided, it imports everything. <!-- Built-in libs are: _math_, _std_. Additional libs: _sonr_, _latr_, _musi_ and [others]().-->
 * _scope_ − parens `()` may act as function scope, like one-line arrow functions in JS.
 * _state variables_ − defined as `*state=init` persist value between <span title="Detected by callsite">fn calls*</span>.
-* _grouping_ − comma operator is first-class citizen and used for <span title="Groups are syntax-level sugar, they're always flat and have no type. To provide language primitive or nesting, use arrays.">group operations*</span>, eg. `a,b = c,d` → `a=c, b=d`, `(a,b) + (c,d)` → `(a+b, c+d)` etc.
+* _groups_ − comma enables group operations as `a,b = c,d` → `a=c, b=d`, `(a,b) + (c,d)` → `(a+b, c+d)` etc. Groups are just syntax sugar and are always flat, for data structuring see _arrays_.
 * _end operator_ − `.` indicates return statement or module exports.
 
 ### ZZFX
@@ -136,9 +136,9 @@ coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
 Features:
 
 * _pipes_ − `|` operator is overloaded for functions as `a | b` → `b(a)`.
-* _lambda functions_ − useful for organizing <span title="Don't require parens for arguments, since `,` has higher precedence than `->`.">pipe transforms*</span>.
+* _lambda functions_ − useful for organizing pipe transforms as `a | a -> a * 2`.
 * _arrays_ − linear collection of elements: numbers, functions or other arrays. Unlike groups, elements are stored in memory.
-* _named members_ − group or array members can get <span title="Just syntax sugar">alias names*</span> as `[foo: a, bar: b]`.
+* _named members_ − group or array members can get alias sugar as `[foo: a, bar: b]`.
 
 ## [Freeverb](https://github.com/opendsp/freeverb/blob/master/index.js)
 
@@ -171,7 +171,7 @@ reverb([..input], room=0.5, damp=0.5) = (
 
 Features:
 
-* _multiarg pipes_ − pipe transforms can be applied to multiple arguments. Depending on arity of pipe target it can act as <span title="`a,b,c | a,b -> a+b` becomes  `(a,b | a,b->a+b), (b,c | a,b->a+b)`">convolver*</span>.
+* _multiarg pipes_ − pipe transforms can be applied to multiple arguments. Depending on arity of pipe target it can act as convolver: `a,b,c | (a,b) -> a+b` becomes  `(a,b | (a,b)->a+b), (b,c | (a,b)->a+b)`.
 * _fold operator_ − `a,b,c >- fn` acts as `reduce(a,b,c, fn)`, provides efficient way to reduce a group or array to single value.
 * _topic operator_ −  `^` refers to result of last expression, useful to join expressions in <span title="Similar to Hack pipeline or JS pipeline without special operator.">flow fashion*</span> without intermediary variables.
 
@@ -197,7 +197,7 @@ melodytest(time) = (
       time * mix(
         200 + (i * 900),
         500 + (i * 900),
-        melodyString[floor(time * 2) % melodyString.length] / 16
+        melodyString[floor(time * 2) % #melodyString] / 16
       )
     ) * (1 - fract(time * 4))
   );
@@ -217,8 +217,9 @@ song() = (
 
 Features:
 
-* _loop operator_ − `cond -< expr` acts as _while_ loop, calling expression until condition holds true. Also used in [list comprehension](./docs/reference#list-comprehension).
+* _loop operator_ − `cond -< expr` acts as _while_ loop, calling expression until condition holds true. Also used in list comprehension as `[i <- 0..10 -< i*2]`.
 * _string literal_ − `"abc"` acts as array with ASCII codes.
+* _cardinal (length) operator_ − `#items` returns number of items of either an array, a string or a group. 
 
 ## Language Reference
 
