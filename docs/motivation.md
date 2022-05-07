@@ -34,16 +34,14 @@ Besides, I had a list of language wishes ([eg.](https://twitter.com/DimaYv/statu
 - Variable sounds (by analogy with [variable fonts](https://en.wikipedia.org/wiki/Variable_font)) − in reality sounds _are_ variable;
 - drop `source | filter() | reverb() | fx()` and get controls with defaults; changing controls changes values;
 
-### Feeling
+## Feeling
 
+<!--
 **It should be language as a gift for Krsna: for him to compose beautiful melody once; and for all demigods to make songs praising Holy Name**.
-
+-->
 What qualities should it have? How should that be organized?
 
 - elegantly reliable: parser should build syntax tree only.
-- evaluator should be able to augment nodes with eval function to make fast evals.
-- compiler should be able to augment nodes with wasm generation.
-
 * it should be more js-y / c-y and less python-y/elixir-y;
 * it should be _very_ familiar and intuitive, but not basic;
 * it should not be too smart, should be fluent like a breeze or spring water;
