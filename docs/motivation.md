@@ -5,15 +5,13 @@ Besides, I had a list of language wishes ([eg.](https://twitter.com/DimaYv/statu
 
 ## Goals
 
-* Familiar & intuitive syntax.
+* Familiar, intuitive syntax.
 * Fluent & expressive.
-* Radically minimal & performant.
 * 0 runtime: no arguments ambiguity, types are predictable in advance, static memory.
-* Compiling to WASM.
-* sound-formulas
-* function params can be signals themselves
-* importable DSP libs: sound design, melody design, synth design, analysis, live, stdlib etc.
-* Compiles to different targets
+* 0 tax: syntax is radically minimal.
+* Function params can be signals themselves.
+* Importable DSP libs: sound design, melody design, synth design, analysis, live, stdlib etc.
+* Compiles to WASM and other targets.
 
 ## Principles
 
