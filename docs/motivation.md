@@ -34,17 +34,6 @@ Besides, I had a list of language wishes ([eg.](https://twitter.com/DimaYv/statu
 - Variable sounds (by analogy with [variable fonts](https://en.wikipedia.org/wiki/Variable_font)) − in reality sounds _are_ variable;
 - drop `source | filter() | reverb() | fx()` and get controls with defaults; changing controls changes values;
 
-
-## Wat?
-
-Having wat files is more useful than direct compilation to binary form:
-
-+ wat files are human-readable, so it's possible to debug mistakes and do changes
-+ wat files are standard interchangeable format with proven compiler: no need to reimplement compilation and deal with its bugs
-+ optimization out of the box
-- wat files are still a bit hard
-- modifying wat files creates divergence from son files..
-
 ### Feeling
 
 **It should be language as a gift for Krsna: for him to compose beautiful melody once; and for all demigods to make songs praising Holy Name**.
