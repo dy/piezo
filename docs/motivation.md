@@ -28,7 +28,7 @@ Besides, I had a list of language wishes ([eg.](https://twitter.com/DimaYv/statu
 
 ## Use cases
 
-- Descre sounds with tiny footprint (copy-pasteable string);
+- Sound formulas with tiny footprint (copy-paste as string);
 - Reproducing synthesizers;
 - Alternative to heavy soundfonts ([like this](https://magenta.github.io/magenta-js/music/index.html#soundfonts));
 - Variable sounds (by analogy with [variable fonts](https://en.wikipedia.org/wiki/Variable_font)) − in reality sounds _are_ variable;
