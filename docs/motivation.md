@@ -41,7 +41,7 @@ Besides, I had a list of language wishes ([eg.](https://twitter.com/DimaYv/statu
 -->
 What qualities should it have? How should that be organized?
 
-- elegantly reliable: parser should build syntax tree only.
+* elegantly reliable: parser should build syntax tree only.
 * it should be more js-y / c-y and less python-y/elixir-y;
 * it should be _very_ familiar and intuitive, but not basic;
 * it should not be too smart, should be fluent like a breeze or spring water;
