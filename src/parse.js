@@ -48,8 +48,8 @@ for (let i = 0; i<=9; i++) lookup[_0+i] = num;
 token('//', PREC_TOKEN, (a, prec) => (skip(c => c >= SPACE), a||expr(prec)))
 
 // sequences
-nary(',', PREC_GROUP)
-nary(';', PREC_SEQ)
+nary(',', PREC_GROUP, true)
+nary(';', PREC_SEQ, true)
 nary('||', PREC_SOME)
 nary('&&', PREC_EVERY)
 

@@ -1,5 +1,16 @@
 # Language design / issues R&D
 
+## [x] WAT, WASM? All targets
+
+Having wat files is more useful than direct compilation to binary form:
+
++ wat files are human-readable, so it's possible to debug mistakes and do changes
++ wat files are standard interchangeable format with proven compiler: no need to reimplement compilation and deal with its bugs
++ optimization out of the box
+- wat files are still a bit hard
+- modifying wat files creates divergence from son files..
+
+
 ## [x] frames as vectors
 
   * like glsl (data views to underlying block buffer), with [standard channel ids](https://en.wikipedia.org/wiki/Surround_sound#Standard_speaker_channels); swizzles as `a.l, a.r = a.r, a.l; a.fl, a.fr = a.fl`
@@ -309,6 +320,10 @@
   * + we may need early return as a() = (a?b. c+d.)
   → (a,b,c) returns group; (a;b;c) returns last; (a;b.c;) returns b but requires ; as `(a;b.;c;)`; (a?b.:c;d) returns b or d.
     * the logic is: group figures out result based on end indicator, else takes full internal value.
+  ? we can force end operator to stand after a separate id, not expression.
+    + bans `pi2 = pi*2.; rate = 44100.;` → `pi2=pi*2;rate=44100; pi,rate.`
+      - doesn't help much if expr comes after, eg. `pi,rate. a=3;`
+    -> so seems uncovered period can stand only at the end of scope. Else there must be a semi.
 
 ## [x] Early return?
 

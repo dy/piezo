@@ -7,9 +7,7 @@ export default tree => {
     func: {},
     export: {},
     import: {},
-    global: {},
-    data: {},
-    range: {} // is that needed?
+    global: {}
   }
 
   // [., ...statement] → [;, [., ...statement]]
@@ -23,7 +21,7 @@ export default tree => {
 // module-level transforms
 const tm = {
   ';': ([,...statements], ir) => {
-    for (let statement of statements) tm[statement[0]]?.(statement, ir)
+    for (let statement of statements) statement && tm[statement[0]]?.(statement, ir)
   },
 
   // @ 'math#sin', @ 'path/to/lib'
@@ -47,7 +45,8 @@ const tm = {
       ir.func[name] = {
         name,
         args: args[0]===',' ? args : args ? [args] : [],
-        state: [],
+        local: {},
+        state: {},
         output: null
       }
     }

@@ -19,7 +19,7 @@ t.only('compile wat: sine gen', t => {
   // console.log(ir.func)
 
   is(ir, {
-    func: { sine: { name: 'sine', args: ['freq'], state: [], output: null } },
+    func: { sine: { name: 'sine', args: ['freq'], local: [], state: [], output: null } },
     export: {},
     import: { math: [ 'sin', 'pi', 'max' ] },
     global: { pi2: [ '*', 'pi', ['int', 2] ], sampleRate: [ 'int', 44100 ] },

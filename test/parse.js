@@ -51,14 +51,18 @@ t('parse: end operator precedence', t => {
 })
 
 t('parse: semicolon', t => {
-  // TODO: semic tests
-  // is(parse(`
-  //   x() = 1+2;
-  // `), [';',['=', ['(', 'x'], ['+', ['float',1], ['float',2]]], null])
+  is(parse(`
+      pi2 = pi*2.0;
+      sampleRate = 44100;
+  `), [';',['=', 'pi2', ['*', 'pi', ['float', 2]]], ['=', 'sampleRate', ['int', 44100]], null]);
 
-  // is(parse(`
-  //   a,b,c;
-  // `), [';',[',','a','b','c'], null])
+  is(parse(`
+    x() = 1+2;
+  `), [';',['=', ['(', 'x'], ['+', ['int',1], ['int',2]]], undefined])
+
+  is(parse(`
+    a,b,c;
+  `), [';',[',','a','b','c'], undefined])
 })
 
 t('parse: import', t => {
