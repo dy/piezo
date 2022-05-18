@@ -1643,11 +1643,58 @@ Having wat files is more useful than direct compilation to binary form:
   * maybe we may need generalizing transformers
 
 
-## [x] Exported function clause naming → gain_a2_k, gain_a2_a (k1==k, a1==a)
+## [x] How to differentiate a-param from k-param argument: let's try gain(input?, kParam) for pipe, but no fn overloading
 
-  * There's no way to differentiate gain(channels, aParam) and gain(channels, kParam) not constructing kParam as separate type.
-  * Seems it's nice to export under different names: gain_a_k, gain_a2_k, gain_a1_a1 - no conflicts, no perf tax, scalability (say, another input type), relatively simple convention.
+  * There's no way to differentiate gain(channels, aParam) and gain(channels, kParam).
 
+  1. `offset = block(n)` offset can be float, which works for `typedarray.set(data,offset)`, as well as indicates kParam type.
+    * ? Only takes finding out "impossible-ish" fraction values.
+      * we can export that "key fraction" turning argument into offset as global
+      * ? What if fraction reflects actual offset? Eg. 1234.0000004321
+        - nah, that increases possible fractions
+      * Consider also main part must be one of limited set of addresses.
+      * Suppose different orders encoding reduces chance. Eg. `1234.1112340000000114321000000111234`
+        * Similar to passwords encoding: more concepts engaged the better.
+          + order gaps
+          + static part of a key (11)
+          + replica of a key (1234)
+          + reflection of a key (4321)
+          + ? sum of a key
+          + https://en.wikipedia.org/wiki/Luhn_algorithm ?
+        * Each this check reduces chance of matching offset with random input argument.
+    - That's too shaky
+  2. Export under different names: gain_a_k, gain_a2_k, gain_a1_a1
+    + no conflicts
+    + no perf tax
+    + scalability (say, another input argument type)
+    - Exporting all these names pointlessly increase module size
+      ~ insignificantly though
+    - `k` isn't real k-param, it's simple argument.
+      ~ can be done as real k-param
+  3. `[inputId, inputOffset] = aparam(n); process(inputId, ...args)`
+    - decouples inputId from inputOffset: can be not obvious what passing id means.
+  4. Get rid of overloading functions?
+    + removes ambiguity
+    + simple solution
+    + all pros from 2.
+    + solves this issue completely
+    + doesn't enforce artificial naming convention
+    + argument doesn't drive function clause
+    - it complicates `curve(input, param)` and `input | curve(param)` case.
+      ~ either we introduce pipe operator `input |> curve(param)`
+        + less code (no need to define pipe fns), + less need in arrow functions, + less overloaded operators
+  5. Pipe function definition, either as
+    a. `input | curve(param)`
+      - introduces possibility of definition ops
+      - function body here is unnecessary: we ought to mark function as pipeable
+    b. → `curve(input?, param)`
+      + indicates optional argument as existing convention
+      + allows indicating which argument is taken "in"
+      + no redundant pipe-clause body
+      + can expect more than one argument from input, which can be useful for eg fold operator
+    c. `@pipe curve(input, param)`
+    + saves all pros of 4.
+    + less API to learn: less simple-case lambdas, no fn overloading
 
 ## [ ] Compile targets:
 

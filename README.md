@@ -2,7 +2,7 @@
 
 > Audio processing language
 
-**Lino** (*li*ne *no*ise) is designed to express sound formulas and audio/signal processors code in short, fluent and intuitive form with ability to compile to optimized bytecode. Primarily targets [AudioWorkletProcessor](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), [audio engines](https://github.com/audiojs/web-audio-api), etc. 
+**Lino** (*li*ne *no*ise) is designed to express sound formulas and audio/signal processors code in short, fluent and intuitive form with ability to compile to optimized bytecode. Primarily targets [AudioWorkletProcessor](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), [audio engines](https://github.com/audiojs/web-audio-api), etc.
 
 [Motivation](./docs/motivation.md)  |  [Documentation](./docs/reference.md)  |  [Examples](./docs/examples.md).
 
@@ -19,21 +19,21 @@ Provides k-rate amplification of mono, stereo or generic input.
 ```fs
 range = 0..1000;
 
+// any-channels
+gain([..channels], volume <- range) = [..channels * volume].
+
 // mono
-gain([left], volume <- range) = [left * volume];
+gain1([left], volume <- range) = [left * volume];
 
 // stereo
-gain([left, right], volume <- range) = [left * volume, right * volume];
-
-// multi-channel
-gain([..channels], volume <- range) = [..channels * volume].
+gain2([left, right], volume <- range) = [left * volume, right * volume];
 ```
 
 Mono/stereo clauses provide shortcuts for <span title="Autogenerating clauses from generic case would cause O(c^n) code size grow depending on number/type of arguments. So manual clauses is lower tax and allows better control over output.">better  performance*</span>, but generally multi-channel case is enough.
 
 Features:
 
-* _function overload_ − function clause is matched by call signature in <span title="On export each clause gets name extension as gain_1a_1k, gain_2a_1k etc.">compile-time*</span>.
+<!-- * _function overload_ − function clause is matched by call signature in <span title="On export each clause gets name extension as gain_1a_1k, gain_2a_1k etc.">compile-time*</span>. -->
 * _channel input/output_ − `[left]` for mono, `[left, right]` for stereo, `[..channels]` for any number of input <span title="Output channels must be explicitly indicated as [], otherwise single value is returned.">channels*</span>.
 * _a-rate_/_k-rate param type_ − `[arg]` indicates <em title="Accurate, or audio-rate, ie. for each sample">a-rate*</em> param, direct `arg` is <em title="Controlling (historical artifact from CSound), blocK-rate − value is fixed for full block">k-rate*</em> param.
 * _range_ − is language-level primitive with `from..to`, `from..<to`, `from>..to` signature, useful in arguments validation, array initialization etc.
@@ -97,7 +97,7 @@ oscillator = [
 ];
 
 // adsr weighting
-adsr(x, a, d, (s, sv), r) = (
+adssr(x, a, d, (s, sv), r) = (
   *i=0;
   t=i++/sampleRate;
 
@@ -115,12 +115,10 @@ adsr(x, a, d, (s, sv), r) = (
 
   y.
 );
-adsr(x, a, d, s, r) = adsr(x, a, d, (s, 1), r);   // no-sv alias
-adsr(a, d, s, r) = x -> adsr(x, a, d, s, r);      // pipe
+adsr(x?, a, d, s, r) = adssr(x, a, d, (s, 1), r);   // no-sv alias
 
 // curve effect
-curve(x, amt=1.82 <- 0..10) = (sign(x) * abs(x)) ** amt;
-curve(amt) = x -> curve(x, amt);
+curve(x?, amt=1.82 <- 0..10) = (sign(x) * abs(x)) ** amt;
 
 // coin = triangle with pitch jump
 coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
@@ -135,16 +133,15 @@ coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
 
 Features:
 
-* _pipes_ − `|` operator is overloaded for functions as `a | b` → `b(a)`.
-* _lambda functions_ − useful for organizing pipe transforms as `a | a -> a * 2`.
+* _pipes_ − `|` operator is overloaded for functions as `a | b` → `b(a)`. `?` after argument in function definition indicates that argument will take value from pipe.
 * _arrays_ − linear collection of elements: numbers, functions or other arrays. Unlike groups, elements are stored in memory.
 * _named members_ − group or array members can get alias sugar as `[foo: a, bar: b]`.
 
 ## [Freeverb](https://github.com/opendsp/freeverb/blob/master/index.js)
 
 ```fs
-@ './combfilter.son';
-@ './allpass.son'
+@ './combfilter.son#comb';
+@ './allpass.son#allpass'
 @ 'math';
 
 sampleRate = 44100;
@@ -162,8 +159,8 @@ reverb([..input], room=0.5, damp=0.5) = (
   *aps = p0,p1,p2,p3 | stretch;
 
   // combs_a.map(a -> comb(a,input,room,damp)).reduce(sum)
-  (combs_a | a -> comb(a, input, room, damp) >- sum) +
-  (combs_b | a -> comb(a, input, room, damp) >- sum);
+  (combs_a | comb(input, room, damp) >- sum) +
+  (combs_b | comb(input, room, damp) >- sum);
 
   (^, aps) >- (input, coef) -> p + allpass(p, coef, room, damp).
 ).
@@ -171,8 +168,9 @@ reverb([..input], room=0.5, damp=0.5) = (
 
 Features:
 
+* _lambda functions_ − useful for organizing inline pipe transforms as `a | a -> a * 2` etc.
 * _multiarg pipes_ − pipe transforms can be applied to multiple arguments. Depending on arity of pipe target it can act as convolver: `a,b,c | (a,b) -> a+b` becomes  `(a,b | (a,b)->a+b), (b,c | (a,b)->a+b)`.
-* _fold operator_ − `a,b,c >- fn` acts as `reduce(a,b,c, fn)`, provides efficient way to reduce a group or array to single value.
+* _fold operator_ − `a,b,c >- fn` acts as `reduce(a,b,c, fn)`, provides efficient way to reduce a group or array to a single value.
 * _topic operator_ −  `^` refers to result of last expression, useful to join expressions in <span title="Similar to Hack pipeline or JS pipeline without special operator.">flow fashion*</span> without intermediary variables.
 
 ## [Floatbeat](https://dollchan.net/bytebeat/index.html#v3b64fVNRS+QwEP4rQ0FMtnVNS9fz9E64F8E38blwZGvWDbaptCP2kP3vziTpumVPH0qZyXzfzHxf8p7U3aNJrhK0rYHfgHAOZZkrlVVu0+saKbd5dTXazolRwnvlKuwNvvYORjiB/LpyO6pt7XhYqTNYZ1DP64WGBYgczuhAQgpiTXEtIwP29pteBZXqwTrB30jwc7i/i0jX2cF8g2WIGKlhriTRcPjSvcVMBn5NxvgCOc3TmqZ7/IdmmEnAMkX2UPB3oMHdE9WcKqVK+i5Prz+PKa98uOl60RgE6zP0+wUr+qVpZNsDUjKhtyLkKvS+LID0FYVSrJql8KdSMptKKlx9eTIbcllvdf8HxabpaJrIXEiycV7WGPeEW9Y4v5CBS07WBbUitvRqVbg7UDtQRRG3dqtZv3C7bsBbFUVcALvwH86MfSDws62fD7CTb0eIghE/mDAPyw9O9+aoa9h63zxXl2SW/GKOFNRyxbyF3N+FA8bPyzFb5misC9+J/XCC14nVKfgRQ7RY5ivKeKmmjOJMaBJSbEZJoiZZMuj2pTEPGunZhqeatOEN3zadxrXRmOw+AA==)
@@ -219,7 +217,7 @@ Features:
 
 * _loop operator_ − `cond -< expr` acts as _while_ loop, calling expression until condition holds true. Also used in list comprehension as `[i <- 0..10 -< i*2]`.
 * _string literal_ − `"abc"` acts as array with ASCII codes.
-* _cardinal (length) operator_ − `#items` returns number of items of either an array, a string or a group. 
+* _cardinal (length) operator_ − `#items` returns number of items of either an array, a string or a group.
 
 ## Language Reference
 
