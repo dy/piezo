@@ -76,7 +76,7 @@ Features:
 * _import_ − organized via `@ 'lib'` or `@ 'path/to/lib#a,b,c'`. If import members `#a,b,c` are not provided, it imports everything. <!-- Built-in libs are: _math_, _std_. Additional libs: _sonr_, _latr_, _musi_ and [others]().-->
 * _scope_ − parens `()` may act as function scope, like one-line arrow functions in JS.
 * _state variables_ − defined as `*state=init` persist value between <span title="Detected by callsite">fn calls*</span>.
-* _groups_ − comma enables group operations as `a,b = c,d` → `a=c, b=d`, `(a,b) + (c,d)` → `(a+b, c+d)` etc. Groups are just syntax sugar and are always flat, for data structuring see _arrays_.
+* _groups_ − comma enables group operations as `a,b = c,d` → `a=c, b=d`, `(a,b) + (c,d)` → `(a+b, c+d)` etc. 
 * _end operator_ − `.` indicates return statement or module exports.
 
 ### ZZFX
@@ -111,7 +111,7 @@ adssr(x, a, d, (s, sv), r) = (
     t < a  + d + s ?                 // sustain
     sv :                             // sustain volume
     (total - t)/r * sv
-  ) * x
+  ) * x;
 
   y.
 );
@@ -133,6 +133,7 @@ coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
 
 Features:
 
+* _flat groups_ − groups are just syntax sugar and are always flat, ie. `a, d, (s, sv), r` == `a, d, s, r`.
 * _pipes_ − `|` operator is overloaded for functions as `a | b` → `b(a)`. `?` after argument in function definition indicates that argument will take value from pipe.
 * _arrays_ − linear collection of elements: numbers, functions or other arrays. Unlike groups, elements are stored in memory.
 * _named members_ − group or array members can get alias sugar as `[foo: a, bar: b]`.
