@@ -6,7 +6,7 @@
 
 ## Intro
 
-_Lino_ operates in block processing context: functions take either a-param or k-param arguments and may have internal state persisted between calls. That compiles to optimized byte code (eg. WASM) that is called for blocks of samples.
+_Lino_ operates in block processing context: functions take either a-param or k-param arguments and may have internal state persisted between calls. That compiles to optimized bytecode (WASM) that is called for blocks of samples.
 
 Let's consider language features by examples.
 
