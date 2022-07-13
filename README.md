@@ -1,12 +1,12 @@
 # lino
 
-**Lino** (*li*ne *no*ise) is audio/sound processing language designed for expressing formulas in short, fluent and intuitive form. Primarily targets are [AudioWorkletProcessor](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), [audio engines](https://github.com/audiojs/web-audio-api), etc.
+**Lino** (*li*ne *no*ise) is audio/sound processing language designed for expressing sound formulas in short, fluent and intuitive form. Primarily targets are [AudioWorkletProcessor](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), [audio engines](https://github.com/audiojs/web-audio-api), etc.
 
 [Motivation](./docs/motivation.md)  |  [Documentation](./docs/reference.md)  |  [Examples](./docs/examples.md).
 
 ## Intro
 
-_Lino_ operates in blocks processing context: functions take either a-param or k-param arguments and may have internal state persisted between calls. That compiles to optimized byte code (eg. WASM) that can be called for blocks of samples.
+_Lino_ operates in block processing context: functions take either a-param or k-param arguments and may have internal state persisted between calls. That compiles to optimized byte code (eg. WASM) that is called for blocks of samples.
 
 Let's consider language features by examples.
 
@@ -17,26 +17,26 @@ Provides k-rate amplification of mono, stereo or generic input.
 ```fs
 range = 0..1000;
 
-// any-channels
-gain([..channels], volume <- range) = [..channels * volume].
-
-// mono
+// mono clause
 gain1([left], volume <- range) = [left * volume];
 
-// stereo
+// stereo clause
 gain2([left, right], volume <- range) = [left * volume, right * volume];
+
+// multi-channel clause
+gain([..channels], volume <- range) = [..channels * volume].
 ```
 
-Mono/stereo clauses provide shortcuts for <span title="Autogenerating clauses from generic case would cause O(c^n) code size grow depending on number/type of arguments. So manual clauses is lower tax and allows better control over output.">better  performance*</span>, but generally multi-channel case is enough.
+Generally multi-channel case is enough, but mono/stereo clauses provide shortcuts for <span title="Autogenerating clauses from generic case would cause O(c^n) code size grow depending on number/type of arguments. So manual clauses is lower tax and allows better control over output.">better  performance*</span>.
 
 Features:
 
 <!-- * _function overload_ − function clause is matched by call signature in <span title="On export each clause gets name extension as gain_1a_1k, gain_2a_1k etc.">compile-time*</span>. -->
-* _channel input/output_ − `[left]` for mono, `[left, right]` for stereo, `[..channels]` for any number of input <span title="Output channels must be explicitly indicated as [], otherwise single value is returned.">channels*</span>.
-* _a-rate_/_k-rate param type_ − `[arg]` indicates <em title="Accurate, or audio-rate, ie. for each sample">a-rate*</em> param, direct `arg` is <em title="Controlling (historical artifact from CSound), blocK-rate − value is fixed for full block">k-rate*</em> param.
+* _destructuring channels_ − `[left]` for mono, `[left, right]` for stereo, `[..channels]` for any number of input <span title="Output channels must be explicitly indicated as [], otherwise single value is returned.">channels*</span>.
+* _a-rate_ / _k-rate params_ − `[arg]` indicates <em title="Accurate, or audio-rate, ie. for each sample">a-rate*</em> param (same as 1-channel input), direct `arg` is <em title="Controlling (historical artifact from CSound), blocK-rate − value is fixed for full block">k-rate*</em> param.
 * _range_ − is language-level primitive with `from..to`, `from..<to`, `from>..to` signature, useful in arguments validation, array initialization etc.
 * _validation_ − `a <- range` (_a ∈ range_, _a in range_) asserts and clamps argument to provided range, to avoid blowing up volume.
-* _destructuring_ − collects array or group members as `[a,..bc] = [a,b,c]`.
+<!-- * _destructuring_ − collects array or group members as `[a,..bc] = [a,b,c]`.-->
 
 ### Biquad Filter
 
@@ -71,10 +71,10 @@ lp([x0], freq = 100 <- 1..10000, Q = 1.0 <- 0.001..3.0) = (
 
 Features:
 
-* _import_ − organized via `@ 'lib'` or `@ 'path/to/lib#a,b,c'`. If import members `#a,b,c` are not provided, it imports everything. <!-- Built-in libs are: _math_, _std_. Additional libs: _sonr_, _latr_, _musi_ and [others]().-->
-* _scope_ − parens `()` may act as function scope, like one-line arrow functions in JS.
-* _state variables_ − defined as `*state=init` persist value between <span title="Detected by callsite">fn calls*</span>.
-* _groups_ − comma enables group operations as `a,b = c,d` → `a=c, b=d`, `(a,b) + (c,d)` → `(a+b, c+d)` etc. 
+* _import_ − organized via URI string as `@ 'path/to/lib'`. To import members, hash is used `@ 'path/to/lib#a,b,c'`. <!-- Built-in libs are: _math_, _std_. Additional libs: _sonr_, _latr_, _musi_ and [others]().--> _import-map.json_ can provide import aliases. 
+* _scope_ − parens `()` can define function body, besides expression groups.
+* _state variables_ − `*state=init` persist value between <span title="Detected by callsite">function calls*</span>.
+* _groups_ − comma enables group operations as `a,b = c,d` (becomes `a=c, b=d`), `(a,b) + (c,d)` (becomes `(a+b, c+d)`) etc. 
 * _end operator_ − `.` indicates return statement or module exports.
 
 ### ZZFX
@@ -96,18 +96,18 @@ oscillator = [
 
 // adsr weighting
 adssr(x, a, d, (s, sv), r) = (
-  *i=0;
-  t=i++/sampleRate;
+  *i = 0;
+  t = i++ / sampleRate;
 
-  a = max(a, 0.0001);                // prevent click
+  a = max(a, 0.0001);            // prevent click
   total = a + d + s + r;
 
   y = t >= total ? 0 : (
-    t < a ? t/a :                    // attack
-    t < a + d ?                      // decay
-    1-((t-a)/d)*(1-sv) :             // decay falloff
-    t < a  + d + s ?                 // sustain
-    sv :                             // sustain volume
+    t < a ? t/a :                // attack
+    t < a + d ?                  // decay
+    1-((t-a)/d)*(1-sv) :         // decay falloff
+    t < a  + d + s ?             // sustain
+    sv :                         // sustain volume
     (total - t)/r * sv
   ) * x;
 
@@ -131,10 +131,11 @@ coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
 
 Features:
 
-* _flat groups_ − groups are just syntax sugar and are always flat, ie. `a, d, (s, sv), r` == `a, d, s, r`.
-* _pipes_ − `|` operator is overloaded for functions as `a | b` → `b(a)`. `?` after argument in function definition indicates that argument will take value from pipe.
+* _groups_ − groups are just syntax sugar and are always flat, ie. `a, d, (s, sv), r` == `a, d, s, sv, r`. They're desugared on compile stage.
+* _pipes_ − `|` operator is overloaded for functions as `a | b` == `b(a)`.
+* _optional arguments_ – `x?` indicates that value can either be taken from pipe or passed directly.
 * _arrays_ − linear collection of elements: numbers, functions or other arrays. Unlike groups, elements are stored in memory.
-* _named members_ − group or array members can get alias sugar as `[foo: a, bar: b]`.
+* _named members_ − group or array members can get alias as `[foo: a, bar: b]`.
 
 ## [Freeverb](https://github.com/opendsp/freeverb/blob/master/index.js)
 
@@ -149,17 +150,15 @@ a1,a2,a3,a4 = 1116,1188,1277,1356;
 b1,b2,b3,b4 = 1422,1491,1557,1617;
 p1,p2,p3,p4 = 225,556,441,341;
 
-stretch(n) = floor(n * sampleRate / 44100);
-sum(a, b) = a + b;
+stretch(n?) = floor(n * sampleRate / 44100);
 
 reverb([..input], room=0.5, damp=0.5) = (
   *combs_a = a0,a1,a2,a3 | stretch,
   *combs_b = b0,b1,b2,b3 | stretch,
   *aps = p0,p1,p2,p3 | stretch;
 
-  // combs_a.map(a -> comb(a,input,room,damp)).reduce(sum)
-  (combs_a | comb(input, room, damp) >- sum) +
-  (combs_b | comb(input, room, damp) >- sum);
+  (combs_a | comb(input, room, damp) >- (a,b) -> a+b) +
+  (combs_b | comb(input, room, damp) >- (a,b) -> a+b);
 
   (^, aps) >- (input, coef) -> p + allpass(p, coef, room, damp).
 ).
@@ -167,10 +166,11 @@ reverb([..input], room=0.5, damp=0.5) = (
 
 Features:
 
-* _lambda functions_ − useful for organizing inline pipe transforms as `a | a -> a * 2` etc.
-* _multiarg pipes_ − pipe transforms can be applied to multiple arguments. Depending on arity of pipe target it can act as convolver: `a,b,c | (a,b) -> a+b` becomes  `(a,b | (a,b)->a+b), (b,c | (a,b)->a+b)`.
+* _lambda functions_ − useful for organizing inline pipe transforms `a | a -> a * 2`, reducers etc.
+* _multiarg pipes_ − pipe can consume multiple arguments. Depending on arity of target it can act as convolver: `a,b,c | (a,b) -> a+b` becomes  `(a,b | (a,b)->a+b), (b,c | (a,b)->a+b)`.
 * _fold operator_ − `a,b,c >- fn` acts as `reduce(a,b,c, fn)`, provides efficient way to reduce a group or array to a single value.
 * _topic operator_ −  `^` refers to result of last expression, useful to join expressions in <span title="Similar to Hack pipeline or JS pipeline without special operator.">flow fashion*</span> without intermediary variables.
+
 
 ## [Floatbeat](https://dollchan.net/bytebeat/index.html#v3b64fVNRS+QwEP4rQ0FMtnVNS9fz9E64F8E38blwZGvWDbaptCP2kP3vziTpumVPH0qZyXzfzHxf8p7U3aNJrhK0rYHfgHAOZZkrlVVu0+saKbd5dTXazolRwnvlKuwNvvYORjiB/LpyO6pt7XhYqTNYZ1DP64WGBYgczuhAQgpiTXEtIwP29pteBZXqwTrB30jwc7i/i0jX2cF8g2WIGKlhriTRcPjSvcVMBn5NxvgCOc3TmqZ7/IdmmEnAMkX2UPB3oMHdE9WcKqVK+i5Prz+PKa98uOl60RgE6zP0+wUr+qVpZNsDUjKhtyLkKvS+LID0FYVSrJql8KdSMptKKlx9eTIbcllvdf8HxabpaJrIXEiycV7WGPeEW9Y4v5CBS07WBbUitvRqVbg7UDtQRRG3dqtZv3C7bsBbFUVcALvwH86MfSDws62fD7CTb0eIghE/mDAPyw9O9+aoa9h63zxXl2SW/GKOFNRyxbyF3N+FA8bPyzFb5misC9+J/XCC14nVKfgRQ7RY5ivKeKmmjOJMaBJSbEZJoiZZMuj2pTEPGunZhqeatOEN3zadxrXRmOw+AA==)
 
