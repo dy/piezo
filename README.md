@@ -1,14 +1,12 @@
 # lino
 
-> Audio processing language
-
-**Lino** (*li*ne *no*ise) is designed to express sound formulas and audio/signal processors code in short, fluent and intuitive form with ability to compile to optimized bytecode. Primarily targets [AudioWorkletProcessor](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), [audio engines](https://github.com/audiojs/web-audio-api), etc.
+**Lino** (*li*ne *no*ise) is a language designed for expressing sound formulas and audio/signal processing code in short, fluent and intuitive form. Primarily targets are [AudioWorkletProcessor](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), [audio engines](https://github.com/audiojs/web-audio-api), etc.
 
 [Motivation](./docs/motivation.md)  |  [Documentation](./docs/reference.md)  |  [Examples](./docs/examples.md).
 
 ## Intro
 
-_Lino_ operates in batch processing context: functions take either a-param or k-param arguments and may have internal state persisted between calls. That compiles to optimized byte code (eg. WASM) that can be called for blocks of samples.
+_Lino_ operates in blocks processing context: functions take either a-param or k-param arguments and may have internal state persisted between calls. That compiles to optimized byte code (eg. WASM) that can be called for blocks of samples.
 
 Let's consider language features by examples.
 
