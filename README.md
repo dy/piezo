@@ -6,9 +6,9 @@
 
 ## Intro
 
-_Lino_ operates in block processing context: functions take either a-param or k-param arguments and may have internal state persisted between calls. That compiles to optimized bytecode (WASM) that is called for blocks of samples.
+_Lino_ operates in audio block processing context: functions take either audio or param arguments and may have internal state persisted between calls. That compiles to optimized bytecode (WASM) that is called for blocks of samples.
 
-Let's consider language features by examples.
+Let's consider examples.
 
 ### Gain Processor
 
@@ -32,11 +32,11 @@ Generally multi-channel case is enough, but mono/stereo clauses provide shortcut
 Features:
 
 <!-- * _function overload_ − function clause is matched by call signature in <span title="On export each clause gets name extension as gain_1a_1k, gain_2a_1k etc.">compile-time*</span>. -->
-* _destructuring channels_ − `[left]` for mono, `[left, right]` for stereo, `[..channels]` for any number of input <span title="Output channels must be explicitly indicated as [], otherwise single value is returned.">channels*</span>.
-* _a-rate_ / _k-rate params_ − `[arg]` indicates <em title="Accurate, or audio-rate, ie. for each sample">a-rate*</em> param (same as 1-channel input), direct `arg` is <em title="Controlling (historical artifact from CSound), blocK-rate − value is fixed for full block">k-rate*</em> param.
+* _input/output_ − `[left]` for mono, `[left, right]` for stereo, `[..channels]` for any number of input/output <span title="Output channels must be explicitly indicated as [], otherwise single value is returned.">channels*</span>. Channel argument can be used as a-param.
+* _param argument_ − direct `arg` indicates <em title="Controlling (historical artifact from CSound), blocK-rate">k-rate*</em> param, which value is fixed for full block.
 * _range_ − is language-level primitive with `from..to`, `from..<to`, `from>..to` signature, useful in arguments validation, array initialization etc.
 * _validation_ − `a <- range` (_a ∈ range_, _a in range_) asserts and clamps argument to provided range, to avoid blowing up volume.
-<!-- * _destructuring_ − collects array or group members as `[a,..bc] = [a,b,c]`.-->
+<!-- * _destructuring_ − collects array or group members as `[a,..bc] = [a,b,c]`. -->
 
 ### Biquad Filter
 
@@ -116,7 +116,7 @@ adssr(x, a, d, (s, sv), r) = (
 adsr(x, a, d, s, r) = adssr(x, a, d, (s, 1), r);   // no-sv alias
 
 // curve effect
-curve(x?, amt=1.82 <- 0..10) = (sign(x) * abs(x)) ** amt;
+curve(x, amt=1.82 <- 0..10) = (sign(x) * abs(x)) ** amt;
 
 // coin = triangle with pitch jump
 coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
