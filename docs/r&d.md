@@ -777,6 +777,7 @@ Having wat files is more useful than direct compilation to binary form:
 ## [x] ! Variables case should not matter.
 
   * https://twitter.com/bloomofthehours/status/1491797450595528713?s=20&t=1aJpwIDrbNhIjwIohsvxiw
+  * Besides listed issues, it also reduces use of camelcase convention
 
 ## [x] Groups: basic operations
 
