@@ -120,8 +120,8 @@ Having wat files is more useful than direct compilation to binary form:
 
 ## [x] Pipes: → let's try basics: lambdas, then pipe overload, then topic reference between expressions
 
-  1. Placeholder as `x |> #*0.6 + reverb() * 0.4`, `source |> lp($, frq, Q)`?
-    ? can there be multiple args to pipe operator? a,b |> runs 2 pipes, not multiarg.
+  1. Placeholder as `x | #*0.6 + reverb() * 0.4`, `source | lp($, frq, Q)`?
+    ? can there be multiple args to pipe operator? `a,b |` runs 2 pipes, not multiarg.
     ? possibly it should be both: passing input as `input` implicit param, `#` redirects to another param
       - nah, too complicated.
     - function plays natural role of args inserter, why duplicating with topic placeholder?
@@ -131,7 +131,7 @@ Having wat files is more useful than direct compilation to binary form:
     + $ looks regexy - backreferences in both string/regexes
     - implicit/reserved references we could avoid
     + it's overall shorter than other options, as easy syntax sugar, because
-      * `a | a -> a+1` introduces fn overload overusea and curried fns constructor problem
+      * `a | a -> a+1` introduces fn overload overuse and curried fns constructor problem
       * `A()=a->a+1; a | A()` requires heavy constructor code and passing lambdas
       * `a |> a -> a+1` is redundancy and aint nice looking
     ? enable access to group members as `a,b,c | d($1, $2)`
@@ -146,13 +146,14 @@ Having wat files is more useful than direct compilation to binary form:
     + comes well with "last expression result" logic.
     - doesn't allow easy use in initializer
       ~+ unless we do ...a=(x;^+y)
-    - not clear how to apply to group
+    + applies to group naturally
       ~+ ...a=(x1,x2,x3;^+y) - does it apply to sequence?
         ~ yes, to get n-th member do ^[0] or ^.0
         ~ semic is noisy here.
     -~ doesn't make much difference with just ...a=(tmp=x;tmp=tmp+y), only shorter
     ~ can possibly do `^2`, `^3` in wasm-style access to stack variables
-    - enforces redundant parens, compared to `...a=x|>add(y)`
+    - enforces redundant parens, `...a=(x;^+y)` compared to `...a=x|>add(y)`
+      + as mitigation see 3.1
     - can't go as single fn argument a(b; c(^, d)) vs a(b | c(d))
 
   2. ~~Pass first argument[s] to pipe operator (elixir/R-like): `source |> lp(frq, Q)`?~~
@@ -172,7 +173,7 @@ Having wat files is more useful than direct compilation to binary form:
     + replaces lambda in a way (see reverb case)
     - Operator `|>` makes assumption about next call operator `a()` - what if there is `a |> b` - how's that applied?
       - this and >- make it confusing if that's supposed to pass funcref `a |> b` or call to a function `a |> b()`
-      - this makes sonl less strict, more toyful script, because it doesn't stand exhaustive review
+      - this makes lino less strict, more toyful script, because it doesn't stand exhaustive review
     - missing an easy way to insert placeholder value, forcing 1-time fn defs or lambdas.
       ? topical pipe `source .> sign(.) * abs(.) ** shapeCurve`? - nah, indecisiveness.
     - aesthetically |> doesn't match -< and ->
@@ -189,16 +190,33 @@ Having wat files is more useful than direct compilation to binary form:
       + fn overloading can be specially defined as `a | gain(amp) = gain(a, amp)`
     * F# style of pipes
     - no easy way to pass to curried function as `source | filter(f, Q)`
-      ~ can define overload case as `filter(f, Q) = src -> filter(src, f, Q)` or `src | filter(f, Q) = filter(src, f, Q)`
+      ~ can define overload case as
+        * `filter(f, Q) = src -> filter(src, f, Q)` or
+        * `src | filter(f, Q) = filter(src, f, Q)` or
+          - introduces possibility of definition ops
+          - function body here is unnecessary: we ought to mark function as pipeable
+        * `filter(src?, f, Q)` = ...`
+          + indicates optional argument as existing convention
+          + allows indicating which argument is taken "in"
+          + no redundant pipe-clause body that introduces ambiguity
+          + can expect more than one argument from input, which can be useful for eg fold operator
+          - creates curried fn, which is implicit conflicting clause
+          - conflicts with just pipe function `x | x -> x+a+b`, vs `sum(x?) = x+a+b; x | sum()`
+          ~ the issue is that `?` operator acts as if argument is something very natural and same-level
+        * implicitly create a curried function if less than needed arguments is present?
+          - too much confusion - not clear which is which. Same-name-fn must not spawn different results.
       ~ can do arrow fn `source | s -> filter(s, f, Q)`
-    * makes same assumption as 2. by invoking rhs function with lhs as first argument.
+    * makes same syntax assumption as 2. by invoking rhs function with lhs as first argument.
     + doesn't have generic operator overloading meaning as in 4: only applies as first argument.
 
-  3.1 ✱ We can combine topic token 1.1 and overload fn
+  3.1 ✱ Use topic token 1.1 only as part of pipe expressions but as curried fn constructor as rhs? `a | a->a+1` === `a | ^+1` 
     + syntax looks fresh, compact, flowy
+    + combines JS's F#/Hack pipes
     + no redundant function calls from 2. (unless we do 4. with constructor/currying meaning)
-      + `|` + `^` = `|>`, which makes sense
-    + reducer operator is as promised, without redundant call: `..combs_a | a -> comb(a, input, room, damp) >- sum`
+    + `|` + `^` = `|>`, makes sense
+    + reducer operator is as promised, without redundant call: `..combs_a | comb(^, input, room, damp) >- sum`
+    ~ Likely there's benefit of limiting topic to pipe only. Generic ^ may have unexpected side-effects.
+      + eg. initializer `...a=(x;^+y)` can be `...a=x|^+y` now, since no conflict with semi. 
 
   4. ~~Function overload `a | b(x) = b(a,x);  a | b(x)`~~
     ~+ Partial application can be thought on its own regardless of pipe as `a1 = a(#, rate)`
@@ -215,7 +233,7 @@ Having wat files is more useful than direct compilation to binary form:
     - definition is alternative to `b(a) = x -> b(x,a)`, duplication
     - the definition breaks convention of calling rhs `|` function with first argument applied, eg `x|b(a)=b(a,x)` swaps args.
 
-  5. lambda + `a |> b(x)` as a shortcut for `a | a -> b(a, x)`?
+  5. ~~lambda + `a |> b(x)` as a shortcut for `a | a -> b(a, x)`?~~
     - `...a = a0,a1,a2,a3 |> stretch(rate) | Comb` is too entropic
       - mixing function scope with direct scope
       * vs `...a = a0,a1,a2,a3 |> stretch(#, rate) |> Comb(#)`
@@ -223,6 +241,7 @@ Having wat files is more useful than direct compilation to binary form:
       * vs (ideal1) `...a = a0,a1,a2,a3 | stretch(rate) | Comb()`
       * vs (ideal2) `...a = a0,a1,a2,a3 |> stretch(rate) |> Comb()`
     -~ this partial application is implicit argument - non-js intuition.
+    - ideally not have additional (shortcut) operator
 
   6. ~~Internal/implicit variable like `#in` to read from.~~
     - let's try avoiding any implicit values for now, most of them can be done via internal state (+ explicit init args)
@@ -1673,7 +1692,7 @@ Having wat files is more useful than direct compilation to binary form:
       ~ can be done as real k-param
   3. `[inputId, inputOffset] = aparam(n); process(inputId, ...args)`
     - decouples inputId from inputOffset: can be not obvious what passing id means.
-  4. Get rid of overloading functions?
+  4. Prohibit overloading functions?
     + removes ambiguity
     + simple solution
     + all pros from 2.
@@ -1683,19 +1702,7 @@ Having wat files is more useful than direct compilation to binary form:
     - it complicates `curve(input, param)` and `input | curve(param)` case.
       ~ either we introduce pipe operator `input |> curve(param)`
         + less code (no need to define pipe fns), + less need in arrow functions, + less overloaded operators
-  5. Pipe function definition, either as
-    a. `input | curve(param)`
-      - introduces possibility of definition ops
-      - function body here is unnecessary: we ought to mark function as pipeable
-    b. → `curve(input?, param)`
-      + indicates optional argument as existing convention
-      + allows indicating which argument is taken "in"
-      + no redundant pipe-clause body
-      + can expect more than one argument from input, which can be useful for eg fold operator
-    c. `@pipe curve(input, param)`
-    + saves all pros of 4.
-    + less API to learn: less simple-case lambdas, no fn overloading
-
+     
 ## [ ] Compile targets:
 
   * WASM
