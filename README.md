@@ -158,10 +158,10 @@ reverb([..input], room=0.5, damp=0.5) = (
   *aps = p0,p1,p2,p3 | stretch;
 
   (
-    (combs_a | comb(input, room, damp) >- (a,b) -> a+b) +
-    (combs_b | comb(input, room, damp) >- (a,b) -> a+b)
+    (combs_a | comb(^, input, room, damp) >- (a,b) -> a+b) +
+    (combs_b | comb(^, input, room, damp) >- (a,b) -> a+b)
   ) |
-  (^, aps) >- (input, coef) -> p + allpass(p, coef, room, damp).
+  (^, aps) >- (input, coef) -> p + allpass(^, p, coef, room, damp).
 ).
 ```
 
