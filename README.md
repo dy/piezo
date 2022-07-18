@@ -6,7 +6,7 @@
 
 ## Intro
 
-_Lino_ operates in audio block processing context: functions take either audio or param arguments and may have internal state persisted between calls. That compiles to optimized bytecode (WASM) that is called for blocks of samples.
+_Lino_ operates in audio block processing context: functions take either current sample or param arguments and may have internal state persisted between calls. That compiles to optimized bytecode (WASM) that is called for blocks of samples.
 
 Let's consider examples.
 
@@ -131,9 +131,8 @@ coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
 
 Features:
 
-* _groups_ − groups are just syntax sugar and are always flat, ie. `a, d, (s, sv), r` == `a, d, s, sv, r`. They're desugared on compile stage.
-* _pipes_ − `|` operator is overloaded for functions as `a | b` == `b(a)`.
-* _optional arguments_ – `x?` indicates that value can either be taken from pipe or passed directly.
+* _groups_ − groups are just syntax sugar and are always flat, ie. `a, d, (s, sv), r` == `a, d, s, sv, r`. They're desugared on compilation stage.
+* _pipes_ − `|` operator is overloaded for functions as `a | b` == `b(a)`. It works nicely with _arrow functions_ or topic operator.
 * _arrays_ − linear collection of elements: numbers, functions or other arrays. Unlike groups, elements are stored in memory.
 * _named members_ − group or array members can get alias as `[foo: a, bar: b]`.
 
@@ -168,9 +167,10 @@ reverb([..input], room=0.5, damp=0.5) = (
 Features:
 
 * _lambda functions_ − useful for organizing inline pipe transforms `a | a -> a * 2`, reducers etc.
+* _topic operator_ −  `^` refers to result of last expression in pipe<span title="Similar to Hack pipeline or JS pipeline without special operator.">*</span>, ie. `x | a -> a+1` === `x | ^+1`.
 * _multiarg pipes_ − pipe can consume multiple arguments. Depending on arity of target it can act as convolver: `a,b,c | (a,b) -> a+b` becomes  `(a,b | (a,b)->a+b), (b,c | (a,b)->a+b)`.
 * _fold operator_ − `a,b,c >- fn` acts as `reduce(a,b,c, fn)`, provides efficient way to reduce a group or array to a single value.
-* _topic operator_ −  `^` refers to result of last expression in pipe<span title="Similar to Hack pipeline or JS pipeline without special operator.">*</span>, ie. `x | a -> a+1` === `x | ^+1`.
+
 
 
 ## [Floatbeat](https://dollchan.net/bytebeat/index.html#v3b64fVNRS+QwEP4rQ0FMtnVNS9fz9E64F8E38blwZGvWDbaptCP2kP3vziTpumVPH0qZyXzfzHxf8p7U3aNJrhK0rYHfgHAOZZkrlVVu0+saKbd5dTXazolRwnvlKuwNvvYORjiB/LpyO6pt7XhYqTNYZ1DP64WGBYgczuhAQgpiTXEtIwP29pteBZXqwTrB30jwc7i/i0jX2cF8g2WIGKlhriTRcPjSvcVMBn5NxvgCOc3TmqZ7/IdmmEnAMkX2UPB3oMHdE9WcKqVK+i5Prz+PKa98uOl60RgE6zP0+wUr+qVpZNsDUjKhtyLkKvS+LID0FYVSrJql8KdSMptKKlx9eTIbcllvdf8HxabpaJrIXEiycV7WGPeEW9Y4v5CBS07WBbUitvRqVbg7UDtQRRG3dqtZv3C7bsBbFUVcALvwH86MfSDws62fD7CTb0eIghE/mDAPyw9O9+aoa9h63zxXl2SW/GKOFNRyxbyF3N+FA8bPyzFb5misC9+J/XCC14nVKfgRQ7RY5ivKeKmmjOJMaBJSbEZJoiZZMuj2pTEPGunZhqeatOEN3zadxrXRmOw+AA==)
