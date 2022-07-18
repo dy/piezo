@@ -113,7 +113,7 @@ adssr(x, a, d, (s, sv), r) = (
 
   y.
 );
-adsr(x?, a, d, s, r) = adssr(x, a, d, (s, 1), r);   // no-sv alias
+adsr(x, a, d, s, r) = adssr(x, a, d, (s, 1), r);   // no-sv alias
 
 // curve effect
 curve(x?, amt=1.82 <- 0..10) = (sign(x) * abs(x)) ** amt;
@@ -125,7 +125,7 @@ coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
   t = i++/sampleRate;
   phase += (freq + t > delay ? jump : 0) * pi2 / sampleRate;
 
-  oscillator[shape](phase) | adsr(0, 0, .06, .24) | curve(1.82).
+  oscillator[shape](phase) | adsr(^, 0, 0, .06, .24) | curve(^, 1.82).
 ).
 ```
 
@@ -157,9 +157,10 @@ reverb([..input], room=0.5, damp=0.5) = (
   *combs_b = b0,b1,b2,b3 | stretch,
   *aps = p0,p1,p2,p3 | stretch;
 
-  (combs_a | comb(input, room, damp) >- (a,b) -> a+b) +
-  (combs_b | comb(input, room, damp) >- (a,b) -> a+b);
-
+  (
+    (combs_a | comb(input, room, damp) >- (a,b) -> a+b) +
+    (combs_b | comb(input, room, damp) >- (a,b) -> a+b)
+  ) |
   (^, aps) >- (input, coef) -> p + allpass(p, coef, room, damp).
 ).
 ```
@@ -169,7 +170,7 @@ Features:
 * _lambda functions_ − useful for organizing inline pipe transforms `a | a -> a * 2`, reducers etc.
 * _multiarg pipes_ − pipe can consume multiple arguments. Depending on arity of target it can act as convolver: `a,b,c | (a,b) -> a+b` becomes  `(a,b | (a,b)->a+b), (b,c | (a,b)->a+b)`.
 * _fold operator_ − `a,b,c >- fn` acts as `reduce(a,b,c, fn)`, provides efficient way to reduce a group or array to a single value.
-* _topic operator_ −  `^` refers to result of last expression, useful to join expressions in <span title="Similar to Hack pipeline or JS pipeline without special operator.">flow fashion*</span> without intermediary variables.
+* _topic operator_ −  `^` refers to result of last expression in pipe<span title="Similar to Hack pipeline or JS pipeline without special operator.">*</span>, ie. `x | a -> a+1` === `x | ^+1`.
 
 
 ## [Floatbeat](https://dollchan.net/bytebeat/index.html#v3b64fVNRS+QwEP4rQ0FMtnVNS9fz9E64F8E38blwZGvWDbaptCP2kP3vziTpumVPH0qZyXzfzHxf8p7U3aNJrhK0rYHfgHAOZZkrlVVu0+saKbd5dTXazolRwnvlKuwNvvYORjiB/LpyO6pt7XhYqTNYZ1DP64WGBYgczuhAQgpiTXEtIwP29pteBZXqwTrB30jwc7i/i0jX2cF8g2WIGKlhriTRcPjSvcVMBn5NxvgCOc3TmqZ7/IdmmEnAMkX2UPB3oMHdE9WcKqVK+i5Prz+PKa98uOl60RgE6zP0+wUr+qVpZNsDUjKhtyLkKvS+LID0FYVSrJql8KdSMptKKlx9eTIbcllvdf8HxabpaJrIXEiycV7WGPeEW9Y4v5CBS07WBbUitvRqVbg7UDtQRRG3dqtZv3C7bsBbFUVcALvwH86MfSDws62fD7CTb0eIghE/mDAPyw9O9+aoa9h63zxXl2SW/GKOFNRyxbyF3N+FA8bPyzFb5misC9+J/XCC14nVKfgRQ7RY5ivKeKmmjOJMaBJSbEZJoiZZMuj2pTEPGunZhqeatOEN3zadxrXRmOw+AA==)
