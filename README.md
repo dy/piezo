@@ -32,7 +32,7 @@ Generally multi-channel case is enough, but mono/stereo clauses provide shortcut
 Features:
 
 <!-- * _function overload_ − function clause is matched by call signature in <span title="On export each clause gets name extension as gain_1a_1k, gain_2a_1k etc.">compile-time*</span>. -->
-* _input/output_ − `[left]` for mono, `[left, right]` for stereo, `[..channels]` for any number of input/output <span title="Output channels must be explicitly indicated as [], otherwise single value is returned.">channels*</span>. Channel argument can be used as a-param.
+* _input/output_ − `[left]` for mono, `[left, right]` for stereo, `[..channels]` for any number of <span title="Output channels must be explicitly indicated as [], otherwise single value is returned.">channels*</span>.
 * _param argument_ − direct `arg` indicates <em title="Controlling (historical artifact from CSound), blocK-rate">k-rate*</em> param, which value is fixed for full block.
 * _range_ − is language-level primitive with `from..to`, `from..<to`, `from>..to` signature, useful in arguments validation, array initialization etc.
 * _validation_ − `a <- range` (_a ∈ range_, _a in range_) asserts and clamps argument to provided range, to avoid blowing up volume.
@@ -71,10 +71,10 @@ lp([x0], freq = 100 <- 1..10000, Q = 1.0 <- 0.001..3.0) = (
 
 Features:
 
-* _import_ − organized via URI string as `@ 'path/to/lib'`. To import members, hash is used `@ 'path/to/lib#a,b,c'`. <!-- Built-in libs are: _math_, _std_. Additional libs: _sonr_, _latr_, _musi_ and [others]().--> _import-map.json_ can provide import aliases. 
-* _scope_ − parens `()` can define function body, besides expression groups.
+* _import_ − organized via URI string as `@ 'path/to/lib'`. Members can be imported via hash as `@ 'path/to/lib#a,b,c'`. <!-- Built-in libs are: _math_, _std_. Additional libs: _sonr_, _latr_, _musi_ and [others]().--> _import-map.json_ can provide import aliases. 
+<!-- * _scope_ − parens `()` can define function body, besides expression groups. -->
 * _state variables_ − `*state=init` persist value between <span title="Detected by callsite">function calls*</span>.
-* _groups_ − comma enables group operations as `a,b = c,d` (becomes `a=c, b=d`), `(a,b) + (c,d)` (becomes `(a+b, c+d)`) etc. 
+* _groups_ − comma enables group operations as `a,b = c,d` === `a=c, b=d`, `(a,b) + (c,d)` === `(a+b, c+d)` etc. 
 * _end operator_ − `.` indicates return statement or module exports.
 
 ### ZZFX
@@ -132,7 +132,7 @@ coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
 Features:
 
 * _groups_ − groups are just syntax sugar and are always flat, ie. `a, d, (s, sv), r` == `a, d, s, sv, r`. They're desugared on compilation stage.
-* _pipes_ − `|` operator is overloaded for functions as `a | b` == `b(a)`. It works nicely with _arrow functions_ or topic operator.
+* _pipes_ − `|` operator is overloaded for functions as `a | b` == `b(a)`. Useful with _arrow functions_ or _topic operator `^`_.
 * _arrays_ − linear collection of elements: numbers, functions or other arrays. Unlike groups, elements are stored in memory.
 * _named members_ − group or array members can get alias as `[foo: a, bar: b]`.
 
@@ -167,7 +167,7 @@ reverb([..input], room=0.5, damp=0.5) = (
 Features:
 
 * _lambda functions_ − useful for organizing inline pipe transforms `a | a -> a * 2`, reducers etc.
-* _topic operator_ −  `^` refers to result of last expression in pipe<span title="Similar to Hack pipeline or JS pipeline without special operator.">*</span>, ie. `x | a -> a+1` === `x | ^+1`.
+* _topic operator_ −  `^` refers to result of last expression in pipeline. It is syntactic sugar and unwrapped as arrow function in compilation stage: `x | ^+1` becomes `x | a -> a+1`.
 * _multiarg pipes_ − pipe can consume multiple arguments. Depending on arity of target it can act as convolver: `a,b,c | (a,b) -> a+b` becomes  `(a,b | (a,b)->a+b), (b,c | (a,b)->a+b)`.
 * _fold operator_ − `a,b,c >- fn` acts as `reduce(a,b,c, fn)`, provides efficient way to reduce a group or array to a single value.
 
