@@ -1,9 +1,9 @@
-// test wasm compiler
+// test wast compiler
 
 import t, { is, ok, same, throws } from 'tst'
 import parse from '../src/parse.js'
 import analyse from '../src/analyse.js'
-import compile from '../src/compile-wasm.js'
+import compile from '../src/compile.js'
 
 
 t.only('compile wat: globals', t => {

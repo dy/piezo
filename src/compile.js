@@ -1,4 +1,4 @@
-// compile to WASM
+// compile to WAST
 
 const INT = 'i32', FLOAT = 'f64'
 

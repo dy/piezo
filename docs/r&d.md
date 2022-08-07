@@ -209,14 +209,14 @@ Having wat files is more useful than direct compilation to binary form:
     * makes same syntax assumption as 2. by invoking rhs function with lhs as first argument.
     + doesn't have generic operator overloading meaning as in 4: only applies as first argument.
 
-  3.1 ✱ Use topic token 1.1 only as part of pipe expressions but as curried fn constructor as rhs? `a | a->a+1` === `a | ^+1` 
+  3.1 ✱ Use topic token 1.1 only as part of pipe expressions but as curried fn constructor as rhs? `a | a->a+1` === `a | ^+1`
     + syntax looks fresh, compact, flowy
     + combines JS's F#/Hack pipes
     + no redundant function calls from 2. (unless we do 4. with constructor/currying meaning)
     + `|` + `^` = `|>`, makes sense
     + reducer operator is as promised, without redundant call: `..combs_a | comb(^, input, room, damp) >- sum`
     ~ Likely there's benefit of limiting topic to pipe only. Generic ^ may have unexpected side-effects.
-      + eg. initializer `...a=(x;^+y)` can be `...a=x|^+y` now, since no conflict with semi. 
+      + eg. initializer `...a=(x;^+y)` can be `...a=x|^+y` now, since no conflict with semi.
 
   4. ~~Function overload `a | b(x) = b(a,x);  a | b(x)`~~
     ~+ Partial application can be thought on its own regardless of pipe as `a1 = a(#, rate)`
@@ -1663,7 +1663,7 @@ Having wat files is more useful than direct compilation to binary form:
   * maybe we may need generalizing transformers
 
 
-## [x] How to differentiate a-param from k-param argument: let's try gain(input?, kParam) for pipe, but no fn overloading
+## [x] How to differentiate a-param from k-param argument: gain(input?, kParam) for pipe, but no fn overloading
 
   * There's no way to differentiate gain(channels, aParam) and gain(channels, kParam).
 
@@ -1703,14 +1703,24 @@ Having wat files is more useful than direct compilation to binary form:
     - it complicates `curve(input, param)` and `input | curve(param)` case.
       ~ either we introduce pipe operator `input |> curve(param)`
         + less code (no need to define pipe fns), + less need in arrow functions, + less overloaded operators
-     
+
 ## [ ] Compile targets:
 
   * WASM
   * WAT
+    + replaceable with wabt, wat-compiler
+    + generates wat file as alternative - gives flexibility
+    + easier debugging
   * JS
     + can be useful in debugging
     + can useful in direct (simple) JS processing
     + can be useful for benchmarking
   * Native bytecode
   * others?
+
+## [ ] Live env requirements
+
+  1) compilable in a worker thread
+  2) hot swapping code in the worklet as it is playing and reusing memory state from the previous compile. If there's a delay/note/reverb tail playing from the previous compilation, and i compile a change, the new instance should inherit all the memory/buffers from the previous one, not start from zero. I have to be able to make changes without affecting the sound that is playing (too much). It won't be possible for 100% of the cases, but if the compiler can match the previous buffers with the new one then it should reuse them.
+  3) parser/compiler errors with line/col/symbol/token information so they can be displayed inline in the editor while the user is typing, so they see what they're doing wrong. They don't need to be extremely descriptive, but at least showing the right symbol position i.e what to draw red.
+  4) a way to export certain parameters into UI elements arbitrarily and with minimal effort. Right now in mono i've introduced a . prefix operator in the arguments so f(a, b, c) if i do f(a, .b, c) then i immediately get a knob for 'b' with that simple addition of the . prefix. That helps me a lot as a producer to not have to go elsewhere to define these and to try new things. The '.b' also becomes hoverable and can change with the wheel, but there's also a UI knob and they're associated, when you hover one, both light up. The idea is that once you export the controls like that, you can hide the editor and that can be a standalone effect/instrument with those controls it pulls from the code. You want another thing to tweak? Simply jump into the code and add a . next to the parameter and save. When there will be dozens of instruments and effects in the screen playing you need to be able to quickly do these things so you don't kill the flow. The flow must never be killed. That's the most important feature. You should be dancing all your way through from start to end while making a track without any gap of having to stop and take closer look at code or something isn't playing right or there are audible glitches etc. So first and foremost it is a party tool. You need to be able to party with it or it's worth nothing.

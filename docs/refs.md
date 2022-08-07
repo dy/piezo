@@ -6,6 +6,7 @@
 * [mono-lib](https://github.com/stagas/mono/blob/main/src/lib.wat.ts), [monolib](https://github.com/stagas/monolib/blob/main/src/index.ts)
 * [webassembly examples](https://openhome.cc/eGossip/WebAssembly/index.html)
 * Example wasm calculator https://crypto.stanford.edu/~blynn/asm/wasm.html
+* [eel2](https://www.cockos.com/EEL2/), [jsfx](https://github.com/JoepVanlier/JSFX)
 
 # bytebeat
 

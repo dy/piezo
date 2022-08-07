@@ -71,10 +71,10 @@ lp([x0], freq = 100 <- 1..10000, Q = 1.0 <- 0.001..3.0) = (
 
 Features:
 
-* _import_ − organized via URI string as `@ 'path/to/lib'`. Members can be imported via hash as `@ 'path/to/lib#a,b,c'`. <!-- Built-in libs are: _math_, _std_. Additional libs: _sonr_, _latr_, _musi_ and [others]().--> _import-map.json_ can provide import aliases. 
+* _import_ − organized via URI string as `@ 'path/to/lib'`. Members can be imported via hash as `@ 'path/to/lib#a,b,c'`. <!-- Built-in libs are: _math_, _std_. Additional libs: _sonr_, _latr_, _musi_ and [others]().--> _import-map.json_ can provide import aliases.
 <!-- * _scope_ − parens `()` can define function body, besides expression groups. -->
 * _state variables_ − `*state=init` persist value between <span title="Detected by callsite">function calls*</span>.
-* _groups_ − comma enables group operations as `a,b = c,d` === `a=c, b=d`, `(a,b) + (c,d)` === `(a+b, c+d)` etc. 
+* _groups_ − comma enables group operations as `a,b = c,d` === `a=c, b=d`, `(a,b) + (c,d)` === `(a+b, c+d)` etc.
 * _end operator_ − `.` indicates return statement or module exports.
 
 ### ZZFX
@@ -131,8 +131,10 @@ coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
 
 Features:
 
-* _groups_ − groups are just syntax sugar and are always flat, ie. `a, d, (s, sv), r` == `a, d, s, sv, r`. They're desugared on compilation stage.
-* _pipes_ − `|` operator is overloaded for functions as `a | b` == `b(a)`. Useful with _arrow functions_ or _topic operator `^`_.
+<!-- * _groups_ − groups are just syntax sugar and are always flat, ie. `a, d, (s, sv), r` == `a, d, s, sv, r`. They're desugared on compilation stage. -->
+<!-- * _function overload_ − function clause is matched by call signature in <span title="On export each clause gets name extension as gain_1a_1k, gain_2a_1k etc.">compile-time*</span>. -->
+* _pipes_ − `|` operator is overloaded for functions as `a | b` → `b(a)`.
+* _partial function application_ − `?` after function argument indicates that function allows partial call creating curried function, that's useful for pipeline.
 * _arrays_ − linear collection of elements: numbers, functions or other arrays. Unlike groups, elements are stored in memory.
 * _named members_ − group or array members can get alias as `[foo: a, bar: b]`.
 
