@@ -3,7 +3,7 @@ import parse from '../src/parse.js'
 import analyse from '../src/analyse.js'
 
 
-t.only('compile wat: sine gen', t => {
+t('analyze: sine gen', t => {
   let ir = analyse(parse(`
     @ 'math#sin,pi,max';
 
@@ -19,10 +19,11 @@ t.only('compile wat: sine gen', t => {
   // console.log(ir.func)
 
   is(ir, {
-    func: { sine: { name: 'sine', args: ['freq'], local: [], state: [], output: null } },
     export: {},
     import: { math: [ 'sin', 'pi', 'max' ] },
     global: { pi2: [ '*', 'pi', ['int', 2] ], sampleRate: [ 'int', 44100 ] },
+    func:
+    { sine: { name: 'sine', args: ['freq'], local: {}, state: {}, output: null } },
     data: {},
     range: {}
   })
@@ -71,7 +72,7 @@ t.todo('compile wat: zzfx coin', t => {
   `)
 })
 
-t('compile wat: oneliners', t => {
+t.todo('compile wat: oneliners', t => {
   // (module
   //   (func $mult (param $a f64) (param $b f64))
   //   (export "mult" (func $mult))
@@ -121,7 +122,7 @@ t('compile wat: oneliners', t => {
   ])
 })
 
-t('compile wat: errors', t => {
+t.todo('compile wat: errors', t => {
   // undefined exports
   throws(() =>
     watify(parse(`a,b,c.`))

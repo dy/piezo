@@ -7,7 +7,9 @@ export default tree => {
     func: {},
     export: {},
     import: {},
-    global: {}
+    global: {},
+    data: {},
+    range: {}
   }
 
   // [., ...statement] → [;, [., ...statement]]
