@@ -3,7 +3,7 @@ import parse from '../src/parse.js'
 import analyse from '../src/analyse.js'
 
 
-t('analyze: sine gen', t => {
+t.only('analyze: sine gen', t => {
   let ir = analyse(parse(`
     @ 'math#sin,pi,max';
 
@@ -23,7 +23,20 @@ t('analyze: sine gen', t => {
     import: { math: [ 'sin', 'pi', 'max' ] },
     global: { pi2: [ '*', 'pi', ['int', 2] ], sampleRate: [ 'int', 44100 ] },
     func:
-    { sine: { name: 'sine', args: ['freq'], local: {}, state: {}, output: null } },
+    {
+      sine: {
+        name: 'sine',
+        args: ['freq'],
+        local: {},
+        state: {},
+        body: [
+          ['=', ['*', 'phase'], ['int', 0]],
+          ['+=', 'phase', ['/', ['*', 'freq', 'pi2'], 'sampleRate']],
+          ['.',['[', ['(', 'sin', 'phase']]]
+        ],
+        output: {}
+      }
+    },
     data: {},
     range: {}
   })

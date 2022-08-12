@@ -15,15 +15,15 @@ export default tree => {
   // [., ...statement] → [;, [., ...statement]]
   // if (tree[0] !== ';') tree = [';',tree]
 
-  tm[tree[0]](tree, ir)
+  tmod[tree[0]](tree, ir)
 
   return ir
 }
 
 // module-level transforms
-const tm = {
+const tmod = {
   ';': ([,...statements], ir) => {
-    for (let statement of statements) statement && tm[statement[0]]?.(statement, ir)
+    for (let statement of statements) statement && tmod[statement[0]]?.(statement, ir)
   },
 
   // @ 'math#sin', @ 'path/to/lib'
@@ -36,21 +36,28 @@ const tm = {
   // a = b., a() = b().
   '.': ([,statement], ir) => {
     // TODO: ir.export
-    tm[statement[0]]?.(statement, ir)
+    tmod[statement[0]]?.(statement, ir)
   },
 
   '=': ([,left,right], ir) => {
     // a() = b
     if (left[0] === '(') {
       let [, name, args] = left
-      console.log(name, args)
-      ir.func[name] = {
+
+      // FIXME: make more meaningful arguments
+      args = args[0]===',' ? args : args ? [args] : []
+
+      let fun = ir.func[name] = {
         name,
-        args: args[0]===',' ? args : args ? [args] : [],
+        args,
         local: {},
         state: {},
-        output: null
+        body: [],
+        output: {}
       }
+
+      // evaluate function body
+      tfun[right[0]](right, fun)
     }
     // a = b
     else {
@@ -61,6 +68,15 @@ const tm = {
 }
 
 // function-level transforms
-const tf = {
-  ';'(){}
+const tfun  = {
+  ';'([,...statements], fun){
+    fun.body.push(...statements)
+  },
+
+  '('([,...statements], fun){
+    // (a;b;c)
+    if (Array.isArray(statements) && statements[0][0] === ';') {
+      tfun[';'](statements[0], fun)
+    }
+  }
 }

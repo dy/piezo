@@ -7,7 +7,7 @@ import compile from '../src/compile.js'
 import d from 'dedent'
 
 
-t.only('compile wat: globals', t => {
+t('compile wat: globals', t => {
   // TODO: single global
   // TODO: multiply wrong types
   // TODO: define globals via group (a,b,c).
