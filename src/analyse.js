@@ -2,7 +2,7 @@ export default tree => {
   // language-level sections
   // `type` section is built on stage of WAT compiling
   // `memory`/`table` sections are covered by arrays
-  //
+  // intermediate module representation
   let ir = {
     func: {},
     export: {},
@@ -57,7 +57,7 @@ const tmod = {
       }
 
       // evaluate function body
-      tfun[right[0]](right, fun)
+      fun.body = tfun[right[0]](right, fun)
     }
     // a = b
     else {
@@ -67,16 +67,39 @@ const tmod = {
 
 }
 
+const _op = Symbol('default_op')
+
 // function-level transforms
+// FIXME: there's big deal of duplication going on
 const tfun  = {
-  ';'([,...statements], fun){
-    fun.body.push(...statements)
+  ';'([,...statements], ir_func){
+    // a=1; b=2; ...
+    return [';', statements.map( expr => (Array.isArray(expr) ? (tfun[expr[0]] || tfun[_op])(expr, ir_func) : expr) )]
   },
 
-  '('([,...statements], fun){
-    // (a;b;c)
+  '('([,...statements], ir_func){
+    // (a...)
     if (Array.isArray(statements) && statements[0][0] === ';') {
-      tfun[';'](statements[0], fun)
+      // FIXME: does that just unwrap braces? why?
+      return tfun[';'](statements[0], ir_func)
     }
+    // sin(phase) as [(, sin, phase]
+    return ['(', statements.map( expr => (Array.isArray(expr) ? (tfun[expr[0]] || tfun[_op])(expr, ir_func) : expr) )]
+  },
+
+  '*'([,...args], ir_func) {
+    // *a = 1;
+    if (args.length === 1) {
+      // detect state variables
+      ir_func.state[args[0]] = null
+      return ['*', args[0]]
+    }
+
+    return ['*', ...args.map( expr => (Array.isArray(expr) ? (tfun[expr[0]] || tfun[_op])(expr, ir_func) : expr)  )]
+  },
+
+  // default operator, like a=b+1
+  [_op]([op, ...args], ir_func) {
+    return [op, ...args.map( expr => (Array.isArray(expr) ? (tfun[expr[0]] || tfun[_op])(expr, ir_func) : expr) )]
   }
 }

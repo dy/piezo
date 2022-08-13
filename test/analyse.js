@@ -16,7 +16,7 @@ t.only('analyze: sine gen', t => {
       [sin(phase)].
     ).
   `))
-  // console.log(ir.func)
+  console.log(ir.func.sine)
 
   is(ir, {
     export: {},
@@ -28,13 +28,13 @@ t.only('analyze: sine gen', t => {
         name: 'sine',
         args: ['freq'],
         local: {},
-        state: {},
-        body: [
+        state: { phase: ['int', 0 ]},
+        output: [['(', 'sin', 'phase']],
+        body: [';',
           ['=', ['*', 'phase'], ['int', 0]],
           ['+=', 'phase', ['/', ['*', 'freq', 'pi2'], 'sampleRate']],
           ['.',['[', ['(', 'sin', 'phase']]]
         ],
-        output: {}
       }
     },
     data: {},
