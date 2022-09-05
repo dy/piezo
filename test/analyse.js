@@ -16,7 +16,6 @@ t.only('analyze: sine gen', t => {
       [sin(phase)].
     ).
   `))
-  console.log(ir.func.sine)
 
   is(ir, {
     export: {},
@@ -28,12 +27,14 @@ t.only('analyze: sine gen', t => {
         name: 'sine',
         args: ['freq'],
         local: {},
-        state: { phase: ['int', 0 ]},
+        state: { phase: ['int', 0 ] },
         output: [['(', 'sin', 'phase']],
-        body: [';',
-          ['=', ['*', 'phase'], ['int', 0]],
-          ['+=', 'phase', ['/', ['*', 'freq', 'pi2'], 'sampleRate']],
-          ['.',['[', ['(', 'sin', 'phase']]]
+        body: ['(',
+          [';',
+            ['=', ['*', 'phase'], ['int', 0]],
+            ['+=', 'phase', ['/', ['*', 'freq', 'pi2'], 'sampleRate']],
+            ['.',['[', ['(', 'sin', 'phase']]]
+          ]
         ],
       }
     },
@@ -42,7 +43,7 @@ t.only('analyze: sine gen', t => {
   })
 })
 
-t.todo('compile wat: zzfx coin', t => {
+t.todo('analyze: zzfx coin', t => {
   compile(parse`
     @'math#sin,pi,max';
 
@@ -85,7 +86,7 @@ t.todo('compile wat: zzfx coin', t => {
   `)
 })
 
-t.todo('compile wat: oneliners', t => {
+t.todo('analyze: oneliners', t => {
   // (module
   //   (func $mult (param $a f64) (param $b f64))
   //   (export "mult" (func $mult))
@@ -135,14 +136,14 @@ t.todo('compile wat: oneliners', t => {
   ])
 })
 
-t.todo('compile wat: errors', t => {
+t.todo('analyze: errors', t => {
   // undefined exports
   throws(() =>
     watify(parse(`a,b,c.`))
   , /Exporting unknown/)
 })
 
-t.todo('compile wat: batch processing', t => {
+t.todo('analyze: batch processing', t => {
   is(watify(unbox(parse(`a([b],c) = b*c;`))),
     ['module', '']
   )

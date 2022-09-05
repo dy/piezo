@@ -39,7 +39,9 @@ const tmod = {
     tmod[statement[0]]?.(statement, ir)
   },
 
-  '=': ([,left,right], ir) => {
+  '=': (node, ir) => {
+    let [,left,right] = node
+
     // a() = b
     if (left[0] === '(') {
       let [, name, args] = left
@@ -53,53 +55,35 @@ const tmod = {
         local: {},
         state: {},
         body: [],
-        output: {}
+        output: []
       }
 
       // evaluate function body
-      fun.body = tfun[right[0]](right, fun)
+      fun.body = mapNode(node, right, fun)
     }
     // a = b
     else {
       ir.global[left] = right
     }
   },
-
 }
 
-const _op = Symbol('default_op')
+// maps node & analyzes internals
+function mapNode(parent, node, fun) {
+  let [op, ...args] = node
 
-// function-level transforms
-// FIXME: there's big deal of duplication going on
-const tfun  = {
-  ';'([,...statements], ir_func){
-    // a=1; b=2; ...
-    return [';', statements.map( expr => (Array.isArray(expr) ? (tfun[expr[0]] || tfun[_op])(expr, ir_func) : expr) )]
-  },
-
-  '('([,...statements], ir_func){
-    // (a...)
-    if (Array.isArray(statements) && statements[0][0] === ';') {
-      // FIXME: does that just unwrap braces? why?
-      return tfun[';'](statements[0], ir_func)
-    }
-    // sin(phase) as [(, sin, phase]
-    return ['(', statements.map( expr => (Array.isArray(expr) ? (tfun[expr[0]] || tfun[_op])(expr, ir_func) : expr) )]
-  },
-
-  '*'([,...args], ir_func) {
-    // *a = 1;
+  // *a = init
+  if (op === '*') {
     if (args.length === 1) {
       // detect state variables
-      ir_func.state[args[0]] = null
-      return ['*', args[0]]
+      fun.state[args[0]] = parent[0] === '=' ? parent[2] : null
     }
-
-    return ['*', ...args.map( expr => (Array.isArray(expr) ? (tfun[expr[0]] || tfun[_op])(expr, ir_func) : expr)  )]
-  },
-
-  // default operator, like a=b+1
-  [_op]([op, ...args], ir_func) {
-    return [op, ...args.map( expr => (Array.isArray(expr) ? (tfun[expr[0]] || tfun[_op])(expr, ir_func) : expr) )]
   }
+
+  // [a, b].
+  if (op === '[' && parent[0] === '.') {
+    fun.output.push(...args)
+  }
+
+  return [op, ...args.map(arg => Array.isArray(arg) ? mapNode(node, arg, fun) : arg)]
 }
