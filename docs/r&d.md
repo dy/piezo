@@ -395,6 +395,8 @@ Having wat files is more useful than direct compilation to binary form:
       ~ can be mitigated on imports: main compilable file exports everything, the rest is treeshaked
         ? how do we `export x from './x#x'`?
           `@ `./x#x`; x;`
+    + exporting each member is tedious and too much code noise.
+      + that's sometimes js trouble that exports is not exported etc.
 
 ## [x] State management → function state identified by callsite
 
