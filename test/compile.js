@@ -7,7 +7,7 @@ import compile from '../src/compile.js'
 import d from 'ts-dedent'
 
 
-t.only('compile wat: globals', t => {
+t('compile wat: globals', t => {
   // TODO: single global
   // TODO: multiply wrong types
   // TODO: define globals via group (a,b,c).
@@ -35,7 +35,7 @@ t.only('compile wat: globals', t => {
 })
 
 
-t('compile wat: sine gen', t => {
+t.todo('compile wat: sine gen', t => {
   let wat = compile(analyse(parse(`
     @ 'math#sin,pi,max';
 
