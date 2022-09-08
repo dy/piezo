@@ -75,7 +75,7 @@ Features:
 <!-- * _scope_ − parens `()` can define function body, besides expression groups. -->
 * _state variables_ − `*state=init` persist value between <span title="Detected by callsite">function calls*</span>.
 * _groups_ − comma enables group operations as `a,b = c,d` === `a=c, b=d`, `(a,b) + (c,d)` === `(a+b, c+d)` etc.
-* _end operator_ − `.` indicates return statement or module exports.
+* _end operator_ − `.` indicates return statement.
 
 ### ZZFX
 

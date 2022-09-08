@@ -314,9 +314,9 @@ Having wat files is more useful than direct compilation to binary form:
 
   + improves precision
 
-## [x] End operator → indicator of return/export statement.
+## [x] End operator → indicator of return statement.
 
-  * `.` operator can finish function body and save state. `delay(x,y) = ...d=[1s], z=0; d[z++]=x; d[z-y].`
+  * `.` operator can finish function body and save state. `delay(x,y) = (*d=[1s], z=0; d[z++]=x; d[z-y].)`
   * ? is it optional?
     * eg. `noise(phase) = sin((phase % (PI*2))**3)` - what would be the point here?
   - it makes direct sense only in case of unnested body. When body is nested - not as much.
@@ -344,7 +344,7 @@ Having wat files is more useful than direct compilation to binary form:
       - doesn't help much if expr comes after, eg. `pi,rate. a=3;`
     -> so seems uncovered period can stand only at the end of scope. Else there must be a semi.
 
-## [x] Early return?
+## [x] Early return? → yes, via return indicator.
 
   * can often see `if (a) return;` - useful construct. How's that in sonl?
   1. `a ? value.`
@@ -363,9 +363,38 @@ Having wat files is more useful than direct compilation to binary form:
     - early return is weak `a ? b.;`
       - can't suppress semicolon: `a ? b. c + d;`
     - exported global is confusing `sampleRate = 44100.;`
+    ~ `c()=1.`, `c()=1.0.` - weirdish constructs, although clear
   * `a ? b...;`, `sampleRate = 44100...;`
   * `a ? b!;`, `sampleRate = 44100!;`
   * `a ? b :| c + d`, `sampleRate = 44100:|;`
+
+## [x] Always return result, or allow no-result functions? → . is only for return; export is implicit (exports all); no-result fns are allowed.
+
+  + always return is more natural practice
+  - no-result case is more generic and closer no wasm, by forcing result we limit capabilities
+  + less choice is better: when no-result is needed?
+  + solves issue of `a(x,y) = x*y.` - meaning export function a, not result. vs `a(x,y) = x*y..`
+  ~ makes `.` optional at the end
+    ~ makes `.` less common for fn result - mostly limiting to early return as `a(x)=(x?1.;x)` ← this is fine though
+    - we still allow `.` as last token:
+      * `a(x,y)=(x*y.)` is valid "result of function", therefore `a(x,y)=x*y.` is too
+      * or else `.` depends on `()`: `(a.)` is result, `a.` is export.
+
+### [x] ? Can we use something else but . for export? → let's try exporting everything by default
+
+  - that seems to create confusion for `a(x,y) = x*y.` case
+  - that doesn't seem to belong to natural languages - marking . with export.
+  - it seems export is better marked before declaration, than after.
+
+  1. `::a(x,y) = x*y.`
+  2. `!a(x,y) = x*y.`
+  3. `#a(x,y) = x*y.`
+    - conflicts with cardinality
+  4. Can we export all by default?
+    - that bloats default module size
+      ~ can be mitigated on imports: main compilable file exports everything, the rest is treeshaked
+        ? how do we `export x from './x#x'`?
+          `@ `./x#x`; x;`
 
 ## [x] State management → function state identified by callsite
 
@@ -727,7 +756,7 @@ Having wat files is more useful than direct compilation to binary form:
         → easiest would be to provide JS wrapper. The variety of WASM export forms is huge.
   * Export area solves the issue: `gain()=...; export gain`
 
-## [ ] Arrays: to be or not to be? → for complex / arbitrary-length / nested structures?
+## [x] Arrays: to be or not to be? → for complex / arbitrary-length / nested structures?
   * ? what if we don't deal with arbitrary-length arrays?
     + it guarantees memory limitation, "embeds" into syntax
     + it removes much need in syntax around arrays like map, filer: it can be as `(a,b,c) | map`
@@ -737,7 +766,7 @@ Having wat files is more useful than direct compilation to binary form:
     ! that is in fact mixing operator! a,b,c >- mix
     !? we can reduce based on reducer's number of args
   * I think we should overload these operators |, >-
-  ?! Groups are flat, small and fixed-size; Arrays are nested and any-length.
+  → ?! Groups are flat, small and fixed-size; Arrays are nested and any-length.
 
 ## [x] Concat/flat groups → no need to flattening/deep nesting
   * ?is done via range operator a, ..b, c..d, e (shortened spread)
@@ -1499,7 +1528,7 @@ Having wat files is more useful than direct compilation to binary form:
     + shorter conditioning a & b | c
     - unconventional
 
-## [x] ASI: semicolons or not? → enforce semicolons.
+## [x] ASI: semicolons or not? → enforce semicolons. But last one is optional.
 
   1. Don't enforce `;` everywhere. Recognize newline intelligently.
     - C/Java-family has them mandatory; Also many JS folk tend to make it mandatory also.
@@ -1511,6 +1540,7 @@ Having wat files is more useful than direct compilation to binary form:
     - there's no that blankline intuition in natural languages nor math:
       newline continues prev line, explicit convention
     + "bullshit" noise
+      ~ well it's line noise
 
 ## [x] Flowy operators
 
@@ -1663,7 +1693,7 @@ Having wat files is more useful than direct compilation to binary form:
   * maybe we may need generalizing transformers
 
 
-## [x] How to differentiate a-param from k-param argument: gain(input?, kParam) for pipe, but no fn overloading
+## [x] How to differentiate a-param from k-param argument: no fn overloading
 
   * There's no way to differentiate gain(channels, aParam) and gain(channels, kParam).
 
@@ -1693,7 +1723,7 @@ Having wat files is more useful than direct compilation to binary form:
       ~ can be done as real k-param
   3. `[inputId, inputOffset] = aparam(n); process(inputId, ...args)`
     - decouples inputId from inputOffset: can be not obvious what passing id means.
-  4. Prohibit overloading functions?
+  → 4. Prohibit overloading functions?
     + removes ambiguity
     + simple solution
     + all pros from 2.
@@ -1704,13 +1734,14 @@ Having wat files is more useful than direct compilation to binary form:
       ~ either we introduce pipe operator `input |> curve(param)`
         + less code (no need to define pipe fns), + less need in arrow functions, + less overloaded operators
 
-## [ ] Compile targets:
+## [x] Compile targets: → WAT
 
   * WASM
   * WAT
     + replaceable with wabt, wat-compiler
-    + generates wat file as alternative - gives flexibility
+    + generates wat file as alternative to wasm
     + easier debugging
+    + natural and easier code than array structs
   * JS
     + can be useful in debugging
     + can useful in direct (simple) JS processing
