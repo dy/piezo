@@ -33,8 +33,8 @@ Features:
 
 <!-- * _function overload_ − function clause is matched by call signature in <span title="On export each clause gets name extension as gain_1a_1k, gain_2a_1k etc.">compile-time*</span>. -->
 * _input/output_ − `[left]` for mono, `[left, right]` for stereo, `[..channels]` for any number of <span title="Output channels must be explicitly indicated as [], otherwise single value is returned.">channels*</span>.
-* _param argument_ − direct `arg` indicates <em title="Controlling (historical artifact from CSound), blocK-rate">k-rate*</em> param, which value is fixed for full block.
-* _range_ − is language-level primitive with `from..to`, `from..<to`, `from>..to` signature, useful in arguments validation, array initialization etc.
+* _params as arguments_ − direct `arg` indicates <em title="Controlling (historical artifact from CSound), blocK-rate">k-rate*</em> param, which value is fixed for full block, channeled `[arg]` indicates <em title="Audio, or precise rate">a-rate*</em> param.
+* _range_ − is language-level primitive with `from..to` signature. Useful in arguments validation, array initialization etc.
 * _validation_ − `a <- range` (_a ∈ range_, _a in range_) asserts and clamps argument to provided range, to avoid blowing up volume.
 <!-- * _destructuring_ − collects array or group members as `[a,..bc] = [a,b,c]`. -->
 
@@ -71,7 +71,7 @@ lp([x0], freq = 100 <- 1..10000, Q = 1.0 <- 0.001..3.0) = (
 
 Features:
 
-* _import_ − organized via URI string as `@ 'path/to/lib'`. Members can be imported via hash as `@ 'path/to/lib#a,b,c'`. <!-- Built-in libs are: _math_, _std_. Additional libs: _sonr_, _latr_, _musi_ and [others]().--> _import-map.json_ can provide import aliases.
+* _import_ − done via URI string as `@ 'path/to/lib'`. Members can be indicated with hash as `@ 'path/to/lib#a,b,c'`. <!-- Built-in libs are: _math_, _std_. Additional libs: _sonr_, _latr_, _musi_ and [others]().--> _import-map.json_ can provide import aliases.
 <!-- * _scope_ − parens `()` can define function body, besides expression groups. -->
 * _state variables_ − `*state=init` persist value between <span title="Detected by callsite">function calls*</span>.
 * _groups_ − comma enables group operations as `a,b = c,d` === `a=c, b=d`, `(a,b) + (c,d)` === `(a+b, c+d)` etc.
@@ -151,12 +151,12 @@ a1,a2,a3,a4 = 1116,1188,1277,1356;
 b1,b2,b3,b4 = 1422,1491,1557,1617;
 p1,p2,p3,p4 = 225,556,441,341;
 
-stretch(n?) = floor(n * sampleRate / 44100);
+stretch(n) = floor(n * sampleRate / 44100);
 
 reverb([..input], room=0.5, damp=0.5) = (
-  *combs_a = a0,a1,a2,a3 | stretch,
-  *combs_b = b0,b1,b2,b3 | stretch,
-  *aps = p0,p1,p2,p3 | stretch;
+  *combs_a = a0,a1,a2,a3 | stretch(^),
+  *combs_b = b0,b1,b2,b3 | stretch(^),
+  *aps = p0,p1,p2,p3 | stretch(^);
 
   (
     (combs_a | comb(^, input, room, damp) >- (a,b) -> a+b) +

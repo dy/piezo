@@ -3,7 +3,7 @@ import parse from '../src/parse.js'
 import analyse from '../src/analyse.js'
 
 
-t.only('analyze: sine gen', t => {
+t('analyze: sine gen', t => {
   let ir = analyse(parse(`
     @ 'math#sin,pi,max';
 
