@@ -397,6 +397,7 @@ Having wat files is more useful than direct compilation to binary form:
           `@ `./x#x`; x;`
     + exporting each member is tedious and too much code noise.
       + that's sometimes js trouble that exports is not exported etc.
+  5. Export everything by default, except for methods marked "private", eg. _abc (convention).
 
 ## [x] State management → function state identified by callsite
 

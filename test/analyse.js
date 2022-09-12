@@ -43,6 +43,27 @@ t('analyze: sine gen', t => {
   })
 })
 
+t('analyze: func args', t => {
+  let ir = analyse(parse(`mult(a, b) = a * b`))
+
+  is(ir, {
+    export: {},
+    import: {},
+    global: {},
+    func: {
+      mult: {
+        name: 'mult',
+        args: ['a', 'b'],
+        local: {},
+        state: {},
+        output: [],
+        body: ['*', 'a', 'b'],
+      }
+    },
+    data: {},
+    range: {}
+  })
+})
 
 
 const unbox = list => list.map(item => Array.isArray(item) ? unbox(item) : item ? item+'' : null)

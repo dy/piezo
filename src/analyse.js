@@ -46,8 +46,10 @@ const tmod = {
     if (left[0] === '(') {
       let [, name, args] = left
 
-      // FIXME: make more meaningful arguments
-      args = args[0]===',' ? args : args ? [args] : []
+      args = args[0]===',' ? args.slice(1) : args ? [args] : []
+
+      // init args by name
+      args.forEach(arg => args[arg] = {})
 
       let fun = ir.func[name] = {
         name,
