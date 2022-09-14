@@ -14,7 +14,7 @@ t('analyze: sine gen', t => {
       *phase=0;
       phase += freq * pi2 / sampleRate;
       [sin(phase)].
-    ).
+    )
   `))
 
   is(ir, {

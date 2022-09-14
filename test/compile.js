@@ -35,7 +35,7 @@ t('compile: globals', t => {
 })
 
 
-t.only('compile: oneliners', t => {
+t('compile: oneliners', t => {
   // no result
   is(clean(compile(analyse(parse(`mult(a, b) = a * b`)))), clean(`
     (func $mult (param $a f64) (param $b f64)
@@ -45,14 +45,14 @@ t.only('compile: oneliners', t => {
   `))
 
   // result
-  is(analyse(parse(`
+  is(clean(compile(analyse(parse(`
     mult(a, b) = a * b.
-  `)), `
+  `)))), clean(`
     (func $mult (param $a f64) (param $b f64)
-      (f64.mul (local.get $a) (local.get $b)
+      (return (f64.mul (local.get $a) (local.get $b)))
     )
     (export $mult (func $mult))
-  `)
+  `))
 
   // error
   is(analyse(parse(`

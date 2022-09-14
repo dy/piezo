@@ -23,7 +23,7 @@ t.skip('parse: identifiers', t => {
 t('parse: end operator precedence', t => {
   is(parse(`
     x() = 1+2.
-  `), ['.',['=', ['(', 'x'], ['+', ['int',1], ['int',2]]]])
+  `), ['=', ['(', 'x'], ['.',['+', ['int',1], ['int',2]]]])
 
   is(parse(`
     a,b,c.
@@ -31,7 +31,7 @@ t('parse: end operator precedence', t => {
 
   is(parse(`
     x() = (1+2).
-  `), ['.',['=', ['(', 'x'], ['(', ['+', ['int',1], ['int',2]]]]])
+  `), ['=', ['(', 'x'], ['.',['(', ['+', ['int',1], ['int',2]]]]])
 
   is(parse(`
     x() = (1+2.)
@@ -39,7 +39,7 @@ t('parse: end operator precedence', t => {
 
   is(parse(`
     x() = (1+2.).
-  `), ['.',['=', ['(', 'x'], ['(',['.',['+', ['int',1], ['int',2]]]]]])
+  `), ['=', ['(', 'x'], ['.',['(',['.',['+', ['int',1], ['int',2]]]]]])
 
   is(parse(`
     x() = (a?b.;c)
@@ -78,18 +78,21 @@ t('parse: sine gen', t => {
       phase += freq * pi2 / sampleRate;
       [sin(phase)].
   ).`);
-  is(tree, [
-    '.', ['=',[
-      '(', 'sine', 'freq'
-    ], ['(',
-        [';',
-          ['=',['*', 'phase'],['int',0]],
-          ['+=', 'phase', ['/', ['*', 'freq', 'pi2'], 'sampleRate']],
-          ['.',['[',['(', 'sin','phase']]]
+  is(tree,
+    ['=',
+      [
+        '(', 'sine', 'freq'
+      ],
+      ['.', ['(',
+          [';',
+            ['=',['*', 'phase'],['int',0]],
+            ['+=', 'phase', ['/', ['*', 'freq', 'pi2'], 'sampleRate']],
+            ['.',['[',['(', 'sin','phase']]]
+          ]
         ]
       ]
     ]
-  ])
+  )
 })
 
 t('parse: audio-gain', t => {

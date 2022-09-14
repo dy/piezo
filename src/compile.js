@@ -28,9 +28,9 @@ export default ir => {
   // expressions mapping
   const edict = {
     '*': (op, a, b) => `(f64.mul ${expr(a)} ${expr(b)})`,
-    'float': (op, a) => `(f64.const ${expr(a)})`
+    'float': (op, a) => `(f64.const ${expr(a)})`,
+    '.': (op, a, b) =>`(return ${expr(a)})`
   }
-
 
   // 1. declare all functions
   for (let name in ir.func) {

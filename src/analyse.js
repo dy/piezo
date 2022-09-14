@@ -14,7 +14,6 @@ export default tree => {
 
   // [., ...statement] → [;, [., ...statement]]
   // if (tree[0] !== ';') tree = [';',tree]
-
   tmod[tree[0]](tree, ir)
 
   return ir
@@ -34,8 +33,7 @@ const tmod = {
   },
 
   // a = b., a() = b().
-  '.': ([,statement], ir) => {
-    // TODO: ir.export
+  '.': ([_,statement], ir) => {
     tmod[statement[0]]?.(statement, ir)
   },
 
