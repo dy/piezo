@@ -7,6 +7,10 @@ import compile from '../src/compile.js'
 import d from 'ts-dedent'
 
 
+function compiles(a, b) {
+  is(clean(compile(analyse(parse(a)))), clean(b), clean(a))
+}
+
 t('compile: globals', t => {
   // TODO: single global
   // TODO: multiply wrong types
@@ -37,108 +41,132 @@ t('compile: globals', t => {
 
 t('compile: oneliners', t => {
   // no result
-  is(clean(compile(analyse(parse(`mult(a, b) = a * b`)))), clean(`
+  compiles(`mult(a, b) = a * b`, `
     (func $mult (param $a f64) (param $b f64)
       (f64.mul (local.get $a) (local.get $b))
     )
     (export $mult (func $mult))
-  `))
+  `)
 
   // result
-  is(clean(compile(analyse(parse(`
+  compiles(`
     mult(a, b) = a * b.
-  `)))), clean(`
+  `, `
     (func $mult (param $a f64) (param $b f64)
       (return (f64.mul (local.get $a) (local.get $b)))
     )
     (export $mult (func $mult))
-  `))
-
-  // error
-  is(analyse(parse(`
-    mult(a, b) = a * b..
-  `)), `
-    (func $mult (param $a f64) (param $b f64)
-      (f64.mul (local.get $a) (local.get $b)
-    )
-    (export $mult (func $mult))
   `)
 
+  // TODO: error - unfinished range
+  // is(clean(compile(analyse(parse(`
+  //   mult(a, b) = a * b..
+  // `)))), clean(`
+  //   (func $mult (param $a f64) (param $b f64)
+  //     (f64.mul (local.get $a) (local.get $b)
+  //   )
+  //   (export $mult (func $mult))
+  // `))
+
   // result
-  is(analyse(parse(`
+  compiles(`
     mult(a, b) = a * b.;
-  `)), `
+  `, `
     (func $mult (param $a f64) (param $b f64)
-      (f64.mul (local.get $a) (local.get $b)
+      (return (f64.mul (local.get $a) (local.get $b)))
     )
     (export $mult (func $mult))
   `)
 
   // no result
-  is(compile(analyse(parse(`
+  compiles(`
     mult(a, b) = (a * b)
-  `))), `module',
-    func', 'mult', param', 'a', 'f64'], param', 'b', 'f64'], result', 'f64'],
-      f64.mul', local.get', 'a'], local.get', 'b']]
-    ]
+  `, `
+    (func $mult (param $a f64) (param $b f64)
+      (f64.mul (local.get $a) (local.get $b))
+    )
+    (export $mult (func $mult))
   `)
 
   // no result
-  is(compile(analyse(parse(`
+  compiles(`
     mult(a, b) = (a * b);
-  `))), ['module',
-    ['func', 'mult', ['param', 'a', 'f64'], ['param', 'b', 'f64'], ['result', 'f64'],
-      ['f64.mul', ['local.get', 'a'], ['local.get', 'b']]
-    ]
-  ])
+  `, `
+    (func $mult (param $a f64) (param $b f64)
+      (f64.mul (local.get $a) (local.get $b))
+    )
+    (export $mult (func $mult))
+  `)
 
   // result
-  is(compile(analyse(parse(`
+  compiles(`
     mult(a, b) = (a * b).
-  `))), ['module',
-    ['func', 'mult', ['param', 'a', 'f64'], ['param', 'b', 'f64'], ['result', 'f64'],
-      ['f64.mul', ['local.get', 'a'], ['local.get', 'b']]
-    ]
-  ])
+  `, `
+    (func $mult (param $a f64) (param $b f64)
+      (return (f64.mul (local.get $a) (local.get $b)))
+    )
+    (export $mult (func $mult))
+  `)
 
   // result
-  is(compile(analyse(parse(`
+  compiles(`
     mult(a, b) = (a * b.)
-  `))), ['module',
-    ['func', 'mult', ['param', 'a', 'f64'], ['param', 'b', 'f64'], ['result', 'f64'],
-      ['f64.mul', ['local.get', 'a'], ['local.get', 'b']]
-    ]
-  ])
+  `, `
+    (func $mult (param $a f64) (param $b f64)
+      (return (f64.mul (local.get $a) (local.get $b)))
+    )
+    (export $mult (func $mult))
+  `)
 
   // result but kind-of double-ish? prohibit?
-  is(compile(analyse(parse(`
+  compiles(`
     mult(a, b) = (a * b.).
-  `))), ['module',
-    ['func', 'mult', ['param', 'a', 'f64'], ['param', 'b', 'f64'], ['result', 'f64'],
-      ['f64.mul', ['local.get', 'a'], ['local.get', 'b']]
-    ],
-    ['export', 'mult', ['func', 'mult']]
-  ])
+  `, `
+    (func $mult (param $a f64) (param $b f64)
+      (return (return (f64.mul (local.get $a) (local.get $b))))
+    )
+    (export $mult (func $mult))
+  `)
 
   // doublish result? like return (return a*b)
-  is(compile(analyse(parse(`
+  compiles(`
     mult(a, b) = (a * b.).;
-  `))), ['module',
-    ['func', 'mult', ['param', 'a', 'f64'], ['param', 'b', 'f64'], ['result', 'f64'],
-      ['f64.mul', ['local.get', 'a'], ['local.get', 'b']]
-    ],
-    ['export', 'mult', ['func', 'mult']]
-  ])
+  `, `
+    (func $mult (param $a f64) (param $b f64)
+      (return (return (f64.mul (local.get $a) (local.get $b))))
+    )
+    (export $mult (func $mult))
+  `)
 
-  is(compile(analyse(parse(`
+  compiles(`
+    mult(a, b) = (a * b; b.)
+  `, `
+    (func $mult (param $a f64) (param $b f64)
+      (f64.mul (local.get $a) (local.get $b))
+      (return (local.get $b))
+    )
+    (export $mult (func $mult))
+  `)
+
+  compiles(`
+    mult(a, b) = (a * b; b.)
+  `, `
+    (func $mult (param $a f64) (param $b f64)
+      (f64.mul (local.get $a) (local.get $b))
+      (return (local.get $b))
+    )
+    (export $mult (func $mult))
+  `)
+
+  compiles(`
     mult(a, b) = (a * b; b).
-  `))), ['module',
-    ['func', 'mult', ['param', 'a', 'f64'], ['param', 'b', 'f64'], ['result', 'f64'],
-      ['f64.mul', ['local.get', 'a'], ['local.get', 'b']],
-      ['local.get', 'b']
-    ],
-    ['export', 'mult', ['func', 'mult']]
-  ])
+  `, `
+    (func $mult (param $a f64) (param $b f64)
+      (f64.mul (local.get $a) (local.get $b))
+      (return (local.get $b))
+    )
+    (export $mult (func $mult))
+  `)
 })
 
 

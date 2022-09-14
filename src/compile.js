@@ -19,6 +19,7 @@ export default ir => {
     // another expression
     if (Array.isArray(node)) {
       let [op, ...args] = node
+
       return edict[op]?.(op, ...args) || ''
     }
 
@@ -29,7 +30,12 @@ export default ir => {
   const edict = {
     '*': (op, a, b) => `(f64.mul ${expr(a)} ${expr(b)})`,
     'float': (op, a) => `(f64.const ${expr(a)})`,
-    '.': (op, a, b) =>`(return ${expr(a)})`
+    '.': (op, a, b) => (a[0] === '(' && a[1]?.[0] === ';') ?
+      // (a;b). → (a); b.
+      `${expr(a[1].slice(0,-1))}\n(return ${expr(a[1][a[1].length-1])})` :
+      `(return ${expr(a)})`,
+    '(': (op, a, b) => expr(a),
+    ';': (op, ...args) => args.map(arg => arg != null ? expr(arg) : '').join('\n')
   }
 
   // 1. declare all functions
