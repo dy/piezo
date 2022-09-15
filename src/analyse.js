@@ -44,10 +44,13 @@ const tmod = {
     if (left[0] === '(') {
       let [, name, args] = left
 
-      args = args[0]===',' ? args.slice(1) : args ? [args] : []
+      args = args?.[0]===',' ? args.slice(1) : args ? [args] : []
 
       // init args by name
       args.forEach(arg => args[arg] = {})
+
+      // detect overload
+      if (ir.func[name]) throw Error(`Function \`${name}\` is already defined`)
 
       let fun = ir.func[name] = {
         name,

@@ -65,5 +65,10 @@ t('analyze: func args', t => {
   })
 })
 
+t('analyze: function overload', t => {
+  throws(() => analyse(parse(`x()=;`)), /Bad syntax/)
+  throws(() => analyse(parse(`x()=1; x()=2;`)), /Function/)
+})
+
 
 const unbox = list => list.map(item => Array.isArray(item) ? unbox(item) : item ? item+'' : null)
