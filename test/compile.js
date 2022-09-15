@@ -4,7 +4,6 @@ import t, { is, ok, same, throws } from 'tst'
 import parse from '../src/parse.js'
 import analyse from '../src/analyse.js'
 import compile from '../src/compile.js'
-import d from 'ts-dedent'
 
 
 function compiles(a, b) {
@@ -19,43 +18,37 @@ t('compile: globals', t => {
   // undefined variable throws error
   throws(() => compile(analyse(parse(`pi2 = pi*2.0;`))), /pi is not defined/)
 
-  let ast = parse(`
+  compiles(`
     pi = 3.14;
     pi2 = pi*2.0;
     sampleRate = 44100;
-  `)
-  let ir = analyse(ast)
-  let wat = compile(ir)
-  // console.log(wat, ir)
-  is(clean(wat), clean(d`
-    (global $pi f64 (f64.const 3.14))
-    (global $pi2 f64)
-    (global $sampleRate i32 (i32.const 44100))
+  `, `
+    (global $pi (export "pi") f64 (f64.const 3.14))
+    (global $pi2 (export "pi2") f64)
+    (global $sampleRate (export "sampleRate") i32 (i32.const 44100))
     (start $module/init)
     (func $module/init
       (global.set $pi2 (f64.mul (global.get $pi) (f64.const 2)))
     )`
-  ))
+  )
 })
 
 
-t('compile: oneliners', t => {
+t('compile: function oneliners', t => {
   // no result
   compiles(`mult(a, b) = a * b`, `
-    (func $mult (param $a f64) (param $b f64)
+    (func $mult (export "mult") (param $a f64) (param $b f64)
       (f64.mul (local.get $a) (local.get $b))
     )
-    (export $mult (func $mult))
   `)
 
   // result
   compiles(`
     mult(a, b) = a * b.
   `, `
-    (func $mult (param $a f64) (param $b f64)
+    (func $mult (export "mult") (param $a f64) (param $b f64)
       (return (f64.mul (local.get $a) (local.get $b)))
     )
-    (export $mult (func $mult))
   `)
 
   // TODO: error - unfinished range
@@ -65,111 +58,106 @@ t('compile: oneliners', t => {
   //   (func $mult (param $a f64) (param $b f64)
   //     (f64.mul (local.get $a) (local.get $b)
   //   )
-  //   (export $mult (func $mult))
+  //   (export "mult" (func $mult))
   // `))
 
   // result
   compiles(`
     mult(a, b) = a * b.;
   `, `
-    (func $mult (param $a f64) (param $b f64)
+    (func $mult (export "mult") (param $a f64) (param $b f64)
       (return (f64.mul (local.get $a) (local.get $b)))
     )
-    (export $mult (func $mult))
   `)
 
   // no result
   compiles(`
     mult(a, b) = (a * b)
   `, `
-    (func $mult (param $a f64) (param $b f64)
+    (func $mult (export "mult") (param $a f64) (param $b f64)
       (f64.mul (local.get $a) (local.get $b))
     )
-    (export $mult (func $mult))
   `)
 
   // no result
   compiles(`
     mult(a, b) = (a * b);
   `, `
-    (func $mult (param $a f64) (param $b f64)
+    (func $mult (export "mult") (param $a f64) (param $b f64)
       (f64.mul (local.get $a) (local.get $b))
     )
-    (export $mult (func $mult))
   `)
 
   // result
   compiles(`
     mult(a, b) = (a * b).
   `, `
-    (func $mult (param $a f64) (param $b f64)
+    (func $mult (export "mult") (param $a f64) (param $b f64)
       (return (f64.mul (local.get $a) (local.get $b)))
     )
-    (export $mult (func $mult))
   `)
 
   // result
   compiles(`
     mult(a, b) = (a * b.)
   `, `
-    (func $mult (param $a f64) (param $b f64)
+    (func $mult (export "mult") (param $a f64) (param $b f64)
       (return (f64.mul (local.get $a) (local.get $b)))
     )
-    (export $mult (func $mult))
   `)
 
   // result but kind-of double-ish? prohibit?
   compiles(`
     mult(a, b) = (a * b.).
   `, `
-    (func $mult (param $a f64) (param $b f64)
+    (func $mult (export "mult") (param $a f64) (param $b f64)
       (return (return (f64.mul (local.get $a) (local.get $b))))
     )
-    (export $mult (func $mult))
   `)
 
   // doublish result? like return (return a*b)
   compiles(`
     mult(a, b) = (a * b.).;
   `, `
-    (func $mult (param $a f64) (param $b f64)
+    (func $mult (export "mult") (param $a f64) (param $b f64)
       (return (return (f64.mul (local.get $a) (local.get $b))))
     )
-    (export $mult (func $mult))
   `)
 
   compiles(`
     mult(a, b) = (a * b; b.)
   `, `
-    (func $mult (param $a f64) (param $b f64)
+    (func $mult (export "mult") (param $a f64) (param $b f64)
       (f64.mul (local.get $a) (local.get $b))
       (return (local.get $b))
     )
-    (export $mult (func $mult))
   `)
 
   compiles(`
     mult(a, b) = (a * b; b.)
   `, `
-    (func $mult (param $a f64) (param $b f64)
+    (func $mult (export "mult") (param $a f64) (param $b f64)
       (f64.mul (local.get $a) (local.get $b))
       (return (local.get $b))
     )
-    (export $mult (func $mult))
   `)
 
   compiles(`
     mult(a, b) = (a * b; b).
   `, `
-    (func $mult (param $a f64) (param $b f64)
+    (func $mult (export "mult") (param $a f64) (param $b f64)
       (f64.mul (local.get $a) (local.get $b))
       (return (local.get $b))
     )
-    (export $mult (func $mult))
   `)
 })
 
-
+t.todo('compile: channel inputs', t => {
+  compiles(`
+    a([l]) = 1;
+  `, `
+  `)
+})
 
 t.todo('compile: audio-gain', t => {
   is(compile(unbox(parse(`

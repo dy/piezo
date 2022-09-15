@@ -2,10 +2,8 @@
 
 const INT = 'i32', FLOAT = 'f64'
 
-const isPrivate = func => func.name[0] === '_'
-
 export default ir => {
-  let func, out = [], globals = {}, exports = {}
+  let func, out = [], globals = {}
 
   // serialize expression (depends on current ir, ctx)
   function expr (node) {
@@ -41,8 +39,8 @@ export default ir => {
   // 1. declare all functions
   for (let name in ir.func) {
     func = ir.func[name]
-    out.push(`(func $${name} ${func.args.map(a=>`(param $${a} f64)`).join(' ')}\n${expr(func.body)}\n)`)
-    if (!isPrivate(func)) exports[func.name] = 'func'
+    out.push(`(func $${name}${name[0]!=='_' ?  ` (export "${name}")` : ``} ${func.args.map(a=>`(param $${a} f64)`).join(' ')}\n${expr(func.body)}\n)`)
+    // if (!isPrivate(func)) exports[func.name] = 'func'
   }
 
   // 2. include imports
@@ -72,9 +70,10 @@ export default ir => {
   }
 
   // 4. provide exports
-  for (let name in exports) {
-    out.push(`(export $${name} (${exports[name]} $${name}))`)
-  }
+  // NOTE: handled by individual definitions, since all variables are exported by default
+  // for (let name in exports) {
+  //   out.push(`(export "${name}" (${exports[name]} $${name}))`)
+  // }
 
   return out.join('\n')
 }
