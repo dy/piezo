@@ -4,10 +4,14 @@ import t, { is, ok, same, throws } from 'tst'
 import parse from '../src/parse.js'
 import analyse from '../src/analyse.js'
 import compile from '../src/compile.js'
+import Wabt from '../lib/wabt.js'
 
 
 function compiles(a, b) {
-  is(clean(compile(analyse(parse(a)))), clean(b), clean(a))
+  let src
+  is(clean(src = compile(analyse(parse(a)))), clean(b), clean(a))
+  console.log(src)
+  return compileWat(src)
 }
 
 t('compile: globals', t => {
@@ -34,20 +38,21 @@ t('compile: globals', t => {
 })
 
 
-t('compile: function oneliners', t => {
+t.only('compile: function oneliners', t => {
+  // result
+  let mod = compiles(`
+    mult(a, b) = a * b.
+  `, `
+    (func $mult (export "mult") (param $a f64) (param $b f64) (result f64)
+      (return (f64.mul (local.get $a) (local.get $b)))
+    )
+  `)
+  console.log(mod.exports.mult(1,2))
+
   // no result
   compiles(`mult(a, b) = a * b`, `
     (func $mult (export "mult") (param $a f64) (param $b f64)
       (f64.mul (local.get $a) (local.get $b))
-    )
-  `)
-
-  // result
-  compiles(`
-    mult(a, b) = a * b.
-  `, `
-    (func $mult (export "mult") (param $a f64) (param $b f64)
-      (return (f64.mul (local.get $a) (local.get $b)))
     )
   `)
 
@@ -65,7 +70,7 @@ t('compile: function oneliners', t => {
   compiles(`
     mult(a, b) = a * b.;
   `, `
-    (func $mult (export "mult") (param $a f64) (param $b f64)
+    (func $mult (export "mult") (param $a f64) (param $b f64) (result f64)
       (return (f64.mul (local.get $a) (local.get $b)))
     )
   `)
@@ -92,7 +97,7 @@ t('compile: function oneliners', t => {
   compiles(`
     mult(a, b) = (a * b).
   `, `
-    (func $mult (export "mult") (param $a f64) (param $b f64)
+    (func $mult (export "mult") (param $a f64) (param $b f64) (result f64)
       (return (f64.mul (local.get $a) (local.get $b)))
     )
   `)
@@ -101,7 +106,7 @@ t('compile: function oneliners', t => {
   compiles(`
     mult(a, b) = (a * b.)
   `, `
-    (func $mult (export "mult") (param $a f64) (param $b f64)
+    (func $mult (export "mult") (param $a f64) (param $b f64) (result f64)
       (return (f64.mul (local.get $a) (local.get $b)))
     )
   `)
@@ -110,7 +115,7 @@ t('compile: function oneliners', t => {
   compiles(`
     mult(a, b) = (a * b.).
   `, `
-    (func $mult (export "mult") (param $a f64) (param $b f64)
+    (func $mult (export "mult") (param $a f64) (param $b f64) (result f64)
       (return (return (f64.mul (local.get $a) (local.get $b))))
     )
   `)
@@ -119,7 +124,7 @@ t('compile: function oneliners', t => {
   compiles(`
     mult(a, b) = (a * b.).;
   `, `
-    (func $mult (export "mult") (param $a f64) (param $b f64)
+    (func $mult (export "mult") (param $a f64) (param $b f64) (result f64)
       (return (return (f64.mul (local.get $a) (local.get $b))))
     )
   `)
@@ -127,7 +132,7 @@ t('compile: function oneliners', t => {
   compiles(`
     mult(a, b) = (a * b; b.)
   `, `
-    (func $mult (export "mult") (param $a f64) (param $b f64)
+    (func $mult (export "mult") (param $a f64) (param $b f64) (result f64)
       (f64.mul (local.get $a) (local.get $b))
       (return (local.get $b))
     )
@@ -136,7 +141,7 @@ t('compile: function oneliners', t => {
   compiles(`
     mult(a, b) = (a * b; b.)
   `, `
-    (func $mult (export "mult") (param $a f64) (param $b f64)
+    (func $mult (export "mult") (param $a f64) (param $b f64) (result f64)
       (f64.mul (local.get $a) (local.get $b))
       (return (local.get $b))
     )
@@ -145,7 +150,7 @@ t('compile: function oneliners', t => {
   compiles(`
     mult(a, b) = (a * b; b).
   `, `
-    (func $mult (export "mult") (param $a f64) (param $b f64)
+    (func $mult (export "mult") (param $a f64) (param $b f64) (result f64)
       (f64.mul (local.get $a) (local.get $b))
       (return (local.get $b))
     )
@@ -236,4 +241,22 @@ function clean (str) {
 
 	//replace duble spaces/tabs to single ones
 	.replace(/(\s)\s+/g, '$1')
+}
+
+
+// convert wast code to binary
+let wabt = await Wabt()
+function compileWat (code, config) {
+  const parsed = wabt.parseWat('inline', code, {})
+
+  const binary = parsed.toBinary({
+    log: true,
+    canonicalize_lebs: true,
+    relocatable: false,
+    write_debug_names: false,
+  })
+  parsed.destroy()
+
+  const mod = new WebAssembly.Module(binary.buffer)
+  return new WebAssembly.Instance(mod)
 }

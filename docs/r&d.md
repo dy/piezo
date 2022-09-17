@@ -398,6 +398,12 @@ Having wat files is more useful than direct compilation to binary form:
     + exporting each member is tedious and too much code noise.
       + that's sometimes js trouble that exports is not exported etc.
   5. Export everything by default, except for methods marked "private", eg. _abc (convention).
+    - _abc forces unnecessary noise across the file. It's easier to mark variable private just once.
+    + Cobra lang uses __abc for private and _abc for protected...
+    - bringing meaning to variable name symbols can be unintuitive.
+  6. We can use @ for export as well as import.
+    + Ruby has @ for protected methods, which is alternative to _abc
+    - mixes up imports/exports: it's hard to see what's what in the file
 
 ## [x] State management → function state identified by callsite
 
@@ -1736,6 +1742,36 @@ Having wat files is more useful than direct compilation to binary form:
     - it complicates `curve(input, param)` and `input | curve(param)` case.
       ~ either we introduce pipe operator `input |> curve(param)`
         + less code (no need to define pipe fns), + less need in arrow functions, + less overloaded operators
+
+## [ ] Do we need arrow functions? → Make them macro/operator-helpers, not constructs
+
+  ? Are they unnecessary?
+
+  - two types of fn declaration - direct and "situational"
+  - we have just single use-case for now, which seems to be "fancy js" rather than sound code
+  - classic sounds indeed don't use situational functions, maybe that's even against nature of sound mechanics
+  - in line noise paradigm <-, -< / ->, >- they create a bit of abstract level confusion:
+    * <-, -< act on "flat" level, whereas
+    * ->, >- () -> act on "functional" level
+  - introduce questions how to use pipes a | x -> x+1: without arrow fns there would be less options
+  -! reduce/flat can be organized as `i < #arr -< sum += arr[i++]`
+  -! map can be organized as `(item <- arr -< item * 2)`
+  -- (+) it frees `->` operator space, making it asymmetrical
+    + can be filled! like map?
+  -- (+) `>-` still kind-of requires function on the right-side and is similar to `|` operator
+    !+? can take attributes as `(cur, next) <- arr -< a + b`
+      - nah, likely need to be `(cur, i) <- arr`
+    ?! what if unlike `-<`, `>-` "reduces" attributes as `(sum, item) <- arr >- sum + item`
+    ?! what if use `->, >-` pair for map/fold/converge? like `arr >- (a,b,c) -> a + b + c`
+      + looks similar to old patterns
+      + has nothing to do with arrow functions
+      + arrow functions are macro-helpers, not runtime constructs
+
+## Passing array/ref value: `a(v) = b(v); b([v]) = [v+1].`
+
+  * Seems to be solvable via passing v as reference to array, must not be a big deal.
+  * Have to track ref type of v though: it must prohibit operations on that.
+
 
 ## [x] Compile targets: → WAT
 

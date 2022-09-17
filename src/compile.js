@@ -39,8 +39,11 @@ export default ir => {
   // 1. declare all functions
   for (let name in ir.func) {
     func = ir.func[name]
-    out.push(`(func $${name}${name[0]!=='_' ?  ` (export "${name}")` : ``} ${func.args.map(a=>`(param $${a} f64)`).join(' ')}\n${expr(func.body)}\n)`)
-    // if (!isPrivate(func)) exports[func.name] = 'func'
+    let dfn = `(func $${name}`
+    if (name[0]!=='_') dfn += ` (export "${name}")`
+    dfn += func.args.map(a=>`(param $${a} f64)`).join(' ')
+    dfn += '\n' + expr(func.body) + '\n'
+    out.push(dfn)
   }
 
   // 2. include imports
@@ -49,6 +52,8 @@ export default ir => {
   for (let name in ir.global) {
     let dfn = ir.global[name]
     let node = `global $${name} `
+
+    if (name[0]!=='_') node+=`(export "${name}") `
 
     // simple init
     if (dfn[0] === 'int') node += `${INT} (${INT}.const ${dfn[1]})`

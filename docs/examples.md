@@ -9,7 +9,7 @@
 pi2 = pi*2;
 
 // by default input/params are a-rate
-lp(x0, freq = 100 <- 1..1k, Q = 1.0 <- 0.001..3.0) = (
+lp([x0], freq = 100 <- 1..1k, Q = 1.0 <- 0.001..3.0) = (
   *(x1, x2, y1, y2);
 
   w = pi2 * freq / sampleRate;
@@ -26,10 +26,8 @@ lp(x0, freq = 100 <- 1..1k, Q = 1.0 <- 0.001..3.0) = (
   x1, x2 = x0, x1;
   y1, y2 = y0, y1;
 
-  y0.
-).
-
-lp(f, Q) = c -> lp(c, f, Q);
+  [y0].
+);
 
 default([..ch], gain) = ch | lp(freq, Q) | amp(gain).
 ```
@@ -232,13 +230,32 @@ reverb((..input), room=0.5, damp=0.5) = (
   *combs_b = b0,b1,b2,b3 | coef -> stretch(coef, sampleRate);
   *aps = p0,p1,p2,p3 | coef -> stretch(coef, sampleRate);
 
-  ..combs_a | a -> comb(a, input, room, damp) >- sum + ..combs_b | a -> comb(input, room, damp) >- sum;
+  ..combs_a | a -> comb(a, input, room, damp) >- sum + ..combs_b | b -> comb(b, input, room, damp) >- sum;
+
+  ^, ..aps >- waterfall;
+
+// loops
+// + only >- new operator
+// + holds conventions: lambda, pipe
+// + resolves syntactically merged scope issue
+// + no implicit args, indicates apparently what's going on under the hood
+// + plays well with >-
+// - introduces fn overload, which might be ok for funcrefs
+// - introduces lambdas, which might be unavoidable anyways
+// - introduces operator precedence issue, | being above `,` which can be mitigated by raising , precedence
+// - overuses lambdas and/or curried functions constructors, if say we want `source | filter(freq, Q)`, can be mitigated by |> operator
+reverb((..input), room=0.5, damp=0.5) = (
+  *combs_a = a <- a0,a1,a2,a3 -< stretch(a, sampleRate);
+  *combs_b = b <- b0,b1,b2,b3 -< stretch(b, sampleRate);
+  *aps = p <- p0,p1,p2,p3 -< stretch(p, sampleRate);
+
+  a <- combs_a -< comb(a, input, room, damp) | sum + b <- combs_b -< comb(b, input, room, damp) | sum;
 
   ^, ..aps >- waterfall;
 ).
 ```
 
-## dynamic processor
+## dynamic processors
 
 ```
 ```
