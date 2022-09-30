@@ -26,7 +26,7 @@ lp([x0], freq = 100 <- 1..1k, Q = 1.0 <- 0.001..3.0) = (
   x1, x2 = x0, x1;
   y1, y2 = y0, y1;
 
-  [y0].
+  [y0]
 );
 
 default([..ch], gain) = ch | lp(freq, Q) | amp(gain).
@@ -63,12 +63,12 @@ skip(fn, from=idx, l) = ( cond(cur[idx]) ? idx++; cur.slice(from, idx) );
 
 // a + b - c
 expr = (prec=0, end, cc, token, newNode, fn) => (
-  cc=space() &&
+  cc=space() ?
   newToken=(
     lookup[cc]?.(token, prec) ||    // if operator with higher precedence isn't found
     !token && lookup[0]()            // parse literal or quit. token seqs are forbidden: `a b`, `a "b"`, `1.32 a`
   )
-  -< token = newToken
+  -< token = newToken;
 
   // check end character
   // FIXME: can't show "Unclose paren", because can be unknown operator within group as well
@@ -117,37 +117,38 @@ dly(delay <- 1..10, feedback <- 1..10) = (
 
   ++count >= size ? count = 0;
 
-  [out].
+  [out]
 ).
 ```
 
 ## Oscillator
 
 ```fs
-sine(f=432 <- 0..20k) = sin(f * t * 2pi).
+sine(f=432 <- 0..20k) = sin(f * t * 2pi);
 
-saw(f=432 <- 0..20k) = 1 - 2 * (t % (1 / f)) * f.
+saw(f=432 <- 0..20k) = 1 - 2 * (t % (1 / f)) * f;
 
-ramp(f) = 2 * (t % (1 / f)) * f - 1.
+ramp(f) = 2 * (t % (1 / f)) * f - 1;
 
-tri(f) = abs(1 - (2 * t * f) % 2) * 2 - 1.
+tri(f) = abs(1 - (2 * t * f) % 2) * 2 - 1;
 
-sqr(f) = (t*f % 1/f < 1/f/2) * 2 - 1.
+sqr(f) = (t*f % 1/f < 1/f/2) * 2 - 1;
 
-pulse(f, w) = (t*f % 1/f < 1/f/2*w) * 2 - 1.
+pulse(f, w) = (t*f % 1/f < 1/f/2*w) * 2 - 1;
 
-noise() = rand() * 2 - 1.
+noise() = rand() * 2 - 1;
 ```
 
 ## nopop
 
 https://github.com/opendsp/nopop/blob/master/index.js
 ```fs
-ladder(threshold=0.05, amount=0.12) =
-  *next, *prev
-  diff=next-prev
-  abs(diff) > threshold ? prev += diff * amount : prev = next
-  prev.
+ladder(threshold=0.05, amount=0.12) = (
+  *next, *prev;
+  diff=next-prev;
+  abs(diff) > threshold ? prev += diff * amount : prev = next;
+  prev
+);
 ```
 
 ## step
@@ -230,9 +231,9 @@ reverb((..input), room=0.5, damp=0.5) = (
   *combs_b = b0,b1,b2,b3 | coef -> stretch(coef, sampleRate);
   *aps = p0,p1,p2,p3 | coef -> stretch(coef, sampleRate);
 
-  ..combs_a | a -> comb(a, input, room, damp) >- sum + ..combs_b | b -> comb(b, input, room, damp) >- sum;
+  combs = ..combs_a | a -> comb(a, input, room, damp) >- sum + ..combs_b | b -> comb(b, input, room, damp) >- sum;
 
-  ^, ..aps >- waterfall;
+  ..combs, ..aps >- waterfall;
 
 // loops
 // + only >- new operator

@@ -15,7 +15,7 @@ Having wat files is more useful than direct compilation to binary form:
 
   * like glsl (data views to underlying block buffer), with [standard channel ids](https://en.wikipedia.org/wiki/Surround_sound#Standard_speaker_channels); swizzles as `a.l, a.r = a.r, a.l; a.fl, a.fr = a.fl`
 
-## [x] `import a,b,c from 'lib'`, `import sin from 'stdlib'` → `# 'stdlib': sin`, `# 'lib': a,b,c;`
+## [x] `import a,b,c from 'lib'`, `import sin from 'stdlib'` → `@ 'stdlib#sin`, `@'lib#a,b,c;`
 
   * ? How do we redefine eg. sin from stdlib?
     ? Just reassign to var or give another name? Every fn has unique name?
@@ -28,7 +28,7 @@ Having wat files is more useful than direct compilation to binary form:
 ## [x] `f(x, y) = x + y` standard classic way to define function in math
   + also as in F# or Elixir
 
-## [x] Ranges: f(x=100~0..100, y~0..100, p~0.001..5, shape~(tri,sin,tan)=sin)
+## [x] Ranges: f(x=100<-0..100, y<-0..100, p<-0.001..5, shape<-{tri,sin,tan}=sin)
 
   * `f(x=100 in 0..100, y=1 in 0..100, z in 1..100, p in 0.001..5) = ...`
     - conflicts with no-keywords policy
@@ -118,7 +118,7 @@ Having wat files is more useful than direct compilation to binary form:
 ## [x] Numbers: float64 by default, unless it's statically inferrable as int32, like ++, +-1 etc ops only
   * Boolean operators turn float64 into int64
 
-## [x] Pipes: → let's try basics: lambdas, then pipe overload, then topic reference between expressions
+## [x] Pipes: → let's try macros as pipe mappers a | x -> x | 
 
   1. Placeholder as `x | #*0.6 + reverb() * 0.4`, `source | lp($, frq, Q)`?
     ? can there be multiple args to pipe operator? `a,b |` runs 2 pipes, not multiarg.
@@ -263,7 +263,7 @@ Having wat files is more useful than direct compilation to binary form:
       + plays well with implicit arguments #t, #i etc.
     - same as 5 - let's avoid implicit stuff
 
-## [x] Lambda → (wait for use-case) generalized fn by callsite, spawning creates bound call
+## [x] Lambda → let's try not use them and decompile to code directly
 
   * should there be lambda? `value | x -> x*.6 + reverb(x) * .4`
     - lambda function has diverging notation from regular fn definition.
@@ -310,11 +310,11 @@ Having wat files is more useful than direct compilation to binary form:
   - we can't include all units anyways, it's pointless
     ~ we don't need all, whereas 2k..20k is very elegant, instead of legacy 2e3..20e3
 
-## [ ] Number types: fractions, complex numbers
+## [x] Number types: fractions, complex numbers -> when needed
 
   + improves precision
 
-## [x] End operator → indicator of return statement.
+## [x] End operator → indicator of return statement. Try using ^a as return.
 
   * `.` operator can finish function body and save state. `delay(x,y) = (*d=[1s], z=0; d[z++]=x; d[z-y].)`
   * ? is it optional?
@@ -344,18 +344,19 @@ Having wat files is more useful than direct compilation to binary form:
       - doesn't help much if expr comes after, eg. `pi,rate. a=3;`
     -> so seems uncovered period can stand only at the end of scope. Else there must be a semi.
 
-## [x] Early return? → yes, via return indicator.
+## [x] Early return? → yes, via return indicator a ? ^b;
 
   * can often see `if (a) return;` - useful construct. How's that in sonl?
   1. `a ? value.`
     * There doesn't seem to be other options.
     → `a ? b.;` expects `;` at the end.
       * skipping ; means node is the last element: `(a;b;c.)`
-  2. not supporting that.
+  2. not supporting early return.
     + simpler flow/logic
-    + no (b.c;d) case
+    + no (b.c;d) syntax case
+    + gl code doesn't support preliminary returns as well as optimal branching, so maybe meaningful
 
-## [x] Return operator: alternatives → no alternatives, use .
+## [x] Return operator: alternatives → try using `^` for returning value from block.
 
   1. `.`
     + erlang-y
@@ -364,11 +365,19 @@ Having wat files is more useful than direct compilation to binary form:
       - can't suppress semicolon: `a ? b. c + d;`
     - exported global is confusing `sampleRate = 44100.;`
     ~ `c()=1.`, `c()=1.0.` - weirdish constructs, although clear
+    - semi after the result. 
   * `a ? b...;`, `sampleRate = 44100...;`
   * `a ? b!;`, `sampleRate = 44100!;`
   * `a ? b :| c + d`, `sampleRate = 44100:|;`
+  * `a ? ^b;`
+    + less confusion with `.`
+    - doesn't look natural when at the end there's `a() = (...; ^out);`
+      + it doesn't necessarily required: last element is returned by default.
+    + allows `.` for short float notation.
+      -~ `1...2.` can be messy
+    + allows return none / break notation.
 
-## [x] Always return result, or allow no-result functions? → . is only for return; export is implicit (exports all); no-result fns are allowed.
+## [x] Always return result, or allow no-result functions? → implicit return, same as (a;b) in scopes
 
   + always return is more natural practice
   - no-result case is more generic and closer no wasm, by forcing result we limit capabilities
@@ -379,8 +388,25 @@ Having wat files is more useful than direct compilation to binary form:
     - we still allow `.` as last token:
       * `a(x,y)=(x*y.)` is valid "result of function", therefore `a(x,y)=x*y.` is too
       * or else `.` depends on `()`: `(a.)` is result, `a.` is export.
+  + Since `(a;b;c)` naturally returns last element, so must function body.
 
-### [x] ? Can we use something else but . for export? → let's try exporting everything by default
+## [x] Break, continue, return? -> try `^` for continue, `^^` for break/return etc.
+
+  1. `^` for continue, `^^` for break;
+    + nice pattern to skip callstack;
+    + brings point to prohibiting `^` as reference to last expression: simpler pipes;
+    + combinable with return statement which is kind-of natural `(a?^b; c)`.
+    - wrapping in parens can change the meaning or scope of `^^`.
+      ~+ not really: it's visible that it breaks recent scope.
+  2. `>>` for continue, `^` for break.
+  3. `.` for break or return, acting within the block; `^` for continue.
+    - break can be used without stack argument, `.` by itself doesn't do much sense although possible
+    - `tsd(i) = (i < 10 ? (log('lower'); 10.); i)` may expect returning from the function, not breaking the block.
+      -> can be used as `tsd(i) = (i < 10 ? (log('lower'); 10).; i)`
+    + the most laconic version
+  4. webassembly doesn't use continue, just `^` for break.
+
+### [x] ? Can we use something else but . for export? → let's try exporting everything by default except for _x
 
   - that seems to create confusion for `a(x,y) = x*y.` case
   - that doesn't seem to belong to natural languages - marking . with export.
@@ -890,7 +916,7 @@ Having wat files is more useful than direct compilation to binary form:
   + allows building chords as (C3, E3, G3) = Cmaj
     ~ would require # to be valid part of identifier
 
-## [x] ? Parts of identifier: $, #, @, _ → don't see why not, doesn't seem we need number references
+## [x] ? Parts of identifier: $, #, @, _ → # is reserved for length, @ is for import
   + allows private-ish variables
   + allows notes constants
   ~ mb non-standardish
@@ -1551,7 +1577,7 @@ Having wat files is more useful than direct compilation to binary form:
     + "bullshit" noise
       ~ well it's line noise
 
-## [x] Flowy operators
+## [x] Flowy operators -> <- >- -<
 
   Draft is ready, needs polishing corners and reaching the planned feeling.
   Taking r&d issues and aligning them.
@@ -1689,7 +1715,7 @@ Having wat files is more useful than direct compilation to binary form:
   2.1 `@math#sin,cos`, `@./path/to/file.son#a,b,c`
     - messes up with native syntax - paths are not part of it.
 
-## [x] Wasmtree instead of IR would be simpler:
+## [x] Wasmtree instead of IR would be simpler -> nope, it's less flexible and less supported
 
   * ['module', ['func', '$name', ['param', 'a', 'b'], ...statements], ['global'], ['exports']]
   + it would allow to just apply a bunch of transforms to inputs, keeping the format
@@ -1743,7 +1769,7 @@ Having wat files is more useful than direct compilation to binary form:
       ~ either we introduce pipe operator `input |> curve(param)`
         + less code (no need to define pipe fns), + less need in arrow functions, + less overloaded operators
 
-## [ ] Do we need arrow functions? → Make them macro/operator-helpers, not constructs
+## [x] Do we need arrow functions? → Make them macro/operator-helpers, not constructs
 
   ? Are they unnecessary?
 

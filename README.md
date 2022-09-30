@@ -24,7 +24,7 @@ gain1([left], volume <- range) = [left * volume];
 gain2([left, right], volume <- range) = [left * volume, right * volume];
 
 // multi-channel clause
-gain([..channels], volume <- range) = [..channels * volume].
+gain([..channels], volume <- range) = [..channels * volume];
 ```
 
 Generally multi-channel case is enough, but mono/stereo clauses provide shortcuts for <span title="Autogenerating clauses from generic case would cause O(c^n) code size grow depending on number/type of arguments. So manual clauses is lower tax and allows better control over output.">better  performance*</span>.
@@ -65,7 +65,7 @@ lp([x0], freq = 100 <- 1..10000, Q = 1.0 <- 0.001..3.0) = (
   x1, x2 = x0, x1;
   y1, y2 = y0, y1;
 
-  [y0].
+  [y0]
 ).
 ```
 
@@ -111,7 +111,7 @@ adssr(x, a, d, (s, sv), r) = (
     (total - t)/r * sv
   ) * x;
 
-  y.
+  y
 );
 adsr(x, a, d, s, r) = adssr(x, a, d, (s, 1), r);   // no-sv alias
 
@@ -125,7 +125,7 @@ coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
   t = i++/sampleRate;
   phase += (freq + t > delay ? jump : 0) * pi2 / sampleRate;
 
-  oscillator[shape](phase) | adsr(^, 0, 0, .06, .24) | curve(^, 1.82).
+  oscillator[shape](phase) | x -> adsr(x, 0, 0, .06, .24) | x -> curve(x, 1.82).
 ).
 ```
 
@@ -134,7 +134,7 @@ Features:
 <!-- * _groups_ − groups are just syntax sugar and are always flat, ie. `a, d, (s, sv), r` == `a, d, s, sv, r`. They're desugared on compilation stage. -->
 <!-- * _function overload_ − function clause is matched by call signature in <span title="On export each clause gets name extension as gain_1a_1k, gain_2a_1k etc.">compile-time*</span>. -->
 * _pipes_ − `|` operator is overloaded for functions as `a | b` → `b(a)`.
-* _partial function application_ − `?` after function argument indicates that function allows partial call creating curried function, that's useful for pipeline.
+* _partial function application_ − `->` indicates that function allows partial call creating curried function, that's useful for pipeline.
 * _arrays_ − linear collection of elements: numbers, functions or other arrays. Unlike groups, elements are stored in memory.
 * _named members_ − group or array members can get alias as `[foo: a, bar: b]`.
 
@@ -154,15 +154,15 @@ p1,p2,p3,p4 = 225,556,441,341;
 stretch(n) = floor(n * sampleRate / 44100);
 
 reverb([..input], room=0.5, damp=0.5) = (
-  *combs_a = a0,a1,a2,a3 | stretch(^),
-  *combs_b = b0,b1,b2,b3 | stretch(^),
-  *aps = p0,p1,p2,p3 | stretch(^);
+  *combs_a = a0,a1,a2,a3 | stretch,
+  *combs_b = b0,b1,b2,b3 | stretch,
+  *aps = p0,p1,p2,p3 | stretch;
 
-  (
-    (combs_a | comb(^, input, room, damp) >- (a,b) -> a+b) +
-    (combs_b | comb(^, input, room, damp) >- (a,b) -> a+b)
-  ) |
-  (^, aps) >- (input, coef) -> p + allpass(^, p, coef, room, damp).
+  combs = (
+    (combs_a | x -> comb(x, input, room, damp) >- (a,b) -> a+b) +
+    (combs_b | x -> comb(x, input, room, damp) >- (a,b) -> a+b)
+  );
+  (combs, aps) >- (input, coef) -> p + allpass(p, coef, room, damp)
 ).
 ```
 
@@ -192,7 +192,8 @@ melodytest(time) = (
   melodyString = "00040008",
   melody = 0;
   i = 0;
-  (i++ < 5) -< (
+
+  i++ < 5 -< (
     melody += tri(
       time * mix(
         200 + (i * 900),
@@ -202,7 +203,7 @@ melodytest(time) = (
     ) * (1 - fract(time * 4))
   );
 
-  melody.
+  melody
 )
 hihat(time) = noise(time) * (1 - fract(time * 4)) ** 10;
 kick(time) = sin((1 - fract(time * 2)) ** 17 * 100);
@@ -211,7 +212,7 @@ melody(time) = melodytest(time) * fract(time * 2) ** 6 * 1;
 
 song() = (
   *t=0; time = t++ / sampleRate;
-  [(kick(time) + snare(time)*.15 + hihat(time)*.05 + melody(time)) / 4].
+  [(kick(time) + snare(time)*.15 + hihat(time)*.05 + melody(time)) / 4]
 ).
 ```
 
@@ -221,9 +222,157 @@ Features:
 * _string literal_ − `"abc"` acts as array with ASCII codes.
 * _cardinal (length) operator_ − `#items` returns number of items of either an array, a string or a group.
 
+
+
 ## Language Reference
 
-...Coming
+
+```fs
+//////////////////////////// naming convention
+some_var, SoMe_VaR;         // identifiers are case-insensitive
+if=12; for=some_Variable;   // keywords are identifiers (lino has no reserved words)
+
+//////////////////////////// primitives
+16, 0x10, 0b0               // integer (decimal, hex or binary)
+16.0, 1e3, 2e-3             // float 
+2pi, 10.1k                  // unit float
+1h2m3s, 4.5s                // time
+1/2, 2/3                    // TODO: fractional numbers
+2i                          // TODO: complex numbers
+"abc", "\x12"               // strings (ascii and utf8 notations)
+'path/to/my/file';          // atoms (like sealed strings)
+
+//////////////////////////// operators
++ - * / % **                // arithmetical (** for pow)
+& | ^ ~ && || !             // bitwise and logical
+== !=                       // comparison
+
+//////////////////////////// ranges
+1..10                       // basic range  
+1.., ..10                   // open ranges
+10..1                       // reverse-direction range 
+1.08 .. 100.8               // float range
+0>..10, 0..<10, 0>..<10     // non-inclusive ranges
+
+//////////////////////////// groups 
+(a, b, c) = (d, e, f);      // groups are syntactic sugar, not data type
+(a, (b, c)) == (a, b, c);   // always flat (identical)
+                            //
+a,b = b,a;                  // swap
+a,b + c,d → (a+b, c+d);     // operation
+(a,b).x → (a.x, b.x);       // property
+(a,b).x() → (a.x(), b.x()); // call
+                            //
+a,b,c = d,e,f;              // a=d,b=e,c=f
+(a,b,c) = (d,e,f)           // a=d, b=e, c=f          // destructured-assembled
+(a,b,c) = d                 // a=d[0], b=d[1], c=d[2] // destructure
+(a,b,c) = d,e,f             //? a=f[0], b=f[1], c=f[2] // destructure group on the right
+a = b,c,d                   //? a=d - groups are not assignable
+a,b,c = (d,e,f)             //? a=f,b=f,c=f
+
+//////////////////////////// statements
+statement();                // semi-colons at end of line are mandatory
+(c = a + b; c);             // parens act as block, returning last element
+(multiple(); statements())  // semi-colon after last statement in block is optional 
+
+//////////////////////////// conditions
+sign = a < 0 ? -1 : +1;     // inline ternary
+                            //
+(2+2 >= 4) ?                // multiline ternary
+  puts("Math works!")       //
+: "a" < "b" ?               // unconstrained `else if` can also be used
+  puts("Sort strings")      //
+: (                         //
+  puts("Get ready");        //
+  puts("Last chance")       // block as seen here.
+)                           //
+                            //
+a > b ? b++;                // subternary operator (if)
+a > b ?: b++;               // elvis operator (else if)
+
+//////////////////////////// loops
+s = "Hello";               
+(#s < 50) -< s += ", hi";   // inline loop: `while (s.length < 50) s += ", hi"`
+(i <- 10..1 -< (            // multiline loop
+  i < 3 ? ^^;               // `^^` to break loop
+  i < 5 ? ^;                // `^` to continue loop
+  puts(i + "...");          // 
+));                         // result of loop is group or last element
+
+//////////////////////////// functions 
+double(n) = n*2;            // inline function
+                            // function overload is not supported 
+triple(n=1) = (             // optional args
+  n == 0 ? ^n;              // preliminary return n
+  n*3                       // last stack value is implicitly returned
+);
+triple();                   // 3
+triple(5);                  // 15
+triple(n: 10);              // 30. named argument.
+copy = triple;              // capture function
+copy(10);                   // also 30
+gain(amp <- 0..100);        // clamp argument to range
+
+//////////////////////////// batch functions
+gain([aType], kType);       // a-type, k-type arguments
+gein([in], amp) = [in*amp]; // output channel data
+
+//////////////////////////// stateful variables
+a() = ( *i=0; i++ )         // persist value between fn calls
+
+//////////////////////////// strings
+hi="hello";                 // strings can use "quotes" 
+string=`{hi} world`;        // interpolated string -> 'hello world'
+string[1];                  // positive indexing from first element [0] -> 'e'
+string[-3];                 // negative indexing from last element [-1] -> 'r'
+string[2..10];              // slice range
+string[1, 2..10, -1];       // slice/pick multiple elements
+string < string;            // comparison (<,>,==,!=)
+string + string;            // concatenation -> "hello worldhello world"
+string - string;            // removes all occurences of right string in left string -> ""
+string / " ";               // split -> ["hello", "world"]
+string ~> "l";              // indexOf -> 2
+string <~ "l";              // rightIndexOf -> -2
+string[-1..0];              // reverse
+#string;                    // length
+
+//////////////////////////// lists
+list = [2, 4, 6, 8];        // 
+list = [0..10];             // list from range
+list = [i <- 0..8 -< i*2];  // list comprehension
+list = [2, 4, 6, last: 8];  // alias names for indices
+list[0];                    // positive indexing from first element [0] -> 2
+list[-2]=5;                 // negative indexing from last element [-1] -> list becomes [2,4,5,8]
+list.last;                  // get value by alias
+list + list;                // concat [1,2]+[2,3]=[1,2,2,3]
+list - list;                // difference [1,2]-[2,3]=[1]
+list ^ list;                // intersection [1,2]^[2,3]=[2]
+list[1..3, 5]; list[5..];   // slice
+list ~> item;               // find
+list <~ item;               // rfind
+list[-1..0];                // reverse
+#list;                      // length
+
+////////////////////////////// TODO: sets
+set = {1, 2, 3, 3}          // from items
+set = {1..3}                // from range
+set = {..list}              // from list 
+set = {'a', 'b', 'c'}       // from atoms
+
+///////////////////////////// map/fold
+items >- (sum, i) -> sum + i // reducer is macro, not arrow function
+(a, b, c) >- (a, b) -> b     // can be applied to groups
+items | item -> a(item)      // can be used in pipe fashion      
+
+//////////////////////////// import
+@'path/to/module';          // any file can be imported directly
+@'math';                    // or defined via import-maps.json
+@'my-module#x,y,z';         // imported entries can be subscoped via hash
+
+//////////////////////////// export
+x = 1;                      // every identifier/function are exported by default
+_x = 2;                     // lowdash identifiers are excluded from export
+```
 
 
 ## Alternatives
