@@ -234,41 +234,36 @@ if=12; for=some_Variable;   // keywords are identifiers (lino has no reserved wo
 
 //////////////////////////// primitives
 16, 0x10, 0b0               // integer (decimal, hex or binary)
-16.0, 1e3, 2e-3             // float 
+16.0, .1, 1e3, 2e-3         // float 
 2pi, 10.1k                  // unit float
 1h2m3s, 4.5s                // time
 1/2, 2/3                    // TODO: fractional numbers
-2i                          // TODO: complex numbers
 "abc", "\x12"               // strings (ascii and utf8 notations)
-'path/to/my/file';          // atoms (like sealed strings)
+'path/to/my/file';          // atoms, aka symbols (for enums etc.)
 
 //////////////////////////// operators
 + - * / % **                // arithmetical (** for pow)
 & | ^ ~ && || !             // bitwise and logical
-== !=                       // comparison
 
 //////////////////////////// ranges
 1..10                       // basic range  
 1.., ..10                   // open ranges
 10..1                       // reverse-direction range 
-1.08 .. 100.8               // float range
+1.08 .. 108.0               // float range
 0>..10, 0..<10, 0>..<10     // non-inclusive ranges
 
 //////////////////////////// groups 
-(a, b, c) = (d, e, f);      // groups are syntactic sugar, not data type
-(a, (b, c)) == (a, b, c);   // always flat (identical)
-                            //
-a,b = b,a;                  // swap
-a,b + c,d → (a+b, c+d);     // operation
-(a,b).x → (a.x, b.x);       // property
-(a,b).x() → (a.x(), b.x()); // call
-                            //
-a,b,c = d,e,f;              // a=d,b=e,c=f
-(a,b,c) = (d,e,f)           // a=d, b=e, c=f          // destructured-assembled
-(a,b,c) = d                 // a=d[0], b=d[1], c=d[2] // destructure
-(a,b,c) = d,e,f             //? a=f[0], b=f[1], c=f[2] // destructure group on the right
-a = b,c,d                   //? a=d - groups are not assignable
-a,b,c = (d,e,f)             //? a=f,b=f,c=f
+a, b, c;                    // groups are syntactic sugar, not data type
+(a, (b, c)) == a, b, c;     // groups are always flat
+a,b,c = d,e,f;              // assign -> a=d, b=e, c=f
+a,b = b,a;                  // swap -> temp=a; a=b; b=temp;
+(a,b) + (c,d);              // operations -> (a+c, b+d)
+(a,b).x                     // (a.x, b.x);
+(a,b).x()                   // (a.x(), b.x());
+(a,b,c) = (d,e,f)           // a=d, b=e, c=f
+(a,b,c) = d                 // a=d, b=d, c=d
+a,b,c = (d,e,f)             // a=d, b=e, c=f
+a = b,c,d                   // error: groups are not assignable
 
 //////////////////////////// statements
 statement();                // semi-colons at end of line are mandatory
@@ -285,7 +280,7 @@ sign = a < 0 ? -1 : +1;     // inline ternary
 : (                         //
   puts("Get ready");        //
   puts("Last chance")       // block as seen here.
-)                           //
+);                          //
                             //
 a > b ? b++;                // subternary operator (if)
 a > b ?: b++;               // elvis operator (else if)
@@ -294,16 +289,16 @@ a > b ?: b++;               // elvis operator (else if)
 s = "Hello";               
 (#s < 50) -< s += ", hi";   // inline loop: `while (s.length < 50) s += ", hi"`
 (i <- 10..1 -< (            // multiline loop
-  i < 3 ? ^^;               // `^^` to break loop
-  i < 5 ? ^;                // `^` to continue loop
+  i < 3 ? ^^;               // `^^` to break loop (can return value as ^^x)
+  i < 5 ? ^;                // `^` to continue loop (can return value as ^x)
   puts(i + "...");          // 
-));                         // result of loop is group or last element
+));                         // result of loop is last statement
 
 //////////////////////////// functions 
 double(n) = n*2;            // inline function
                             // function overload is not supported 
 triple(n=1) = (             // optional args
-  n == 0 ? ^n;              // preliminary return n
+  n == 0 ? ^n;              // preliminarily return n
   n*3                       // last stack value is implicitly returned
 );
 triple();                   // 3
@@ -311,11 +306,11 @@ triple(5);                  // 15
 triple(n: 10);              // 30. named argument.
 copy = triple;              // capture function
 copy(10);                   // also 30
-gain(amp <- 0..100);        // clamp argument to range
+clamp(v <- 0..100) = v;     // clamp argument to range
 
 //////////////////////////// batch functions
 gain([aType], kType);       // a-type, k-type arguments
-gein([in], amp) = [in*amp]; // output channel data
+gain([in], amp) = [in*amp]; // input/output channeled data (for batch call)
 
 //////////////////////////// stateful variables
 a() = ( *i=0; i++ )         // persist value between fn calls
@@ -337,18 +332,17 @@ string[-1..0];              // reverse
 #string;                    // length
 
 //////////////////////////// lists
-list = [2, 4, 6, 8];        // 
+list = [2, 4, 6, last: 8];  // list from elements
 list = [0..10];             // list from range
 list = [i <- 0..8 -< i*2];  // list comprehension
-list = [2, 4, 6, last: 8];  // alias names for indices
+list.last;                  // alias name for index
 list[0];                    // positive indexing from first element [0] -> 2
 list[-2]=5;                 // negative indexing from last element [-1] -> list becomes [2,4,5,8]
-list.last;                  // get value by alias
 list + list;                // concat [1,2]+[2,3]=[1,2,2,3]
 list - list;                // difference [1,2]-[2,3]=[1]
-list ^ list;                // intersection [1,2]^[2,3]=[2]
+list * list;                // intersection [1,2]*[2,3]=[2]
 list[1..3, 5]; list[5..];   // slice
-list ~> item;               // find
+list ~> item;               // find index of the item
 list <~ item;               // rfind
 list[-1..0];                // reverse
 #list;                      // length
@@ -356,13 +350,13 @@ list[-1..0];                // reverse
 ////////////////////////////// TODO: sets
 set = {1, 2, 3, 3}          // from items
 set = {1..3}                // from range
-set = {..list}              // from list 
 set = {'a', 'b', 'c'}       // from atoms
 
 ///////////////////////////// map/fold
-items >- (sum, i) -> sum + i // reducer is macro, not arrow function
-(a, b, c) >- (a, b) -> b     // can be applied to groups
-items | item -> a(item)      // can be used in pipe fashion      
+items | (x) -> a(x);        // pipe operator with mapper 
+items >- (sum,x) -> sum+x;  // fold operator with reducer
+(a, b, c) >- (a, b) -> b;   // can be applied to groups (syntax sugar)
+(a, b, c) | (a) -> a.x * 2; // compiler unfolds to actual constructs
 
 //////////////////////////// import
 @'path/to/module';          // any file can be imported directly
