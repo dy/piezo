@@ -28,10 +28,11 @@ export default ir => {
   const edict = {
     '*': (op, a, b) => `(f64.mul ${expr(a)} ${expr(b)})`,
     'float': (op, a) => `(f64.const ${expr(a)})`,
-    '.': (op, a, b) => (a[0] === '(' && a[1]?.[0] === ';') ?
-      // (a;b). → (a); b.
-      `${expr(a[1].slice(0,-1))}\n(return ${expr(a[1][a[1].length-1])})` :
-      `(return ${expr(a)})`,
+    // FIXME: handle end operator differently
+    // '.': (op, a, b) => (a[0] === '(' && a[1]?.[0] === ';') ?
+    //   `${expr(a[1].slice(0,-1))}\n(return ${expr(a[1][a[1].length-1])})` :
+    //   `(return ${expr(a)})`,
+    // (a;b). → (a); b.
     '(': (op, a, b) => expr(a),
     ';': (op, ...args) => args.map(arg => arg != null ? expr(arg) : '').join('\n')
   }
@@ -41,8 +42,13 @@ export default ir => {
     func = ir.func[name]
     let dfn = `(func $${name}`
     if (name[0]!=='_') dfn += ` (export "${name}")`
-    dfn += func.args.map(a=>`(param $${a} f64)`).join(' ')
-    dfn += '\n' + expr(func.body) + '\n'
+    dfn += ' ' + func.args.map(a=>`(param $${a} f64)`).join(' ')
+    dfn += ' ' + '(result f64)' // TODO: detect result type properly
+    dfn += `\n${expr(func.body)}`
+    dfn += '\n(return)'
+    // detect function result 
+    dfn += '\n)'
+
     out.push(dfn)
   }
 

@@ -10,7 +10,6 @@ import Wabt from '../lib/wabt.js'
 function compiles(a, b) {
   let src
   is(clean(src = compile(analyse(parse(a)))), clean(b), clean(a))
-  console.log(src)
   return compileWat(src)
 }
 
@@ -38,123 +37,70 @@ t('compile: globals', t => {
 })
 
 
-t.only('compile: function oneliners', t => {
-  // result
+t('compile: function oneliners', t => {
+  // default
   let mod = compiles(`
-    mult(a, b) = a * b.
+    mult(a, b) = a * b;
   `, `
     (func $mult (export "mult") (param $a f64) (param $b f64) (result f64)
-      (return (f64.mul (local.get $a) (local.get $b)))
-    )
-  `)
-  console.log(mod.exports.mult(1,2))
-
-  // no result
-  compiles(`mult(a, b) = a * b`, `
-    (func $mult (export "mult") (param $a f64) (param $b f64)
       (f64.mul (local.get $a) (local.get $b))
+      (return)
     )
   `)
-
-  // TODO: error - unfinished range
-  // is(clean(compile(analyse(parse(`
-  //   mult(a, b) = a * b..
-  // `)))), clean(`
-  //   (func $mult (param $a f64) (param $b f64)
-  //     (f64.mul (local.get $a) (local.get $b)
-  //   )
-  //   (export "mult" (func $mult))
-  // `))
-
-  // result
-  compiles(`
-    mult(a, b) = a * b.;
-  `, `
-    (func $mult (export "mult") (param $a f64) (param $b f64) (result f64)
-      (return (f64.mul (local.get $a) (local.get $b)))
-    )
+  is(mod.exports.mult(2,4), 8)
+  
+  // no semi
+  mod = compiles(`mult(a, b) = a * b`, `
+  (func $mult (export "mult") (param $a f64) (param $b f64) (result f64)
+    (f64.mul (local.get $a) (local.get $b))
+    (return)
+  )
   `)
+  is(mod.exports.mult(2,4), 8)
 
   // no result
-  compiles(`
-    mult(a, b) = (a * b)
-  `, `
-    (func $mult (export "mult") (param $a f64) (param $b f64)
-      (f64.mul (local.get $a) (local.get $b))
-    )
-  `)
-
-  // no result
-  compiles(`
+  mod = compiles(`
     mult(a, b) = (a * b);
   `, `
-    (func $mult (export "mult") (param $a f64) (param $b f64)
+    (func $mult (export "mult") (param $a f64) (param $b f64) (result f64)
       (f64.mul (local.get $a) (local.get $b))
+      (return)
     )
   `)
+  is(mod.exports.mult(2,4), 8)
 
-  // result
-  compiles(`
-    mult(a, b) = (a * b).
-  `, `
-    (func $mult (export "mult") (param $a f64) (param $b f64) (result f64)
-      (return (f64.mul (local.get $a) (local.get $b)))
-    )
-  `)
-
-  // result
-  compiles(`
-    mult(a, b) = (a * b.)
-  `, `
-    (func $mult (export "mult") (param $a f64) (param $b f64) (result f64)
-      (return (f64.mul (local.get $a) (local.get $b)))
-    )
-  `)
-
-  // result but kind-of double-ish? prohibit?
-  compiles(`
-    mult(a, b) = (a * b.).
-  `, `
-    (func $mult (export "mult") (param $a f64) (param $b f64) (result f64)
-      (return (return (f64.mul (local.get $a) (local.get $b))))
-    )
-  `)
-
-  // doublish result? like return (return a*b)
-  compiles(`
-    mult(a, b) = (a * b.).;
-  `, `
-    (func $mult (export "mult") (param $a f64) (param $b f64) (result f64)
-      (return (return (f64.mul (local.get $a) (local.get $b))))
-    )
-  `)
-
-  compiles(`
-    mult(a, b) = (a * b; b.)
+  // no result
+  mod = compiles(`
+    mult(a, b) = (a * b);
   `, `
     (func $mult (export "mult") (param $a f64) (param $b f64) (result f64)
       (f64.mul (local.get $a) (local.get $b))
-      (return (local.get $b))
+      (return)
     )
   `)
+  is(mod.exports.mult(2,4), 8)
+  
+  mod = compiles(`
+  mult(a, b) = (b; a * b)
+  `, `
+  (func $mult (export "mult") (param $a f64) (param $b f64) (result f64)
+  (local.get $b)
+  (f64.mul (local.get $a) (local.get $b))
+  (return)
+  )
+  `)
+  is(mod.exports.mult(2,4), 8)
 
-  compiles(`
-    mult(a, b) = (a * b; b.)
+  mod = compiles(`
+    mult(a, b) = (b; a * b;)
   `, `
     (func $mult (export "mult") (param $a f64) (param $b f64) (result f64)
+      (local.get $b)
       (f64.mul (local.get $a) (local.get $b))
-      (return (local.get $b))
+      (return)
     )
   `)
-
-  compiles(`
-    mult(a, b) = (a * b; b).
-  `, `
-    (func $mult (export "mult") (param $a f64) (param $b f64) (result f64)
-      (f64.mul (local.get $a) (local.get $b))
-      (return (local.get $b))
-    )
-  `)
+  is(mod.exports.mult(2,4), 8)
 })
 
 t.todo('compile: channel inputs', t => {

@@ -93,8 +93,8 @@ token('++', PREC_UNARY, a => a && ['-',['++',a],1])
 token('--', PREC_UNARY, a => a && ['+',['--',a],1])
 
 
-unary('^', PREC_TOKEN) // topic reference / pin: ^ a
-unary('.', PREC_END, true) // end token
+unary('^', PREC_TOKEN) // pin: ^ a
+// unary('.', PREC_END, true) // end token
 
 // a.b
 token('.', PREC_CALL, (a,b) => a && (b=expr(PREC_CALL)) && ['.', a, b])

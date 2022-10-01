@@ -341,6 +341,7 @@ list[-2]=5;                 // negative indexing from last element [-1] -> list 
 list + list;                // concat [1,2]+[2,3]=[1,2,2,3]
 list - list;                // difference [1,2]-[2,3]=[1]
 list * list;                // intersection [1,2]*[2,3]=[2]
+list / " ";                 // join ["a", "b"] / " " -> "a b"
 list[1..3, 5]; list[5..];   // slice
 list ~> item;               // find index of the item
 list <~ item;               // rfind
