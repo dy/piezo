@@ -84,6 +84,7 @@ function mapNode(parent, node, fun) {
   }
 
   // [a, b].
+  // FIXME: detect output
   if (op === '[' && parent[0] === '.') {
     fun.output.push(...args)
   }

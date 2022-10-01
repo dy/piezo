@@ -40,16 +40,14 @@ export default ir => {
   // 1. declare all functions
   for (let name in ir.func) {
     func = ir.func[name]
-    let dfn = `(func $${name}`
+    let dfn = `func $${name}`
     if (name[0]!=='_') dfn += ` (export "${name}")`
     dfn += ' ' + func.args.map(a=>`(param $${a} f64)`).join(' ')
     dfn += ' ' + '(result f64)' // TODO: detect result type properly
     dfn += `\n${expr(func.body)}`
-    dfn += '\n(return)'
-    // detect function result 
-    dfn += '\n)'
+    dfn += '\n(return)\n'
 
-    out.push(dfn)
+    out.push(`(${dfn})`)
   }
 
   // 2. include imports
@@ -66,7 +64,7 @@ export default ir => {
     else if (dfn[0] === 'float') node += `${FLOAT} (${FLOAT}.const ${dfn[1]})`
     // requires start init
     // TODO: may need detecting expression result type
-    else node += FLOAT, globals[name] = dfn
+    else node += `(mut ${FLOAT}) (${FLOAT}.const 0)`, globals[name] = dfn
 
     out.push(`(${node})`)
   }

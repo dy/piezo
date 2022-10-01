@@ -27,7 +27,7 @@ t('compile: globals', t => {
     sampleRate = 44100;
   `, `
     (global $pi (export "pi") f64 (f64.const 3.14))
-    (global $pi2 (export "pi2") f64)
+    (global $pi2 (export "pi2") (mut f64) (f64.const 0))
     (global $sampleRate (export "sampleRate") i32 (i32.const 44100))
     (start $module/init)
     (func $module/init
