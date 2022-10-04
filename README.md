@@ -154,9 +154,9 @@ p1,p2,p3,p4 = 225,556,441,341;
 stretch(n) = floor(n * sampleRate / 44100);
 
 reverb([..input], room=0.5, damp=0.5) = (
-  *combs_a = a0,a1,a2,a3 | stretch,
-  *combs_b = b0,b1,b2,b3 | stretch,
-  *aps = p0,p1,p2,p3 | stretch;
+  *combs_a = a0,a1,a2,a3 | x -> stretch(x),
+  *combs_b = b0,b1,b2,b3 | x -> stretch(x),
+  *aps = p0,p1,p2,p3 | x -> stretch(x);
 
   combs = (
     (combs_a | x -> comb(x, input, room, damp) >- (a,b) -> a+b) +
@@ -230,13 +230,14 @@ Features:
 ```fs
 //////////////////////////// naming convention
 some_var, SoMe_VaR;         // identifiers are case-insensitive
-if=12; for=some_Variable;   // keywords are identifiers (lino has no reserved words)
+if=12; for=some_Variable;   // lino has no reserved words
 
 //////////////////////////// primitives
 16, 0x10, 0b0               // integer (decimal, hex or binary)
+true=0b1, false=0b0         // alias booleans
 16.0, .1, 1e3, 2e-3         // float 
-2pi, 10.1k                  // unit float
-1h2m3s, 4.5s                // time
+10.1k, 2pi                  // unit float
+1h2m3s, 4.5s                // time float
 1/2, 2/3                    // TODO: fractional numbers
 "abc", "\x12"               // strings (ascii and utf8 notations)
 'path/to/my/file';          // atoms, aka symbols (for enums etc.)
@@ -260,26 +261,27 @@ a,b = b,a;                  // swap -> temp=a; a=b; b=temp;
 (a,b) + (c,d);              // operations -> (a+c, b+d)
 (a,b).x                     // (a.x, b.x);
 (a,b).x()                   // (a.x(), b.x());
-(a,b,c) = (d,e,f)           // a=d, b=e, c=f
-(a,b,c) = d                 // a=d, b=d, c=d
 a,b,c = (d,e,f)             // a=d, b=e, c=f
-a = b,c,d                   // error: groups are not assignable
+(a,b,c) = d                 // a=d, b=d, c=d
+a = b,c,d                   // a=b, a=c, a=d
 
 //////////////////////////// statements
 statement();                // semi-colons at end of line are mandatory
 (c = a + b; c);             // parens act as block, returning last element
-(multiple(); statements())  // semi-colon after last statement in block is optional 
+(multiple(); statements()); // semi-colon after last statement in block is optional 
+                            // block returns last statement or group
+                            // return/break operator can preliminarily return value
 
 //////////////////////////// conditions
 sign = a < 0 ? -1 : +1;     // inline ternary
                             //
 (2+2 >= 4) ?                // multiline ternary
   puts("Math works!")       //
-: "a" < "b" ?               // unconstrained `else if` can also be used
+: "a" < "b" ?               // else if
   puts("Sort strings")      //
-: (                         //
+: (                         // else
   puts("Get ready");        //
-  puts("Last chance")       // block as seen here.
+  puts("Last chance")       // 
 );                          //
                             //
 a > b ? b++;                // subternary operator (if)
@@ -287,12 +289,13 @@ a > b ?: b++;               // elvis operator (else if)
 
 //////////////////////////// loops
 s = "Hello";               
-(#s < 50) -< s += ", hi";   // inline loop: `while (s.length < 50) s += ", hi"`
+#s < 50 -< s += ", hi";     // inline loop: `while (s.length < 50) s += ", hi"`
 (i <- 10..1 -< (            // multiline loop
   i < 3 ? ^^;               // `^^` to break loop (can return value as ^^x)
   i < 5 ? ^;                // `^` to continue loop (can return value as ^x)
   puts(i + "...");          // 
-));                         // result of loop is last statement
+));                         // 
+a0,a1,a2 = i <- 0..2 -< i   // loop creates group as result -> a0=0, a1=1, a2=2
 
 //////////////////////////// functions 
 double(n) = n*2;            // inline function
@@ -306,14 +309,21 @@ triple(5);                  // 15
 triple(n: 10);              // 30. named argument.
 copy = triple;              // capture function
 copy(10);                   // also 30
-clamp(v <- 0..100) = v;     // clamp argument to range
+clamp(v <- 0..100) = v;     // clamp argument to range  
+                            // function can return groups
 
 //////////////////////////// batch functions
-gain([aType], kType);       // a-type, k-type arguments
-gain([in], amp) = [in*amp]; // input/output channeled data (for batch call)
+gain(~[aType], kType);       // a-type, k-type arguments
+gain(~[in], amp) = [in*amp]; // input/output channeled data (for batch call)
+process(~chans) = chans;     // generic multichannel processing
+generate() = (~chans; chans);// generate channeled data
+(~ch; ch.l, ch.r, ch.0);     // access channels layout
 
 //////////////////////////// stateful variables
-a() = ( *i=0; i++ )         // persist value between fn calls
+a() = ( *i=0; i++ )         // stateful variable - persist value between fn calls
+
+//////////////////////////// UI variables
+a(~in, .amp) = (in * amp);  // create UI knob for amp
 
 //////////////////////////// strings
 hi="hello";                 // strings can use "quotes" 
@@ -354,8 +364,8 @@ set = {1..3}                // from range
 set = {'a', 'b', 'c'}       // from atoms
 
 ///////////////////////////// map/fold
-items | (x) -> a(x);        // pipe operator with mapper 
 items >- (sum,x) -> sum+x;  // fold operator with reducer
+items | (x) -> a(x);        // pipe operator with mapper 
 (a, b, c) >- (a, b) -> b;   // can be applied to groups (syntax sugar)
 (a, b, c) | (a) -> a.x * 2; // compiler unfolds to actual constructs
 

@@ -58,11 +58,19 @@ const tmod = {
         local: {},
         state: {},
         body: [],
-        output: []
+        return: []
       }
 
       // evaluate function body
       fun.body = mapNode(node, right, fun)
+      
+      // catch function return value
+      // [a, b].
+      console.log(right)
+      // FIXME: detect output
+      // if (op === '[' && parent[0] === '.') {
+      //   fun.output.push(...args)
+      // }
     }
     // a = b
     else {
@@ -81,12 +89,6 @@ function mapNode(parent, node, fun) {
       // detect state variables
       fun.state[args[0]] = parent[0] === '=' ? parent[2] : null
     }
-  }
-
-  // [a, b].
-  // FIXME: detect output
-  if (op === '[' && parent[0] === '.') {
-    fun.output.push(...args)
   }
 
   return [op, ...args.map(arg => Array.isArray(arg) ? mapNode(node, arg, fun) : arg)]

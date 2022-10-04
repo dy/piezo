@@ -628,7 +628,7 @@ Having wat files is more useful than direct compilation to binary form:
   + it not only eliminates else, but also augments null-path operator `a.b?.c`, which is for no-prop just `a.b?c` case.
   - weirdly confusing, as if very important part is lost. Maybe just introduce elvis `a>b ? a=1` → `a<=b ?: a=1`
 
-## [x] Loops: `i <- 0..10 -< a + i`, `i <- ..list -< a`, `[x <- 1,2,3 -< x*2]`
+## [x] Loops: `i <- 0..10 -< a + i`, `i <- list -< a`, `[x <- 1,2,3 -< x*2]`
   * `for i in 0..10 (a,b,c)`, `for i in src a;`
   * alternatively as elixir does: `item <- 0..10 a,b,c`
     + also erlang list comprehension is similar: `[x*2 || x <- [1,2,3]]`
@@ -1192,24 +1192,28 @@ Having wat files is more useful than direct compilation to binary form:
     * for exports we create clauses = that depends on the way fn is called.
     * so that's just generalized way to "batch" functions against values in memory.
 
-## [x] ? Should we provide param types or not?
+## [x] ? Should we provide param types or not? -> try `~` as indicator of input signal
   * kParam type clause can save 1024 memory reads per block.
 
   1. hide implementation detail of kRate/aRate and generate both clauses depending on input type.
     - see zzfx: myriad of params generate O^2 clauses. A mess.
       → we need some indicator of param type
-  2. generate params via typescript system
+  2. generate params via typescript-like syntax `param: kType`
     - colon is too ambiguous
     + very common: rtype, hegel, flow use same notation
     - needs separate type parsing/tracking subsystem, whereas name immediately reflects type
     + allows multitype definition as `frequency:aParam|kParam`
       + this solves redirection problem
+    - types are reserved words, we have policy of 0 reserved words
+    - conflicts with other cases of colon, like condition or named args
   3. use csound-like prefixing for identifying params: ifrequency, ainput, gi
     + melds in global params organically `gTime, gSampleRate` (which is glsl-familiar)
     + name reflects type constantly
     + shortness
     - problematic destructuring of multiple channels: gain((al,ar) in -1..1)
       ~ can be mitigated by default params falling back to a-type `gain((l,r) in -1..1, kGain)`
+      ~ destructuring could be prohibited
+        ~ but we need that for indicating simple layout cases `l,r` vs generic-channel case `..ch`
     + resolves conflict of fn name and param: gain vs kGain, delay vs kDelay
     + that also works good as indicator of non-argument variables
     ~ ? should non-prefixed params possibly generate two versions?
@@ -1259,7 +1263,7 @@ Having wat files is more useful than direct compilation to binary form:
     + automatic management of global time and index
     - still myriad of clauses for only zzfx
 
-  7. ✱ what if we use unclosed range `gain((..ch), amp)`
+  7. what if we use unclosed range `gain((..ch), amp)`
     + matches array allocation `[..16]`
     + similar to args collecting `fn(...args)`: intuition is `[..args]` - spread args or create from range, `(..args)` - collect args...
       ? + then matches destructuring as `(a,b,..cd) = (a,b,c,d)`
@@ -1274,7 +1278,30 @@ Having wat files is more useful than direct compilation to binary form:
           + which allows avoiding blockSize global.
             ~- we'd going to need to take sampleRate argument as well then.
               ~+ not necessarily: global sampleRate can be useful itself
-
+    - mixes up either with groups definition or  
+    
+    8. * use `~` as indicator of input or output?
+      * `gain(~input, amp)`, `gain(~[left, right], amp)`, `fn() = ~[l, r]`, `fn() = ~channels`
+      + looks cool as indicator of expected waveform `~` as input or output
+      + can better indicate `~in` as list of channels, rather than exceptional `[..in]`
+      - `~` can be unnecessary if returning input variable: `gain(~in, amp) = in * amp`, `gain(~in, amp) = ~in * amp`
+        ~ (can be fine, it's just an indicator of batch)
+      - preliminary return mess: `gen() = (cond ? ^~[l,r]; ~[l,r])`
+        ~ doesn't have much meaning by itself, out is supposed to be batch-variable.
+        ~ can be rather an exception, expecting variable to be defined a bit in advance
+      * `gen() = (~out; ...fill up out...; out)`
+        - can mess with state `(~*out)`, `(*~out)`
+          ~ stateful by default, stores result of last processing anyways, so that's just `(~out)`
+        - not clear at first what to initialize this variable to - list of channels or a single channel
+          ~ can do `(~[l,r];...)` or `(~chx;...)` same as input
+            - unclear the total number of channels in `chx`. Max?
+              ~ Maximum limits processing capabilities (can be configured)
+        + maybe that's better to explicitly initialize output here indeed, since that's returned from function via API as block
+        - conflict with binary inverse (NOT) `~a` vs declaring a batch variable.
+          ~ NOT is used in expressions after _number_ declaration, wheres channels is only in declaration and not in expressions;
+        - dissonanc-ish with `a ~> b` and `a <~ b`
+          ~ these two are not stabilized yet
+      + matches `.`, `*` paradigm
 
 ## [x] `t`, `i` are global params? Or must be imported? Or per-sound? -> manual time management
 
@@ -1598,15 +1625,18 @@ Having wat files is more useful than direct compilation to binary form:
   + it allows more clearly indicate output signal, opposed to just grouped value:
    * `phase -> (sin(phase))` === `phase -> sin(phase)` - because group of 1 element is that element;
    * `phase -> [sin(phase)]` - that's output signal.
-  - [..ch]. vs [..size] − conflict with array creation.
+  - returning [..ch] vs [..size] − conflict with array creation
     - [a] means frame with 1 channel, [a] also means array with 1 item.
     - [..a] means frame with `a` channels, [..a] also means array with `a` items.
     ? prohibit array signature in favor of groups: `(..size)` can define a group as well...
       - nah, groups are just syntax sugar, they don't have serialization or own taste, whereas arrays do.
     ~ if blockSize === 1, block frame becomes identical to array
-    - when we return [a,b,c] it implies frame, but we may want non-batch array result, do we?
+    - when we return [a,b,c] it implies frame, but we may want regular non-batch array result, do we?
       ~ worst case it creates redundant block, but the way value is read from it is still array-like frame.
-    → ok, let's keep same for now: it seems array===frame is not a crime
+      → ok, let's keep same for now: it seems array===frame is not a crime
+        -? how do we adjust block-size then? We don't need 1024 items spawned instead of just 1.
+        - frame output creates internal unnecessary loop
+  - also, `fn([..ch])` is not nice notation for just getting all channels. Marking argument as "input" would be easier.
 
 ## [x] No-keywords? Let's try. i18n is a good call.
 
@@ -1793,11 +1823,16 @@ Having wat files is more useful than direct compilation to binary form:
       + has nothing to do with arrow functions
       + arrow functions are macro-helpers, not runtime constructs
 
-## Passing array/ref value: `a(v) = b(v); b([v]) = [v+1].`
+## [x] Passing array/ref value: `a(v) = b(v); b([v]) = [v+1].`
 
   * Seems to be solvable via passing v as reference to array, must not be a big deal.
   * Have to track ref type of v though: it must prohibit operations on that.
 
+## [ ] Simplify mapper as `items -> fn(^)` instead of `items | x -> fn(x)`
+
+  - leaves mapper notation for folding only, which is not nice
+  + pipe notation is bulky with current proposal
+  + pipe notation is a bit meaningless, since the only argument is always x
 
 ## [x] Compile targets: → WAT
 
