@@ -15,27 +15,24 @@ Let's consider examples.
 Provides k-rate amplification of mono, stereo or generic input.
 
 ```fs
-range = 0..1000;
-
 // mono clause
-gain1([left], volume <- range) = [left * volume];
+gain1(~(left), volume <- 0..100) = ~left * volume;
 
 // stereo clause
-gain2([left, right], volume <- range) = [left * volume, right * volume];
+gain2(~[left, right], volume <- 0..100) = ~[left * volume, right * volume];
 
 // multi-channel clause
-gain([..channels], volume <- range) = [..channels * volume];
+gain(~channels, volume <- 0..100) = ~channels * volume;
 ```
 
 Generally multi-channel case is enough, but mono/stereo clauses provide shortcuts for <span title="Autogenerating clauses from generic case would cause O(c^n) code size grow depending on number/type of arguments. So manual clauses is lower tax and allows better control over output.">better  performance*</span>.
 
 Features:
 
-<!-- * _function overload_ − function clause is matched by call signature in <span title="On export each clause gets name extension as gain_1a_1k, gain_2a_1k etc.">compile-time*</span>. -->
 * _input/output_ − `[left]` for mono, `[left, right]` for stereo, `[..channels]` for any number of <span title="Output channels must be explicitly indicated as [], otherwise single value is returned.">channels*</span>.
 * _params as arguments_ − direct `arg` indicates <em title="Controlling (historical artifact from CSound), blocK-rate">k-rate*</em> param, which value is fixed for full block, channeled `[arg]` indicates <em title="Audio, or precise rate">a-rate*</em> param.
-* _range_ − is language-level primitive with `from..to` signature. Useful in arguments validation, array initialization etc.
 * _validation_ − `a <- range` (_a ∈ range_, _a in range_) asserts and clamps argument to provided range, to avoid blowing up volume.
+<!-- * _range_ − is language-level primitive with `from..to` signature. Useful in arguments validation, array initialization etc. -->
 <!-- * _destructuring_ − collects array or group members as `[a,..bc] = [a,b,c]`. -->
 
 ### Biquad Filter
@@ -48,7 +45,7 @@ Biquad filter processor for single-channel input.
 pi2 = pi*2;
 sampleRate = 44100;
 
-lp([x0], freq = 100 <- 1..10000, Q = 1.0 <- 0.001..3.0) = (
+lp(~[x0], freq = 100 <- 1..10000, Q = 1.0 <- 0.001..3.0) = (
   *x1, *x2, *y1, *y2 = 0;    // state
 
   w = pi2 * freq / sampleRate;
@@ -65,8 +62,8 @@ lp([x0], freq = 100 <- 1..10000, Q = 1.0 <- 0.001..3.0) = (
   x1, x2 = x0, x1;
   y1, y2 = y0, y1;
 
-  [y0]
-).
+  ~[y0]
+);
 ```
 
 Features:
@@ -126,7 +123,7 @@ coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
   phase += (freq + t > delay ? jump : 0) * pi2 / sampleRate;
 
   oscillator[shape](phase) | x -> adsr(x, 0, 0, .06, .24) | x -> curve(x, 1.82).
-).
+);
 ```
 
 Features:
@@ -163,7 +160,7 @@ reverb([..input], room=0.5, damp=0.5) = (
     (combs_b | x -> comb(x, input, room, damp) >- (a,b) -> a+b)
   );
   (combs, aps) >- (input, coef) -> p + allpass(p, coef, room, damp)
-).
+);
 ```
 
 Features:
@@ -212,8 +209,8 @@ melody(time) = melodytest(time) * fract(time * 2) ** 6 * 1;
 
 song() = (
   *t=0; time = t++ / sampleRate;
-  [(kick(time) + snare(time)*.15 + hihat(time)*.05 + melody(time)) / 4]
-).
+  ~[(kick(time) + snare(time)*.15 + hihat(time)*.05 + melody(time)) / 4]
+);
 ```
 
 Features:
@@ -235,7 +232,7 @@ if=12; for=some_Variable;   // lino has no reserved words
 //////////////////////////// primitives
 16, 0x10, 0b0               // integer (decimal, hex or binary)
 true=0b1, false=0b0         // alias booleans
-16.0, .1, 1e3, 2e-3         // float 
+16.0, .1, 1e3, 2e-3         // float
 10.1k, 2pi                  // unit float
 1h2m3s, 4.5s                // time float
 1/2, 2/3                    // TODO: fractional numbers
@@ -247,18 +244,18 @@ true=0b1, false=0b0         // alias booleans
 & | ^ ~ && || !             // bitwise and logical
 
 //////////////////////////// ranges
-1..10                       // basic range  
+1..10                       // basic range
 1.., ..10                   // open ranges
-10..1                       // reverse-direction range 
-1.08 .. 108.0               // float range
+10..1                       // reverse-direction range
+1.08..108.0               // float range
 0>..10, 0..<10, 0>..<10     // non-inclusive ranges
 
-//////////////////////////// groups 
+//////////////////////////// groups
 a, b, c;                    // groups are syntactic sugar, not data type
 (a, (b, c)) == a, b, c;     // groups are always flat
-a,b,c = d,e,f;              // assign -> a=d, b=e, c=f
-a,b = b,a;                  // swap -> temp=a; a=b; b=temp;
-(a,b) + (c,d);              // operations -> (a+c, b+d)
+a,b,c = d,e,f;              // assign: a=d, b=e, c=f
+a,b = b,a;                  // swap: temp=a; a=b; b=temp;
+(a,b) + (c,d);              // operations: (a+c, b+d)
 (a,b).x                     // (a.x, b.x);
 (a,b).x()                   // (a.x(), b.x());
 a,b,c = (d,e,f)             // a=d, b=e, c=f
@@ -268,9 +265,9 @@ a = b,c,d                   // a=b, a=c, a=d
 //////////////////////////// statements
 statement();                // semi-colons at end of line are mandatory
 (c = a + b; c);             // parens act as block, returning last element
-(multiple(); statements()); // semi-colon after last statement in block is optional 
-                            // block returns last statement or group
-                            // return/break operator can preliminarily return value
+(multiple(); statements()); // semi-colon after last statement in block is optional
+(a=b+1; a,b,c);             // block returns last statement or group
+(a ? ^b; c);                // return/break operator can preliminarily return value
 
 //////////////////////////// conditions
 sign = a < 0 ? -1 : +1;     // inline ternary
@@ -281,25 +278,24 @@ sign = a < 0 ? -1 : +1;     // inline ternary
   puts("Sort strings")      //
 : (                         // else
   puts("Get ready");        //
-  puts("Last chance")       // 
+  puts("Last chance")       //
 );                          //
                             //
 a > b ? b++;                // subternary operator (if)
 a > b ?: b++;               // elvis operator (else if)
 
 //////////////////////////// loops
-s = "Hello";               
+s = "Hello";
 #s < 50 -< s += ", hi";     // inline loop: `while (s.length < 50) s += ", hi"`
 (i <- 10..1 -< (            // multiline loop
   i < 3 ? ^^;               // `^^` to break loop (can return value as ^^x)
   i < 5 ? ^;                // `^` to continue loop (can return value as ^x)
-  puts(i + "...");          // 
-));                         // 
-a0,a1,a2 = i <- 0..2 -< i   // loop creates group as result -> a0=0, a1=1, a2=2
+  puts(i + "...");          //
+));                         //
+a0,a1,a2 = i <- 0..2 -< i   // loop creates group as result: a0=0, a1=1, a2=2
 
-//////////////////////////// functions 
+//////////////////////////// functions
 double(n) = n*2;            // inline function
-                            // function overload is not supported 
 triple(n=1) = (             // optional args
   n == 0 ? ^n;              // preliminarily return n
   n*3                       // last stack value is implicitly returned
@@ -309,7 +305,7 @@ triple(5);                  // 15
 triple(n: 10);              // 30. named argument.
 copy = triple;              // capture function
 copy(10);                   // also 30
-clamp(v <- 0..100) = v;     // clamp argument to range  
+clamp(v <- 0..100) = v;     // clamp argument to range
                             // function can return groups
 
 //////////////////////////// batch functions
@@ -320,25 +316,25 @@ generate() = (~chans; chans);// generate channeled data
 (~ch; ch.l, ch.r, ch.0);     // access channels layout
 
 //////////////////////////// stateful variables
-a() = ( *i=0; i++ )         // stateful variable - persist value between fn calls
+a() = ( *i=0; i++ );         // stateful variable - persist value between fn calls
 
 //////////////////////////// UI variables
 a(~in, .amp) = (in * amp);  // create UI knob for amp
 
 //////////////////////////// strings
-hi="hello";                 // strings can use "quotes" 
-string=`{hi} world`;        // interpolated string -> 'hello world'
-string[1];                  // positive indexing from first element [0] -> 'e'
-string[-3];                 // negative indexing from last element [-1] -> 'r'
+hi="hello";                 // strings can use "quotes"
+string="{hi} world";        // interpolated string: "hello world"
+string[1];                  // positive indexing from first element [0]: 'e'
+string[-3];                 // negative indexing from last element [-1]: 'r'
 string[2..10];              // slice range
 string[1, 2..10, -1];       // slice/pick multiple elements
-string < string;            // comparison (<,>,==,!=)
-string + string;            // concatenation -> "hello worldhello world"
-string - string;            // removes all occurences of right string in left string -> ""
-string / " ";               // split -> ["hello", "world"]
-string ~> "l";              // indexOf -> 2
-string <~ "l";              // rightIndexOf -> -2
 string[-1..0];              // reverse
+string < string;            // comparison (<,>,==,!=)
+string + string;            // concatenation: "hello worldhello world"
+string - string;            // removes all occurences of right string in left string: ""
+string / " ";               // split: ["hello", "world"]
+string ~> "l";              // indexOf: 2
+string <~ "l";              // rightIndexOf: -2
 #string;                    // length
 
 //////////////////////////// lists
@@ -346,16 +342,15 @@ list = [2, 4, 6, last: 8];  // list from elements
 list = [0..10];             // list from range
 list = [i <- 0..8 -< i*2];  // list comprehension
 list.last;                  // alias name for index
-list[0];                    // positive indexing from first element [0] -> 2
-list[-2]=5;                 // negative indexing from last element [-1] -> list becomes [2,4,5,8]
+list[0];                    // positive indexing from first element [0]: 2
+list[-2]=5;                 // negative indexing from last element [-1]: list becomes [2,4,5,8]
 list + list;                // concat [1,2]+[2,3]=[1,2,2,3]
 list - list;                // difference [1,2]-[2,3]=[1]
-list * list;                // intersection [1,2]*[2,3]=[2]
-list / " ";                 // join ["a", "b"] / " " -> "a b"
+list * " ";                 // join ["a", "b"] * " " -> "a b"
 list[1..3, 5]; list[5..];   // slice
+list[-1..0];                // reverse
 list ~> item;               // find index of the item
 list <~ item;               // rfind
-list[-1..0];                // reverse
 #list;                      // length
 
 ////////////////////////////// TODO: sets
@@ -365,9 +360,9 @@ set = {'a', 'b', 'c'}       // from atoms
 
 ///////////////////////////// map/fold
 items >- (sum,x) -> sum+x;  // fold operator with reducer
-items | (x) -> a(x);        // pipe operator with mapper 
+items | x -> a(x);          // pipe operator with mapper
 (a, b, c) >- (a, b) -> b;   // can be applied to groups (syntax sugar)
-(a, b, c) | (a) -> a.x * 2; // compiler unfolds to actual constructs
+(a, b, c) | a -> a.x * 2;   // compiler unfolds to actual constructs
 
 //////////////////////////// import
 @'path/to/module';          // any file can be imported directly
