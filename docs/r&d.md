@@ -25,8 +25,24 @@ Having wat files is more useful than direct compilation to binary form:
 
   → We can declare exporting as a separate area, like `export gain, somethingElse, somethingElse`
 
-## [x] `f(x, y) = x + y` standard classic way to define function in math
+## [x] `f(x, y) = x + y` ->
+  + standard classic way to define function in math
   + also as in F# or Elixir
+  - conflicts with anonymous fn notation
+
+### [ ] `f(x,y) -> x + y`
+  + looks very similar
+  + also classic-ish function notation
+  + natural extension of lambda functions
+  + unifies lambda functions look
+  + organically permits lambda functions
+
+### [ ] Alt: `f = (x,y) -> x + y`
+  + all pros of prev
+  + JS-familiar notation
+  + less fancy syntax extensions
+  + better indicator of fn primitive
+  ? batch output: `~() -> 1` vs `() -> ~1` vs `() ~> 1`
 
 ## [x] Ranges: f(x=100<-0..100, y<-0..100, p<-0.001..5, shape<-{tri,sin,tan}=sin)
 
@@ -102,7 +118,7 @@ Having wat files is more useful than direct compilation to binary form:
 
 ## [x] !? erlang strings: "hello" === [104,101,108,108,111]
 
-## [x] !? erlang atoms: 'hello' (not string)
+## [ ] !? erlang atoms: 'hello' (not string)
   * Atoms are useful for referencing:
     + function instances
       ~ we have funcref type, not necessary
@@ -118,7 +134,7 @@ Having wat files is more useful than direct compilation to binary form:
 ## [x] Numbers: float64 by default, unless it's statically inferrable as int32, like ++, +-1 etc ops only
   * Boolean operators turn float64 into int64
 
-## [x] Pipes: → let's try macros as pipe mappers a | x -> x | 
+## [ ] Pipes: → we can use macros as pipe mappers or curried fn builders
 
   1. Placeholder as `x | #*0.6 + reverb() * 0.4`, `source | lp($, frq, Q)`?
     ? can there be multiple args to pipe operator? `a,b |` runs 2 pipes, not multiarg.
@@ -138,7 +154,7 @@ Having wat files is more useful than direct compilation to binary form:
     - sending group items would require referencing by number
       ~ unless we prohibit sending groups, not sure we need it.
 
-  1.1 ✱ What if we get rid of pipe operator and just use "last expression" placeholder?
+  1.1 What if we get rid of pipe operator and just use "last expression" placeholder?
     * `a; ^ + 1;`
     + clean, compact
     + caret character literally defines as "insertion point"
@@ -208,8 +224,9 @@ Having wat files is more useful than direct compilation to binary form:
       ~ can do arrow fn `source | s -> filter(s, f, Q)`
     * makes same syntax assumption as 2. by invoking rhs function with lhs as first argument.
     + doesn't have generic operator overloading meaning as in 4: only applies as first argument.
+    - we may not need lambda functions
 
-  3.1 ✱ Use topic token 1.1 only as part of pipe expressions but as curried fn constructor as rhs? `a | a->a+1` === `a | ^+1`
+  3.1 Use topic token 1.1 only as part of pipe expressions but as curried fn constructor as rhs? `a | a->a+1` === `a | ^+1`
     + syntax looks fresh, compact, flowy
     + combines JS's F#/Hack pipes
     + no redundant function calls from 2. (unless we do 4. with constructor/currying meaning)
@@ -217,6 +234,12 @@ Having wat files is more useful than direct compilation to binary form:
     + reducer operator is as promised, without redundant call: `..combs_a | comb(^, input, room, damp) >- sum`
     ~ Likely there's benefit of limiting topic to pipe only. Generic ^ may have unexpected side-effects.
       + eg. initializer `...a=(x;^+y)` can be `...a=x|^+y` now, since no conflict with semi.
+
+  3.2 ~~`filter(-> src, f, Q)`~~
+    + benefits of `filter(src?, f, Q)`
+    + more explicit indicator of curried clause and piped in argument
+    + can be combined with `filter(~>src)`
+    - `x,y,z | stretch` vs `x,y,z | stretch(amt)` - both valid and similar, but syntactically nastily different
 
   4. ~~Function overload `a | b(x) = b(a,x);  a | b(x)`~~
     ~+ Partial application can be thought on its own regardless of pipe as `a1 = a(#, rate)`
@@ -228,7 +251,7 @@ Having wat files is more useful than direct compilation to binary form:
     - too much definition noise, compared to just |> available for every fn
     - comma has precedence below |.
     - `a | b(x)` being replaced by `b(a, x)` is meta-programming, it's not operator overloading
-    - there's no difference in `a | b(x)` between OR of result and overloaded function
+    - there's no difference in `a | b(x)` between OR of result and overloaded function (expression)
       ~ b(x) signature can return b(a,x), not boolean.
     - definition is alternative to `b(a) = x -> b(x,a)`, duplication
     - the definition breaks convention of calling rhs `|` function with first argument applied, eg `x|b(a)=b(a,x)` swaps args.
@@ -263,7 +286,7 @@ Having wat files is more useful than direct compilation to binary form:
       + plays well with implicit arguments #t, #i etc.
     - same as 5 - let's avoid implicit stuff
 
-## [x] Lambda → let's try not use them and decompile to code directly
+## [ ] Lambda -> we can use only lambdas everywhere
 
   * should there be lambda? `value | x -> x*.6 + reverb(x) * .4`
     - lambda function has diverging notation from regular fn definition.
@@ -279,8 +302,9 @@ Having wat files is more useful than direct compilation to binary form:
         → by spawning a function somewhere, we spawn generic reference with predefined arguments, eg.
         → `Comb(a) = x -> x + a` → `CombArr(a,x) = x+a;  Comb(a) = CombArr.bind(a)`
   ! → operator must uniquely identify type and be macros
+  ?! Try x(..args) -> operation for regular functions?
 
-## [x] Reduce/fold operator: unrols into single expression for groups OR applies reduce/fold for arrays. Acts as convolver also.
+## [ ] Reduce/fold operator: wait for use-case
 
   * ? Reduce operator? It can be eg. `:>` (2 become 1), or `=>`.
     * ? `a,b,c :> reducer`, like `signals :> #0 + #1`
@@ -290,6 +314,8 @@ Having wat files is more useful than direct compilation to binary form:
     * ? `a,b,c ..> a,b -> a+b`
     → `(a,b,c) >- a,b -> a+b` (crazy!)
   ! >- operator can be statically analyzable if group length is known (it should be known)
+  ? unrols into single expression for groups OR applies reduce/fold for arrays. Acts as convolver also.
+  ? or just avoid that since direct loop is available?
 
 ## [x] Units: time primitive and short orders is natural: 1h2s, 20k
 
@@ -365,7 +391,7 @@ Having wat files is more useful than direct compilation to binary form:
       - can't suppress semicolon: `a ? b. c + d;`
     - exported global is confusing `sampleRate = 44100.;`
     ~ `c()=1.`, `c()=1.0.` - weirdish constructs, although clear
-    - semi after the result. 
+    - semi after the result.
   * `a ? b...;`, `sampleRate = 44100...;`
   * `a ? b!;`, `sampleRate = 44100!;`
   * `a ? b :| c + d`, `sampleRate = 44100:|;`
@@ -617,6 +643,8 @@ Having wat files is more useful than direct compilation to binary form:
   + in JS that's frequent good-to-have
   + that would organically introduce pattern of named fn arguments either `gain(volume: 1)`
   + named group items are also useful: `oscillators = (a: x->y, b: x-y)`
+  - conflicting convention: we don't really use labels anywhere (we use variables instead)
+  - it kind-of enforces lambdas, which we want to avoid also.
 
 ## [x] Elvis operator: `a ?: b` instead of jsy `a ?? b`
   * ~ equivalent to a ? #0 : b
@@ -777,7 +805,7 @@ Having wat files is more useful than direct compilation to binary form:
 ### [x] loops can return a value: `(isActive(it): action(it))` - the last result of action is returned
   + useful for many loop cases where we need internal variable result.
 
-## [x] ? Is there a way to multi-export without apparent `export` keyword for every function?
+## [x] ? Is there a way to multi-export without apparent `export` keyword for every function? -> export all by default
 
   * ? maybe it's good there's apparent `export` indicator - easy to scan and in-place, compared to accumulated export at the end.
   → C++ exports implicitly function clauses.
@@ -899,7 +927,7 @@ Having wat files is more useful than direct compilation to binary form:
         ? how do we map arrays then
           * list comprehension: i <- arr -< i * 10
 
-## [ ] Convolver operator?
+## [x] Convolver operator? -> let's try to hold on until use-case comes
 
   * Fold operator gives thought to convolver operator which slides window depending on number of arguments,
     samples ^ (a,b,c,d,e) -> a*0.1 + b*0.2 + c*0.4 + d*0.2 + e*0.1 returns all same samples weighted with a formula
@@ -1170,7 +1198,7 @@ Having wat files is more useful than direct compilation to binary form:
     ~ single runs are not expected to be very regular externally, since for batch runs there's clause cases.
     ? we detect from apparent channels idicator: gain(v, amp) is direct clause, gain((..ch), amp) is all-channels clause
 
-## [x] Autogenerate mono/stereo clauses fn code or define fn clauses manually in syntax
+## [x] Autogenerate mono/stereo clauses fn code or define fn clauses manually in syntax -> autogenerate
 
   * See [gain node](https://github.com/mohayonao/web-audio-engine/blob/master/src/impl/dsp/GainNode.js) for clause examples.
 
@@ -1191,6 +1219,11 @@ Having wat files is more useful than direct compilation to binary form:
   → there's no much sense generating looping functions for internals.
     * for exports we create clauses = that depends on the way fn is called.
     * so that's just generalized way to "batch" functions against values in memory.
+
+  3. Rethinking. Since we don't allow overloading and external batch argument is explicitly defined via `~`, we can autogenerate function code for simple mono & stereo cases automatically.
+    + doesn't enforce array destructuring
+    + saves lots of manual code
+    + saves namespace
 
 ## [x] ? Should we provide param types or not? -> try `~` as indicator of input signal
   * kParam type clause can save 1024 memory reads per block.
@@ -1278,8 +1311,8 @@ Having wat files is more useful than direct compilation to binary form:
           + which allows avoiding blockSize global.
             ~- we'd going to need to take sampleRate argument as well then.
               ~+ not necessarily: global sampleRate can be useful itself
-    - mixes up either with groups definition or  
-    
+    - mixes up either with groups definition or
+
     8. * use `~` as indicator of input or output?
       * `gain(~input, amp)`, `gain(~[left, right], amp)`, `fn() = ~[l, r]`, `fn() = ~channels`
       + looks cool as indicator of expected waveform `~` as input or output
@@ -1302,6 +1335,8 @@ Having wat files is more useful than direct compilation to binary form:
         - dissonanc-ish with `a ~> b` and `a <~ b`
           ~ these two are not stabilized yet
       + matches `.`, `*` paradigm
+      * `~gen() = (out)`
+        + simplifies output type indicator as block.
 
 ## [x] `t`, `i` are global params? Or must be imported? Or per-sound? -> manual time management
 
@@ -1485,7 +1520,7 @@ Having wat files is more useful than direct compilation to binary form:
       → better export global `reset` to enable instance rotation.
       → generally functions allocate own memory on first call, with assigned unique callsites within current instance.
 
-## [x] Batch function reads from memory; regular function takes arguments. How to differentiate them? → detect batchable function from channeled inputs/outputs.
+## [x] Batch function reads from memory; regular function takes arguments. How to differentiate them? → batch is indicated by ~.
 
   1. `export` === processing
     - `import pow from 'math'` is not processing function
@@ -1521,10 +1556,7 @@ Having wat files is more useful than direct compilation to binary form:
     - can be problematic destructuring: `gain((al,ar) in -1..1)`
 
   4. Imply batch from channel inputs gain((..ch))?
-
-
-## [x] Output number of channels can be detected from the last operator in fn body.
-  * gain([..in], amp) = [..in]*amp
+  5. Indicate batch by `~` symbol.
 
 ## [x] Batching
 
@@ -1619,7 +1651,7 @@ Having wat files is more useful than direct compilation to binary form:
 
   * Don't extend conditionals, elvis `?:` is enough, the rest is &&, ||
 
-## [x] Make channeled input an array: `gain([left, right], amp)` instead of group destructuring `gain((left, right), amp)`?
+## [x] Make channeled input an array: `gain([left, right], amp)` instead of group destructuring `gain((left, right), amp)`? -> nah, avoid unnecessary meaning for destruction, just use `~` operator.
 
   + array better refers to memory send to input, not some internal grouping - so it's a "frame"
   + it allows more clearly indicate output signal, opposed to just grouped value:
@@ -1637,6 +1669,7 @@ Having wat files is more useful than direct compilation to binary form:
         -? how do we adjust block-size then? We don't need 1024 items spawned instead of just 1.
         - frame output creates internal unnecessary loop
   - also, `fn([..ch])` is not nice notation for just getting all channels. Marking argument as "input" would be easier.
+  -> Nah, avoid unnecessary meaning for destruction.
 
 ## [x] No-keywords? Let's try. i18n is a good call.
 
@@ -1758,7 +1791,7 @@ Having wat files is more useful than direct compilation to binary form:
   * maybe we may need generalizing transformers
 
 
-## [x] How to differentiate a-param from k-param argument: no fn overloading
+## [x] How to differentiate a-param from k-param argument: no fn overloading, ~ indicator
 
   * There's no way to differentiate gain(channels, aParam) and gain(channels, kParam).
 
@@ -1799,7 +1832,7 @@ Having wat files is more useful than direct compilation to binary form:
       ~ either we introduce pipe operator `input |> curve(param)`
         + less code (no need to define pipe fns), + less need in arrow functions, + less overloaded operators
 
-## [x] Do we need arrow functions? → Make them macro/operator-helpers, not constructs
+## [x] Do we need arrow functions? → Lets wait for use-case for now, but worst case make them macro/operator-helpers
 
   ? Are they unnecessary?
 
@@ -1855,3 +1888,4 @@ Having wat files is more useful than direct compilation to binary form:
   2) hot swapping code in the worklet as it is playing and reusing memory state from the previous compile. If there's a delay/note/reverb tail playing from the previous compilation, and i compile a change, the new instance should inherit all the memory/buffers from the previous one, not start from zero. I have to be able to make changes without affecting the sound that is playing (too much). It won't be possible for 100% of the cases, but if the compiler can match the previous buffers with the new one then it should reuse them.
   3) parser/compiler errors with line/col/symbol/token information so they can be displayed inline in the editor while the user is typing, so they see what they're doing wrong. They don't need to be extremely descriptive, but at least showing the right symbol position i.e what to draw red.
   4) a way to export certain parameters into UI elements arbitrarily and with minimal effort. Right now in mono i've introduced a . prefix operator in the arguments so f(a, b, c) if i do f(a, .b, c) then i immediately get a knob for 'b' with that simple addition of the . prefix. That helps me a lot as a producer to not have to go elsewhere to define these and to try new things. The '.b' also becomes hoverable and can change with the wheel, but there's also a UI knob and they're associated, when you hover one, both light up. The idea is that once you export the controls like that, you can hide the editor and that can be a standalone effect/instrument with those controls it pulls from the code. You want another thing to tweak? Simply jump into the code and add a . next to the parameter and save. When there will be dozens of instruments and effects in the screen playing you need to be able to quickly do these things so you don't kill the flow. The flow must never be killed. That's the most important feature. You should be dancing all your way through from start to end while making a track without any gap of having to stop and take closer look at code or something isn't playing right or there are audible glitches etc. So first and foremost it is a party tool. You need to be able to party with it or it's worth nothing.
+

@@ -12,28 +12,19 @@ Let's consider examples.
 
 ### Gain Processor
 
-Provides k-rate amplification of mono, stereo or generic input.
+Provides k-rate amplification of input audio.
 
 ```fs
-// mono clause
-gain1(~(left), volume <- 0..100) = ~left * volume;
+gain = (~audio, volume <- 0..100) -> audio * volume;
 
-// stereo clause
-gain2(~[left, right], volume <- 0..100) = ~[left * volume, right * volume];
-
-// multi-channel clause
-gain(~channels, volume <- 0..100) = ~channels * volume;
+gain([0,.1,.2,.3,.4,.5], 2); // [0,.2,.4,.6,.8,1]
 ```
-
-Generally multi-channel case is enough, but mono/stereo clauses provide shortcuts for <span title="Autogenerating clauses from generic case would cause O(c^n) code size grow depending on number/type of arguments. So manual clauses is lower tax and allows better control over output.">better  performance*</span>.
 
 Features:
 
-* _input/output_ − `[left]` for mono, `[left, right]` for stereo, `[..channels]` for any number of <span title="Output channels must be explicitly indicated as [], otherwise single value is returned.">channels*</span>.
-* _params as arguments_ − direct `arg` indicates <em title="Controlling (historical artifact from CSound), blocK-rate">k-rate*</em> param, which value is fixed for full block, channeled `[arg]` indicates <em title="Audio, or precise rate">a-rate*</em> param.
-* _validation_ − `a <- range` (_a ∈ range_, _a in range_) asserts and clamps argument to provided range, to avoid blowing up volume.
-<!-- * _range_ − is language-level primitive with `from..to` signature. Useful in arguments validation, array initialization etc. -->
-<!-- * _destructuring_ − collects array or group members as `[a,..bc] = [a,b,c]`. -->
+* _block input/output_ − tilda `~arg` indicates <em title="Audio, or precise rate">a-rate*</em> input/output/param, which has array type. Direct argument `arg` indicates <em title="Controlling (historical artifact from CSound), blocK-rate">k-rate*</em> value (fixed for full block in combination with ~ args).
+* _range_ − language-level primitive with `from..to` signature. Useful in arguments validation, array initialization etc.
+* _validation_ − `a <- range` (_a ∈ range_) asserts and clamps argument to provided range, to avoid blowing up arg values, also useful for reflecting in UI.
 
 ### Biquad Filter
 
@@ -45,7 +36,7 @@ Biquad filter processor for single-channel input.
 pi2 = pi*2;
 sampleRate = 44100;
 
-lp(~[x0], freq = 100 <- 1..10000, Q = 1.0 <- 0.001..3.0) = (
+lp = (~x0, freq = 100 <- 1..10000, Q = 1.0 <- 0.001..3.0) -> (
   *x1, *x2, *y1, *y2 = 0;    // state
 
   w = pi2 * freq / sampleRate;
@@ -57,22 +48,21 @@ lp(~[x0], freq = 100 <- 1..10000, Q = 1.0 <- 0.001..3.0) = (
 
   b0, b1, b2, a1, a2 *= 1.0 / a0;
 
-  y0 = b0*x0 + b1*x1 + b2*x2 - a1*y1 - a2*y2;
+  ~y0 = b0*x0 + b1*x1 + b2*x2 - a1*y1 - a2*y2;
 
   x1, x2 = x0, x1;
   y1, y2 = y0, y1;
 
-  ~[y0]
+  y0
 );
 ```
 
 Features:
 
 * _import_ − done via URI string as `@ 'path/to/lib'`. Members can be indicated with hash as `@ 'path/to/lib#a,b,c'`. <!-- Built-in libs are: _math_, _std_. Additional libs: _sonr_, _latr_, _musi_ and [others]().--> _import-map.json_ can provide import aliases.
-<!-- * _scope_ − parens `()` can define function body, besides expression groups. -->
 * _state variables_ − `*state=init` persist value between <span title="Detected by callsite">function calls*</span>.
 * _groups_ − comma enables group operations as `a,b = c,d` === `a=c, b=d`, `(a,b) + (c,d)` === `(a+b, c+d)` etc.
-* _end operator_ − `.` indicates return statement.
+* _scope_ − parens `()` besides expression groups can indicate function body (therefore permit semicolons). Last element or group is automatically returned.
 
 ### ZZFX
 
@@ -85,14 +75,13 @@ Full ZZFX is available in examples, we consider only [coin sound](https://codepe
 pi2 = pi*2;
 sampleRate = 44100;
 
-// waveshape generators
 oscillator = [
   saw: phase -> [1 - 4 * abs( round(phase/pi2) - phase/pi2 )],
-  sine: phase -> [sin(phase)]
+  sine: phase -> [sin(phase)];
 ];
 
 // adsr weighting
-adssr(x, a, d, (s, sv), r) = (
+adsr = (x, a, d, (s, sv=1), r) -> (
   *i = 0;
   t = i++ / sampleRate;
 
@@ -110,13 +99,12 @@ adssr(x, a, d, (s, sv), r) = (
 
   y
 );
-adsr(x, a, d, s, r) = adssr(x, a, d, (s, 1), r);   // no-sv alias
 
 // curve effect
-curve(x, amt=1.82 <- 0..10) = (sign(x) * abs(x)) ** amt;
+curve = (x, amt=1.82 <- 0..10) -> (sign(x) * abs(x)) ** amt;
 
 // coin = triangle with pitch jump
-coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
+coin = (freq=1675, jump=freq/2, delay=0.06, shape=0) -> (
   *i=0, *phase=0;
 
   t = i++/sampleRate;
@@ -129,7 +117,6 @@ coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
 Features:
 
 <!-- * _groups_ − groups are just syntax sugar and are always flat, ie. `a, d, (s, sv), r` == `a, d, s, sv, r`. They're desugared on compilation stage. -->
-<!-- * _function overload_ − function clause is matched by call signature in <span title="On export each clause gets name extension as gain_1a_1k, gain_2a_1k etc.">compile-time*</span>. -->
 * _pipes_ − `|` operator is overloaded for functions as `a | b` → `b(a)`.
 * _partial function application_ − `->` indicates that function allows partial call creating curried function, that's useful for pipeline.
 * _arrays_ − linear collection of elements: numbers, functions or other arrays. Unlike groups, elements are stored in memory.
@@ -148,12 +135,12 @@ a1,a2,a3,a4 = 1116,1188,1277,1356;
 b1,b2,b3,b4 = 1422,1491,1557,1617;
 p1,p2,p3,p4 = 225,556,441,341;
 
-stretch(n) = floor(n * sampleRate / 44100);
+stretch = (n) -> floor(n * sampleRate / 44100);
 
-reverb([..input], room=0.5, damp=0.5) = (
-  *combs_a = a0,a1,a2,a3 | x -> stretch(x),
-  *combs_b = b0,b1,b2,b3 | x -> stretch(x),
-  *aps = p0,p1,p2,p3 | x -> stretch(x);
+reverb = (~input, room=0.5, damp=0.5) -> (
+  *combs_a = a0,a1,a2,a3 | stretch,
+  *combs_b = b0,b1,b2,b3 | stretch,
+  *aps = p0,p1,p2,p3 | stretch;
 
   combs = (
     (combs_a | x -> comb(x, input, room, damp) >- (a,b) -> a+b) +
