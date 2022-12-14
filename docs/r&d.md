@@ -23,21 +23,19 @@ Having wat files is more useful than direct compilation to binary form:
 
   → default is going to need a name to be importable directly
 
-  → We can declare exporting as a separate area, like `export gain, somethingElse, somethingElse`
-
-## [x] `f(x, y) = x + y` ->
+## [x] `f(x, y) = x + y` -> let's use `f = arg -> result`
   + standard classic way to define function in math
   + also as in F# or Elixir
   - conflicts with anonymous fn notation
 
-### [ ] `f(x,y) -> x + y`
+### ~~[x] `f(x,y) -> x + y`~~
   + looks very similar
   + also classic-ish function notation
   + natural extension of lambda functions
   + unifies lambda functions look
   + organically permits lambda functions
 
-### [ ] Alt: `f = (x,y) -> x + y`
+### [x] Alt: `f = (x,y) -> x + y`
   + all pros of prev
   + JS-familiar notation
   + less fancy syntax extensions
@@ -130,11 +128,12 @@ Having wat files is more useful than direct compilation to binary form:
   + ok, can be useful for special syntax with non-string meaning, like paths, dates and other atoms.
   + also can be used for special name variables maybe? like `'x-1' = 2; x0; x1;`
     ? or use `x\-1 = 2` instead?
+  ! We can reserve atoms for import directives.
 
 ## [x] Numbers: float64 by default, unless it's statically inferrable as int32, like ++, +-1 etc ops only
   * Boolean operators turn float64 into int64
 
-## [ ] Pipes: → we can use macros as pipe mappers or curried fn builders
+## [x] Pipes: → | with anon functions
 
   1. Placeholder as `x | #*0.6 + reverb() * 0.4`, `source | lp($, frq, Q)`?
     ? can there be multiple args to pipe operator? `a,b |` runs 2 pipes, not multiarg.
@@ -286,7 +285,7 @@ Having wat files is more useful than direct compilation to binary form:
       + plays well with implicit arguments #t, #i etc.
     - same as 5 - let's avoid implicit stuff
 
-## [ ] Lambda -> we can use only lambdas everywhere
+## [x] Lambda -> we can use only lambdas everywhere
 
   * should there be lambda? `value | x -> x*.6 + reverb(x) * .4`
     - lambda function has diverging notation from regular fn definition.
@@ -304,7 +303,7 @@ Having wat files is more useful than direct compilation to binary form:
   ! → operator must uniquely identify type and be macros
   ?! Try x(..args) -> operation for regular functions?
 
-## [ ] Reduce/fold operator: wait for use-case
+## [x] Reduce/fold operator: let's use >- with lambdas
 
   * ? Reduce operator? It can be eg. `:>` (2 become 1), or `=>`.
     * ? `a,b,c :> reducer`, like `signals :> #0 + #1`
@@ -432,15 +431,15 @@ Having wat files is more useful than direct compilation to binary form:
     + the most laconic version
   4. webassembly doesn't use continue, just `^` for break.
 
-### [x] ? Can we use something else but . for export? → let's try exporting everything by default except for _x
+### [x] ? Can we use something else but . for export? → export last elements in file
 
   - that seems to create confusion for `a(x,y) = x*y.` case
   - that doesn't seem to belong to natural languages - marking . with export.
   - it seems export is better marked before declaration, than after.
 
-  1. `::a(x,y) = x*y.`
-  2. `!a(x,y) = x*y.`
-  3. `#a(x,y) = x*y.`
+  1. ~~`::a(x,y) = x*y.`~~
+  2. ~~`!a(x,y) = x*y.`~~
+  3. ~~`#a(x,y) = x*y.`~~
     - conflicts with cardinality
   4. Can we export all by default?
     - that bloats default module size
@@ -453,9 +452,10 @@ Having wat files is more useful than direct compilation to binary form:
     - _abc forces unnecessary noise across the file. It's easier to mark variable private just once.
     + Cobra lang uses __abc for private and _abc for protected...
     - bringing meaning to variable name symbols can be unintuitive.
-  6. We can use @ for export as well as import.
+  6. ~~We can use @ for export as well as import.~~
     + Ruby has @ for protected methods, which is alternative to _abc
     - mixes up imports/exports: it's hard to see what's what in the file
+  7. We can export last function/group, as regular groups do.
 
 ## [x] State management → function state identified by callsite
 
@@ -805,7 +805,7 @@ Having wat files is more useful than direct compilation to binary form:
 ### [x] loops can return a value: `(isActive(it): action(it))` - the last result of action is returned
   + useful for many loop cases where we need internal variable result.
 
-## [x] ? Is there a way to multi-export without apparent `export` keyword for every function? -> export all by default
+## [x] ? Is there a way to multi-export without apparent `export` keyword for every function? -> export last items in a file.
 
   * ? maybe it's good there's apparent `export` indicator - easy to scan and in-place, compared to accumulated export at the end.
   → C++ exports implicitly function clauses.
@@ -818,6 +818,7 @@ Having wat files is more useful than direct compilation to binary form:
       ? how would we export multiple clauses?
         → easiest would be to provide JS wrapper. The variety of WASM export forms is huge.
   * Export area solves the issue: `gain()=...; export gain`
+  -> Same as `(a;b,c)` returns b and c - return last items as `gain=()->{}; gain, gain1, gain2`.
 
 ## [x] Arrays: to be or not to be? → for complex / arbitrary-length / nested structures?
   * ? what if we don't deal with arbitrary-length arrays?
@@ -846,7 +847,7 @@ Having wat files is more useful than direct compilation to binary form:
     + matches that arrow madness
   * ? maybe that's just inverse reduce operator. a = sum -< a,b,c
 
-## [x] comments: //, /* vs ;; and (; ;) → use // without /*
+## [x] comments: //, /* vs ;; and (; ;) → use familiar `//`
   + ;; make more sense, since ; is separator, and everything behind it doesnt matter
   + (; makes more sense as "group with comments", since we use only ( for groups.
   + ;; is less noisy than //
@@ -864,7 +865,14 @@ Having wat files is more useful than direct compilation to binary form:
       (1 - 4 * abs( round(phase/pi2) - phase/pi2 ))
     )
   ```
+  - // is super-familiar and js/c-y
     ~ just reformat
+  ? ALT: use \
+    + mono-compatible
+    + \ is almost never used in langs & that's unique
+    + it's very close
+    + it's short
+    - it can be used for length
 
 ## [x] ! Variables case should not matter.
 
@@ -939,12 +947,12 @@ Having wat files is more useful than direct compilation to binary form:
 
 ## [x] Array slice takes ranges a[1..3], unlike python
 
-## [x] Notes as hi-level aliases for frequencies A4, B1 etc.
+## [x] Notes as hi-level aliases for frequencies A4, B1 etc. -> available
   * import 'musi' - imports all these constants
   + allows building chords as (C3, E3, G3) = Cmaj
     ~ would require # to be valid part of identifier
 
-## [x] ? Parts of identifier: $, #, @, _ → # is reserved for length, @ is for import
+## [x] ? Parts of identifier: $, #, @, _ → # is for length, @ is reserved for import
   + allows private-ish variables
   + allows notes constants
   ~ mb non-standardish
@@ -1225,7 +1233,7 @@ Having wat files is more useful than direct compilation to binary form:
     + saves lots of manual code
     + saves namespace
 
-## [x] ? Should we provide param types or not? -> try `~` as indicator of input signal
+## [ ] ? Should we provide param types or not? -> try explicit dims notation `a[1,1024]`
   * kParam type clause can save 1024 memory reads per block.
 
   1. hide implementation detail of kRate/aRate and generate both clauses depending on input type.
@@ -1574,7 +1582,7 @@ Having wat files is more useful than direct compilation to binary form:
   * latr can provide alloc and other common helpers
   - not latr nut std. Latr is generic synthesis
 
-## [x] Array/string length → not abs, but #(a,b,c) or #arr for number of items
+## [x] Array/string length → `#arr` for length is the most natural
   * Ref https://en.wikipedia.org/wiki/Comparison_of_programming_languages_(array)
   * Ref https://en.wikipedia.org/wiki/Cardinality
   * Lua, J langs propose # operator for length
@@ -1584,6 +1592,11 @@ Having wat files is more useful than direct compilation to binary form:
     - `#str` doesn't work well as "length of string"
     -~ `abs()` allows group inside, making # a unary operator would create `#(a,b,c)` stuff, which has strong intuition as records-ish
       - `#(a,b,c)` doesn't make clear if that's number of items or abs values of all internals (likely the second)
+  * `\` for length:
+    + Similar to ᴓ === radius/diameter of something
+    + Escapes === "literal" meaning of variable
+    + Less noisy compared to #
+    + Leaves # available for identifier names & notes
   * Icon, Unicon propose * operator for length
   * ? `melody_string[]`
     ~+ sort of math association
@@ -1724,7 +1737,7 @@ Having wat files is more useful than direct compilation to binary form:
   * `@math: sin, cos; @latr; @./my-lib.son`
     + at math: sin, cos
     + @ has address intuition, which better fits for paths.
-  * ✱ `sin, cos @ 'math', * @ 'latr'`
+  * `sin, cos @ 'math', * @ 'latr'`
     + a,b at source
     +~ reminds npm namespace convention
     + CSS @import, Objective C @import.
@@ -1777,6 +1790,14 @@ Having wat files is more useful than direct compilation to binary form:
 
   2.1 `@math#sin,cos`, `@./path/to/file.son#a,b,c`
     - messes up with native syntax - paths are not part of it.
+
+### [x] Do we need to have `@` for imports? Can't we just indicate atom directly? -> keep atoms free
+
+  * `'math#sin,cos'
+  + saves from `@'@brain/pkg'` case
+  + frees `@` for variable names
+  + less load
+  - reserves atoms for single-purpose, better keep them free.
 
 ## [x] Wasmtree instead of IR would be simpler -> nope, it's less flexible and less supported
 
@@ -1889,3 +1910,200 @@ Having wat files is more useful than direct compilation to binary form:
   3) parser/compiler errors with line/col/symbol/token information so they can be displayed inline in the editor while the user is typing, so they see what they're doing wrong. They don't need to be extremely descriptive, but at least showing the right symbol position i.e what to draw red.
   4) a way to export certain parameters into UI elements arbitrarily and with minimal effort. Right now in mono i've introduced a . prefix operator in the arguments so f(a, b, c) if i do f(a, .b, c) then i immediately get a knob for 'b' with that simple addition of the . prefix. That helps me a lot as a producer to not have to go elsewhere to define these and to try new things. The '.b' also becomes hoverable and can change with the wheel, but there's also a UI knob and they're associated, when you hover one, both light up. The idea is that once you export the controls like that, you can hide the editor and that can be a standalone effect/instrument with those controls it pulls from the code. You want another thing to tweak? Simply jump into the code and add a . next to the parameter and save. When there will be dozens of instruments and effects in the screen playing you need to be able to quickly do these things so you don't kill the flow. The flow must never be killed. That's the most important feature. You should be dancing all your way through from start to end while making a track without any gap of having to stop and take closer look at code or something isn't playing right or there are audible glitches etc. So first and foremost it is a party tool. You need to be able to party with it or it's worth nothing.
 
+
+## [x] Tape machines -> try providing length of variable `*a#100`
+
+  * They're like buffers/arrays, but every batch call they shift index.
+  * In a way similar to state variables, but in fact state arrays (variables with memory of prev values)
+  * In mono done as `v()=(#:1; y=#(0); #=y+1;y);` (create, read, write)
+
+  1. `v = (in[2,1024]) -> (*state[1]; y=state.0; state.0=y+1; arr[100]=[1,2,3]; y)`
+    + familiar conventions: init as type, stateful, access as array.
+  ? have dim extension to any variable?
+    - confusable for array
+  ```
+  fn = () -> (
+    *a[1s * 48]; \ init stateful variable with 1s of memory
+    *a[1s * 48] |= i -> abs(i); create stateful variable with past values
+    a.0 = 2; \ write 2 at index 0
+    a[0] = 2; \ same
+
+    a.0 \ read current value
+    a[0] \ same
+    a.-1 \ read prev value
+    a[-1000] \ read 1000th prev value (no rotation)
+    a[-10..0] \ get array of last 10 values
+
+    array = [..a] \ create array from all prev values
+  )
+  ```
+  - init is conflicting with array property access.
+    - we may need to expand that notation to defining arrays for any variables, eg. `a = [0..10]` vs `a[10]`,
+      but obviously the latter is just array access.
+    ~ that's special modifier for stateful initializer.
+  - there's never positive index btw
+    ? flipping to positive?
+      - reversed logic for sound
+  - 3 variations of structures/access: array, input, memory.
+  ? what if we make regular arrays init as `a[3] = [a,b,c]`
+    - confusing with setting 3rd member
+  ? maybe that's fine not to have arrays defined like that?
+
+  1.1 Init all variables via `~i, ~x, ~s` etc.
+    + brings arrays to the same level as `~arr[10]`, `*state[10]`, `(in[2,1024])`
+    + literally means "variable"
+    + indicates all used variables explicitly
+      - forces redundant notation: can easily init directly
+    + introduces "variable type": can be `.param=10 <- 0..100` for external param via UI (unlike argument).
+
+  1.2 ~~Alternative notation for saved state: `v = (in) -> (*a[10]; a'0=a'-1+a'-2)`~~
+    - Mess up with strings/quotes, nah
+
+  2. ~~`v = (in:(3,1024) <- -1..1, amp) -> (*a:(1s*48); b:1024 = [1,2,3]; a.0 + b.0)`~~
+  - same drawbacks
+  - less apparent
+  + non-conflicting notation
+  + reminiscent of types
+  + colon is free-ish
+  - args messup via comma
+  - not elegant parens
+
+  2.1 ~~`v = (in:3:1024 <- -1..1, amp) -> (*a:1s*48; b:ch:1024 = [ch1,ch2]; a.0 + b.0)`~~
+    - doesn't match neither with `[]` nor `.`
+    - confusable with naming/alias - `[x:10, y:20]` - is that array with aliases, or array with 2 arrays?
+  2.2 ~~`v = (in#3#1024 <- -1..1, amp) -> (*a#1s*48; b#ch#1024 = [ch1,ch2]; a.0 + b.0)`~~
+    + reminds length by meaning
+    - crammed noise
+  2.3 ~~`v = (in.3.1024 <- -1..1, amp) -> (*a.1s*48; b.ch.1024 = [ch1,ch2]; a.0 + b.0)`~~
+    - same drawbacks as `[]`
+
+  3. ~~`v = (in{3,1024} <- -1..1, amp) -> (*a{1s*48}; b{1024} = [1,2,3,...]; a.0+b.0)`~~
+  - bad association with heavy stuff: sets, objects, structs, block etc.
+
+  4. Don't use any special notation for arrays.
+    + we know array sizing in advance on init, always-ish?
+    ~ we can allow a[] = [1,2,3] for autoinit
+    + mem state and input arg state are indeed a bit special cases
+    + `*x[100]` or `(in[100])` can be more thought as "index space" rather than special object kind definition.
+
+  5. Can't we just define infinite memory / past values?
+    * mem layout seems to be helpful & useful elsewhere
+      ? like where? we don't really use it: arrays can be figured out from memory itself...
+
+  6. Don't use any arrays syntax extension: `v = (in <- -1..1, amp) -> (*a = [..1s]; b = [1,2,3,...]; a.0+b.0)`
+    + Solves problem of syntax.
+    - Doesn't solve problem of tapes / inputs:
+
+  7. Use unindexed `v = (in[] <- -1..1, amp) -> (*a[] = [..1s]; b[] = [1,2,3,...]; a.0+b.0)`
+    + Unified notation
+    - Not really useful if we assign arrays after anyways
+
+  8. Indicate dims in advance? `v = ([2,1024]in <- -1..1, amp) -> (*[1s]a; [1024]b = [1,2,3,...]; a.0+b.0)`
+    + matches prefix type indicator pattern
+    - swaps order: `[10]in; in.7=1` vs `in[10]; in[7]=1`.
+
+  9. Make first (init), then read. `in[10] = [1,2,3]; in[9] = 1;`
+    - very confusing same notation different meaning;
+
+  10. Length operator: `v = (in\1024 <- -1..1, amp) -> (*a\1s; b\5 = [1,2,3,...]; a.0+b.0)`
+    + matches length notation
+  10.1 Old length operator: `v = (in#1024 <- -1..1, amp) -> (*a#(1s*sr); b#5 = [1,2,3,...]; a.0+b.0)`
+    + matches length as `#in === 1024`
+    + matches meaning of # as length
+    + reminds # from mono
+    ? how to define unknown-length?
+      ? maybe enforce length and enforce passing memory pointer?
+
+  10 + 8. Alt length operator `v = ([]in <- -1..1, amp) -> (*[1s]a; []b = [1,2,3,...]; a.0+b.0)`
+    + both kinds of sizes possible
+    - lame as length/abs operator: []123 is lame.
+
+### [x] Should we instead of batch variable indicate arg layout? -> yes, meaningful for all input var, array var and state var.
+
+  Before:
+  ```
+  gain(~in, amp) = ~in*amp;     // input/output channeled data (for batch call)
+  generate() = (
+    ~chans=[left,right,..rest]; // define channels (batch) variable
+    chans.l, chans.r            // channel name aliases
+    chans.0, chans.1            // channel index aliases
+    chans
+  );
+  ```
+
+  After:
+  ```
+  blockSize
+  gain = (in[2,blockSize], amp) -> [ch <- in -< [x <- ch -< x * amp]];
+  generate = () -> (chans[2,blockSize]; chans);
+  ```
+
+  + allows customizing block size / channels layout more explicitly
+    + no implicit layout conventions = less configurations
+  + matches memory var signature
+  + output is just an array
+  + compatible with array, just different processing meaning, so `arr = [..tape]` can be just copy
+  - [x] it doesn't iterate over values automatically and needs some extra wrapper
+    + allows more explicit iteration pattern
+    + allows direct mono/stereo clause as `gain0 = (in, amp) -> in*amp; gain1 = (in[1024], amp) -> x <- in -< gain0(x, in)`
+    + in fact, arrays can expose ops automatically to all elements, so that `gain(in[len], amp) -> in * amp` just multiplies all.
+  - no channel name auto-aliases
+    ~? can be made global swizzle aliases?
+      + can be overridden by named indexes
+    ~? can be provided explicitly as named indexes
+  - no clear intuition does that behave like array or saved-state array?
+  + very natural notation, as if groups are created for expressing strides
+  !+ arrays can be always flat, but layout defines how they should be read
+
+### [x] Tape machine: layout/access logic? -> let's do a.0, a.1 for past values
+
+  1. a[0] current, a[-1] prev
+    + very natural
+    - long syntax
+    + better mem implementation: compiles to a[(iteration+shift) % len]
+  2. a[0] current, a[1] prev
+    + allows a.0, a.1, a.2
+    + better memory layout (in order)
+    + matches array layout
+    + it already indexes like that in biquad filter code `x1,x2 = x0,x1`
+
+## [x] Should we make mandatory var initializing area `~i=0;`? -> nah
+
+  (indicated above in 1.1):
+  + brings arrays to the same level as `~arr[10]`, `*state[10]`, `(in[2,1024])`
+  + literally means "variable"
+  + indicates all used variables explicitly
+    - forces redundant notation: can easily init directly
+      ~ isn't that heavy burden: can be as useful as direct init, but easier to parse
+  + introduces "variable type": can be `.param=10 <- 0..100` for external param via UI (unlike argument).
+  - conflicts with global "no-prefix" inits.
+    ~ we can make it an indicator of actual variable, opposed to const `-arr[10]`
+      - still, pollutes global...
+        ~ can be quite useful, as indicator that we don't change globals. So only globals can be defined directly.
+  - a concept user doesn't have to know necessarily
+
+## [ ] Time units: + convert to sample rate samples (or - convert to floats)?
+
+  + saves many conversions
+  - has implicit sr variable...
+
+## [x] UI variables -> move to latr
+
+  1. Special syntax?
+  ```
+  gain = in -> (
+    .amp=1 <- 0.1..100;       // create UI knob for amp
+    in*amp
+  );
+  ```
+
+  2. Can be just external fn
+  ```
+  'latr#knob'
+  gain = in -> (
+    amp=knob(1, 0.1..100);       // create UI knob for amp
+    in*amp
+  );
+  ```
+  + better customizable: log axis, linear, type, step
+  + comes with other tools: logging, profiling

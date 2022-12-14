@@ -15,15 +15,17 @@ Let's consider examples.
 Provides k-rate amplification of input audio.
 
 ```fs
-gain = (~audio, volume <- 0..100) -> audio * volume;
+block_size = 1024
+
+gain = (input#block_size, volume <- 0..100) -> input * volume;
 
 gain([0,.1,.2,.3,.4,.5], 2); // [0,.2,.4,.6,.8,1]
 ```
 
 Features:
 
-* _block input/output_ − tilda `~arg` indicates <em title="Audio, or precise rate">a-rate*</em> input/output/param, which has array type. Direct argument `arg` indicates <em title="Controlling (historical artifact from CSound), blocK-rate">k-rate*</em> value (fixed for full block in combination with ~ args).
-* _range_ − language-level primitive with `from..to` signature. Useful in arguments validation, array initialization etc.
+* _block input/output_ − `#` indicates <em title="Audio, or precise rate">a-rate*</em> input/param/variable, which has array type. Direct argument `arg` indicates <em title="Controlling (historical artifact from CSound), blocK-rate">k-rate*</em> (regular) value, fixed for block.
+* _range_ − primitive with `from..to` signature, useful in args validation, array initialization etc.
 * _validation_ − `a <- range` (_a ∈ range_) asserts and clamps argument to provided range, to avoid blowing up arg values, also useful for reflecting in UI.
 
 ### Biquad Filter
@@ -31,12 +33,13 @@ Features:
 Biquad filter processor for single-channel input.
 
 ```fs
-@ 'math#pi,cos,sin';
+@'math#pi,cos,sin';
 
 pi2 = pi*2;
 sampleRate = 44100;
+blockLen = 1024;
 
-lp = (~x0, freq = 100 <- 1..10000, Q = 1.0 <- 0.001..3.0) -> (
+lp = (x#blockLen, freq = 100 <- 1..10000, Q = 1.0 <- 0.001..3.0) -> (
   *x1, *x2, *y1, *y2 = 0;    // state
 
   w = pi2 * freq / sampleRate;
@@ -48,12 +51,14 @@ lp = (~x0, freq = 100 <- 1..10000, Q = 1.0 <- 0.001..3.0) -> (
 
   b0, b1, b2, a1, a2 *= 1.0 / a0;
 
-  ~y0 = b0*x0 + b1*x1 + b2*x2 - a1*y1 - a2*y2;
+  [x0 <- x -< (
+    y0 = b0*x0 + b1*x1 + b2*x2 - a1*y1 - a2*y2;
 
-  x1, x2 = x0, x1;
-  y1, y2 = y0, y1;
+    x1, x2 = x0, x1;
+    y1, y2 = y0, y1;
 
-  y0
+    y0
+  )]
 );
 ```
 
@@ -70,7 +75,7 @@ Full ZZFX is available in examples, we consider only [coin sound](https://codepe
 > `zzfx(...[,,1675,,.06,.24,1,1.82,,,837,.06])`
 
 ```fs
-@ 'math';
+@'math';
 
 pi2 = pi*2;
 sampleRate = 44100;
@@ -125,9 +130,9 @@ Features:
 ## [Freeverb](https://github.com/opendsp/freeverb/blob/master/index.js)
 
 ```fs
-@ './combfilter.son#comb';
-@ './allpass.son#allpass'
-@ 'math';
+@'./combfilter.son#comb';
+@'./allpass.son#allpass'
+@'math';
 
 sampleRate = 44100;
 
@@ -164,7 +169,7 @@ Features:
 Transpiled floatbeat/bytebeat song:
 
 ```fs
-@ 'math';
+@'math';
 
 sampleRate = 44100;
 
@@ -217,25 +222,41 @@ some_var, SoMe_VaR;         // identifiers are case-insensitive
 if=12; for=some_Variable;   // lino has no reserved words
 
 //////////////////////////// primitives
-16, 0x10, 0b0               // integer (decimal, hex or binary)
-true=0b1, false=0b0         // alias booleans
-16.0, .1, 1e3, 2e-3         // float
-10.1k, 2pi                  // unit float
-1h2m3s, 4.5s                // time float
-1/2, 2/3                    // TODO: fractional numbers
-"abc", "\x12"               // strings (ascii and utf8 notations)
-'path/to/my/file';          // atoms, aka symbols (for enums etc.)
+16, 0x10, 0b0;               // integer (decimal, hex or binary)
+true=0b1, false=0b0;         // alias booleans (not provided by default)
+16.0, .1, 1e3, 2e-3;         // floats
+10.1k, 2pi;                  // unit float (converted to floats)
+1h2m3s, 4.5s;                // time float
+1/2, 2/3;                    // fractional numbers (todo)
+"abc", "\x12";               // strings (ascii and utf8 notations)
+'path/to/my/file';           // imports, atoms
 
-//////////////////////////// operators
+//////////////////////////// ranges
+1..10;                       // basic range
+1.., ..10;                   // open ranges
+10..1;                       // reverse-direction range
+1.08..108.0;                 // float range
+0>..10, 0..<10, 0>..<10;     // non-inclusive ranges
+(x-1)..(x+1);                // calculated ranges
+
+//////////////////////////// standard operators
 + - * / % **                // arithmetical (** for pow)
 & | ^ ~ && || !             // bitwise and logical
 
-//////////////////////////// ranges
-1..10                       // basic range
-1.., ..10                   // open ranges
-10..1                       // reverse-direction range
-1.08..108.0               // float range
-0>..10, 0..<10, 0>..<10     // non-inclusive ranges
+//////////////////////////// clamp operator
+x <- 0..10                  // clamp(x, 0, 10)
+x <-= 0..10                 // x = clamp(x, 0, 10)
+x <- [1,2,3]                // arrays: for x in [1,2,3]
+x <- (1,2,3)                // groups: for x in [1,2,3]
+x <- 3                      // numbers: for x in [0,1,2]
+
+//////////////////////////// length/abs operator
+#[1,2,3]                    // 3
+#(1,2,3,4)                  // 4
+#"abc"                      // 3
+#0..10                      // 10
+#123                        // 123
+#-123                       // 123
 
 //////////////////////////// groups
 a, b, c;                    // groups are syntactic sugar, not data type
@@ -243,11 +264,11 @@ a, b, c;                    // groups are syntactic sugar, not data type
 a,b,c = d,e,f;              // assign: a=d, b=e, c=f
 a,b = b,a;                  // swap: temp=a; a=b; b=temp;
 (a,b) + (c,d);              // operations: (a+c, b+d)
-(a,b).x                     // (a.x, b.x);
-(a,b).x()                   // (a.x(), b.x());
-a,b,c = (d,e,f)             // a=d, b=e, c=f
-(a,b,c) = d                 // a=d, b=d, c=d
-a = b,c,d                   // a=b, a=c, a=d
+(a,b).x;                    // (a.x, b.x);
+(a,b).x();                  // (a.x(), b.x());
+a,b,c = (d,e,f);            // a=d, b=e, c=f
+(a,b,c) = d;                // a=d, b=d, c=d
+a = b,c,d;                  // a=b, a=c, a=d
 
 //////////////////////////// statements
 statement();                // semi-colons at end of line are mandatory
@@ -271,10 +292,10 @@ sign = a < 0 ? -1 : +1;     // inline ternary
 a > b ? b++;                // subternary operator (if)
 a > b ?: b++;               // elvis operator (else if)
 
-//////////////////////////// loops
+//////////////////////////// loops ( -< operator )
 s = "Hello";
-#s < 50 -< s += ", hi";     // inline loop: `while (s.length < 50) s += ", hi"`
-(i <- 10..1 -< (            // multiline loop
+(#s < 50) -< (s += ", hi"); // inline loop: `while (s.length < 50) s += ", hi"`
+(i <- (10..1) -< (          // multiline loop
   i < 3 ? ^^;               // `^^` to break loop (can return value as ^^x)
   i < 5 ? ^;                // `^` to continue loop (can return value as ^x)
   puts(i + "...");          //
@@ -282,8 +303,8 @@ s = "Hello";
 a0,a1,a2 = i <- 0..2 -< i   // loop creates group as result: a0=0, a1=1, a2=2
 
 //////////////////////////// functions
-double(n) = n*2;            // inline function
-triple(n=1) = (             // optional args
+double = n -> n*2;          // inline function
+triple = (n=1) -> (         // optional args
   n == 0 ? ^n;              // preliminarily return n
   n*3                       // last stack value is implicitly returned
 );
@@ -292,21 +313,19 @@ triple(5);                  // 15
 triple(n: 10);              // 30. named argument.
 copy = triple;              // capture function
 copy(10);                   // also 30
-clamp(v <- 0..100) = v;     // clamp argument to range
-                            // function can return groups
-
-//////////////////////////// batch functions
-gain(~[aType], kType);       // a-type, k-type arguments
-gain(~[in], amp) = [in*amp]; // input/output channeled data (for batch call)
-process(~chans) = chans;     // generic multichannel processing
-generate() = (~chans; chans);// generate channeled data
-(~ch; ch.l, ch.r, ch.0);     // access channels layout
+clamp(v <- 0..100) = v;     // clamp argument
+x = () -> 1,2,3;            // return group (multiple values)
+gain = (in#1024, amp) -> in*amp;          // list argument
+generate = () -> [1,2,3];              // return array
 
 //////////////////////////// stateful variables
-a() = ( *i=0; i++ );         // stateful variable - persist value between fn calls
-
-//////////////////////////// UI variables
-a(~in, .amp) = (in * amp);  // create UI knob for amp
+a = () -> ( *i=0; i++ );             // stateful variable - persist value between fn calls
+a();                                 // 0
+a();                                 // 1
+b = () -> ( *i#10; i.1++; i.0+=i.1; )  // define memory size & access past state
+b();                                 // 0
+b();                                 // i[0] ===
+b();                                 // 1
 
 //////////////////////////// strings
 hi="hello";                 // strings can use "quotes"
@@ -319,25 +338,30 @@ string[-1..0];              // reverse
 string < string;            // comparison (<,>,==,!=)
 string + string;            // concatenation: "hello worldhello world"
 string - string;            // removes all occurences of right string in left string: ""
-string / " ";               // split: ["hello", "world"]
-string ~> "l";              // indexOf: 2
-string <~ "l";              // rightIndexOf: -2
+string / string;            // split: "a b" / " " = ["a", "b"]
+string * list;              // join: " " * ["a", "b"] = "a b"
+hi ~> "l";                  // indexOf: 2
+hi <~ "l";                  // rightIndexOf: -2
 #string;                    // length
 
 //////////////////////////// lists
-list = [2, 4, 6, last: 8];  // list from elements
+list#10                     // list from size
+list = [2, 4, 6, last: 8];  // list from elements (with aliases)
 list = [0..10];             // list from range
 list = [i <- 0..8 -< i*2];  // list comprehension
 list.last;                  // alias name for index
+list.l, list.r, list.c;     // global aliases for channels (swizzles)
+list.0, list.1, list.2;     // short index access notation
 list[0];                    // positive indexing from first element [0]: 2
 list[-2]=5;                 // negative indexing from last element [-1]: list becomes [2,4,5,8]
 list + list;                // concat [1,2]+[2,3]=[1,2,2,3]
 list - list;                // difference [1,2]-[2,3]=[1]
-list * " ";                 // join ["a", "b"] * " " -> "a b"
+list | x -> x*2             // map items
 list[1..3, 5]; list[5..];   // slice
 list[-1..0];                // reverse
 list ~> item;               // find index of the item
 list <~ item;               // rfind
+list */+- number;           // apply math ops w/numbers to all members: [1,2]*2=[2,4]
 #list;                      // length
 
 ////////////////////////////// TODO: sets
@@ -347,18 +371,18 @@ set = {'a', 'b', 'c'}       // from atoms
 
 ///////////////////////////// map/fold
 items >- (sum,x) -> sum+x;  // fold operator with reducer
-items | x -> a(x);          // pipe operator with mapper
+items | x -> a(x);          // map operator
 (a, b, c) >- (a, b) -> b;   // can be applied to groups (syntax sugar)
+[a, b, c] >- (a, b) -> b;   // can be applied to lists
 (a, b, c) | a -> a.x * 2;   // compiler unfolds to actual constructs
 
 //////////////////////////// import
-@'path/to/module';          // any file can be imported directly
+@'./path/to/module';        // any file can be imported directly
 @'math';                    // or defined via import-maps.json
-@'my-module#x,y,z';         // imported entries can be subscoped via hash
+@'my-module#x,y,z';         // import selected members
 
 //////////////////////////// export
-x = 1;                      // every identifier/function are exported by default
-_x = 2;                     // lowdash identifiers are excluded from export
+x,y,z;                      // exports last members in a file
 ```
 
 

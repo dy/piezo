@@ -59,3 +59,10 @@
    + lino is beginning of "linotype"
    - .son extension is missing
       + .lin extension is pretty cool too, like flax
+
+* lisa
+   ~+ like lino
+   + mono -> lisa
+   + reminds Julia lang
+   + file can be named literally mono.lisa
+   - already exists: https://github.com/Somainer/lisa-lang
