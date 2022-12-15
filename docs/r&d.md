@@ -234,6 +234,9 @@ Having wat files is more useful than direct compilation to binary form:
     ~ Likely there's benefit of limiting topic to pipe only. Generic ^ may have unexpected side-effects.
       + eg. initializer `...a=(x;^+y)` can be `...a=x|^+y` now, since no conflict with semi.
 
+  3.1.1 Likely topic must be `&`, as reminiscence of binary operator pair `|&`.
+    + also matches "self" by meaning
+
   3.2 ~~`filter(-> src, f, Q)`~~
     + benefits of `filter(src?, f, Q)`
     + more explicit indicator of curried clause and piped in argument
@@ -316,7 +319,7 @@ Having wat files is more useful than direct compilation to binary form:
   ? unrols into single expression for groups OR applies reduce/fold for arrays. Acts as convolver also.
   ? or just avoid that since direct loop is available?
 
-## [x] Units: time primitive and short orders is natural: 1h2s, 20k
+## [x] Units: time primitive and short orders is natural: 1h2s, 20k -> see below
 
   * Units possibly intrudoced as `10k`, `1s`, `1hz`, `1khz`
 
@@ -334,6 +337,19 @@ Having wat files is more useful than direct compilation to binary form:
 
   - we can't include all units anyways, it's pointless
     ~ we don't need all, whereas 2k..20k is very elegant, instead of legacy 2e3..20e3
+
+## [x] Time units: convert to sample rate samples (or to floats)? -> try generic units `1k=1000,1s=48000,1pi=pi`
+
+  + saves many conversions
+  - has implicit sr variable...
+  ?! `@pi=3.14; 2pi;`, `@s = 44800; 1s;`
+    - `1s === 44800`, not `@s`
+    - reserves `@`
+    - `1pi1ms1s` mixed units fail
+  ?! `1s=48000; 1ms=.001s; 1pi=pi; 3pi5s2ms`
+    + solves mono discrepancy
+    + laconic, obvious and truthy
+    ~+ customizable from outside as `1s=sampleRate`
 
 ## [x] Number types: fractions, complex numbers -> when needed
 
@@ -1233,7 +1249,7 @@ Having wat files is more useful than direct compilation to binary form:
     + saves lots of manual code
     + saves namespace
 
-## [ ] ? Should we provide param types or not? -> try explicit dims notation `a[1,1024]`
+## [x] ? Should we provide param types or not? -> try explicit dims notation `[1024]in`
   * kParam type clause can save 1024 memory reads per block.
 
   1. hide implementation detail of kRate/aRate and generate both clauses depending on input type.
@@ -1582,7 +1598,7 @@ Having wat files is more useful than direct compilation to binary form:
   * latr can provide alloc and other common helpers
   - not latr nut std. Latr is generic synthesis
 
-## [x] Array/string length → `#arr` for length is the most natural
+## [x] Array/string length → `arr[]` for length is the most natural
   * Ref https://en.wikipedia.org/wiki/Comparison_of_programming_languages_(array)
   * Ref https://en.wikipedia.org/wiki/Cardinality
   * Lua, J langs propose # operator for length
@@ -1591,18 +1607,23 @@ Having wat files is more useful than direct compilation to binary form:
     - `#str` in module space means "load module", `#str` in function scope means `length of function`
     - `#str` doesn't work well as "length of string"
     -~ `abs()` allows group inside, making # a unary operator would create `#(a,b,c)` stuff, which has strong intuition as records-ish
-      - `#(a,b,c)` doesn't make clear if that's number of items or abs values of all internals (likely the second)
+      - `#(a,b,c)` doesn't make clear if that's number of items or abs values of all internals (likely the second?)
+    - `#` borrows from `a4#`, which would be nice ids for notes.
   * `\` for length:
     + Similar to ᴓ === radius/diameter of something
     + Escapes === "literal" meaning of variable
     + Less noisy compared to #
     + Leaves # available for identifier names & notes
+    - looks yucky, like escapes/regexps
   * Icon, Unicon propose * operator for length
   * ? `melody_string[]`
     ~+ sort of math association
     ~+ sort of #, but not as generic
     ~+ empty array is unused anyways
     - `(a,b,c)[]` is a mess, `#(a,b,c)` is fine.
+      ~ not really an argument.
+    + natural-ish, puts in the same row as members access
+    + points to modulo operator, like, accessing not single member but length
   * ? We can do |a| operator for abs(a) or a.length
     + Math notation is |a|
     - fn syntax is waaay more familiar
@@ -1882,7 +1903,9 @@ Having wat files is more useful than direct compilation to binary form:
   * Seems to be solvable via passing v as reference to array, must not be a big deal.
   * Have to track ref type of v though: it must prohibit operations on that.
 
-## [ ] Simplify mapper as `items -> fn(^)` instead of `items | x -> fn(x)`
+## [x] Simplify mapper: use list | & * 2
+
+  * as `items -> fn(^)` instead of `items | x -> fn(x)`?
 
   - leaves mapper notation for folding only, which is not nice
   + pipe notation is bulky with current proposal
@@ -1911,7 +1934,7 @@ Having wat files is more useful than direct compilation to binary form:
   4) a way to export certain parameters into UI elements arbitrarily and with minimal effort. Right now in mono i've introduced a . prefix operator in the arguments so f(a, b, c) if i do f(a, .b, c) then i immediately get a knob for 'b' with that simple addition of the . prefix. That helps me a lot as a producer to not have to go elsewhere to define these and to try new things. The '.b' also becomes hoverable and can change with the wheel, but there's also a UI knob and they're associated, when you hover one, both light up. The idea is that once you export the controls like that, you can hide the editor and that can be a standalone effect/instrument with those controls it pulls from the code. You want another thing to tweak? Simply jump into the code and add a . next to the parameter and save. When there will be dozens of instruments and effects in the screen playing you need to be able to quickly do these things so you don't kill the flow. The flow must never be killed. That's the most important feature. You should be dancing all your way through from start to end while making a track without any gap of having to stop and take closer look at code or something isn't playing right or there are audible glitches etc. So first and foremost it is a party tool. You need to be able to party with it or it's worth nothing.
 
 
-## [x] Tape machines -> try providing length of variable `*a#100`
+## [x] Tape machines -> try providing length of variable `*[100]a`, `*[]a`, `[]in`, `[100]in` for subarray/list argument
 
   * They're like buffers/arrays, but every batch call they shift index.
   * In a way similar to state variables, but in fact state arrays (variables with memory of prev values)
@@ -1997,6 +2020,15 @@ Having wat files is more useful than direct compilation to binary form:
   7. Use unindexed `v = (in[] <- -1..1, amp) -> (*a[] = [..1s]; b[] = [1,2,3,...]; a.0+b.0)`
     + Unified notation
     - Not really useful if we assign arrays after anyways
+    + We may not ever need initializing arrays to some length, like `b[100]=[1,2,3];`
+      * It can always get length from values.
+        - we may want to have sub-array though instead of slicing original array, ie. `b = a[0..10]` and `b[10] = a` are different.
+        ? do we ever need slicing arrays? Can't we just always return subarrays?
+        ? to actually slice array we'd need create new one as `b = [a[0..10]]`
+          + more explicit reflection of what's going on
+          - we can't easily subarray as `a[1,3,5..7,-1]`
+      * Whereas input arg makes sense as both `in[]` (iterate all available) and `in[100]` (iterate until 100).
+      * Same as memory `x[]` - save all values ever and `x[1s]` - store 1s of data.
 
   8. Indicate dims in advance? `v = ([2,1024]in <- -1..1, amp) -> (*[1s]a; [1024]b = [1,2,3,...]; a.0+b.0)`
     + matches prefix type indicator pattern
@@ -2004,6 +2036,8 @@ Having wat files is more useful than direct compilation to binary form:
 
   9. Make first (init), then read. `in[10] = [1,2,3]; in[9] = 1;`
     - very confusing same notation different meaning;
+  9.1 `in[10] = list` means create sublist; `in[9] = number;` means write number;
+    + There's a chance we cannot export array with various-type values from WASM, like array must be unitype and not nested.
 
   10. Length operator: `v = (in\1024 <- -1..1, amp) -> (*a\1s; b\5 = [1,2,3,...]; a.0+b.0)`
     + matches length notation
@@ -2013,10 +2047,15 @@ Having wat files is more useful than direct compilation to binary form:
     + reminds # from mono
     ? how to define unknown-length?
       ? maybe enforce length and enforce passing memory pointer?
+    - looks noisy, # wants to be part of id, not full operator
+    - calculated values like `a#(1s*sr)` require more characters
+    - not clear how to indicate any-length
+    - occupies # char
 
   10 + 8. Alt length operator `v = ([]in <- -1..1, amp) -> (*[1s]a; []b = [1,2,3,...]; a.0+b.0)`
     + both kinds of sizes possible
     - lame as length/abs operator: []123 is lame.
+    + `*[]x` has more meaning than `*x[]` - this way we indicate size of memory, not size of `x` in memory.
 
 ### [x] Should we instead of batch variable indicate arg layout? -> yes, meaningful for all input var, array var and state var.
 
@@ -2082,11 +2121,6 @@ Having wat files is more useful than direct compilation to binary form:
         ~ can be quite useful, as indicator that we don't change globals. So only globals can be defined directly.
   - a concept user doesn't have to know necessarily
 
-## [ ] Time units: + convert to sample rate samples (or - convert to floats)?
-
-  + saves many conversions
-  - has implicit sr variable...
-
 ## [x] UI variables -> move to latr
 
   1. Special syntax?
@@ -2107,3 +2141,19 @@ Having wat files is more useful than direct compilation to binary form:
   ```
   + better customizable: log axis, linear, type, step
   + comes with other tools: logging, profiling
+
+## [x] Remove loops? -> let's try removing `<-` as `in` operator
+
+  * We can replace `x <- list -< x + 5` with `list | x -> x + 5`
+  * We can replace `x < len -< body` with `..len | i -> body`
+  * We can replace `condition -< xxx` with `0.. | i -> xxx`
+    ?~ break can be done as `0.. | i -> (!cond ? ^^; xxx)`
+  + makes `<-` actual clamp operator, rather than `in`
+  + keeps only standard connections
+
+  * ALT: we can remove only `<-` from iteration, replacing it with `set | x -> x`
+  + removes ambiguity of `<-`: for clamp only
+  + simplifies cases
+  + removes left-direction case like `x <- list -< xxx`
+  + makes loops less frequent and more meaningful
+  + `<-` as clamp replaces min, max as well
