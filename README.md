@@ -1,14 +1,10 @@
 # lino
 
-**Lino** (*li*ne *no*ise) is audio/sound processing language for expressing sound formulas in short, fluent and intuitive form. Primarily targets [AudioWorkletProcessor](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), [audio engines](https://github.com/audiojs/web-audio-api), etc.
+**Lino** (*li*ne *no*ise) is sound processing language for expressing sound formulas in short, fluent and intuitive form. It has enhanced ergonomics and compiles to optimized bytecode, useful for in [AudioWorkletProcessor](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), [audio engines](https://github.com/audiojs/web-audio-api), etc.
 
 [Motivation](./docs/motivation.md)  |  [Documentation](./docs/reference.md)  |  [Examples](./docs/examples.md).
 
-## Intro
-
-_Lino_ operates in audio block processing context: functions take either current sample or param arguments and may have internal state persisted between calls. That compiles to optimized bytecode (WASM) that is called for blocks of samples.
-
-Let's consider examples.
+## Examples
 
 ### Gain Processor
 
@@ -22,9 +18,9 @@ gain([0,.1,.2,.3,.4,.5], 2); // [0,.2,.4,.6,.8,1]
 
 Features:
 
-* _block input/output_ − `[]` prefix indicates array argument, usually <em title="Audio, or precise rate">a-rate*</em> input/param, simple argument can be used for <em title="Controlling (historical artifact from CSound), blocK-rate">k-rate*</em> param.
-* _range_ − primitive with `from..to` signature, useful in clamp, validation, array manipulations etc.
+* _block input/output_ − `[]` prefix indicates array argument (usually <em title="Audio, or precise rate">a-rate*</em> input/param); direct argument can be used for <em title="Controlling (historical artifact from CSound), blocK-rate">k-rate*</em> param.
 * _validation_ − `a <- range` (_a ∈ range_) clamps argument to provided range, to avoid blowing up values.
+* _range_ − primitive with `from..to` signature, useful to clamp value.
 
 
 ### Biquad Filter
@@ -34,8 +30,8 @@ Biquad filter processor for single-channel input.
 ```fs
 @ 'math#pi,cos,sin';
 
-1pi=pi;                       // define pi units
-1s = 44100, 1ms=1s/1000;      // define time units in samples
+1pi = pi;                     // define pi units
+1s = 44100;                   // define time units in samples
 blockLen = 1024;
 
 lp = ([blockLen]x, freq = 100 <- 1..10000, Q = 1.0 <- 0.001..3.0) -> (
@@ -50,23 +46,25 @@ lp = ([blockLen]x, freq = 100 <- 1..10000, Q = 1.0 <- 0.001..3.0) -> (
 
   b0, b1, b2, a1, a2 *= 1.0 / a0;
 
-  x | x0 -> (
+  // produce output block of data
+  [ x | x0 -> (
     y0 = b0*x0 + b1*x1 + b2*x2 - a1*y1 - a2*y2;
 
     x1, x2 = x0, x1;
     y1, y2 = y0, y1;
 
     y0
-  )
-);
+  ) ]
+)
 ```
 
 Features:
 
 * _import_ − done via URI string as `@ 'path/to/lib'`. Members can be imported as `@ 'path/to/lib#a,b,c'`. <!-- Built-in libs are: _math_, _std_. Additional libs: _sonr_, _latr_, _musi_ and [others]().--> _import-map.json_ can provide import aliases.
-* _state variables_ − `*state=init` persist value between <span title="Detected by callsite">function calls*</span>.
+* _state variables_ − `*state=init` persists value between <span title="Detected by callsite">function calls*</span>.
 * _groups_ − comma enables group operations as `a,b = c,d` === `a=c, b=d`, `(a,b) + (c,d)` === `(a+b, c+d)` etc.
-* _scope_ − parens `()` besides expression groups can indicate function body. Last element or group is automatically returned.
+* _scope_ − parens `()` besides precedence can indicate function body, return last element or group.
+* _lambda functions_ − useful for organizing inline pipe transforms `a | a -> a * 2`, reducers etc.
 
 ### ZZFX
 
@@ -114,15 +112,17 @@ coin = (freq=1675, jump=freq/2, delay=0.06, shape=0) -> (
   phase += (freq + t > delay ? jump : 0) * 2pi / 1s;
 
   oscillator[shape](phase) | x -> adsr(x, 0, 0, .06, .24) | x -> curve(x, 1.82).
-);
+);\
 ```
 
 Features:
 
 <!-- * _groups_ − groups are just syntax sugar and are always flat, ie. `a, d, (s, sv), r` == `a, d, s, sv, r`. They're desugared on compilation stage. -->
-* _pipes_ − `|` operator is overloaded for functions as `a | b` → `b(a)`.
-* _arrays_ − linear collection of same-type elements: numbers, functions or other arrays. Unlike groups, elements are stored in memory.
+* _pipes_ − `|` operator is overloaded for functions as `a | b` → `b(a)`. It can have short notation via topic operator as `a | b(&)`.
+* _arrays_ − linear collection of same-type elements: numbers, functions or other arrays. Unlike groups, arrays are primitives and stored in memory.
 * _named members_ − group or array members can get alias as `[foo: a, bar: b]`.
+* _export_ – last element in a file is automatically exported (`lp`).
+
 
 ## [Freeverb](https://github.com/opendsp/freeverb/blob/master/index.js)
 
@@ -131,13 +131,13 @@ Features:
 @ './allpass.son#allpass'
 @ 'math';
 
-sampleRate = 44100;
+1s = 44100;
 
 a1,a2,a3,a4 = 1116,1188,1277,1356;
 b1,b2,b3,b4 = 1422,1491,1557,1617;
 p1,p2,p3,p4 = 225,556,441,341;
 
-stretch = (n) -> floor(n * sampleRate / 44100);
+stretch = (n) -> floor(n * 1s / 44100);
 
 reverb = ([]input, room=0.5, damp=0.5) -> (
   *combs_a = a0,a1,a2,a3 | stretch,
@@ -154,8 +154,7 @@ reverb = ([]input, room=0.5, damp=0.5) -> (
 
 Features:
 
-* _lambda functions_ − useful for organizing inline pipe transforms `a | a -> a * 2`, reducers etc.
-* _topic operator_ −  `^` refers to result of last expression in pipeline. It is syntactic sugar and unwrapped as arrow function in compilation stage: `x | ^+1` becomes `x | a -> a+1`.
+<!-- * _topic operator_ −  `^` refers to result of last expression in pipeline. It is syntactic sugar and unwrapped as arrow function in compilation stage: `x | ^+1` becomes `x | a -> a+1`. -->
 * _multiarg pipes_ − pipe can consume multiple arguments. Depending on arity of target it can act as convolver: `a,b,c | (a,b) -> a+b` becomes  `(a,b | (a,b)->a+b), (b,c | (a,b)->a+b)`.
 * _fold operator_ − `a,b,c >- fn` acts as `reduce(a,b,c, fn)`, provides efficient way to reduce a group or array to a single value.
 
@@ -170,11 +169,11 @@ Transpiled floatbeat/bytebeat song:
 
 sampleRate = 44100;
 
-fract(x) = x % 1;
-mix(a, b, c) = (a * (1 - c)) + (b * c);
-tri(x) = 2 * asin(sin(x)) / pi;
-noise(x) = sin((x + 10) * sin((x + 10) ** (fract(x) + 10)));
-melodytest(time) = (
+fract = (x) -> x % 1;
+mix = (a, b, c) -> (a * (1 - c)) + (b * c);
+tri = (x) -> 2 * asin(sin(x)) / pi;
+noise = (x) -> sin((x + 10) * sin((x + 10) ** (fract(x) + 10)));
+melodytest = (time) -> (
   melodyString = "00040008",
   melody = 0;
   i = 0;
@@ -184,19 +183,19 @@ melodytest(time) = (
       time * mix(
         200 + (i * 900),
         500 + (i * 900),
-        melodyString[floor(time * 2) % []melodyString] / 16
+        melodyString[floor(time * 2) % melodyString[]] / 16
       )
     ) * (1 - fract(time * 4))
   );
 
   melody
 )
-hihat(time) = noise(time) * (1 - fract(time * 4)) ** 10;
-kick(time) = sin((1 - fract(time * 2)) ** 17 * 100);
-snare(time) = noise(floor((time) * 108000)) * (1 - fract(time + 0.5)) ** 12;
-melody(time) = melodytest(time) * fract(time * 2) ** 6 * 1;
+hihat = (time) -> noise(time) * (1 - fract(time * 4)) ** 10;
+kick = (time) -> sin((1 - fract(time * 2)) ** 17 * 100);
+snare = (time) -> noise(floor((time) * 108000)) * (1 - fract(time + 0.5)) ** 12;
+melody = (time) -> melodytest(time) * fract(time * 2) ** 6 * 1;
 
-song() = (
+song = () -> (
   *t=0; time = t++ / sampleRate;
   (kick(time) + snare(time)*.15 + hihat(time)*.05 + melody(time)) / 4
 );
@@ -204,18 +203,16 @@ song() = (
 
 Features:
 
-* _loop operator_ − `cond -< expr` acts as _while_ loop, calling expression until condition holds true. Also used in list comprehension as `[i <- 0..10 -< i*2]`.
+* _loop operator_ − `cond -< expr` acts as _while_ loop, calling expression until condition holds true. Produces sequence as result.
 * _string literal_ − `"abc"` acts as array with ASCII codes.
-* _cardinal (length) operator_ − `#items` returns number of items of either an array, a string or a group.
-
+* _cardinal (length) operator_ − `items[]` returns total number of items of either an array or a string; returns absolute value of a number.
 
 
 ## Language Reference
 
-
 ```fs
 //////////////////////////// naming convention
-some_var, SoMe_VaR;         // identifiers are case-insensitive
+foo_bar === Foo_Bar;        // identifiers are case-insensitive
 if=12; for=some_Variable;   // lino has no reserved words
 
 //////////////////////////// primitives
@@ -243,8 +240,8 @@ x <- 0..10                  // clamp(x, 0, 10)
 x <- ..10                   // min(x, 10)
 x <- 0..                    // max(0, x)
 x <-= 0..10                 // x = clamp(x, 0, 10)
-x <- [1,2,3]                // x in [1,2,3]: yes (1) or no (0)
-x <- (1,2,3)                // x in (1,2,3): yes or no
+x <- [1,2,3]                // ? x in [1,2,3]: yes (1) or no (0)
+x <- (1,2,3)                // ? x in (1,2,3): yes or no
 [1,2,3] ~> x                // index lookup (see lists)
 
 //////////////////////////// groups
