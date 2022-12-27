@@ -72,3 +72,7 @@
 * get channel: `a[0]`?
 * get value at a time `a(t)`?
 * integrate: `∫(a, dt)`? `acc(a, dt)`?
+
+## Sounds to replicate 
+
+* https://github.com/gleitz/midi-js-soundfonts
