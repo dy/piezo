@@ -29,25 +29,12 @@
 * [ ] sonr expressions
   * `sin(432 + 10*sin(8)) * adsr(0, 0, .4, 0)`
 
-* [ ] zzfx
-
-* [ ] web-audio-api
-
-* [ ] [musicdsp](https://github.com/bdejong/musicdsp/tree/master/source)
-* [ ] [sndkit](https://github.com/paulbatchelor/sndkit)
-
-* [ ] Compare to alternatives: rust, soul, elementary-audio
-
-* [ ] fourier-transform
-
 ## Test cases
 
 * sonr expressions
 * FM, AM signals sin(f + sin(m) * 100), sin(f) * (cos(m) + 1)
 * weighted mixing signals sin(a) * .75 + cos(b) * .25
 * periodic wave eg. wave(1204) - seed indicates overtone weights
-* ZZFX sound board
-* web-audio-api for node
 * mixing: `+`, `-`, `*` and `mix(a,b,c)`
 * amplifying: `a*x` and `| gain(amt)`
 * shifting: `a | delay(±1s)`
@@ -73,6 +60,3 @@
 * get value at a time `a(t)`?
 * integrate: `∫(a, dt)`? `acc(a, dt)`?
 
-## Sounds to replicate 
-
-* https://github.com/gleitz/midi-js-soundfonts

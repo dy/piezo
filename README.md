@@ -285,26 +285,17 @@ a > b ? b++;                // subternary operator (if)
 a > b ?: b++;               // elvis operator (else if)
 
 //////////////////////////// loops & iterators
-s = "Hello";
-(s[] < 50) -< (s += ", hi");// inline loop: `while (s.length < 50) s += ", hi"`
-0..50 | i -> s += ", hi";   // ALT: iteration
-                            //
-(i=10; i-- > 1 -< (         // multiline loop
-  i < 3 ? ^^;               // `^^` to break loop (can return value as ^^x)
-  i < 5 ? ^;                // `^` to continue loop (can return value as ^x)
-  puts(i);                  //
-));                         //
-10..1 | i -> (              // ALT: iteration
-  i < 3 ? ^^;               // `^^` breaks iteration
-  i < 5 ? ^;                // `^` continues iteration
-  puts(i)                   //
-);                          //
-                            //
-a0,a1,a2 = (i++ < 2 -< i);  // loop creates group as result: a0=0, a1=1, a2=2
-a0,a1,a2 = 0..2 | i -> i;   // ALT: iteration
-                            //
-[j++ < 10 -< x * 2];        // list comprehension
-[ 1..10 | x -> x*2 ];       // ALT: iteration
+s = "Hello";                    //
+(s[] < 50) -< (s += ", hi");    // inline loop: `while (s.length < 50) s += ", hi"`
+                                //
+(i=10; i-- > 1 -< (             // multiline loop
+  i < 3 ? ^^;                   // `^^` to break loop (can return value as ^^x)
+  i < 5 ? ^;                    // `^` to continue loop (can return value as ^x)
+  puts(i);                      //
+));                             //
+                                //
+a0,a1,a2 = (i=0; i++ < 2 -< i); // loop creates group as result: a0=0, a1=1, a2=2
+[j++ < 10 -< x * 2];            // list comprehension via loop
 
 //////////////////////////// functions
 double = n -> n*2;          // inline function
@@ -365,11 +356,6 @@ list[-1..0];                // reverse
 list ~> item;               // find index of the item
 list <~ item;               // rfind
 
-////////////////////////////// TODO: sets
-set = {1, 2, 3, 3}          // from items
-set = {1..3}                // from range
-set = {'a', 'b', 'c'}       // from atoms
-
 //////////////////////////// length/abs operator
 [1,2,3][]                    // 3
 "abc"[]                      // 3
@@ -377,13 +363,19 @@ set = {'a', 'b', 'c'}       // from atoms
 123[]                        // 123
 -123[]                       // 123
 
-///////////////////////////// map / fold
-items >- (sum,x) -> sum+x;  // fold operator with reducer
-items | x -> a(x);          // map operator
-(a, b, c) >- (a, b) -> b;   // can be applied to groups (syntax sugar)
-[a, b, c] >- (a, b) -> b;   // can be applied to lists
-(a, b, c) | a -> a.x * 2;   // compiler unfolds to actual constructs
-[a,b,c] | & * 2             // pipe can use topic & for single-arg lambda function
+///////////////////////////// map
+[a, b, c] | x -> a(x);      // map operator returns same-type argument as input
+(a, b, c) | a -> a.x * 2;   // groups unfold to actual constructs
+10..1 | i -> (              // iteration over range
+  i < 3 ? ^^;               // `^^` breaks iteration
+  i < 5 ? ^;                // `^` continues iteration
+);                          // returns group
+[ 1..10 | x -> x * 2 ];     // list comprehension
+
+///////////////////////////// fold
+items >- (sum, x) -> sum+x;   // fold operator with reducer
+(a, b, c) >- (a, b) -> a + b; // can be applied to groups (syntax sugar)
+[a, b, c] >- (a, b) -> a + b; // can be applied to lists
 
 //////////////////////////// import
 @ './path/to/module';        // any file can be imported directly
@@ -391,7 +383,7 @@ items | x -> a(x);          // map operator
 @ 'my-module#x,y,z';         // import selected members
 
 //////////////////////////// export
-x,y,z                        // last members in a file get exported (!no semi)
+x, y, z                      // last members in a file get exported (!no semi)
 ```
 
 

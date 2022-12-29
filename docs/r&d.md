@@ -1615,6 +1615,7 @@ Having wat files is more useful than direct compilation to binary form:
     + Less noisy compared to #
     + Leaves # available for identifier names & notes
     - looks yucky, like escapes/regexps
+    - TeX guys and score notations like Guido use `\` for command
   * Icon, Unicon propose * operator for length
   * ? `melody_string[]`
     ~+ sort of math association
