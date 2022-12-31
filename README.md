@@ -236,19 +236,56 @@ true=0b1, false=0b0;         // alias booleans (not provided by default)
 1.08..108.0;                 // float range
 0>..10, 0..<10, 0>..<10;     // non-inclusive ranges
 (x-1)..(x+1);                // calculated ranges
+-10..10[];                   // length (20)
 
 //////////////////////////// standard operators
 + - * / % **                // arithmetical (** for pow)
 & | ^ ~ && || !             // bitwise and logical
 
 //////////////////////////// clamp operator
-x <- 0..10                  // clamp(x, 0, 10)
-x <- ..10                   // min(x, 10)
-x <- 0..                    // max(0, x)
-x <-= 0..10                 // x = clamp(x, 0, 10)
-x <- [1,2,3]                // ? x in [1,2,3]: yes (1) or no (0)
-x <- (1,2,3)                // ? x in (1,2,3): yes or no
-[1,2,3] ~> x                // index lookup (see lists)
+x <- 0..10;                  // clamp(x, 0, 10)
+x <- ..10;                   // min(x, 10)
+x <- 0..;                    // max(0, x)
+x <-= 0..10;                 // x = clamp(x, 0, 10)
+
+//////////////////////////// length operator
+[1,2,3][];                    // 3
+"abc"[];                      // 3
+0..10[];                      // 10
+
+//////////////////////////// strings
+hi="hello";                 // strings can use "quotes"
+string="%hi world";         // interpolated string: "hello world"
+string[1]; string.1;        // positive indexing from first element [0]: 'e'
+string[-3];                 // negative indexing from last element [-1]: 'r'
+string[2..10];              // substring
+string[1, 2..10, -1];       // slice/pick multiple elements
+string[-1..0];              // reverse
+string[];                   // length
+string < string;            // comparison (<,>,==,!=)
+string + string;            // concatenation: "hello worldhello world"
+string - string;            // removes all occurences of right string in left string: ""
+string / string;            // split: "a b" / " " = ["a", "b"]
+string * list;              // join: " " * ["a", "b"] = "a b"
+string ~> "l";              // indexOf: 2
+string <~ "l";              // rightIndexOf: -2
+
+//////////////////////////// lists
+list = [2, 4, 6, last: 8];  // list from elements (with aliases)
+list = [0..10];             // list from range
+list = [0..8 | i -> i*2];   // list comprehension
+list.l, list.r, list.c;     // global aliases for channels (swizzles)
+list.0, list.1, list.2;     // short index access notation
+list[0];                    // positive indexing from first element [0]: 2
+list[-2]=5;                 // negative indexing from last element [-1]: list becomes [2,4,5,8]
+list[];                     // length
+list + list;                // concat [1,2]+[2,3]=[1,2,2,3]
+list - list;                // difference [1,2]-[2,3]=[1]
+list | x -> x * 2;          // iterate/map items
+list[1..3, 5]; list[5..];   // slice
+list[-1..0];                // reverse
+list ~> item;               // find index of the item
+list <~ item;               // rfind
 
 //////////////////////////// groups
 a, b, c;                    // groups are syntactic sugar, not data type
@@ -268,7 +305,7 @@ statement();                // semi-colons at end of line are mandatory
 (c = a + b; c);             // parens define block, return last element
 (a=b+1; a,b,c);             // block can return group
 (a ? ^b; c);                // return/break operator can preliminarily return value
-(multiple(); statements(););// HEADS UP: semi-colon after last statement returns null
+(multiple(); statements(););// HEADS UP: semi-colon after last statement returns void
 
 //////////////////////////// conditions
 sign = a < 0 ? -1 : +1;     // inline ternary
@@ -322,47 +359,6 @@ b();                                 // 1
 b();                                 // 2
 b();                                 // 3
 
-//////////////////////////// strings
-hi="hello";                 // strings can use "quotes"
-string="%hi world";         // interpolated string: "hello world"
-string[1]; string.1;        // positive indexing from first element [0]: 'e'
-string[-3];                 // negative indexing from last element [-1]: 'r'
-string[2..10];              // substring
-string[1, 2..10, -1];       // slice/pick multiple elements
-string[-1..0];              // reverse
-string[];                   // length
-string < string;            // comparison (<,>,==,!=)
-string + string;            // concatenation: "hello worldhello world"
-string - string;            // removes all occurences of right string in left string: ""
-string / string;            // split: "a b" / " " = ["a", "b"]
-string * list;              // join: " " * ["a", "b"] = "a b"
-string ~> "l";              // indexOf: 2
-string <~ "l";              // rightIndexOf: -2
-
-//////////////////////////// lists
-list = [2, 4, 6, last: 8];  // list from elements (with aliases)
-list = [0..10];             // list from range
-list = [0..8 | i -> i*2];   // list comprehension
-list.l, list.r, list.c;     // global aliases for channels (swizzles)
-list.0, list.1, list.2;     // short index access notation
-list[0];                    // positive indexing from first element [0]: 2
-list[-2]=5;                 // negative indexing from last element [-1]: list becomes [2,4,5,8]
-list[];                     // length
-list + list;                // concat [1,2]+[2,3]=[1,2,2,3]
-list - list;                // difference [1,2]-[2,3]=[1]
-list | x -> x * 2;          // iterate/map items
-list[1..3, 5]; list[5..];   // slice
-list[-1..0];                // reverse
-list ~> item;               // find index of the item
-list <~ item;               // rfind
-
-//////////////////////////// length/abs operator
-[1,2,3][]                    // 3
-"abc"[]                      // 3
-0..10[]                      // 10
-123[]                        // 123
--123[]                       // 123
-
 ///////////////////////////// map
 [a, b, c] | x -> a(x);      // map operator returns same-type argument as input
 (a, b, c) | a -> a.x * 2;   // groups unfold to actual constructs
@@ -383,7 +379,7 @@ items >- (sum, x) -> sum+x;   // fold operator with reducer
 @ 'my-module#x,y,z';         // import selected members
 
 //////////////////////////// export
-x, y, z                      // last members in a file get exported (!no semi)
+x, y, z                      // last members in a file get exported (no semi!)
 ```
 
 
