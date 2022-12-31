@@ -1,8 +1,10 @@
-# lino ( Work In Progress ) 
+# lino
 
 **Lino** (*li*ne *no*ise) is sound processing language for expressing sound formulas in short, fluent and intuitive form. It has enhanced ergonomics and compiles to optimized bytecode, useful for in [AudioWorkletProcessor](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), [audio engines](https://github.com/audiojs/web-audio-api), etc.
 
-[Motivation](./docs/motivation.md)  |  [Documentation](./docs/reference.md)  |  [Examples](./docs/examples.md).
+<!--[Motivation](./docs/motivation.md)  |  [Documentation](./docs/reference.md)  |  [Examples](./docs/examples.md).-->
+
+> Work in progress notice: current stage is stabilized syntax and basic cases compilation; it requires full compiler implementation.
 
 ## Examples
 
