@@ -4,7 +4,7 @@
 
 <!--[Motivation](./docs/motivation.md)  |  [Documentation](./docs/reference.md)  |  [Examples](./docs/examples.md).-->
 
-> Work in progress notice: current stage is stabilized syntax and basic cases compilation; it requires full compiler implementation.
+> WORK IN PROGRESS NOTICE: current stage is stabilized syntax and basic cases compilation; it requires full compiler implementation.
 
 ## Examples
 
