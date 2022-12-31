@@ -223,6 +223,12 @@ true=0b1, false=0b0;         // alias booleans (not provided by default)
 "abc", "\x12";               // strings (ascii and utf8 notations)
 'path/to/my/file';           // imports, atoms
 
+//////////////////////////// units
+1k = 1000; 1pi = 3.1415;     // define units
+1s = 44100; 1ms = 1s/1000;   // useful for sample indexes
+10.1k, 2pi;                  // any numbers get converted to floats
+1h2m3s, 4.5s;                // permits combinations
+
 //////////////////////////// ranges
 1..10;                       // basic range
 1.., ..10;                   // open ranges
@@ -256,12 +262,6 @@ a,b = b,a;                  // swap: temp=a; a=b; b=temp;
 a,b,c = (d,e,f);            // a=d, b=e, c=f
 (a,b,c) = d;                // a=d, b=d, c=d
 a = b,c,d;                  // a=b, a=c, a=d
-
-//////////////////////////// units
-1k = 1000; 1pi = 3.1415;     // define units
-1s = 44100; 1ms = 1s/1000;   // useful for sample indexes
-10.1k, 2pi;                  // any numbers get converted to floats
-1h2m3s, 4.5s;                // permits combinations
 
 //////////////////////////// statements
 statement();                // semi-colons at end of line are mandatory
