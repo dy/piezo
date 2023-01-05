@@ -191,12 +191,16 @@ x, y, z                      // last members in a file get exported (no semi!)
 Provides k-rate amplification of input audio.
 
 ```fs
-gain = ([]input, volume <- 0..100) -> input * volume;
+gain = (                      
+  []input,                    // array argument (a-param)
+  volume <- 0..100            // clamps to range - volume ∈ 0..100
+) -> (
+  i = 0;
+  input | x -> x * volume     // map input members
+)
 
-gain([0,.1,.2,.3,.4,.5], 2); // [0,.2,.4,.6,.8,1]
+gain([0,.1,.2,.3,.4,.5], 2);  // [0,.2,.4,.6,.8,1]
 ```
-
-Features:
 
 * _block input/output_ − `[]` prefix indicates array argument (usually <em title="Audio, or precise rate">a-rate*</em> input/param); direct argument can be used for <em title="Controlling (historical artifact from CSound), blocK-rate">k-rate*</em> param.
 * _validation_ − `a <- range` (_a ∈ range_) clamps argument to provided range, to avoid blowing up values.
@@ -208,15 +212,16 @@ Features:
 Biquad filter processor for single-channel input.
 
 ```fs
-@ 'math#pi,cos,sin';
+@ 'math#pi,cos,sin';          // import pi, sin, cos from math
 
 1pi = pi;                     // define pi units
 1s = 44100;                   // define time units in samples
-blockLen = 1024;
+blockLen = 1024;              // can be redefined from outside
 
 lp = ([blockLen]x, freq = 100 <- 1..10000, Q = 1.0 <- 0.001..3.0) -> (
-  *x1, *x2, *y1, *y2 = 0;     // state
-
+  *x1, *x2, *y1, *y2 = 0;     // filter state (defined by callsite)
+  
+  // lpf formula
   w = 2pi * freq / 1s;
   sin_w, cos_w = sin(w), cos(w);
   a = sin_w / (2.0 * Q);
@@ -235,17 +240,18 @@ lp = ([blockLen]x, freq = 100 <- 1..10000, Q = 1.0 <- 0.001..3.0) -> (
 
     y0
   )
-)
+);
+
+lp, blockLen        // export 
 ```
 
-Features:
-
-* _import_ − done via URI string as `@ 'path/to/lib'`. Members can be imported as `@ 'path/to/lib#a,b,c'`. <!-- Built-in libs are: _math_, _std_. Additional libs: _sonr_, _latr_, _musi_ and [others]().--> _import-map.json_ can provide import aliases.
+* _import_ − done via URI string as `@ 'path/to/lib'`. Members can be imported as `@ 'path/to/lib#a,b,c'`. <!-- Built-in libs are: _math_, _std_. Additional libs: _sonr_, _latr_, _musi_ and [others](). _import-map.json_ can provide import aliases.
 * _state variables_ − `*state=init` persists value between <span title="Detected by callsite">function calls*</span>.
 * _groups_ − comma enables group operations as `a,b = c,d` === `a=c, b=d`, `(a,b) + (c,d)` === `(a+b, c+d)` etc.
 * _scope_ − parens `()` besides precedence can indicate function body; returns last element or group.
 * _functions_ − arrow syntax `(arg1, arg2) -> (expr1; expr2)` defines a function.
-* _export_ – last element in a file is automatically exported (`lp`).
+* _export_ – last element in a file is automatically exported. Note: no semi must follow.
+
 
 ### ZZFX
 
@@ -298,11 +304,12 @@ coin = (freq=1675, jump=freq/2, delay=0.06, shape=0) -> (
 
 Features:
 
-<!-- * _groups_ − groups are just syntax sugar and are always flat, ie. `a, d, (s, sv), r` == `a, d, s, sv, r`. They're desugared on compilation stage. -->
+<!-- * _groups_ − groups are just syntax sugar and are always flat, ie. `a, d, (s, sv), r` == `a, d, s, sv, r`. They're desugared on compilation stage.
 * _units_ – define number multipliers as `1<unit> = <number>`. Units decompose to numbers on compiling stage.
 * _pipes_ − `|` operator is overloaded for functions as `a | b` → `b(a)`.
 * _arrays_ − flat collection of same-type elements: numbers or functions. Unlike groups, arrays are primitives and stored in memory.
 * _named members_ − group or array members can get alias as `[foo: a, bar: b]`.
+-->
 
 <!--
 
