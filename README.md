@@ -11,7 +11,7 @@ It has C/JS/Python-y syntax and compiles to optimized WASM bytecode, making it a
 
 ```fs
 //////////////////////////// naming convention
-foo_bar === Foo_Bar;        // identifiers are case-insensitive
+foo_bar == Foo_Bar;         // identifiers are case-insensitive
 if=12; for=some_Variable;   // lino has no reserved words
 
 //////////////////////////// primitives
@@ -40,6 +40,7 @@ true=0b1, false=0b0;         // alias booleans (not provided by default)
 //////////////////////////// standard operators
 + - * / % **                // arithmetical (** for pow)
 & | ^ ~ && || !             // bitwise and logical
+== != >= <=                 // comparisons
 
 //////////////////////////// clamp operator
 x <- 0..10;                  // clamp(x, 0, 10)
