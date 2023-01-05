@@ -302,14 +302,12 @@ coin = (freq=1675, jump=freq/2, delay=0.06, shape=0) -> (
 );
 ```
 
-Features:
-
-<!-- * _groups_ − groups are just syntax sugar and are always flat, ie. `a, d, (s, sv), r` == `a, d, s, sv, r`. They're desugared on compilation stage.
+* _groups_ − groups are just syntax sugar and are always flat, ie. `a, d, (s, sv), r` == `a, d, s, sv, r`. They're desugared on compilation stage.
 * _units_ – define number multipliers as `1<unit> = <number>`. Units decompose to numbers on compiling stage.
 * _pipes_ − `|` operator is overloaded for functions as `a | b` → `b(a)`.
 * _arrays_ − flat collection of same-type elements: numbers or functions. Unlike groups, arrays are primitives and stored in memory.
 * _named members_ − group or array members can get alias as `[foo: a, bar: b]`.
--->
+
 
 <!--
 
