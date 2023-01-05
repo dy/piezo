@@ -1,6 +1,7 @@
 # lino
 
-**Lino** (*li*ne *no*ise) is sound processing language with enhanced ergonomics and accessibility. It has C/JS/Python-y syntax and compiles to optimized WASM bytecode, making it available in different environments, eg. [AudioWorkletProcessor](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), [audio engines](https://github.com/audiojs/web-audio-api), etc.
+**Lino** (*li*ne *no*ise) is sound processing language with enhanced ergonomics and accessibility.
+It has C/JS/Python-y syntax and compiles to optimized WASM bytecode, making it available for different environments, eg. [AudioWorkletProcessor](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), [audio engines](https://github.com/audiojs/web-audio-api), etc.
 
 <!--[Motivation](./docs/motivation.md)  |  [Documentation](./docs/reference.md)  |  [Examples](./docs/examples.md).-->
 
