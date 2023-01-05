@@ -15,10 +15,9 @@ foo_bar == Foo_Bar;         // identifiers are case-insensitive
 if=12; for=some_Variable;   // lino has no reserved words
 
 //////////////////////////// primitives
-16, 0x10, 0b0;               // integer (decimal, hex or binary)
+16, 0x10, 0b0;               // int, (dec, hex or binary)
 true=0b1, false=0b0;         // alias booleans (not provided by default)
 16.0, .1, 1e3, 2e-3;         // floats
-1/2, 2/3;                    // fractional numbers (todo)
 "abc", "\x12";               // strings (ascii and utf8 notations)
 'path/to/my/file';           // imports, atoms
 
@@ -40,6 +39,7 @@ true=0b1, false=0b0;         // alias booleans (not provided by default)
 //////////////////////////// standard operators
 + - * / % **                // arithmetical (** for pow)
 && || !                     // logical
+& | ^ ~                     // int / binary ops
 == != >= <=                 // comparisons
 
 //////////////////////////// clamp operator
@@ -326,7 +326,7 @@ reverb = ([]input, room=0.5, damp=0.5) -> (
     (combs_a | x -> comb(x, input, room, damp) >- (a,b) -> a+b) +
     (combs_b | x -> comb(x, input, room, damp) >- (a,b) -> a+b)
   );
-  
+
   (combs, aps) >- (input, coef) -> p + allpass(p, coef, room, damp)
 );
 ```

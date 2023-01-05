@@ -1656,6 +1656,13 @@ Having wat files is more useful than direct compilation to binary form:
   3. Reverse convention: a&&b, a||b, a^^b for binaries
     + shorter conditioning a & b | c
     - unconventional
+  4. Get rid of them
+    + they occupy very useful syntax space
+    + it's not very clear which numbers we're dealing with: float or int?
+    + bytebeat is very narrow subset of sounds and is unlikely to reproduce anything super useful
+    - makes bytebeats harder to implement
+    - makes useless 0x00 and 0b00 notations
+    + less questions of converting one numbers to another
 
 ## [x] ASI: semicolons or not? → enforce semicolons. But last one is optional.
 
