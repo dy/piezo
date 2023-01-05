@@ -6,6 +6,178 @@
 
 > WORK IN PROGRESS NOTICE: current stage is stabilized syntax and basic cases compilation; it requires full compiler implementation.
 
+## Reference
+
+```fs
+//////////////////////////// naming convention
+foo_bar === Foo_Bar;        // identifiers are case-insensitive
+if=12; for=some_Variable;   // lino has no reserved words
+
+//////////////////////////// primitives
+16, 0x10, 0b0;               // integer (decimal, hex or binary)
+true=0b1, false=0b0;         // alias booleans (not provided by default)
+16.0, .1, 1e3, 2e-3;         // floats
+1/2, 2/3;                    // fractional numbers (todo)
+"abc", "\x12";               // strings (ascii and utf8 notations)
+'path/to/my/file';           // imports, atoms
+
+//////////////////////////// units
+1k = 1000; 1pi = 3.1415;     // define units
+1s = 44100; 1ms = 1s/1000;   // useful for sample indexes
+10.1k, 2pi;                  // any numbers get converted to floats
+1h2m3s, 4.5s;                // permits combinations
+
+//////////////////////////// ranges
+1..10;                       // basic range
+1.., ..10;                   // open ranges
+10..1;                       // reverse-direction range
+1.08..108.0;                 // float range
+0>..10, 0..<10, 0>..<10;     // non-inclusive ranges
+(x-1)..(x+1);                // calculated ranges
+-10..10[];                   // length (20)
+
+//////////////////////////// standard operators
++ - * / % **                // arithmetical (** for pow)
+& | ^ ~ && || !             // bitwise and logical
+
+//////////////////////////// clamp operator
+x <- 0..10;                  // clamp(x, 0, 10)
+x <- ..10;                   // min(x, 10)
+x <- 0..;                    // max(0, x)
+x <-= 0..10;                 // x = clamp(x, 0, 10)
+
+//////////////////////////// length operator
+[1,2,3][];                   // 3
+(1,2,3)[];                   // 3
+"abc"[];                     // 3
+-1..+2[];                    // 3
+
+//////////////////////////// groups
+a, b, c;                    // groups are syntactic sugar, not data type
+(a, b, c)++;                // they apply operation to multiple elements: (a++, b++, c++)
+(a, (b, c)) == a, b, c;     // groups are always flat
+a,b,c = d,e,f;              // assign: a=d, b=e, c=f
+a,b = b,a;                  // swap: temp=a; a=b; b=temp;
+(a,b) + (c,d);              // operations: (a+c, b+d)
+(a,b).x;                    // (a.x, b.x);
+(a,b).x();                  // (a.x(), b.x());
+a,b,c = (d,e,f);            // a=d, b=e, c=f
+(a,b,c) = d;                // a=d, b=d, c=d
+a = b,c,d;                  // a=b, a=c, a=d
+
+//////////////////////////// strings
+hi="hello";                 // strings can use "quotes"
+string="%hi world";         // interpolated string: "hello world"
+string[1]; string.1;        // positive indexing from first element [0]: 'e'
+string[-3];                 // negative indexing from last element [-1]: 'r'
+string[2..10];              // substring
+string[1, 2..10, -1];       // slice/pick multiple elements
+string[-1..0];              // reverse
+string[];                   // length
+string == string;           // comparison (==,!=,>,<)
+string + string;            // concatenation: "hello worldhello world"
+string - string;            // removes all occurences of the right string in the left string: ""
+string / string;            // split: "a b" / " " = ["a", "b"]
+string * list;              // join: " " * ["a", "b"] = "a b"
+string ~> "l";              // indexOf: 2
+string <~ "l";              // rightIndexOf: -2
+
+//////////////////////////// lists
+list = [l:2, r:4, c:6, 8];  // list from elements (with aliases)
+list = [0..10];             // list from range
+list = [0..8 | i -> i*2];   // list comprehension
+list = [list1, list2];      // list concat (always flat)
+list.0, list.1, list.2;     // short index access notation
+list.l = 2;                 // alias index access
+list[0];                    // positive indexing from first element [0]: 2
+list[-2]=5;                 // negative indexing from last element [-1]: list becomes [2,4,5,8]
+list[];                     // length
+list[1..3, 5]; list[5..];   // slice
+list[-1..0];                // reverse
+list | x -> x * 2;          // iterate/map items
+list ~> item;               // find index of the item
+list <~ item;               // rfind
+
+//////////////////////////// statements
+foo();                      // semi-colons at end of line are mandatory
+(c = a + b; c);             // parens define block, return last element
+(a=b+1; a,b,c);             // block can return group
+(a ? ^b; c);                // return/break operator can preliminarily return value
+(foo(); bar(););            // semi-colon after last statement returns void
+
+//////////////////////////// conditions
+sign = a < 0 ? -1 : +1;     // inline ternary
+(2+2 >= 4) ?                // multiline ternary
+  log("Math works!")        //
+: "a" < "b" ?               // else if
+  log("Sort strings")       //
+: (                         // else
+  log("Get ready");         //
+  log("Last chance")        //
+);                          //
+                            //
+a > b ? b++;                // if operator
+a > b ?: b++;               // elvis operator (else if)
+
+//////////////////////////// loops
+s = "Hello";                    //
+(s[] < 50) -< (s += ", hi");    // inline loop: `while (s.length < 50) s += ", hi"`
+                                //
+(i=10; i-- > 1 -< (             // multiline loop
+  i < 3 ? ^^;                   // `^^` to break loop (can return value as ^^x)
+  i < 5 ? ^;                    // `^` to continue loop (can return value as ^x)
+  log(i);                       //
+));                             //
+                                //
+a0,a1,a2 = (i=0; i++ < 2 -< i); // loop creates group as result: a0=0, a1=1, a2=2
+[j++ < 10 -< x * 2];            // list comprehension via loop
+
+//////////////////////////// functions
+double = n -> n*2;          // inline function
+triple = (n=1) -> (         // optional args
+  n == 0 ? ^n;              // preliminarily return n
+  n*3                       // returns last value
+);
+triple();                   // 3
+triple(5);                  // 15
+triple(n: 10);              // 30. named argument.
+copy = triple;              // capture function
+copy(10);                   // also 30
+clamp = (v <- 0..100) -> v; // clamp argument
+x = () -> 1,2,3;            // return group (multiple values)
+gain = ([]in, amp) -> in*amp;          // list argument
+gain = ([1024]in, amp) -> in*amp;      // sublist argument
+
+//////////////////////////// stateful variables
+a = () -> ( *i=0; i++ );             // stateful variable persist value between fn calls
+a(), a();                            // 0, 1
+b = () -> ( *[4]i; i.0=i.1+1; i.0 ); // memory size with past state access
+b(), b(), b();                       // 1, 2, 3
+
+///////////////////////////// map
+[a, b, c] | x -> a(x);      // maps list to new list
+(a, b, c) | a -> a.x * 2;   // unfolds group to constructs
+10..1 | i -> (              // iteration over range (produces group)
+  i < 3 ? ^^;               // `^^` breaks iteration
+  i < 5 ? ^;                // `^` continues iteration
+);                          // returns group
+[ 1..10 | x -> x * 2 ];     // list comprehension
+
+///////////////////////////// fold
+items >- (sum, x) -> sum+x;   // fold operator with reducer
+(a, b, c) >- (a, b) -> a + b; // can be applied to groups (syntax sugar)
+[a, b, c] >- (a, b) -> a + b; // can be applied to lists
+
+//////////////////////////// import
+@ './path/to/module';        // any file can be imported directly
+@ 'math';                    // or defined via import-maps.json
+@ 'my-module#x,y,z';         // import selected members
+
+//////////////////////////// export
+x, y, z                      // last members in a file get exported (no semi!)
+```
+
+
 ## Examples
 
 ### Gain Processor
@@ -123,7 +295,7 @@ Features:
 <!-- * _groups_ − groups are just syntax sugar and are always flat, ie. `a, d, (s, sv), r` == `a, d, s, sv, r`. They're desugared on compilation stage. -->
 * _units_ – define number multipliers as `1<unit> = <number>`. Units decompose to numbers on compiling stage.
 * _pipes_ − `|` operator is overloaded for functions as `a | b` → `b(a)`.
-* _arrays_ − flat linear collection of same-type elements: numbers, functions or other arrays. Unlike groups, arrays are primitives and stored in memory.
+* _arrays_ − flat collection of same-type elements: numbers or functions. Unlike groups, arrays are primitives and stored in memory.
 * _named members_ − group or array members can get alias as `[foo: a, bar: b]`.
 
 <!--
@@ -211,178 +383,6 @@ Features:
 * _string literal_ − `"abc"` acts as array with ASCII codes.
 * _length operator_ − `items[]` returns total number of items of either an array, group, string or range.
 
-
-## Language Reference
-
-```fs
-//////////////////////////// naming convention
-foo_bar === Foo_Bar;        // identifiers are case-insensitive
-if=12; for=some_Variable;   // lino has no reserved words
-
-//////////////////////////// primitives
-16, 0x10, 0b0;               // integer (decimal, hex or binary)
-true=0b1, false=0b0;         // alias booleans (not provided by default)
-16.0, .1, 1e3, 2e-3;         // floats
-1/2, 2/3;                    // fractional numbers (todo)
-"abc", "\x12";               // strings (ascii and utf8 notations)
-'path/to/my/file';           // imports, atoms
-
-//////////////////////////// units
-1k = 1000; 1pi = 3.1415;     // define units
-1s = 44100; 1ms = 1s/1000;   // useful for sample indexes
-10.1k, 2pi;                  // any numbers get converted to floats
-1h2m3s, 4.5s;                // permits combinations
-
-//////////////////////////// ranges
-1..10;                       // basic range
-1.., ..10;                   // open ranges
-10..1;                       // reverse-direction range
-1.08..108.0;                 // float range
-0>..10, 0..<10, 0>..<10;     // non-inclusive ranges
-(x-1)..(x+1);                // calculated ranges
--10..10[];                   // length (20)
-
-//////////////////////////// standard operators
-+ - * / % **                // arithmetical (** for pow)
-& | ^ ~ && || !             // bitwise and logical
-
-//////////////////////////// clamp operator
-x <- 0..10;                  // clamp(x, 0, 10)
-x <- ..10;                   // min(x, 10)
-x <- 0..;                    // max(0, x)
-x <-= 0..10;                 // x = clamp(x, 0, 10)
-
-//////////////////////////// length operator
-[1,2,3][];                    // 3
-(1,2,3)[];                    // 3
-"abc"[];                      // 3
--1..+2[];                     // 3
-
-//////////////////////////// groups
-a, b, c;                    // groups are syntactic sugar, not data type
-(a, b, c)++;                // they apply operation to multiple elements: (a++, b++, c++)
-(a, (b, c)) == a, b, c;     // groups are always flat
-a,b,c = d,e,f;              // assign: a=d, b=e, c=f
-a,b = b,a;                  // swap: temp=a; a=b; b=temp;
-(a,b) + (c,d);              // operations: (a+c, b+d)
-(a,b).x;                    // (a.x, b.x);
-(a,b).x();                  // (a.x(), b.x());
-a,b,c = (d,e,f);            // a=d, b=e, c=f
-(a,b,c) = d;                // a=d, b=d, c=d
-a = b,c,d;                  // a=b, a=c, a=d
-
-//////////////////////////// strings
-hi="hello";                 // strings can use "quotes"
-string="%hi world";         // interpolated string: "hello world"
-string[1]; string.1;        // positive indexing from first element [0]: 'e'
-string[-3];                 // negative indexing from last element [-1]: 'r'
-string[2..10];              // substring
-string[1, 2..10, -1];       // slice/pick multiple elements
-string[-1..0];              // reverse
-string[];                   // length
-string == string;           // comparison (==,!=,>,<)
-string + string;            // concatenation: "hello worldhello world"
-string - string;            // removes all occurences of the right string in the left string: ""
-string / string;            // split: "a b" / " " = ["a", "b"]
-string * list;              // join: " " * ["a", "b"] = "a b"
-string ~> "l";              // indexOf: 2
-string <~ "l";              // rightIndexOf: -2
-
-//////////////////////////// lists
-list = [2, 4, 6, last: 8];  // list from elements (with aliases)
-list = [0..10];             // list from range
-list = [0..8 | i -> i*2];   // list comprehension
-list.l, list.r, list.c;     // global aliases for channels (swizzles)
-list.0, list.1, list.2;     // short index access notation
-list[0];                    // positive indexing from first element [0]: 2
-list[-2]=5;                 // negative indexing from last element [-1]: list becomes [2,4,5,8]
-list[];                     // length
-list[1..3, 5]; list[5..];   // slice
-list[-1..0];                // reverse
-list + list;                // concat [1,2]+[2,3]=[1,2,2,3]
-list - list;                // difference [1,2]-[2,3]=[1]
-list | x -> x * 2;          // iterate/map items
-list ~> item;               // find index of the item
-list <~ item;               // rfind
-
-//////////////////////////// statements
-statement();                // semi-colons at end of line are mandatory
-(c = a + b; c);             // parens define block, return last element
-(a=b+1; a,b,c);             // block can return group
-(a ? ^b; c);                // return/break operator can preliminarily return value
-(multiple(); statements(););// semi-colon after last statement returns void
-
-//////////////////////////// conditions
-sign = a < 0 ? -1 : +1;     // inline ternary
-(2+2 >= 4) ?                // multiline ternary
-  puts("Math works!")       //
-: "a" < "b" ?               // else if
-  puts("Sort strings")      //
-: (                         // else
-  puts("Get ready");        //
-  puts("Last chance")       //
-);                          //
-                            //
-a > b ? b++;                // subternary operator (if)
-a > b ?: b++;               // elvis operator (else if)
-
-//////////////////////////// loops
-s = "Hello";                    //
-(s[] < 50) -< (s += ", hi");    // inline loop: `while (s.length < 50) s += ", hi"`
-                                //
-(i=10; i-- > 1 -< (             // multiline loop
-  i < 3 ? ^^;                   // `^^` to break loop (can return value as ^^x)
-  i < 5 ? ^;                    // `^` to continue loop (can return value as ^x)
-  puts(i);                      //
-));                             //
-                                //
-a0,a1,a2 = (i=0; i++ < 2 -< i); // loop creates group as result: a0=0, a1=1, a2=2
-[j++ < 10 -< x * 2];            // list comprehension via loop
-
-//////////////////////////// functions
-double = n -> n*2;          // inline function
-triple = (n=1) -> (         // optional args
-  n == 0 ? ^n;              // preliminarily return n
-  n*3                       // returns last value
-);
-triple();                   // 3
-triple(5);                  // 15
-triple(n: 10);              // 30. named argument.
-copy = triple;              // capture function
-copy(10);                   // also 30
-clamp = (v <- 0..100) -> v; // clamp argument
-x = () -> 1,2,3;            // return group (multiple values)
-gain = ([]in, amp) -> in*amp;          // list argument
-gain = ([1024]in, amp) -> in*amp;      // sublist argument
-
-//////////////////////////// stateful variables
-a = () -> ( *i=0; i++ );             // stateful variable persist value between fn calls
-a(), a();                            // 0, 1
-b = () -> ( *[10]i; i.0=i.1+1; i.0 ) // memory size with past state access
-b(), b(), b();                       // 1, 2, 3
-
-///////////////////////////// map
-[a, b, c] | x -> a(x);      // maps list to new list
-(a, b, c) | a -> a.x * 2;   // groups unfold to actual constructs (group)
-10..1 | i -> (              // iteration over range (produces group)
-  i < 3 ? ^^;               // `^^` breaks iteration
-  i < 5 ? ^;                // `^` continues iteration
-);                          // returns group
-[ 1..10 | x -> x * 2 ];     // list comprehension
-
-///////////////////////////// fold
-items >- (sum, x) -> sum+x;   // fold operator with reducer
-(a, b, c) >- (a, b) -> a + b; // can be applied to groups (syntax sugar)
-[a, b, c] >- (a, b) -> a + b; // can be applied to lists
-
-//////////////////////////// import
-@ './path/to/module';        // any file can be imported directly
-@ 'math';                    // or defined via import-maps.json
-@ 'my-module#x,y,z';         // import selected members
-
-//////////////////////////// export
-x, y, z                      // last members in a file get exported (no semi!)
-```
 
 
 ## Alternatives
