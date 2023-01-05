@@ -39,7 +39,7 @@ true=0b1, false=0b0;         // alias booleans (not provided by default)
 
 //////////////////////////// standard operators
 + - * / % **                // arithmetical (** for pow)
-& | ^ ~ && || !             // bitwise and logical
+&& || !                     // logical
 == != >= <=                 // comparisons
 
 //////////////////////////// clamp operator
