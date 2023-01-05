@@ -66,7 +66,7 @@ Features:
 * _state variables_ − `*state=init` persists value between <span title="Detected by callsite">function calls*</span>.
 * _groups_ − comma enables group operations as `a,b = c,d` === `a=c, b=d`, `(a,b) + (c,d)` === `(a+b, c+d)` etc.
 * _scope_ − parens `()` besides precedence can indicate function body; returns last element or group.
-* _functions_ − arrow syntax `->` defines a function, can be used as in-place construct for pipe transforms `a | a -> a * 2`, reducers etc.
+* _functions_ − arrow syntax `(arg1, arg2) -> (expr1; expr2)` defines a function.
 * _export_ – last element in a file is automatically exported (`lp`).
 
 ### ZZFX
@@ -121,7 +121,7 @@ coin = (freq=1675, jump=freq/2, delay=0.06, shape=0) -> (
 Features:
 
 <!-- * _groups_ − groups are just syntax sugar and are always flat, ie. `a, d, (s, sv), r` == `a, d, s, sv, r`. They're desugared on compilation stage. -->
-* _units_ – define number multipliers as `1<unit> = <number>`. Very handy to get more natural expressions in code.
+* _units_ – define number multipliers as `1<unit> = <number>`. Units decompose to numbers on compiling stage.
 * _pipes_ − `|` operator is overloaded for functions as `a | b` → `b(a)`.
 * _arrays_ − linear collection of same-type elements: numbers, functions or other arrays. Unlike groups, arrays are primitives and stored in memory.
 * _named members_ − group or array members can get alias as `[foo: a, bar: b]`.
