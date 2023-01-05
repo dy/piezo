@@ -42,6 +42,10 @@ true=0b1, false=0b0;         // alias booleans (not provided by default)
 & | ^ ~                     // int / binary ops
 == != >= <=                 // comparisons
 
+//////////////////////////// type cast
+1/3; 2*3.14;                // ints upgrade to floats implicitly
+3.0 | 0;                    // floats floor to ints explicitly
+
 //////////////////////////// clamp operator
 x <- 0..10;                  // clamp(x, 0, 10)
 x <- ..10;                   // min(x, 10)
