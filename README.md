@@ -14,12 +14,10 @@ It has C/JS/Python-y syntax and compiles to optimized WASM bytecode, making it a
 foo_bar == Foo_Bar;         // identifiers are case-insensitive
 if=12; for=some_Variable;   // lino has no reserved words
 
-//////////////////////////// primitives
-16, 0x10, 0b0;               // int, (dec, hex or binary)
-true=0b1, false=0b0;         // alias booleans (not provided by default)
+//////////////////////////// numbers
+16, 0x10, 0b0;               // int, (dec, hex or binary form)
 16.0, .1, 1e3, 2e-3;         // floats
-"abc", "\x12";               // strings (ascii and utf8 notations)
-'path/to/my/file';           // imports, atoms
+true=0b1, false=0b0;         // alias booleans (not provided by default)
 
 //////////////////////////// units
 1k = 1000; 1pi = 3.1415;     // define units
@@ -43,7 +41,7 @@ true=0b1, false=0b0;         // alias booleans (not provided by default)
 == != >= <=                 // comparisons
 
 //////////////////////////// type cast
-1/3; 2*3.14;                // ints upgrade to floats implicitly
+1 / 3; 2 * 3.14;            // ints upgrade to floats implicitly
 3.0 | 0;                    // floats floor to ints explicitly
 
 //////////////////////////// clamp operator
@@ -72,8 +70,9 @@ a,b,c = (d,e,f);            // a=d, b=e, c=f
 a = b,c,d;                  // a=b, a=c, a=d
 
 //////////////////////////// strings
-hi="hello";                 // strings can use "quotes"
+hi="hello";                 // strings
 string="%hi world";         // interpolated string: "hello world"
+"\u0020", "\x20";           // unicode or ascii codes
 string[1]; string.1;        // positive indexing from first element [0]: 'e'
 string[-3];                 // negative indexing from last element [-1]: 'r'
 string[2..10];              // substring
@@ -92,7 +91,7 @@ string <~ "l";              // rightIndexOf: -2
 list = [l:2, r:4, c:6, 8];  // list from elements (with aliases)
 list = [0..10];             // list from range
 list = [0..8 | i -> i*2];   // list comprehension
-list = [list1, list2];      // list concat (always flat)
+list = [list1, list2];      // list from multiple lists (always flat)
 list.0, list.1, list.2;     // short index access notation
 list.l = 2;                 // alias index access
 list[0];                    // positive indexing from first element [0]: 2
@@ -103,6 +102,7 @@ list[-1..0];                // reverse
 list | x -> x * 2;          // iterate/map items
 list ~> item;               // find index of the item
 list <~ item;               // rfind
+list +-*/ 2;                // other operators act on all members
 
 //////////////////////////// statements
 foo();                      // semi-colons at end of line are mandatory
@@ -121,20 +121,17 @@ sign = a < 0 ? -1 : +1;     // inline ternary
   log("Get ready");         //
   log("Last chance")        //
 );                          //
-                            //
 a > b ? b++;                // if operator
 a > b ?: b++;               // elvis operator (else if)
 
 //////////////////////////// loops
 s = "Hello";                    //
 (s[] < 50) -< (s += ", hi");    // inline loop: `while (s.length < 50) s += ", hi"`
-                                //
 (i=10; i-- > 1 -< (             // multiline loop
   i < 3 ? ^^;                   // `^^` to break loop (can return value as ^^x)
   i < 5 ? ^;                    // `^` to continue loop (can return value as ^x)
   log(i);                       //
 ));                             //
-                                //
 a0,a1,a2 = (i=0; i++ < 2 -< i); // loop creates group as result: a0=0, a1=1, a2=2
 [j++ < 10 -< x * 2];            // list comprehension via loop
 
@@ -160,7 +157,7 @@ a(), a();                            // 0, 1
 b = () -> ( *[4]i; i.0=i.1+1; i.0 ); // memory size with past state access
 b(), b(), b();                       // 1, 2, 3
 
-///////////////////////////// map
+////////////////////////////// map
 [a, b, c] | x -> a(x);      // maps list to new list
 (a, b, c) | a -> a.x * 2;   // unfolds group to constructs
 10..1 | i -> (              // iteration over range (produces group)
