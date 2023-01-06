@@ -22,8 +22,8 @@ true=0b1, false=0b0;         // alias booleans (not provided by default)
 //////////////////////////// units
 1k = 1000; 1pi = 3.1415;     // define units
 1s = 44100; 1ms = 1s/1000;   // useful for sample indexes
-10.1k, 2pi;                  // any numbers get converted to floats
-1h2m3s, 4.5s;                // permits combinations
+10.1k, 2pi;                  // units deconstruct to numbers: 10100, 6.283
+1h2m3.5s;                    // unit combinations
 
 //////////////////////////// ranges
 1..10;                       // basic range
