@@ -12,6 +12,9 @@
   * [x] Compare vs wabt, wat-compiler
   * [ ] Repl with compiler selector
 
+* [ ] Compiler
+* [ ] Processing modules collection
+
 * [ ] mono sine wave + gain case
 
 * [ ] stdlib
