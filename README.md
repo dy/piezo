@@ -193,12 +193,13 @@ gain = (
   volume <- 0..100            // clamps to range - volume ∈ 0..100
 ) -> (
   i = 0;
-  input | x -> x * volume     // map input members
+  input * volume              // multiply input members
 )
 
 gain([0,.1,.2,.3,.4,.5], 2);  // [0,.2,.4,.6,.8,1]
 ```
 
+* _functions_ − arrow syntax `(arg1, arg2) -> (expr1; expr2)` defines a function.
 * _block input/output_ − `[]` prefix indicates array argument (usually <em title="Audio, or precise rate">a-rate*</em> input/param); direct argument can be used for <em title="Controlling (historical artifact from CSound), blocK-rate">k-rate*</em> param.
 * _validation_ − `a <- range` (_a ∈ range_) clamps argument to provided range, to avoid blowing up values.
 * _range_ − primitive with `from..to` signature, useful to clamp value.
@@ -242,11 +243,10 @@ lp = ([blockLen]x, freq = 100 <- 1..10000, Q = 1.0 <- 0.001..3.0) -> (
 lp, blockLen        // export 
 ```
 
-* _import_ − done via URI string as `@ 'path/to/lib'`. Members can be imported as `@ 'path/to/lib#a,b,c'`. <!-- Built-in libs are: _math_, _std_. Additional libs: _sonr_, _latr_, _musi_ and [others](). _import-map.json_ can provide import aliases.
+* _import_ − done via URI string as `@ 'path/to/lib'`. Members can be imported as `@ 'path/to/lib#a,b,c'`. <!-- Built-in libs are: _math_, _std_. Additional libs: _sonr_, _latr_, _musi_ and [others](). --> _import-map.json_ can provide import aliases.
 * _state variables_ − `*state=init` persists value between <span title="Detected by callsite">function calls*</span>.
 * _groups_ − comma enables group operations as `a,b = c,d` === `a=c, b=d`, `(a,b) + (c,d)` === `(a+b, c+d)` etc.
 * _scope_ − parens `()` besides precedence can indicate function body; returns last element or group.
-* _functions_ − arrow syntax `(arg1, arg2) -> (expr1; expr2)` defines a function.
 * _export_ – last element in a file is automatically exported. Note: no semi must follow.
 
 
@@ -342,7 +342,6 @@ Features:
 * _multiarg pipes_ − pipe can consume groups. Depending on arity of target it can act as convolver: `a,b,c | (a,b) -> a+b` becomes  `(a,b | (a,b)->a+b), (b,c | (a,b)->a+b)`.
 * _fold operator_ − `a,b,c >- fn` acts as `reduce(a,b,c, fn)`, provides efficient way to reduce a group or array to a single value.
 
--->
 
 ## [Floatbeat](https://dollchan.net/bytebeat/index.html#v3b64fVNRS+QwEP4rQ0FMtnVNS9fz9E64F8E38blwZGvWDbaptCP2kP3vziTpumVPH0qZyXzfzHxf8p7U3aNJrhK0rYHfgHAOZZkrlVVu0+saKbd5dTXazolRwnvlKuwNvvYORjiB/LpyO6pt7XhYqTNYZ1DP64WGBYgczuhAQgpiTXEtIwP29pteBZXqwTrB30jwc7i/i0jX2cF8g2WIGKlhriTRcPjSvcVMBn5NxvgCOc3TmqZ7/IdmmEnAMkX2UPB3oMHdE9WcKqVK+i5Prz+PKa98uOl60RgE6zP0+wUr+qVpZNsDUjKhtyLkKvS+LID0FYVSrJql8KdSMptKKlx9eTIbcllvdf8HxabpaJrIXEiycV7WGPeEW9Y4v5CBS07WBbUitvRqVbg7UDtQRRG3dqtZv3C7bsBbFUVcALvwH86MfSDws62fD7CTb0eIghE/mDAPyw9O9+aoa9h63zxXl2SW/GKOFNRyxbyF3N+FA8bPyzFb5misC9+J/XCC14nVKfgRQ7RY5ivKeKmmjOJMaBJSbEZJoiZZMuj2pTEPGunZhqeatOEN3zadxrXRmOw+AA==)
 
