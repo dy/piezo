@@ -19,6 +19,10 @@ if=12; for=some_Variable;   // lino has no reserved words
 16.0, .1, 1e3, 2e-3;         // floats
 true=0b1, false=0b0;         // alias booleans (not provided by default)
 
+//////////////////////////// type cast
+1 / 3; 2 * 3.14;            // ints upgrade to floats implicitly
+3.0 | 0;                    // floats floor to ints explicitly
+
 //////////////////////////// units
 1k = 1000; 1pi = 3.1415;     // define units
 1s = 44100; 1ms = 1s/1000;   // useful for sample indexes
@@ -39,10 +43,6 @@ true=0b1, false=0b0;         // alias booleans (not provided by default)
 && || !                     // logical
 & | ^ ~                     // int / binary ops
 == != >= <=                 // comparisons
-
-//////////////////////////// type cast
-1 / 3; 2 * 3.14;            // ints upgrade to floats implicitly
-3.0 | 0;                    // floats floor to ints explicitly
 
 //////////////////////////// clamp operator
 x <- 0..10;                  // clamp(x, 0, 10)
@@ -88,7 +88,8 @@ string ~> "l";              // indexOf: 2
 string <~ "l";              // rightIndexOf: -2
 
 //////////////////////////// lists
-list = [l:2, r:4, c:6, 8];  // list from elements (with aliases)
+list = [1, 2, 3]            // list from elements 
+list = [l:2, r:4, c:6];     // list with aliases
 list = [0..10];             // list from range
 list = [0..8 | i -> i*2];   // list comprehension
 list = [list1, list2];      // list from multiple lists (always flat)
