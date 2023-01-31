@@ -11,8 +11,9 @@ It has C/JS/Python-y syntax and compiles to optimized WASM bytecode, making it a
 
 ```fs
 //////////////////////////// naming convention
-foo_bar == Foo_Bar;         // identifiers are case-insensitive
-if=12; for=some_Variable;   // lino has no reserved words
+foo_bar == Foo_Bar;         // ids are case-insensitive
+Ab_C_F#, $0, ;              // ids permit #, $, A-z0-9, unicode chars 
+default=1; eval=fn, else=0; // lino has no reserved words
 
 //////////////////////////// numbers
 16, 0x10, 0b0;               // int, (dec, hex or binary form)
