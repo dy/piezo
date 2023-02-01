@@ -94,6 +94,7 @@ list = [l:2, r:4, c:6];     // list with aliases
 list = [0..10];             // list from range
 list = [0..8 | i -> i*2];   // list comprehension
 list = [list1, list2];      // list from multiple lists (always flat)
+[2]list = list1;            // (sub)list of fixed size
 list.0, list.1, list.2;     // short index access notation
 list.l = 2;                 // alias index access
 list[0];                    // positive indexing from first element [0]: 2
@@ -104,7 +105,7 @@ list[-1..0];                // reverse
 list | x -> x * 2;          // iterate/map items
 list ~> item;               // find index of the item
 list <~ item;               // rfind
-list +-*/ 2;                // other operators act on all members
+list +-*/ 2;                // math operators act on all members
 
 //////////////////////////// statements
 foo();                      // semi-colons at end of line are mandatory
@@ -114,56 +115,60 @@ foo();                      // semi-colons at end of line are mandatory
 (foo(); bar(););            // semi-colon after last statement returns void
 
 //////////////////////////// conditions
-sign = a < 0 ? -1 : +1;     // inline ternary
-(2+2 >= 4) ?                // multiline ternary
-  log("Math works!")        //
-: "a" < "b" ?               // else if
-  log("Sort strings")       //
-: (                         // else
-  log("Get ready");         //
-  log("Last chance")        //
-);                          //
-a > b ? b++;                // if operator
-a > b ?: b++;               // elvis operator (else if)
-a,b,c >- x ? a++:b++:c++;   // switch operator
+sign = a < 0 ? -1 : +1;       // inline ternary
+(2+2 >= 4) ?                  // multiline ternary
+  log("Math works!")          //
+: "a" < "b" ?                 // else if
+  log("Sort strings")         //
+: (                           // else
+  log("Get ready");           //
+  log("Last chance")          //
+);                            //
+a > b ? b++;                  // if operator
+a > b ?: b++;                 // elvis operator (else if)
+a,b,c >- x ? a++ : b++ : c++; // switch operator
 
 //////////////////////////// loops & iterators
 s = "Hello";                    //
 s[] < 50 <| (s += ", hi");      // inline loop: `while (s.length < 50) s += ", hi"`
-(i <- 10..1 <| (                // multiline loop
+(i <- 10.. <| (                 // multiline loop
   i < 3 ? ^^;                   // `^^` to break loop (can return value as ^^x)
   i < 5 ? ^;                    // `^` to continue loop (can return value as ^x)
   log(i);                       //
 ));                             //
 [j++ < 10 <| x * 2];            // list comprehension via loop
-a0,a1,a2 = i <- 2;              // iterator creates group: a0=0, a1=1, a2=2
 [i <- 0..10 <| i * 2];          // list comprehension via iterator
+a0,a1,a2 = i <- 2;              // iterator creates group: a0=0, a1=1, a2=2
 
 //////////////////////////// functions
-double = n -> n*2;          // inline function
-triple = (n=1) -> (         // optional args
-  n == 0 ? ^n;              // preliminarily return n
-  n*3                       // returns last value
+double = n -> n*2;               // inline function
+triple = (n=1) -> (              // optional args
+  n == 0 ? ^n;                   // preliminarily return n
+  n*3                            // returns last value
 );
-triple();                   // 3
-triple(5);                  // 15
-triple(n: 10);              // 30. named argument.
-copy = triple;              // capture function
-copy(10);                   // also 30
-clamp = (v -< 0..100) -> v; // clamp argument
-x = () -> 1,2,3;            // return group (multiple values)
-gain = ([]in, amp) -> in*amp;          // list argument
-gain = ([1024]in, amp) -> in*amp;      // sublist argument
+triple();                        // 3
+triple(5);                       // 15
+triple(n: 10);                   // 30. named argument.
+copy = triple;                   // capture function
+copy(10);                        // also 30
+clamp = (v=1 -< 0..100) -> v;    // clamp argument
+x = () -> 1,2,3;                 // return group (multiple values)
+gain = ([]in, amp) -> in*amp;    // list argument
+gain = ([100]in, amp) -> in*amp; // sublist argument
 
 //////////////////////////// stateful variables
-a = () -> ( *i=0; i++ );             // stateful variable persist value between fn calls
-a(), a();                            // 0, 1
-b = () -> ( *[4]i; i.0=i.1+1; i.0 ); // memory size with past state access
-b(), b(), b();                       // 1, 2, 3
+a = () -> ( *i=0; i++ );         // stateful variable persist value between fn calls
+a(), a();                        // 0, 1
+b = () -> (                      //    
+  *[4]i;                         // memory of 4 items
+  i.0 = i.1+1;                   // read previous value 
+  i.0                            // return currrent value
+);                               //
+b(), b(), b();                   // 1, 2, 3
 
 ////////////////////////////// map
 [a, b, c] | x -> a(x);      // maps list to new list
-(a, b, c) | a -> a.x * 2;   // unfolds group to constructs
+(a, b, c) | a -> a.x * 2;   // deconstructs group into statements
 10..1 | i -> (              // iteration over range (produces group)
   i < 3 ? ^^;               // `^^` breaks iteration
   i < 5 ? ^;                // `^` continues iteration
