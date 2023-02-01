@@ -11,13 +11,18 @@ It has C/JS/Python-y syntax and compiles to optimized WASM bytecode, making it a
 
 ```fs
 //////////////////////////// naming convention
-foo_bar == Foo_Bar;         // identifiers are case-insensitive
-if=12; for=some_Variable;   // lino has no reserved words
+foo_bar == Foo_Bar;         // ids are case-insensitive
+Ab_C_F#, $0, ;              // ids permit #, $, A-z0-9, unicode chars 
+default=1; eval=fn, else=0; // lino has no reserved words
 
 //////////////////////////// numbers
 16, 0x10, 0b0;               // int, (dec, hex or binary form)
 16.0, .1, 1e3, 2e-3;         // floats
 true=0b1, false=0b0;         // alias booleans (not provided by default)
+
+//////////////////////////// type cast
+1 / 3; 2 * 3.14;            // ints upgrade to floats implicitly
+3.0 | 0;                    // floats floor to ints explicitly
 
 //////////////////////////// units
 1k = 1000; 1pi = 3.1415;     // define units
@@ -39,10 +44,6 @@ true=0b1, false=0b0;         // alias booleans (not provided by default)
 && || !                     // logical
 & | ^ ~                     // int / binary ops
 == != >= <=                 // comparisons
-
-//////////////////////////// type cast
-1 / 3; 2 * 3.14;            // ints upgrade to floats implicitly
-3.0 | 0;                    // floats floor to ints explicitly
 
 //////////////////////////// clamp operator
 x <- 0..10;                  // clamp(x, 0, 10)
@@ -88,7 +89,8 @@ string ~> "l";              // indexOf: 2
 string <~ "l";              // rightIndexOf: -2
 
 //////////////////////////// lists
-list = [l:2, r:4, c:6, 8];  // list from elements (with aliases)
+list = [1, 2, 3]            // list from elements 
+list = [l:2, r:4, c:6];     // list with aliases
 list = [0..10];             // list from range
 list = [0..8 | i -> i*2];   // list comprehension
 list = [list1, list2];      // list from multiple lists (always flat)
