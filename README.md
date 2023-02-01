@@ -12,7 +12,7 @@ It has C/JS/Python-y syntax and compiles to optimized WASM bytecode, making it a
 ```fs
 //////////////////////////// naming convention
 foo_bar == Foo_Bar;         // ids are case-insensitive
-Ab_C_F#, $0, Δx;            // ids permit #, $, alnum, unicodes
+Ab_C_F#, $0, Δx;            // ids permit #, _, $, alnum, unicodes
 default=1; eval=fn, else=0; // lino has no reserved words
 
 //////////////////////////// numbers
