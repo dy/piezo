@@ -42,7 +42,7 @@ Having wat files is more useful than direct compilation to binary form:
   + better indicator of fn primitive
   ? batch output: `~() -> 1` vs `() -> ~1` vs `() ~> 1`
 
-## [x] Ranges: f(x=100<-0..100, y<-0..100, p<-0.001..5, shape<-{tri,sin,tan}=sin)
+## [x] Ranges: f(x=100-<0..100, y-<0..100, p-<0.001..5, shape-<{tri,sin,tan}=sin)
 
   * `f(x=100 in 0..100, y=1 in 0..100, z in 1..100, p in 0.001..5) = ...`
     - conflicts with no-keywords policy
@@ -93,6 +93,7 @@ Having wat files is more useful than direct compilation to binary form:
     + visually precise indication of what's going on
     - false match with reduce/loop operator
       ~ not anymore a problem if we make loop/reducer `<|` and `|>`
+    + by rearranging loop/reducer it's not more at conflict
 
   * `f(x = 100 <- 0..100, y <- 0..100 = 1, z <- 1..100, p <- 0.001..5, shape <- (tri, sin, tan) = sin)`
     + literally elixir/haskel/erlang/R/Scala's list comprehension assigner
@@ -678,7 +679,7 @@ Having wat files is more useful than direct compilation to binary form:
   + it not only eliminates else, but also augments null-path operator `a.b?.c`, which is for no-prop just `a.b?c` case.
   - weirdly confusing, as if very important part is lost. Maybe just introduce elvis `a>b ? a=1` → `a<=b ?: a=1`
 
-## [x] Loops: `i -< 0..10 <| a + i`, `i -< list <| a`, `[x -< 1,2,3 <| x*2]`
+## [x] Loops: `i <- 0..10 <| a + i`, `i <- list <| a`, `[x <- 1,2,3 <| x*2]`
   * `for i in 0..10 (a,b,c)`, `for i in src a;`
   * alternatively as elixir does: `item <- 0..10 a,b,c`
     + also erlang list comprehension is similar: `[x*2 || x <- [1,2,3]]`
@@ -763,10 +764,12 @@ Having wat files is more useful than direct compilation to binary form:
       + and loop is no-array generalization
     + `-<` somehow reminds loop block from UML diagrams
     - it acts on "immediate level syntax space", whereas produces a bunch. There must be `|` for multiple items.
-  * ! `x < 5 <| x++`, `[ x -< 1,2,3 <| x * 2]`
+  * ! `x < 5 <| x++`, `[ x <- 1,2,3 <| x * 2]`
     + if we take `|>` as reducer, it becomes meaningful reverse operator: take one and produce many
     + visually it matches the meaning
     + it acts on "iteration" scope, which is nice
+    - a bit false-match with reducer since reducer takes fn argument, but here neither left/right are arguments
+      + reverse-function kind-of closes that gap `a |> b -> c`, `c <- b <| a`
   * → ? `x < 5 :> x++`,  `x++ <: x < 5`, `[ x ~ 1,2,3 :> x*2 ]`, `[ x * 2 <: x ~ 1,2,3 ]`
     + result direction indicator
     + aligns with math, label reference
@@ -866,7 +869,7 @@ Having wat files is more useful than direct compilation to binary form:
     - nah, just do `(a,b,c) = d`
     ? Alternatively: do we need nested structures at all? Maybe just flat all the time?
 
-## [x] -< operator purpose? iterator, or `for of` loop
+## [x] -< operator purpose? `<-` for iterator, and `-<` for range
 
   * ? splits list by some sorter: `a,b,c -< v -> v`
   * ? or in fact multiplexor? selects input by condition? like a,b,c -< x -> x > 2 ? 1 : 0
@@ -876,15 +879,15 @@ Having wat files is more useful than direct compilation to binary form:
   * ? maybe that's just inverse reduce operator. a = sum -< a,b,c
     * inverse reduce is loop
   * -<, >- look more from condition block-diagram scope. Maybe can be used for switches somehow?
-  * -> ! what if that's iterator operator, an extension of `in`/`from`/`of`: `[x -< 1,2,3 <| x * 2]`
+  * -> ! what if that's iterator operator, an extension of `in`/`from`/`of`: `[x <- 1,2,3 <| x * 2]`
     ~- more familiar to just `[1,2,3 | x -> x * 2]`
-    + can be used in pipes also as `x -< list | x + 2`
-    + can iterate over ranges as `x -< 0..10 <| x*2`
-    + can iterate groups `x -< 1,2,3 <|`
-    + can iterate simple number `x -< 10`
+    + can be used in pipes also as `x <- list | x + 2`
+    + can iterate over ranges as `x <- 0..10 <| x*2`
+    + can iterate groups `x <- 1,2,3 <|`
+    + can iterate simple number `x <- 10`
     + it's mainly `for (x of list)` operator
 
-## [ ] what's the meaning of `>-`?
+## [x] what's the meaning of `>-`? switch
 
   * must be the opposite-ish to `for of`.
   * for of takes each element from the list. this operator must take one element. Switch?
@@ -893,6 +896,12 @@ Having wat files is more useful than direct compilation to binary form:
     + meaningful as `-<` counterpart
     + enables if-else as `1,0 >- x ? true : false;`
       . `1 >- x ? true`;
+
+## [x] What if we swap `-<` with `<-`, as `x in y` and `x of y`? Let's try
+  + `a |> b -> c` becomes symmetrical with `c <- b <| a`
+  + `c <- b` is more conventional for `a of b`
+  + `x -< 0..10` is nicer for range indication limit and for clamp
+  + `x -<= 0..10` is just a nice construct
 
 ## [x] comments: //, /* vs ;; and (; ;) → use familiar `//`
   + ;; make more sense, since ; is separator, and everything behind it doesnt matter
@@ -980,7 +989,7 @@ Having wat files is more useful than direct compilation to binary form:
       ? do we need index argument for pipe transformer
         - no, pipe is not mapper...
         ? how do we map arrays then
-          * list comprehension: i -< arr <| i * 10
+          * list comprehension: i <- arr <| i * 10
 
 ## [x] Convolver operator? -> let's try to hold on until use-case comes
 
@@ -1925,7 +1934,7 @@ Having wat files is more useful than direct compilation to binary form:
     * ->, >- () -> act on "functional" level
   - introduce questions how to use pipes a | x -> x+1: without arrow fns there would be less options
   -! reduce/flat can be organized as `i < #arr <| sum += arr[i++]`
-  -! map can be organized as `(item -< arr <| item * 2)`
+  -! map can be organized as `(item <- arr <| item * 2)`
   -- (+) it frees `->` operator space, making it asymmetrical
     + can be filled! like map?
   -- (+) `|>` still kind-of requires function on the right-side and is similar to `|` operator
@@ -2112,7 +2121,7 @@ Having wat files is more useful than direct compilation to binary form:
   After:
   ```
   blockSize
-  gain = (in[2,blockSize], amp) -> [ch -< in <| [x -< ch <| x * amp]];
+  gain = (in[2,blockSize], amp) -> [ch <- in <| [x <- ch <| x * amp]];
   generate = () -> (chans[2,blockSize]; chans);
   ```
 
@@ -2123,7 +2132,7 @@ Having wat files is more useful than direct compilation to binary form:
   + compatible with array, just different processing meaning, so `arr = [..tape]` can be just copy
   - [x] it doesn't iterate over values automatically and needs some extra wrapper
     + allows more explicit iteration pattern
-    + allows direct mono/stereo clause as `gain0 = (in, amp) -> in*amp; gain1 = (in[1024], amp) -> x -< in <| gain0(x, in)`
+    + allows direct mono/stereo clause as `gain0 = (in, amp) -> in*amp; gain1 = (in[1024], amp) -> x <- in <| gain0(x, in)`
     + in fact, arrays can expose ops automatically to all elements, so that `gain(in[len], amp) -> in * amp` just multiplies all.
   - no channel name auto-aliases
     ~? can be made global swizzle aliases?

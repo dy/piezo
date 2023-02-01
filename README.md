@@ -12,7 +12,7 @@ It has C/JS/Python-y syntax and compiles to optimized WASM bytecode, making it a
 ```fs
 //////////////////////////// naming convention
 foo_bar == Foo_Bar;         // ids are case-insensitive
-Ab_C_F#, $0, ;              // ids permit #, $, A-z0-9, unicode chars 
+Ab_C_F#, $0, ;              // ids permit #, $, A-z0-9, unicode chars
 default=1; eval=fn, else=0; // lino has no reserved words
 
 //////////////////////////// numbers
@@ -46,10 +46,10 @@ true=0b1, false=0b0;         // alias booleans (not provided by default)
 == != >= <=                 // comparisons
 
 //////////////////////////// clamp operator
-x <- 0..10;                  // clamp(x, 0, 10)
-x <- ..10;                   // min(x, 10)
-x <- 0..;                    // max(0, x)
-x <-= 0..10;                 // x = clamp(x, 0, 10)
+x -< 0..10;                  // clamp(x, 0, 10)
+x -< ..10;                   // min(x, 10)
+x -< 0..;                    // max(0, x)
+x -<= 0..10;                 // x = clamp(x, 0, 10)
 
 //////////////////////////// length operator
 [1,2,3][];                   // 3
@@ -89,7 +89,7 @@ string ~> "l";              // indexOf: 2
 string <~ "l";              // rightIndexOf: -2
 
 //////////////////////////// lists
-list = [1, 2, 3]            // list from elements 
+list = [1, 2, 3]            // list from elements
 list = [l:2, r:4, c:6];     // list with aliases
 list = [0..10];             // list from range
 list = [0..8 | i -> i*2];   // list comprehension
@@ -130,14 +130,14 @@ a,b,c >- x ? a++:b++:c++;   // switch operator
 //////////////////////////// loops & iterators
 s = "Hello";                    //
 s[] < 50 <| (s += ", hi");      // inline loop: `while (s.length < 50) s += ", hi"`
-(i -< 10..1 <| (                // multiline loop with iterator
+(i <- 10..1 <| (                // multiline loop
   i < 3 ? ^^;                   // `^^` to break loop (can return value as ^^x)
   i < 5 ? ^;                    // `^` to continue loop (can return value as ^x)
   log(i);                       //
 ));                             //
 [j++ < 10 <| x * 2];            // list comprehension via loop
-a0,a1,a2 = i -< 2;              // iterator creates group as result: a0=0, a1=1, a2=2
-[i -< 0..10 <| i * 2];          // list comprehension via iterator
+a0,a1,a2 = i <- 2;              // iterator creates group: a0=0, a1=1, a2=2
+[i <- 0..10 <| i * 2];          // list comprehension via iterator
 
 //////////////////////////// functions
 double = n -> n*2;          // inline function
@@ -150,7 +150,7 @@ triple(5);                  // 15
 triple(n: 10);              // 30. named argument.
 copy = triple;              // capture function
 copy(10);                   // also 30
-clamp = (v <- 0..100) -> v; // clamp argument
+clamp = (v -< 0..100) -> v; // clamp argument
 x = () -> 1,2,3;            // return group (multiple values)
 gain = ([]in, amp) -> in*amp;          // list argument
 gain = ([1024]in, amp) -> in*amp;      // sublist argument
@@ -194,7 +194,7 @@ Provides k-rate amplification of input audio.
 ```fs
 gain = (
   []input,                    // array argument (a-param)
-  volume <- 0..100            // clamps to range - volume ∈ 0..100
+  volume -< 0..100            // clamps to range - volume ∈ 0..100
 ) -> (
   i = 0;
   input * volume              // multiply input members
@@ -205,7 +205,7 @@ gain([0,.1,.2,.3,.4,.5], 2);  // [0,.2,.4,.6,.8,1]
 
 * _functions_ − arrow syntax `(arg1, arg2) -> (expr1; expr2)` defines a function.
 * _block input/output_ − `[]` prefix indicates array argument (usually <em title="Audio, or precise rate">a-rate*</em> input/param); direct argument can be used for <em title="Controlling (historical artifact from CSound), blocK-rate">k-rate*</em> param.
-* _validation_ − `a <- range` (_a ∈ range_) clamps argument to provided range, to avoid blowing up values.
+* _validation_ − `a -< range` (_a ∈ range_) clamps argument to provided range, to avoid blowing up values.
 * _range_ − primitive with `from..to` signature, useful to clamp value.
 
 
@@ -220,7 +220,7 @@ Biquad filter processor for single-channel input.
 1s = 44100;                   // define time units in samples
 blockLen = 1024;              // can be redefined from outside
 
-lp = ([blockLen]x, freq = 100 <- 1..10000, Q = 1.0 <- 0.001..3.0) -> (
+lp = ([blockLen]x, freq = 100 -< 1..10000, Q = 1.0 -< 0.001..3.0) -> (
   *x1, *x2, *y1, *y2 = 0;     // filter state (defined by callsite)
 
   // lpf formula
@@ -274,7 +274,7 @@ adsr = (x, a, d, (s, sv=1), r) -> (
   *i = 0;
   t = i++ / 1s;
 
-  a = a <- 0.0001..;                // prevent click
+  a = a -< 0.0001..;                // prevent click
   total = a + d + s + r;
 
   y = t >= total ? 0 : (
@@ -290,7 +290,7 @@ adsr = (x, a, d, (s, sv=1), r) -> (
 );
 
 // curve effect
-curve = (x, amt=1.82 <- 0..10) -> (sign(x) * abs(x)) ** amt;
+curve = (x, amt=1.82 -< 0..10) -> (sign(x) * abs(x)) ** amt;
 
 // coin = triangle with pitch jump
 coin = (freq=1675, jump=freq/2, delay=0.06, shape=0) -> (
