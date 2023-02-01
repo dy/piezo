@@ -197,21 +197,18 @@ x, y, z                      // last members in a file get exported (no semi!)
 Provides k-rate amplification of input audio.
 
 ```fs
-gain = (
-  []input,                    // array argument (a-param)
-  volume -< 0..100            // clamps to range - volume ∈ 0..100
-) -> (
+gain = ( []input, []output, volume -< 0..100 ) -> (
   i = 0;
-  input * volume              // multiply input members
+  x <- input |> output[i++] = x * volume;
 )
 
 gain([0,.1,.2,.3,.4,.5], 2);  // [0,.2,.4,.6,.8,1]
 ```
 
-* _functions_ − arrow syntax `(arg1, arg2) -> (expr1; expr2)` defines a function.
+* _functions_ − arrow `(arg1, arg2) -> (expr1; expr2)` defines a function.
 * _block input/output_ − `[]` prefix indicates array argument (usually <em title="Audio, or precise rate">a-rate*</em> input/param); direct argument can be used for <em title="Controlling (historical artifact from CSound), blocK-rate">k-rate*</em> param.
 * _validation_ − `a -< range` (_a ∈ range_) clamps argument to provided range, to avoid blowing up values.
-* _range_ − primitive with `from..to` signature, useful to clamp value.
+* _range_ − primitive with `from..to` signature, useful for clamp operator.
 
 
 ### Biquad Filter
@@ -239,14 +236,14 @@ lp = ([blockLen]x, freq = 100 -< 1..10000, Q = 1.0 -< 0.001..3.0) -> (
   b0, b1, b2, a1, a2 *= 1.0 / a0;
 
   // produce output block
-  x | x0 -> (
+  [ x | x0 -> (
     y0 = b0*x0 + b1*x1 + b2*x2 - a1*y1 - a2*y2;
 
     x1, x2 = x0, x1;
     y1, y2 = y0, y1;
 
     y0
-  )
+  ) ]
 );
 
 lp, blockLen        // export
@@ -279,7 +276,7 @@ adsr = (x, a, d, (s, sv=1), r) -> (
   *i = 0;
   t = i++ / 1s;
 
-  a = a -< 0.0001..;                // prevent click
+  a = a -< 0.0001..;             // prevent click
   total = a + d + s + r;
 
   y = t >= total ? 0 : (
@@ -399,13 +396,8 @@ Features:
 * _string literal_ − `"abc"` acts as array with ASCII codes.
 * _length operator_ − `items[]` returns total number of items of either an array, group, string or range.
 
+## See also
 
-
-## Alternatives
-
-* [mono](https://github.com/stagas/mono)
-* [soul](https://github.com/soul-lang/SOUL/blob/master/docs/SOUL_Language.md)
-* [elementary/audio](https://www.elementary.audio/docs/guides/Making_Sound)
-
+* [mono](https://github.com/stagas/mono) – subset of for cowbell.lol
 
 <p align=center><a href="https://github.com/krsnzd/license/">🕉</a></p>
