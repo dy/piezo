@@ -123,17 +123,19 @@ sign = a < 0 ? -1 : +1;     // inline ternary
 );                          //
 a > b ? b++;                // if operator
 a > b ?: b++;               // elvis operator (else if)
+a,b,c >- x ? a++:b++:c++;   // switch operator
 
-//////////////////////////// loops
+//////////////////////////// loops & iterators
 s = "Hello";                    //
-(s[] < 50) -< (s += ", hi");    // inline loop: `while (s.length < 50) s += ", hi"`
-(i=10; i-- > 1 -< (             // multiline loop
+s[] < 50 <| (s += ", hi");      // inline loop: `while (s.length < 50) s += ", hi"`
+(i -< 10..1 <| (                // multiline loop with iterator
   i < 3 ? ^^;                   // `^^` to break loop (can return value as ^^x)
   i < 5 ? ^;                    // `^` to continue loop (can return value as ^x)
   log(i);                       //
 ));                             //
-a0,a1,a2 = (i=0; i++ < 2 -< i); // loop creates group as result: a0=0, a1=1, a2=2
-[j++ < 10 -< x * 2];            // list comprehension via loop
+[j++ < 10 <| x * 2];            // list comprehension via loop
+a0,a1,a2 = i -< 2;              // iterator creates group as result: a0=0, a1=1, a2=2
+[i -< 0..10 <| i * 2];          // list comprehension via iterator
 
 //////////////////////////// functions
 double = n -> n*2;          // inline function
@@ -167,9 +169,9 @@ b(), b(), b();                       // 1, 2, 3
 [ 1..10 | x -> x * 2 ];     // list comprehension
 
 ///////////////////////////// fold
-items >- (sum, x) -> sum+x;   // fold operator with reducer
-(a, b, c) >- (a, b) -> a + b; // can be applied to groups (syntax sugar)
-[a, b, c] >- (a, b) -> a + b; // can be applied to lists
+items |> (sum, x) -> sum+x;   // fold operator with reducer
+(a, b, c) |> (a, b) -> a + b; // can be applied to groups (syntax sugar)
+[a, b, c] |> (a, b) -> a + b; // can be applied to lists
 
 //////////////////////////// import
 @ './path/to/module';        // any file can be imported directly
@@ -188,7 +190,7 @@ x, y, z                      // last members in a file get exported (no semi!)
 Provides k-rate amplification of input audio.
 
 ```fs
-gain = (                      
+gain = (
   []input,                    // array argument (a-param)
   volume <- 0..100            // clamps to range - volume ∈ 0..100
 ) -> (
@@ -218,7 +220,7 @@ blockLen = 1024;              // can be redefined from outside
 
 lp = ([blockLen]x, freq = 100 <- 1..10000, Q = 1.0 <- 0.001..3.0) -> (
   *x1, *x2, *y1, *y2 = 0;     // filter state (defined by callsite)
-  
+
   // lpf formula
   w = 2pi * freq / 1s;
   sin_w, cos_w = sin(w), cos(w);
@@ -240,7 +242,7 @@ lp = ([blockLen]x, freq = 100 <- 1..10000, Q = 1.0 <- 0.001..3.0) -> (
   )
 );
 
-lp, blockLen        // export 
+lp, blockLen        // export
 ```
 
 * _import_ − done via URI string as `@ 'path/to/lib'`. Members can be imported as `@ 'path/to/lib#a,b,c'`. <!-- Built-in libs are: _math_, _std_. Additional libs: _sonr_, _latr_, _musi_ and [others](). --> _import-map.json_ can provide import aliases.
@@ -329,19 +331,19 @@ reverb = ([]input, room=0.5, damp=0.5) -> (
   *aps = p0,p1,p2,p3 | stretch;
 
   combs = (
-    (combs_a | x -> comb(x, input, room, damp) >- (a,b) -> a+b) +
-    (combs_b | x -> comb(x, input, room, damp) >- (a,b) -> a+b)
+    (combs_a | x -> comb(x, input, room, damp) |> (a,b) -> a+b) +
+    (combs_b | x -> comb(x, input, room, damp) |> (a,b) -> a+b)
   );
 
-  (combs, aps) >- (input, coef) -> p + allpass(p, coef, room, damp)
+  (combs, aps) |> (input, coef) -> p + allpass(p, coef, room, damp)
 );
 ```
 
 Features:
 
 * _multiarg pipes_ − pipe can consume groups. Depending on arity of target it can act as convolver: `a,b,c | (a,b) -> a+b` becomes  `(a,b | (a,b)->a+b), (b,c | (a,b)->a+b)`.
-* _fold operator_ − `a,b,c >- fn` acts as `reduce(a,b,c, fn)`, provides efficient way to reduce a group or array to a single value.
-
+* _fold operator_ − `a,b,c |> fn` acts as `reduce(a,b,c, fn)`, provides efficient way to reduce a group or array to a single value.
+-->
 
 ## [Floatbeat](https://dollchan.net/bytebeat/index.html#v3b64fVNRS+QwEP4rQ0FMtnVNS9fz9E64F8E38blwZGvWDbaptCP2kP3vziTpumVPH0qZyXzfzHxf8p7U3aNJrhK0rYHfgHAOZZkrlVVu0+saKbd5dTXazolRwnvlKuwNvvYORjiB/LpyO6pt7XhYqTNYZ1DP64WGBYgczuhAQgpiTXEtIwP29pteBZXqwTrB30jwc7i/i0jX2cF8g2WIGKlhriTRcPjSvcVMBn5NxvgCOc3TmqZ7/IdmmEnAMkX2UPB3oMHdE9WcKqVK+i5Prz+PKa98uOl60RgE6zP0+wUr+qVpZNsDUjKhtyLkKvS+LID0FYVSrJql8KdSMptKKlx9eTIbcllvdf8HxabpaJrIXEiycV7WGPeEW9Y4v5CBS07WBbUitvRqVbg7UDtQRRG3dqtZv3C7bsBbFUVcALvwH86MfSDws62fD7CTb0eIghE/mDAPyw9O9+aoa9h63zxXl2SW/GKOFNRyxbyF3N+FA8bPyzFb5misC9+J/XCC14nVKfgRQ7RY5ivKeKmmjOJMaBJSbEZJoiZZMuj2pTEPGunZhqeatOEN3zadxrXRmOw+AA==)
 
@@ -361,7 +363,7 @@ melodytest = (time) -> (
   melody = 0;
   i = 0;
 
-  i++ < 5 -< (
+  i++ < 5 <| (
     melody += tri(
       time * mix(
         200 + (i * 900),
@@ -386,7 +388,7 @@ song = () -> (
 
 Features:
 
-* _loop operator_ − `cond -< expr` acts as _while_ loop, calling expression until condition holds true. Produces sequence as result.
+* _loop operator_ − `cond <| expr` acts as _while_ loop, calling expression until condition holds true. Produces sequence as result.
 * _string literal_ − `"abc"` acts as array with ASCII codes.
 * _length operator_ − `items[]` returns total number of items of either an array, group, string or range.
 
