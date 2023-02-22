@@ -11,8 +11,8 @@ It has common syntax and compiles to optimized WASM bytecode, making it availabl
 
 ```fs
 //////////////////////////// naming convention
+foo123, F#, $0, Δx;         // ids permit #, _, $, alnum, unicodes
 foo_bar == Foo_Bar;         // ids are case-insensitive
-Ab_C_F#, $0, Δx;            // ids permit #, _, $, alnum, unicodes
 default=1; eval=fn, else=0; // lino has no reserved words
 
 //////////////////////////// numbers
