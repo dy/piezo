@@ -16,7 +16,7 @@ foo_bar == Foo_Bar;         // ids are case-insensitive
 default=1; eval=fn, else=0; // lino has no reserved words
 
 //////////////////////////// numbers
-16, 0x10, 0b0;               // int, (dec, hex or binary form)
+16, 0x10, 0b0;               // int (dec, hex or binary form)
 16.0, .1, 1e3, 2e-3;         // floats
 true=0b1, false=0b0;         // alias booleans (not provided by default)
 
