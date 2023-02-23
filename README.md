@@ -398,6 +398,6 @@ Features:
 
 ## See also
 
-* [mono](https://github.com/stagas/mono) – subset of for cowbell.lol
+* [mono](https://github.com/stagas/mono) – spiritual brother for cowbell.lol
 
 <p align=center><a href="https://github.com/krsnzd/license/">🕉</a></p>
