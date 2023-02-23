@@ -139,6 +139,7 @@ s[] < 50 <| (s += ", hi");      // inline loop: `while (s.length < 50) s += ", h
 [j++ < 10 <| x * 2];            // list comprehension via loop
 [i <- 0..10 <| i * 2];          // list comprehension via iterator
 a0,a1,a2 = i <- 2;              // iterator creates group: a0=0, a1=1, a2=2
+item, idx <- list;              // 'in' operator 
 
 //////////////////////////// functions
 double = n -> n*2;               // inline function
@@ -198,8 +199,7 @@ Provides k-rate amplification of input audio.
 
 ```fs
 gain = ( []input, []output, volume -< 0..100 ) -> (
-  i = 0;
-  x <- input |> output[i++] = x * volume;
+  x, i <- input <| output[i] = x * volume;
 )
 
 gain([0,.1,.2,.3,.4,.5], 2);  // [0,.2,.4,.6,.8,1]
