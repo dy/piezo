@@ -2,22 +2,22 @@ import t, { is, ok, same } from 'tst'
 import parse from '../src/parse.js'
 
 
-t('parse: common', t => {
-  is(parse('1+1'), ['+', ['int', 1], ['int', 1]])
-  is(parse('1.0+1.0'), ['+', ['float', 1], ['float', 1]])
+t.only('parse: common', t => {
+  is(parse('1+1'), ['+', ['int',1], ['int',1]])
+  is(parse('1.0+1.0'), ['+', ['float',1], ['float',1]])
   is(parse('a+b-c'), ['-',['+', 'a', 'b'],'c'])
-
   is(parse(`x([left], v)`), ['(','x',[',',['[','left'],'v']])
 })
 
-t.skip('parse: identifiers', t => {
+t.only('parse: identifiers', t => {
   // permit @#$_
-  // OBSOLETE: nah, @ and # are operators
-  is(parse('a@a, _b#, c_c, $d$'), [',', 'a@a', '_b#','c_c','$d$'])
+  is(parse('Δx, _b#, c_c, $d0'), [',', 'δx', '_b#','c_c','$d0'])
 
   // disregard casing
-  // OBSOLETE: parser doesn't necessarily deal with lowcase semantic, that's analyzer or transform level thing
   is(parse('A, Bc, d_E'), [',', 'a', 'bc','d_e'])
+
+  is(parse('Ab_C_F#, $0, Δx'), [',', 'ab_c_f#', '$0', 'δx'])
+  is(parse('default=1; eval=fn, else=0;'), [';', ['=', 'default', ['int',1]], [',', ['=', 'eval', 'fn'], ['=', 'else', ['int',0]]], null])
 })
 
 t('parse: end operator precedence', t => {
