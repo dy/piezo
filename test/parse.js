@@ -32,6 +32,13 @@ t('parse: type cast', t => {
   is(parse('3.0 | 0'), ['|', ['flt', 3], ['int', 0]]);
 })
 
+t('parse: units', t => {
+  is(parse('1k = 1000; 1pi = 3.1415;'), [';', ['=', ['int', 1, 'k'], ['int', 1000]], ['=', ['int', 1, 'pi'], ['flt', 3.1415]], null])
+  is(parse('1s = 44100; 1ms = 1s/1000;'), [';',['=',['int',1,'s'],['int',44100]], ['=', ['int',1,'ms'], ['/',['int',1,'s'],['int',1000]]], null], 'useful for sample indexes')
+  is(parse('10.1k, 2pi;'),[';', [',', ['flt', 10.1, 'k'], ['int', 2, 'pi']], undefined], 'units deconstruct to numbers: 10100, 6.283')
+  is(parse('1h2m3.5s'), ['int', 1, 'h', ['int', 2, 'm', ['flt', 3.5, 's']]], 'unit combinations')
+})
+
 t('parse: end operator precedence', t => {
   is(parse(`
     x() = 1+2;

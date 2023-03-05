@@ -8,19 +8,16 @@ const OPAREN=40, CPAREN=41, OBRACK=91, CBRACK=93, SPACE=32, QUOTE=39, DQUOTE=34,
 PREC_SEMI=1, PREC_END=6, PREC_ASSIGN=5, PREC_FUNC=2, PREC_LOOP=2, PREC_SEQ=4, PREC_COND=3, PREC_SOME=4, PREC_EVERY=5, PREC_OR=6, PREC_XOR=7, PREC_AND=8,
 PREC_EQ=9, PREC_COMP=10, PREC_SHIFT=11, PREC_SUM=12, PREC_MULT=13, PREC_EXP=14, PREC_UNARY=15, PREC_POSTFIX=16, PREC_CALL=18, PREC_TOKEN=20
 
-// extend identifiers
+// make id support #
 parse.id = n => skip(char => isId(char) || char === HASH).toLowerCase()
 
-
-// 'true', 20, a => a ? err() : ['',true],
-// 'false', 20, a => a ? err() : ['',false],
 
 const isNum = c => c >= _0 && c <= _9
 const num = (a) => {
   if (a) err(); // abc 023 - wrong
-  let n = skip(isNum), sep='', d=''; // numerator, separator, denominator
+  let n = skip(isNum), sep='', d='', unit, ext; // numerator, separator, denominator, unit, extra
 
-  if ((numTypes[cur[idx]])) {
+  if (numTypes[cur[idx]]) {
     sep = skip()
     if ([PLUS, MINUS].includes(cur.charCodeAt(idx))) d = skip()
     d += skip(isNum)
@@ -28,7 +25,16 @@ const num = (a) => {
 
   // subscript takes 0/nullish value as wrong token, so we must wrap 0 into token
   // can be useful after (hopefully)
-  return (numTypes[sep])(n, d) || err('Bad number')
+  let node = (numTypes[sep])(n, d);
+  if (!node) err('Bad number')
+
+  // parse units, eg. 1s
+  if (unit = skip(c => !isNum(c) && isId(c))) node.push(unit)
+
+  // parse unit combinations, eg. 1h2m3s
+  if (isNum(cur.charCodeAt(idx))) node.push(num())
+
+  return node
 }
 const numTypes = {
   '': (n, d) => ['int', +n],
@@ -37,10 +43,9 @@ const numTypes = {
   'x': (n, d) => ['hex', parseInt(d, 16)],
   'b': (n, d) => ['bin', parseInt(d, 2)]
 }
-// .1
-// '.',, a=>!a && num(),
 // 0-9
 for (let i = 0; i<=9; i++) lookup[_0+i] = num;
+// .1
 lookup[PERIOD] = a=>!a && num();
 
 
@@ -111,7 +116,7 @@ unary('^', PREC_TOKEN) // pin: ^ a
 unary('^^', PREC_TOKEN) // pin: ^ a
 
 // a.b
-token('.', PREC_CALL, (a,b) => a && (console.log('.', a),b=expr(PREC_CALL)) && ['.', a, b])
+token('.', PREC_CALL, (a,b) => a && (b=expr(PREC_CALL)) && ['.', a, b])
 
 // a..b, ..b, a..
 token('..', PREC_CALL, a => ['..', a || '', expr(PREC_CALL)])
