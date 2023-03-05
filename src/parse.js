@@ -4,8 +4,8 @@ import parse, { lookup, skip, cur, idx, err, expr, token, unary, binary, nary, i
 export default (src) => parse(src)
 
 // char codes & precedences
-const OPAREN=40, CPAREN=41, OBRACK=91, CBRACK=93, SPACE=32, QUOTE=39, DQUOTE=34, PERIOD=46, BSLASH=92, _0=48, _9=57, COLON=58, HASH=35, AT=64,
-PREC_SEQ=1, PREC_END=6, PREC_ASSIGN=5, PREC_FUNC=2, PREC_LOOP=2, PREC_GROUP=4, PREC_COND=3, PREC_SOME=4, PREC_EVERY=5, PREC_OR=6, PREC_XOR=7, PREC_AND=8,
+const OPAREN=40, CPAREN=41, OBRACK=91, CBRACK=93, SPACE=32, QUOTE=39, DQUOTE=34, PERIOD=46, BSLASH=92, _0=48, _9=57, COLON=58, HASH=35, AT=64, _X = 120, _B = 98, PLUS = 43, MINUS = 45,
+PREC_SEMI=1, PREC_END=6, PREC_ASSIGN=5, PREC_FUNC=2, PREC_LOOP=2, PREC_SEQ=4, PREC_COND=3, PREC_SOME=4, PREC_EVERY=5, PREC_OR=6, PREC_XOR=7, PREC_AND=8,
 PREC_EQ=9, PREC_COMP=10, PREC_SHIFT=11, PREC_SUM=12, PREC_MULT=13, PREC_EXP=14, PREC_UNARY=15, PREC_POSTFIX=16, PREC_CALL=18, PREC_TOKEN=20
 
 // extend identifiers
@@ -17,23 +17,31 @@ parse.id = n => skip(char => isId(char) || char === HASH).toLowerCase()
 
 const isNum = c => c >= _0 && c <= _9
 const num = (a) => {
-  let fract
-  if (a) err(); // what's that?
-  a = skip(isNum);
-  if (cur.charCodeAt(idx)===PERIOD && isNum(cur.charCodeAt(idx+1))) {
-    skip()
-    if (fract = skip(isNum)) (a += '.' + fract);
+  if (a) err(); // abc 023 - wrong
+  let n = skip(isNum), sep='', d=''; // numerator, separator, denominator
+
+  if ((numTypes[cur[idx]])) {
+    sep = skip()
+    if ([PLUS, MINUS].includes(cur.charCodeAt(idx))) d = skip()
+    d += skip(isNum)
   }
-  if ((a=+a)!=a) err('Bad number', a)
 
   // subscript takes 0/nullish value as wrong token, so we must wrap 0 into token
   // can be useful after (hopefully)
-  return [fract ? 'float' : 'int', a]
+  return (numTypes[sep])(n, d) || err('Bad number')
+}
+const numTypes = {
+  '': (n, d) => ['int', +n],
+  '.': (n, d) => ['flt', Number(n+'.'+d)],
+  'e': (n, d) => ['flt', Number(n+'e'+d)],
+  'x': (n, d) => ['hex', parseInt(d, 16)],
+  'b': (n, d) => ['bin', parseInt(d, 2)]
 }
 // .1
 // '.',, a=>!a && num(),
 // 0-9
 for (let i = 0; i<=9; i++) lookup[_0+i] = num;
+lookup[PERIOD] = a=>!a && num();
 
 
 const string = q => (qc, c, str='') => {
@@ -55,8 +63,8 @@ lookup[QUOTE] = string(QUOTE)
 token('//', PREC_TOKEN, (a, prec) => (skip(c => c >= SPACE), a||expr(prec)))
 
 // sequences
-nary(',', PREC_GROUP, true)
-nary(';', PREC_SEQ, true)
+nary(',', PREC_SEQ, true)
+nary(';', PREC_SEMI, true)
 nary('||', PREC_SOME)
 nary('&&', PREC_EVERY)
 
@@ -99,12 +107,11 @@ unary('--', PREC_UNARY)
 token('++', PREC_UNARY, a => a && ['-',['++',a],1])
 token('--', PREC_UNARY, a => a && ['+',['--',a],1])
 
-
 unary('^', PREC_TOKEN) // pin: ^ a
-// unary('.', PREC_END, true) // end token
+unary('^^', PREC_TOKEN) // pin: ^ a
 
 // a.b
-token('.', PREC_CALL, (a,b) => a && (b=expr(PREC_CALL)) && ['.', a, b])
+token('.', PREC_CALL, (a,b) => a && (console.log('.', a),b=expr(PREC_CALL)) && ['.', a, b])
 
 // a..b, ..b, a..
 token('..', PREC_CALL, a => ['..', a || '', expr(PREC_CALL)])

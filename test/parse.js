@@ -2,14 +2,14 @@ import t, { is, ok, same } from 'tst'
 import parse from '../src/parse.js'
 
 
-t.only('parse: common', t => {
+t('parse: common', t => {
   is(parse('1+1'), ['+', ['int',1], ['int',1]])
-  is(parse('1.0+1.0'), ['+', ['float',1], ['float',1]])
+  is(parse('1.0+1.0'), ['+', ['flt',1], ['flt',1]])
   is(parse('a+b-c'), ['-',['+', 'a', 'b'],'c'])
   is(parse(`x([left], v)`), ['(','x',[',',['[','left'],'v']])
 })
 
-t.only('parse: identifiers', t => {
+t('parse: identifiers', t => {
   // permit @#$_
   is(parse('Δx, _b#, c_c, $d0'), [',', 'δx', '_b#','c_c','$d0'])
 
@@ -18,6 +18,18 @@ t.only('parse: identifiers', t => {
 
   is(parse('Ab_C_F#, $0, Δx'), [',', 'ab_c_f#', '$0', 'δx'])
   is(parse('default=1; eval=fn, else=0;'), [';', ['=', 'default', ['int',1]], [',', ['=', 'eval', 'fn'], ['=', 'else', ['int',0]]], null])
+})
+
+t('parse: numbers', t => {
+  is(parse('16, 0x10, 0b010000'), [',',['int', 16], ['hex', 16], ['bin', 16]]);
+  // console.log(parse('1, .1'))
+  is(parse('16.0, .1, 1e+3, 2e-3'), [',', ['flt', 16], ['flt', 0.1], ['flt', 1e3], ['flt', 2e-3]]);
+  is(parse('true=0b1, false=0b0'), [',', ['=', 'true', ['bin', 1]], ['=', 'false', ['bin', 0]]]);
+})
+
+t('parse: type cast', t => {
+  is(parse('1 / 3; 2 * 3.14'), [';', ['/', ['int', 1],['int', 3]], ['*', ['int', 2], ['flt', 3.14]]]);
+  is(parse('3.0 | 0'), ['|', ['flt', 3], ['int', 0]]);
 })
 
 t('parse: end operator precedence', t => {
