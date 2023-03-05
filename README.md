@@ -11,9 +11,9 @@ It has common syntax and compiles to optimized WASM bytecode, making it availabl
 
 ```fs
 //////////////////////////// naming convention
-foo_bar == Foo_Bar;         // ids are case-insensitive
-Ab_C_F#, $0, Δx;            // ids permit #, _, $, alnum, unicodes
-default=1; eval=fn, else=0; // lino has no reserved words
+Ab_C_F#, $0, Δx;             // ids permit #, _, $, alnum, unicodes
+foo_bar_δ == Foo_Bar_Δ;      // ids are case-insensitive, dash case
+default=1; eval=fn, else=0;  // ids can be any common words (lino has no reserved words)
 
 //////////////////////////// numbers
 16, 0x10, 0b0;               // int, (dec, hex or binary form)
@@ -159,9 +159,9 @@ gain = ([100]in, amp) -> in*amp; // sublist argument
 //////////////////////////// stateful variables
 a = () -> ( *i=0; i++ );         // stateful variable persist value between fn calls
 a(), a();                        // 0, 1
-b = () -> (                      //    
+b = () -> (                      //
   *[4]i;                         // memory of 4 items
-  i.0 = i.1+1;                   // read previous value 
+  i.0 = i.1+1;                   // read previous value
   i.0                            // return currrent value
 );                               //
 b(), b(), b();                   // 1, 2, 3

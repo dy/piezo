@@ -16,4 +16,5 @@
 * [ ] https://github.com/tidalcycles/strudel
 * [ ] https://cowbell.lol/
 * [ ] LUFS and other meters https://github.com/klangfreund/LUFSMeter/blob/master/Ebu128LoudnessMeter.cpp
-
+* [ ] https://phoboslab.org/log/2023/02/qoa-time-domain-audio-compression
+* [ ] decoders from audio-decode

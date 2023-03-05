@@ -32,6 +32,8 @@
 * [ ] sonr expressions
   * `sin(432 + 10*sin(8)) * adsr(0, 0, .4, 0)`
 
+* [ ] Loudness meter for waveplay
+
 ## Test cases
 
 * sonr expressions

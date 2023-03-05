@@ -2104,6 +2104,7 @@ Having wat files is more useful than direct compilation to binary form:
     + both kinds of sizes possible
     - lame as length/abs operator: []123 is lame.
     + `*[]x` has more meaning than `*x[]` - this way we indicate size of memory, not size of `x` in memory.
+    + `[]x` is golang array notation
 
 ### [x] Should we instead of batch variable indicate arg layout? -> yes, meaningful for all input var, array var and state var.
 
@@ -2227,3 +2228,11 @@ Having wat files is more useful than direct compilation to binary form:
   Top Back Left - TBL
   Top Back Center - TBC
   Top Back Right - TBR
+
+## [ ] !Defer
+  + like golang defer execution runs item after function return
+
+## [ ] Try-catch
+
+  !1 Golang-like `result : err = fn()`
+    + matches reverse-ternary op
