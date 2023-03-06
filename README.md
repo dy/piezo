@@ -13,12 +13,12 @@ It has common syntax and compiles to optimized WASM bytecode, making it availabl
 //////////////////////////// naming convention
 foo123, Ab_C_F#, $0, Δx;     // ids permit alnum, #, _, $, unicodes
 foo_bar_δ == Foo_Bar_Δ;      // ids are case-insensitive, dash case
-default=1; eval=fn, else=0;  // ids can be any common words (lino has no reserved words)
+default=1; eval=fn; else=0;  // ids can be any common words (lino has no reserved words)
 
 //////////////////////////// numbers
 16, 0x10, 0b0;               // int (dec, hex or binary form)
 16.0, .1, 1e3, 2e-3;         // floats
-true=0b1, false=0b0;         // alias booleans (not provided by default)
+true, false = 0b1, 0b0;      // alias booleans (not provided by default)
 
 //////////////////////////// type cast
 1 / 3; 2 * 3.14;            // ints upgrade to floats implicitly
@@ -55,10 +55,10 @@ x -<= 0..10;                 // x = clamp(x, 0, 10)
 [1,2,3][];                   // 3
 (1,2,3)[];                   // 3
 "abc"[];                     // 3
--1..+2[];                    // 3
+(-1..+2)[];                    // 3
 
 //////////////////////////// groups
-a, b, c;                    // groups are syntactic sugar, not data type
+a, b, c;                    // groups are syntactic sugar, not tuple data type
 (a, b, c)++;                // they apply operation to multiple elements: (a++, b++, c++)
 (a, (b, c)) == a, b, c;     // groups are always flat
 a,b,c = d,e,f;              // assign: a=d, b=e, c=f
@@ -66,9 +66,10 @@ a,b = b,a;                  // swap: temp=a; a=b; b=temp;
 (a,b) + (c,d);              // operations: (a+c, b+d)
 (a,b).x;                    // (a.x, b.x);
 (a,b).x();                  // (a.x(), b.x());
-a,b,c = (d,e,f);            // a=d, b=e, c=f
-(a,b,c) = d;                // a=d, b=d, c=d
+a,b,c = (d,e,f);            // a=d; b=e; c=f
+(a,b,c) = d;                // a=d, b=d; c=d
 a = b,c,d;                  // a=b, a=c, a=d
+a = b, c = d;               // a = b, a = c cnote difference with JS
 
 //////////////////////////// strings
 hi="hello";                 // strings

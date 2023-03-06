@@ -17,13 +17,13 @@ t('parse: identifiers', t => {
   is(parse('A, Bc, d_E'), [',', 'a', 'bc','d_e'])
 
   is(parse('Ab_C_F#, $0, Δx'), [',', 'ab_c_f#', '$0', 'δx'])
-  is(parse('default=1; eval=fn, else=0;'), [';', ['=', 'default', ['int',1]], [',', ['=', 'eval', 'fn'], ['=', 'else', ['int',0]]], null])
+  is(parse('default=1; eval=fn; else=0'), [';', ['=', 'default', ['int',1]], ['=', 'eval', 'fn'], ['=', 'else', ['int',0]]])
 })
 
 t('parse: numbers', t => {
   is(parse('16, 0x10, 0b010000'), [',',['int', 16], ['hex', 16], ['bin', 16]]);
   is(parse('16.0, .1, 1e+3, 2e-3'), [',', ['flt', 16], ['flt', 0.1], ['flt', 1e3], ['flt', 2e-3]]);
-  is(parse('true=0b1, false=0b0'), [',', ['=', 'true', ['bin', 1]], ['=', 'false', ['bin', 0]]]);
+  is(parse('true=0b1; false=0b0'), [';', ['=', 'true', ['bin', 1]], ['=', 'false', ['bin', 0]]]);
 
   throws(() => parse('12.'), /Bad/)
   throws(() => parse('12e+'), /Bad/)
@@ -66,10 +66,43 @@ t('parse: clamp operator', t => {
 })
 
 t('parse: length operator', t => {
-  // [1,2,3][];                   // 3
-  // (1,2,3)[];                   // 3
-  // "abc"[];                     // 3
-  // -1..+2[];                    // 3
+  is(parse('[a,b,c][]'), ['[]', ['[', [',','a','b','c']]])
+  is(parse('(a,b,c)[]'), ['[]', ['(', [',','a','b','c']]])
+  is(parse('"abc"[]'), ['[]', ['"', "abc"]])
+  is(parse('(-a..+b)[]'), ['[]', ['(',['..', ['-','a'],['+','b']]]])
+})
+
+t('groups', t => {
+  is(parse('a, b, c'), [',','a','b','c'], 'groups are syntactic sugar, not data type')
+  is(parse('++(a, b, c)'), ['++',['(',[',','a','b','c']]], 'they apply operation to multiple elements: (a++, b++, c++)')
+  is(parse('(a, (b, c)) == (a, b, c)'), ['==',['(',[',','a',['(',[',','b','c']]]],['(',[',','a','b','c']]], 'groups are always flat')
+  is(parse('a,b,c = d,e,f'), ['=',[',','a','b','c'],[',','d','e','f']], 'assign: a=d, b=e, c=f')
+  is(parse('a,b = b,a'), ['=', [',','a','b'], [',', 'b', 'a']], 'swap: temp=a; a=b; b=temp;')
+  is(parse('(a,b) + (c,d)'), ['+',['(',[',','a','b']],['(',[',','c','d']]], 'operations: (a+c, b+d)')
+  is(parse('(a,b).x'), ['.',['(',[',','a','b']],'x'], '(a.x, b.x);')
+  is(parse('(a,b).x()'), ['(',['.',['(',[',','a','b']],'x'],undefined], '(a.x(), b.x());')
+  is(parse('a,b,c = (d,e,f)'), ['=',[',','a','b','c'],['(',[',','d','e','f']]], 'a=d, b=e, c=f')
+  is(parse('(a,b,c) = d'), ['=',['(',[',','a','b','c']],'d'], 'a=d, b=d, c=d')
+  is(parse('a = b,c,d'), ['=','a',[',','b','c','d']], 'a=b, a=c, a=d')
+})
+
+t('parse:strings', t => {
+  is(parse('hi="hello"'),['=','hi',['"','hello']], 'strings')
+  is(parse('string="%hi world"'),[], 'interpolated string: "hello world"')
+  is(parse('"\u0020", "\x20"'),[], 'unicode or ascii codes')
+  is(parse('string[1]; string.1'),[], 'positive indexing from first element [0]: \'e\'')
+  is(parse('string[-3]'),[], 'negative indexing from last element [-1]: \'r\'')
+  is(parse('string[2..10]'),[], 'substring')
+  is(parse('string[1, 2..10, -1]'),[], 'slice/pick multiple elements')
+  is(parse('string[-1..0]'),[], 'reverse')
+  is(parse('string[]'),[], 'length')
+  is(parse('string == string'),[], 'comparison (==,!=,>,<)')
+  is(parse('string + string'),[], 'concatenation: "hello worldhello world"')
+  is(parse('string - string'),[], 'removes all occurences of the right string in the left string: ""')
+  is(parse('string / string'),[], 'split: "a b" / " " = ["a", "b"]')
+  is(parse('string * list'),[], 'join: " " * ["a", "b"] = "a b"')
+  is(parse('string ~> "l"'),[], 'indexOf: 2')
+  is(parse('string <~ "l"'),[], 'rightIndexOf: -2')
 })
 
 t('parse: errors', t => {

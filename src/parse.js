@@ -8,31 +8,30 @@ const OPAREN=40, CPAREN=41, OBRACK=91, CBRACK=93, SPACE=32, QUOTE=39, DQUOTE=34,
 
 // precedences
 const PREC_SEMI=1,
-PREC_FUNC=2,
-PREC_TERNARY=3,
-PREC_SEQUENCE=4,
-PREC_OR=4,
-PREC_AND=5,
-PREC_ASSIGN=5,
-PREC_BOR=6,
-PREC_XOR=7,
-PREC_BAND=8,
-PREC_EQ=9,
-PREC_COMP=10,
-PREC_SHIFT=11,
-PREC_CLAMP=11.5, // pre-arithmetical: a + b * c -< 10, NOT a < b -< c, a << b -< c
-PREC_SUM=12,
-PREC_RANGE=12.5, // +a..-b, a**2..b**3, a*2..b*3, NOT a+2..b+3
-PREC_MULT=13,
-PREC_POW=14,
-PREC_UNARY=15,
-PREC_POSTFIX=16,
-PREC_CALL=18, // a(b), a.b, a[b]
-PREC_TOKEN=20 // [a,b] etc
+PREC_ASSIGN=3,  // a = b=>c,  a,b = c,d,  a = b||c,  a = b|c (NOTE: different from JS, more Pythony)
+PREC_FUNC=4,
+PREC_SEQUENCE=5, // a => b,c; BUT a, b==c, d,   a, b>=c, d,  a | b,c | d,   a?b:c , d
+PREC_TERNARY=6,
+PREC_OR=7,
+PREC_AND=8,
+PREC_BOR=9,
+PREC_XOR=10,
+PREC_BAND=11,
+PREC_EQ=12,
+PREC_COMP=13,
+PREC_SHIFT=14,
+PREC_CLAMP=15, // pre-arithmetical: a+b*c -< 10; BUT a < b-<c, a << b-<c
+PREC_SUM=16,
+PREC_RANGE=17, // +a .. -b, a**2 .. b**3, a*2 .. b*3; BUT a + 2..b + 3
+PREC_MULT=18,
+PREC_POW=19,
+PREC_UNARY=20,
+PREC_POSTFIX=21,
+PREC_CALL=22, // a(b), a.b, a[b], a[]
+PREC_TOKEN=23 // [a,b] etc
 
 // make id support #
 parse.id = n => skip(char => isId(char) || char === HASH).toLowerCase()
-
 
 const isNum = c => c >= _0 && c <= _9
 const num = (a) => {
@@ -174,8 +173,9 @@ token('[', PREC_TOKEN, (a) => !a && ['[', expr(0,93)||''])
 token(':', 1.1, (a, b) => (b=expr(1.1)||err(), [':',a,b]))
 
 // (a,b,c), (a)
+// FIXME: do we need extra wrapper here? can we just return internal token
 token('(', PREC_CALL, a => !a && ['(', expr(0,CPAREN)||err()])
 
 // a(b,c,d), a()
-token('(', PREC_CALL, (a,b) => a && ((b=expr(0, CPAREN)) ? ['(', a, b] : ['(', a]))
+token('(', PREC_CALL, (a,b) => a && ['(', a, expr(0, CPAREN)])
 

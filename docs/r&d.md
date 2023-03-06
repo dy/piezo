@@ -904,6 +904,7 @@ Having wat files is more useful than direct compilation to binary form:
   + `x -<= 0..10` is just a nice construct
 
 ## [x] comments: //, /* vs ;; and (; ;) → use familiar `//`
+
   + ;; make more sense, since ; is separator, and everything behind it doesnt matter
   + (; makes more sense as "group with comments", since we use only ( for groups.
   + ;; is less noisy than //
@@ -922,7 +923,7 @@ Having wat files is more useful than direct compilation to binary form:
     )
   ```
   - // is super-familiar and js/c-y
-    ~ just reformat
+  - // is used in python for floor division, very handy: (a / b | 0) -> a//b
   ? ALT: use \
     + mono-compatible
     + \ is almost never used in langs & that's unique
