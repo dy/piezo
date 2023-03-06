@@ -52,17 +52,17 @@ t('parse: ranges', t => {
 })
 
 t('parse: standard operators', t => {
-  is(parse('a + b - c * d / e % f ** g'), [], 'arithmetical (** for pow)')
-  is(parse('a && b || !c'), [], 'logical')
-  is(parse('a & b | c ^ ~d'), [],  'int / binary ops')
-  is(parse('a == b != c >= d <= e'), [], 'comparisons')
+  is(parse('a + b - c * d / e % f ** g'), ['-', ['+', 'a', 'b'], ['%', ['/', ['*', 'c', 'd'], 'e'], ['**', 'f', 'g']]], 'arithmetical (** for pow)')
+  is(parse('a && b || !c'), ['||', ['&&', 'a', 'b'], ['!', 'c']], 'logical')
+  is(parse('a & b | c ^ ~d'), ['|', ['&', 'a', 'b'], ['^', 'c', ['~','d']]],  'int / binary ops')
+  is(parse('a == b != c >= d <= e'), ['!=', ['==', 'a', 'b'], ['<=', ['>=', 'c', 'd'], 'e']], 'comparisons')
 })
 
 t('parse: clamp operator', t => {
-  is(parse('x -< 0..10;'),['-<', 'x', ['..', ['int',0], ['int',10]]], 'clamp(x, 0, 10)')
-  is(parse('x -< ..10;'),['-<', 'x', ['..',undefined,['int',10]]], 'min(x, 10)')
-  is(parse('x -< 0..;'),['-<', 'x', ['..',['int',0],undefined]], 'max(0, x)')
-  is(parse('x -<= 0..10;'),['-<=', 'x', ['..',['int',0],['int',10]]], 'x = clamp(x, 0, 10)')
+  is(parse('x -< 0..10;'), [';',['-<', 'x', ['..', ['int',0], ['int',10]]],undefined], 'clamp(x, 0, 10)')
+  is(parse('x -< ..10;'), [';',['-<', 'x', ['..',undefined,['int',10]]],undefined], 'min(x, 10)')
+  is(parse('x -< 0..;'), [';',['-<', 'x', ['..',['int',0],undefined]],undefined], 'max(0, x)')
+  is(parse('x -<= 0..10;'), [';',['-<=', 'x', ['..',['int',0],['int',10]]], undefined], 'x = clamp(x, 0, 10)')
 })
 
 t('parse: length operator', t => {

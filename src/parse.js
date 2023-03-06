@@ -3,11 +3,32 @@ import parse, { lookup, skip, cur, idx, err, expr, token, unary, binary, nary, i
 
 export default (src) => parse(src)
 
-// char codes & precedences
-const OPAREN=40, CPAREN=41, OBRACK=91, CBRACK=93, SPACE=32, QUOTE=39, DQUOTE=34, PERIOD=46, BSLASH=92, _0=48, _9=57, COLON=58, HASH=35, AT=64, _X = 120, _B = 98, PLUS = 43, MINUS = 45,
-PREC_SEMI=1, PREC_END=6, PREC_ASSIGN=5, PREC_FUNC=2, PREC_LOOP=2, PREC_SEQ=4, PREC_COND=3, PREC_SOME=4, PREC_EVERY=5, PREC_OR=6, PREC_XOR=7, PREC_AND=8,
-PREC_EQ=9, PREC_COMP=10, PREC_SHIFT=11, PREC_SUM=12, PREC_MULT=13, PREC_EXP=14, PREC_UNARY=15, PREC_POSTFIX=16, PREC_CALL=18, PREC_TOKEN=20,
-PREC_RANGE=12.5 // +a..-b, a**2..b**3, a*2..b*3, but not a+2..b+3
+// char codes
+const OPAREN=40, CPAREN=41, OBRACK=91, CBRACK=93, SPACE=32, QUOTE=39, DQUOTE=34, PERIOD=46, BSLASH=92, _0=48, _9=57, COLON=58, HASH=35, AT=64, _X = 120, _B = 98, PLUS = 43, MINUS = 45
+
+// precedences
+const PREC_SEMI=1,
+PREC_FUNC=2,
+PREC_TERNARY=3,
+PREC_SEQUENCE=4,
+PREC_OR=4,
+PREC_AND=5,
+PREC_ASSIGN=5,
+PREC_BOR=6,
+PREC_XOR=7,
+PREC_BAND=8,
+PREC_EQ=9,
+PREC_COMP=10,
+PREC_SHIFT=11,
+PREC_CLAMP=11.5, // pre-arithmetical: a + b * c -< 10, NOT a < b -< c, a << b -< c
+PREC_SUM=12,
+PREC_RANGE=12.5, // +a..-b, a**2..b**3, a*2..b*3, NOT a+2..b+3
+PREC_MULT=13,
+PREC_POW=14,
+PREC_UNARY=15,
+PREC_POSTFIX=16,
+PREC_CALL=18, // a(b), a.b, a[b]
+PREC_TOKEN=20 // [a,b] etc
 
 // make id support #
 parse.id = n => skip(char => isId(char) || char === HASH).toLowerCase()
@@ -71,24 +92,25 @@ lookup[QUOTE] = string(QUOTE)
 token('//', PREC_TOKEN, (a, prec) => (skip(c => c >= SPACE), a||expr(prec)))
 
 // sequences
-nary(',', PREC_SEQ, true)
+nary(',', PREC_SEQUENCE, false)
 nary(';', PREC_SEMI, true)
-nary('||', PREC_SOME)
-nary('&&', PREC_EVERY)
+nary('||', PREC_OR)
+nary('&&', PREC_AND)
 
 // binaries
-binary('**', PREC_EXP, true)
+binary('**', PREC_POW, true)
 binary('=', PREC_ASSIGN, true)
 binary('+=', PREC_ASSIGN, true)
 binary('-=', PREC_ASSIGN, true)
+binary('-<=', PREC_ASSIGN, true)
 
 binary('+', PREC_SUM)
 binary('-', PREC_SUM)
 binary('*', PREC_MULT)
 binary('/', PREC_MULT)
 binary('%', PREC_MULT)
-binary('|', PREC_OR)
-binary('&', PREC_AND)
+binary('|', PREC_BOR)
+binary('&', PREC_BAND)
 binary('^', PREC_XOR)
 binary('==', PREC_EQ)
 binary('!=', PREC_EQ)
@@ -100,10 +122,10 @@ binary('>>', PREC_SHIFT)
 binary('>>>', PREC_SHIFT)
 binary('<<', PREC_SHIFT)
 
-binary('<-', PREC_COMP ) // a <- b
-binary('->', PREC_FUNC) // a,b->b,a
-binary('>-', PREC_FUNC) // a,b>-c
-binary('-<', PREC_LOOP) // a -< b
+// binary('<-', PREC_COMP ) // a <- b
+// binary('->', PREC_FUNC) // a,b->b,a
+// binary('>-', PREC_FUNC) // a,b>-c
+binary('-<', PREC_CLAMP) // a -< b
 
 // unaries
 unary('+', PREC_UNARY)
@@ -136,10 +158,10 @@ unary('*', PREC_UNARY)
 unary('@', PREC_ASSIGN)
 
 // a?b
-binary('?', PREC_COND)
+binary('?', PREC_TERNARY)
 
 // ?:
-token('?', PREC_COND, (a, b, c) => a && (b=expr(2)) && (cur[idx]===':'&&idx++) && (c=expr(3), ['?', a, b, c]))
+token('?', PREC_TERNARY, (a, b, c) => a && (b=expr(2)) && (cur[idx]===':'&&idx++) && (c=expr(3), ['?', a, b, c]))
 
 // a[b]
 token('[', PREC_CALL,  a => a && ['[', a, expr(0,CBRACK)||err()])
