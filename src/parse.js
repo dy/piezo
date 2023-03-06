@@ -15,12 +15,14 @@ parse.id = n => skip(char => isId(char) || char === HASH).toLowerCase()
 const isNum = c => c >= _0 && c <= _9
 const num = (a) => {
   if (a) err(); // abc 023 - wrong
-  let n = skip(isNum), sep='', d='', unit, ext; // numerator, separator, denominator, unit, extra
+  let n = skip(isNum), sep='', d='', unit; // numerator, separator, denominator, unit
 
-  if (numTypes[cur[idx]]) {
+  let next = cur.charCodeAt(idx+1)
+  if (numTypes[cur[idx]] && (isNum(next) || next === PLUS || next === MINUS)) {
     sep = skip()
-    if ([PLUS, MINUS].includes(cur.charCodeAt(idx))) d = skip()
+    if (next === PLUS || next === MINUS) d = skip()
     d += skip(isNum)
+    if (sep && !d) err('Bad number', n + sep + d)
   }
 
   // subscript takes 0/nullish value as wrong token, so we must wrap 0 into token
@@ -115,11 +117,11 @@ token('--', PREC_UNARY, a => a && ['+',['--',a],1])
 unary('^', PREC_TOKEN) // pin: ^ a
 unary('^^', PREC_TOKEN) // pin: ^ a
 
-// a.b
-token('.', PREC_CALL, (a,b) => a && (b=expr(PREC_CALL)) && ['.', a, b])
-
 // a..b, ..b, a..
 token('..', PREC_CALL, a => ['..', a || '', expr(PREC_CALL)])
+
+// a.b
+token('.', PREC_CALL, (a,b) => a && (b=expr(PREC_CALL)) && ['.', a, b])
 
 // *a
 unary('*', PREC_UNARY)

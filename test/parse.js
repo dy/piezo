@@ -1,4 +1,4 @@
-import t, { is, ok, same } from 'tst'
+import t, { is, ok, same, throws } from 'tst'
 import parse from '../src/parse.js'
 
 
@@ -20,11 +20,13 @@ t('parse: identifiers', t => {
   is(parse('default=1; eval=fn, else=0;'), [';', ['=', 'default', ['int',1]], [',', ['=', 'eval', 'fn'], ['=', 'else', ['int',0]]], null])
 })
 
-t('parse: numbers', t => {
+t.only('parse: numbers', t => {
   is(parse('16, 0x10, 0b010000'), [',',['int', 16], ['hex', 16], ['bin', 16]]);
   // console.log(parse('1, .1'))
   is(parse('16.0, .1, 1e+3, 2e-3'), [',', ['flt', 16], ['flt', 0.1], ['flt', 1e3], ['flt', 2e-3]]);
   is(parse('true=0b1, false=0b0'), [',', ['=', 'true', ['bin', 1]], ['=', 'false', ['bin', 0]]]);
+
+  throws(() => parse('12.'), /Bad/)
 })
 
 t('parse: type cast', t => {
@@ -37,6 +39,22 @@ t('parse: units', t => {
   is(parse('1s = 44100; 1ms = 1s/1000;'), [';',['=',['int',1,'s'],['int',44100]], ['=', ['int',1,'ms'], ['/',['int',1,'s'],['int',1000]]], null], 'useful for sample indexes')
   is(parse('10.1k, 2pi;'),[';', [',', ['flt', 10.1, 'k'], ['int', 2, 'pi']], undefined], 'units deconstruct to numbers: 10100, 6.283')
   is(parse('1h2m3.5s'), ['int', 1, 'h', ['int', 2, 'm', ['flt', 3.5, 's']]], 'unit combinations')
+})
+
+t.only('parse: ranges', t => {
+  is(parse('1..10'), ['..',['int',1],['int',10]], 'basic range')
+  is(parse('1.., ..10'), [',',['..',['int',1]], ['..',['int',10]]], 'open ranges')
+  is(parse('10..1'), ['..',['int',10],['int',1]], 'reverse-direction range')
+  is(parse('1.08..108.0'), ['..',['flt',1.08],['flt',108]], 'float range')
+  is(parse('0>..10, 0..<10, 0>..<10'), [',',['>..'],['..<'],['>..<']], 'non-inclusive ranges')
+  is(parse('(x-1)..(x+1)'), [], 'calculated ranges')
+  is(parse('-10..10[]'), [], 'length (20)')
+})
+
+t('parse: errors', t => {
+  let log = []
+  try { parse('...x') } catch (e) { log.push('...') }
+  is(log, ['...'])
 })
 
 t('parse: end operator precedence', t => {
