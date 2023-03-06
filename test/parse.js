@@ -20,13 +20,13 @@ t('parse: identifiers', t => {
   is(parse('default=1; eval=fn, else=0;'), [';', ['=', 'default', ['int',1]], [',', ['=', 'eval', 'fn'], ['=', 'else', ['int',0]]], null])
 })
 
-t.only('parse: numbers', t => {
+t('parse: numbers', t => {
   is(parse('16, 0x10, 0b010000'), [',',['int', 16], ['hex', 16], ['bin', 16]]);
-  // console.log(parse('1, .1'))
   is(parse('16.0, .1, 1e+3, 2e-3'), [',', ['flt', 16], ['flt', 0.1], ['flt', 1e3], ['flt', 2e-3]]);
   is(parse('true=0b1, false=0b0'), [',', ['=', 'true', ['bin', 1]], ['=', 'false', ['bin', 0]]]);
 
   throws(() => parse('12.'), /Bad/)
+  throws(() => parse('12e+'), /Bad/)
 })
 
 t('parse: type cast', t => {
@@ -41,14 +41,14 @@ t('parse: units', t => {
   is(parse('1h2m3.5s'), ['int', 1, 'h', ['int', 2, 'm', ['flt', 3.5, 's']]], 'unit combinations')
 })
 
-t.only('parse: ranges', t => {
+t('parse: ranges', t => {
   is(parse('1..10'), ['..',['int',1],['int',10]], 'basic range')
-  is(parse('1.., ..10'), [',',['..',['int',1]], ['..',['int',10]]], 'open ranges')
+  is(parse('1.., ..10'), [',',['..',['int',1],,], ['..',,['int',10]]], 'open ranges')
   is(parse('10..1'), ['..',['int',10],['int',1]], 'reverse-direction range')
   is(parse('1.08..108.0'), ['..',['flt',1.08],['flt',108]], 'float range')
-  is(parse('0>..10, 0..<10, 0>..<10'), [',',['>..'],['..<'],['>..<']], 'non-inclusive ranges')
-  is(parse('(x-1)..(x+1)'), [], 'calculated ranges')
-  is(parse('-10..10[]'), [], 'length (20)')
+  is(parse('0>..10, 0..<10, 0>..<10'), [',',['>..', ['int',0], ['int',10]],['..<',['int',0],['int',10]],['>..<',['int',0],['int',10]]], 'non-inclusive ranges')
+  is(parse('(x-1)..(x+1)'), ['..', ['(',['-','x',['int',1]]], ['(',['+','x',['int',1]]]], 'calculated ranges')
+  is(parse('(-10..10)[]'), ['[]',['(', ['..',['-',['int',10]], ['int',10]]]], 'length (20)')
 })
 
 t('parse: errors', t => {

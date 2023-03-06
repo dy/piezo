@@ -6,7 +6,8 @@ export default (src) => parse(src)
 // char codes & precedences
 const OPAREN=40, CPAREN=41, OBRACK=91, CBRACK=93, SPACE=32, QUOTE=39, DQUOTE=34, PERIOD=46, BSLASH=92, _0=48, _9=57, COLON=58, HASH=35, AT=64, _X = 120, _B = 98, PLUS = 43, MINUS = 45,
 PREC_SEMI=1, PREC_END=6, PREC_ASSIGN=5, PREC_FUNC=2, PREC_LOOP=2, PREC_SEQ=4, PREC_COND=3, PREC_SOME=4, PREC_EVERY=5, PREC_OR=6, PREC_XOR=7, PREC_AND=8,
-PREC_EQ=9, PREC_COMP=10, PREC_SHIFT=11, PREC_SUM=12, PREC_MULT=13, PREC_EXP=14, PREC_UNARY=15, PREC_POSTFIX=16, PREC_CALL=18, PREC_TOKEN=20
+PREC_EQ=9, PREC_COMP=10, PREC_SHIFT=11, PREC_SUM=12, PREC_MULT=13, PREC_EXP=14, PREC_UNARY=15, PREC_POSTFIX=16, PREC_CALL=18, PREC_TOKEN=20,
+PREC_RANGE=12.5 // +a..-b, a**2..b**3, a*2..b*3, but not a+2..b+3
 
 // make id support #
 parse.id = n => skip(char => isId(char) || char === HASH).toLowerCase()
@@ -20,8 +21,8 @@ const num = (a) => {
   let next = cur.charCodeAt(idx+1)
   if (numTypes[cur[idx]] && (isNum(next) || next === PLUS || next === MINUS)) {
     sep = skip()
-    if (next === PLUS || next === MINUS) d = skip()
-    d += skip(isNum)
+    if (next === PLUS || next === MINUS) d = skip(), d += (skip(isNum) || err('Bad number', n + sep + d))
+    else d = skip(isNum)
     if (sep && !d) err('Bad number', n + sep + d)
   }
 
@@ -118,10 +119,15 @@ unary('^', PREC_TOKEN) // pin: ^ a
 unary('^^', PREC_TOKEN) // pin: ^ a
 
 // a..b, ..b, a..
-token('..', PREC_CALL, a => ['..', a || '', expr(PREC_CALL)])
+token('..', PREC_RANGE, a => ['..', a, expr(PREC_RANGE)])
+token('>..', PREC_RANGE, a => ['>..', a, expr(PREC_RANGE)])
+token('>..<', PREC_RANGE, a => ['>..<', a, expr(PREC_RANGE)])
+token('..<', PREC_RANGE, a => ['..<', a, expr(PREC_RANGE)])
 
 // a.b
-token('.', PREC_CALL, (a,b) => a && (b=expr(PREC_CALL)) && ['.', a, b])
+// token('.', PREC_CALL, (a,b) => a && (b=expr(PREC_CALL)) && ['.', a, b])
+// NOTE: we don't parse expression to avoid 0..1 recognize as 0[.1]
+token('.', PREC_CALL, (a,b) => a && (b=skip(isId)) && ['.', a, b])
 
 // *a
 unary('*', PREC_UNARY)
@@ -137,6 +143,9 @@ token('?', PREC_COND, (a, b, c) => a && (b=expr(2)) && (cur[idx]===':'&&idx++) &
 
 // a[b]
 token('[', PREC_CALL,  a => a && ['[', a, expr(0,CBRACK)||err()])
+
+// a[]
+unary('[]', PREC_CALL, true)
 
 // [a,b,c]
 token('[', PREC_TOKEN, (a) => !a && ['[', expr(0,93)||''])
