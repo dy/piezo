@@ -9,12 +9,13 @@ const OPAREN=40, CPAREN=41, OBRACK=91, CBRACK=93, SPACE=32, QUOTE=39, DQUOTE=34,
 // precedences
 const PREC_SEMI=1,
 PREC_ASSIGN=3,  // a = b=>c,  a,b = c,d,  a = b||c,  a = b|c (NOTE: different from JS, more Pythony)
-PREC_FUNC=4,
+PREC_BOR=3.5, // NOTE: reduced weight to use as pipe operator, may cause side-effects (which ones?)
+PREC_FUNC=4, // a = b=>c, BUT b => c,d
 PREC_SEQUENCE=5, // a => b,c; BUT a, b==c, d,   a, b>=c, d,  a | b,c | d,   a?b:c , d
 PREC_TERNARY=6,
+PREC_LABEL=6.5, // a:b = 2,  a:b, b:c,   a: b&c
 PREC_OR=7,
 PREC_AND=8,
-PREC_BOR=9,
 PREC_XOR=10,
 PREC_BAND=11,
 PREC_EQ=12,
@@ -122,7 +123,7 @@ binary('>>>', PREC_SHIFT)
 binary('<<', PREC_SHIFT)
 
 // binary('<-', PREC_COMP ) // a <- b
-// binary('->', PREC_FUNC) // a,b->b,a
+binary('->', PREC_FUNC) // a,b->b,a
 // binary('>-', PREC_FUNC) // a,b>-c
 binary('-<', PREC_CLAMP) // a -< b
 
@@ -173,7 +174,7 @@ unary('[]', PREC_CALL, true)
 
 // [a,b,c]
 token('[', PREC_TOKEN, (a) => !a && ['[', expr(0,93)||''])
-token(':', 1.1, (a, b) => (b=expr(1.1)||err(), [':',a,b]))
+binary(':', PREC_LABEL)
 
 // (a,b,c), (a)
 // FIXME: do we need extra wrapper here? can we just return internal token

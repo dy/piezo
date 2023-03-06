@@ -2231,9 +2231,17 @@ Having wat files is more useful than direct compilation to binary form:
   Top Back Right - TBR
 
 ## [ ] !Defer
+
   + like golang defer execution runs item after function return
 
-## [ ] Try-catch
+## [ ] !Try-catch
 
-  !1 Golang-like `result : err = fn()`
+  ! Golang-like `result : err = fn()`
     + matches reverse-ternary op
+    + also see trytm https://github.com/bdsqqq/try
+
+## [x] Pipe: replace with `|:` operator? -> let's use lowered-precedence `|` for now and see for side-effects
+
+  + Doesn't mess up precedence of `a,b | c`
+    - actually it's desired precedence...
+  - Doesn't look like classic pipe

@@ -105,6 +105,26 @@ t('parse:strings', t => {
   is(parse('string <~ "l"'),['<~','string',['"','l']], 'rightIndexOf: -2')
 })
 
+t.only('parse: lists', t => {
+  is(parse('list = [1, 2, 3]'), ['=','list',['[',[',',['int',1],['int',2],['int',3]]]],'list from elements')
+  is(parse('list = [l:2, r:4]'), ['=','list',['[',[',',[':','l',['int',2]], [':','r',['int',4]]]]],'list with aliases')
+  is(parse('[0..10]'), ['[',['..',['int',0],['int',10]]],'list from range')
+  is(parse('[0..8 | i -> i*2]'), ['[',['|', ['..',['int',0],['int',8]], ['->', 'i', ['*', 'i', ['int', 2]]]]],'list comprehension')
+  is(parse('[2]list = list1'), ['=',[['[',],'list'],'list1'], '(sub)list of fixed size')
+  is(parse('list.0, list.1, list.2'), [],'short index access notation')
+  is(parse('list.l = 2'), [],'alias index access')
+  is(parse('list[0]'), [],'positive indexing from first element [0]: 2')
+  is(parse('list[-2]=5'), [],'negative indexing from last element [-1]: list becomes [2,4,5,8]')
+  is(parse('list[]'), [], 'length')
+  is(parse('list[1..3, 5]'), [], 'slice')
+  is(parse('list[5..]'), [],'slice')
+  is(parse('list[-1..0]'), [],'reverse')
+  is(parse('list | x -> x * 2'), [],'iterate/map items')
+  is(parse('list ~> item'), [],'find index of the item')
+  is(parse('list <~ item'), [],'rfind')
+  is(parse('list +-*/ 2'), [],'math operators act on all members')
+})
+
 t('parse: errors', t => {
   let log = []
   try { parse('...x') } catch (e) { log.push('...') }
