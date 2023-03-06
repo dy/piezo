@@ -51,6 +51,27 @@ t('parse: ranges', t => {
   is(parse('(-10..10)[]'), ['[]',['(', ['..',['-',['int',10]], ['int',10]]]], 'length (20)')
 })
 
+t('parse: standard operators', t => {
+  is(parse('a + b - c * d / e % f ** g'), [], 'arithmetical (** for pow)')
+  is(parse('a && b || !c'), [], 'logical')
+  is(parse('a & b | c ^ ~d'), [],  'int / binary ops')
+  is(parse('a == b != c >= d <= e'), [], 'comparisons')
+})
+
+t('parse: clamp operator', t => {
+  is(parse('x -< 0..10;'),['-<', 'x', ['..', ['int',0], ['int',10]]], 'clamp(x, 0, 10)')
+  is(parse('x -< ..10;'),['-<', 'x', ['..',undefined,['int',10]]], 'min(x, 10)')
+  is(parse('x -< 0..;'),['-<', 'x', ['..',['int',0],undefined]], 'max(0, x)')
+  is(parse('x -<= 0..10;'),['-<=', 'x', ['..',['int',0],['int',10]]], 'x = clamp(x, 0, 10)')
+})
+
+t('parse: length operator', t => {
+  // [1,2,3][];                   // 3
+  // (1,2,3)[];                   // 3
+  // "abc"[];                     // 3
+  // -1..+2[];                    // 3
+})
+
 t('parse: errors', t => {
   let log = []
   try { parse('...x') } catch (e) { log.push('...') }
