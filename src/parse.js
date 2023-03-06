@@ -22,11 +22,11 @@ PREC_COMP=13,
 PREC_SHIFT=14,
 PREC_CLAMP=15, // pre-arithmetical: a+b*c -< 10; BUT a < b-<c, a << b-<c
 PREC_SUM=16,
-PREC_RANGE=17, // +a .. -b, a**2 .. b**3, a*2 .. b*3; BUT a + 2..b + 3
-PREC_MULT=18,
-PREC_POW=19,
-PREC_UNARY=20,
-PREC_POSTFIX=21,
+PREC_FIND=17, // a <~ b*2, a..b <~ c BUT a<~b + 2
+PREC_RANGE=18, // +a .. -b, a**2 .. b**3, a*2 .. b*3; BUT a + 2..b + 3
+PREC_MULT=19,
+PREC_POW=20,
+PREC_UNARY=21,
 PREC_CALL=22, // a(b), a.b, a[b], a[]
 PREC_TOKEN=23 // [a,b] etc
 
@@ -125,6 +125,9 @@ binary('<<', PREC_SHIFT)
 // binary('->', PREC_FUNC) // a,b->b,a
 // binary('>-', PREC_FUNC) // a,b>-c
 binary('-<', PREC_CLAMP) // a -< b
+
+binary('~>', PREC_FIND) // a ~> b
+binary('<~', PREC_FIND) // a <~ b
 
 // unaries
 unary('+', PREC_UNARY)

@@ -86,6 +86,7 @@ string + string;            // concatenation: "hello worldhello world"
 string - string;            // removes all occurences of the right string in the left string: ""
 string / string;            // split: "a b" / " " = ["a", "b"]
 string * list;              // join: " " * ["a", "b"] = "a b"
+string * 2;                 // repeat: "abc" * 2 = "abcabc"
 string ~> "l";              // indexOf: 2
 string <~ "l";              // rightIndexOf: -2
 
