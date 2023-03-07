@@ -186,5 +186,6 @@ binary(':', PREC_LABEL)
 token('(', PREC_CALL, a => !a && ['(', expr(0,CPAREN)||err()])
 
 // a(b,c,d), a()
-token('(', PREC_CALL, (a,b) => a && ['(', a, expr(0, CPAREN)])
+token('(', PREC_CALL, (a,b) => a && ['()', a, expr(0, CPAREN)])
+unary('()', PREC_CALL, true)
 

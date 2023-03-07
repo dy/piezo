@@ -6,7 +6,7 @@ t('parse: common', t => {
   is(parse('1+1'), ['+', ['int',1], ['int',1]])
   is(parse('1.0+1.0'), ['+', ['flt',1], ['flt',1]])
   is(parse('a+b-c'), ['-',['+', 'a', 'b'],'c'])
-  is(parse(`x([left], v)`), ['(','x',[',',['[','left'],'v']])
+  is(parse(`x([left], v)`), ['()','x',[',',['[','left'],'v']])
 })
 
 t('parse: identifiers', t => {
@@ -72,7 +72,7 @@ t('parse: length operator', t => {
   is(parse('(-a..+b)[]'), ['[]', ['(',['..', ['-','a'],['+','b']]]])
 })
 
-t('groups', t => {
+t('parse: groups', t => {
   is(parse('a, b, c'), [',','a','b','c'], 'groups are syntactic sugar, not data type')
   is(parse('++(a, b, c)'), ['++',['(',[',','a','b','c']]], 'they apply operation to multiple elements: (a++, b++, c++)')
   is(parse('(a, (b, c)) == (a, b, c)'), ['==',['(',[',','a',['(',[',','b','c']]]],['(',[',','a','b','c']]], 'groups are always flat')
@@ -80,13 +80,13 @@ t('groups', t => {
   is(parse('a,b = b,a'), ['=', [',','a','b'], [',', 'b', 'a']], 'swap: temp=a; a=b; b=temp;')
   is(parse('(a,b) + (c,d)'), ['+',['(',[',','a','b']],['(',[',','c','d']]], 'operations: (a+c, b+d)')
   is(parse('(a,b).x'), ['.',['(',[',','a','b']],'x'], '(a.x, b.x);')
-  is(parse('(a,b).x()'), ['(',['.',['(',[',','a','b']],'x'],undefined], '(a.x(), b.x());')
+  is(parse('(a,b).x()'), ['()',['.',['(',[',','a','b']],'x']], '(a.x(), b.x());')
   is(parse('a,b,c = (d,e,f)'), ['=',[',','a','b','c'],['(',[',','d','e','f']]], 'a=d, b=e, c=f')
   is(parse('(a,b,c) = d'), ['=',['(',[',','a','b','c']],'d'], 'a=d, b=d, c=d')
   is(parse('a = b,c,d'), ['=','a',[',','b','c','d']], 'a=b, a=c, a=d')
 })
 
-t('parse:strings', t => {
+t('parse: strings', t => {
   is(parse('hi="hello"'),['=','hi',['"','hello']], 'strings')
   is(parse('string="%hi world"'),['=','string',['"','%hi world']], 'interpolated string: "hello world"')
   is(parse('"\u0020", "\x20"'),[',',['"','\u0020'],['"','\x20']], 'unicode or ascii codes')
@@ -123,6 +123,29 @@ t('parse: lists', t => {
   is(parse('list ~> item'), ['~>','list','item'],'find index of the item')
   is(parse('list <~ item'), ['<~','list','item'],'rfind')
   is(parse('list + 2'), ['+','list',['int',2]],'math operators act on all members')
+})
+
+t('parse: statements', t => {
+  is(parse('foo()'), ['()','foo'], 'semi-colons at end of line are mandatory')
+  is(parse('(c = a + b; c)'), ['(',[';',['=','c',['+','a','b']],'c']], 'parens define block, return last element')
+  is(parse('(a=b+1; a,b,c)'), ['(',[';',['=','a',['+','b',['int',1]]],[',','a','b','c']]], 'block can return group')
+  is(parse('(a ? ^b; c)'), ['(',[';',['?','a',['^','b']],'c']], 'return/break operator can preliminarily return value')
+  is(parse('(foo(); bar();)'), ['(',[';',['()','foo'],['()','bar'],null]], 'semi-colon after last statement returns void')
+})
+
+t('parse: conditions', t => {
+  // sign = a < 0 ? -1 : +1;       // inline ternary
+  // (2+2 >= 4) ?                  // multiline ternary
+  //   log("Math works!")          //
+  // : "a" < "b" ?                 // else if
+  //   log("Sort strings")         //
+  // : (                           // else
+  //   log("Get ready");           //
+  //   log("Last chance")          //
+  // );                            //
+  // a > b ? b++;                  // if operator
+  // a > b ?: b++;                 // elvis operator (else if)
+  // a,b,c >- x ? a++ : b++ : c++; // switch operator
 })
 
 t('parse: errors', t => {
