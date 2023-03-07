@@ -167,13 +167,18 @@ binary('?', PREC_TERNARY)
 token('?', PREC_TERNARY, (a, b, c) => a && (b=expr(2)) && (cur[idx]===':'&&idx++) && (c=expr(3), ['?', a, b, c]))
 
 // a[b]
-token('[', PREC_CALL,  a => a && ['[', a, expr(0,CBRACK)||err()])
+token('[', PREC_CALL,  a => a && ['[]', a, expr(0,CBRACK)||err()])
+
+// [a,b,c]
+token('[', PREC_TOKEN, (a) => !a && ['[', expr(0,CBRACK)||''])
 
 // a[]
 unary('[]', PREC_CALL, true)
 
-// [a,b,c]
-token('[', PREC_TOKEN, (a) => !a && ['[', expr(0,93)||''])
+// [1]a
+token('[', PREC_TOKEN, (a,len,name) => !a && (len = expr(0,CBRACK), name = skip(isId)) && !isNum(name.charCodeAt(0)) && ['[',len,name])
+
+// [a:b, c:d]
 binary(':', PREC_LABEL)
 
 // (a,b,c), (a)
