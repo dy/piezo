@@ -12,6 +12,7 @@
   * [x] Compare vs wabt, wat-compiler
   * [ ] Repl with compiler selector
 
+* [ ] Parser
 * [ ] Compiler
 * [ ] Processing modules collection
 
