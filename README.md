@@ -37,7 +37,7 @@ true, false = 0b1, 0b0;      // alias booleans (not provided by default)
 1.08..108.0;                 // float range
 0>..10, 0..<10, 0>..<10;     // non-inclusive ranges
 (x-1)..(x+1);                // calculated ranges
--10..10[];                   // length (20)
+(-10..10)[];                 // length (20)
 
 //////////////////////////// standard operators
 + - * / % **                 // arithmetical (** for pow)
@@ -88,8 +88,8 @@ string - string;             // removes all occurences of the right string in th
 string / string;             // split: "a b" / " " = ["a", "b"]
 string * list;               // join: " " * ["a", "b"] = "a b"
 string * 2;                  // repeat: "abc" * 2 = "abcabc"
-string ~> "l";               // indexOf: 2
-string ~< "l";               // rightIndexOf: -2
+"l" ~> string;               // indexOf: 2
+"l" ~< string;               // rightIndexOf: -2
 
 //////////////////////////// lists
 list = [1, 2, 3]             // list from elements
@@ -106,8 +106,8 @@ list[];                      // length
 list[1..3, 5]; list[5..];    // slice
 list[-1..0];                 // reverse
 list | x -> x * 2;           // iterate/map items
-list ~> item;                // find index of the item
-list ~< item;                // rfind
+item ~> list;                // find index of the item
+item ~< list;                // rfind
 list +-*/ 2;                 // math operators act on all members
 
 //////////////////////////// statements
@@ -166,7 +166,7 @@ b = () -> (                  //
 );                           //
 b(), b(), b();               // 1, 2, 3
 
-////////////////////////////// map
+///////////////////////////// map
 [a, b, c] | x -> a(x);       // maps list to new list
 (a, b, c) | a -> a.x * 2;    // maps group items (syntactically)
 10..1 | i -> (               // iteration over range (produces group)
@@ -175,7 +175,7 @@ b(), b(), b();               // 1, 2, 3
 );                           // returns group
 [ 1..10 | x -> x * 2 ];      // list comprehension
 
-///////////////////////////// fold
+//////////////////////////// fold
 items |> (sum,x) -> sum+x;   // fold operator with reducer
 (a,b,c) |> (a,b) -> a + b;   // can be applied to groups (syntax sugar)
 [a,b,c] |> (a,b) -> a + b;   // can be applied to lists
