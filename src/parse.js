@@ -8,12 +8,12 @@ const OPAREN=40, CPAREN=41, OBRACK=91, CBRACK=93, SPACE=32, QUOTE=39, DQUOTE=34,
 
 // precedences
 const PREC_SEMI=1,
-PREC_ASSIGN=2,  // a = b=>c,  a,b = c,d,  a = b||c,  a = b|c (NOTE: different from JS, more Pythony)
+PREC_ASSIGN=2,  // a = b->c,  a,b = c,d,  a = b||c,  a = b|c (NOTE: different from JS, more Pythony)
 PREC_BOR=3, // NOTE: reduced weight to use as pipe operator, may cause side-effects (which ones?)
-PREC_FUNC=4, // a = b=>c, BUT b => c,d
-PREC_SEQUENCE=5, // a => b,c;   a, b==c, d,   a, b>=c, d,   a | b,c | d,   a?b:c , d
+PREC_LOOP=3, // a?b:c <| d,   a , b<|c,   b<|c, d,   a->a+1 <| 2,   a <| b | c |> d
+PREC_FUNC=4, // a = b->c, BUT b => c,d
+PREC_SEQUENCE=5, // a -> b,c;   a, b==c, d,   a, b>=c, d,   a | b,c | d,   a?b:c , d
 PREC_LABEL=6, // a:b = 2,  a:b, b:c,   a: b&c
-PREC_LOOP=6, // a?b:c <| d,   a , b<|c,   b<|c, d
 PREC_TERNARY=7,
 PREC_OR=8,
 PREC_AND=9,

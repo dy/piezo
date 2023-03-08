@@ -209,9 +209,43 @@ t('parse: stateful variables', t => {
   is(parse('b(), b(), b();'),[';',[',',['()','b'],['()','b'],['()','b']],undefined], '1, 2, 3')
 })
 
-t('parse: errors', t => {
+t('parse: map', () => {
+  is(parse('[a, b, c] | x -> a(x)'), ['|',['[',[',','a','b','c']],['->','x',['()','a','x']]],      'maps list to new list')
+  is(parse('(a, b, c) | a -> a.x * 2'), ['|',['(',[',','a','b','c']],['->','a',['*',['.','a','x'],['int',2]]]],   'maps group items (syntactically)')
+  is(parse(`
+  10..1 | i -> (                // iteration over range (produces group)
+    i < 3 ? ^^;                 // \`^^\` breaks iteration
+    i < 5 ? ^;                  // \`^\` continues iteration
+  );                            // returns group
+  `), [';',['|',['..',['int',10],['int',1]],['->','i',['(',[';',
+    ['?',['<','i',['int',3]], ['^^']],
+    ['?',['<','i',['int',5]], ['^']],
+    null
+  ]]]],undefined])
+  is(parse('[ 1..10 | x -> x * 2 ]'), ['[',['|',['..',['int',1],['int',10]],
+    ['->','x',['*','x',['int',2]]]
+  ]],     'list comprehension')
+})
+
+t('parse: fold', () => {
+  is(parse('items |> (sum,x) -> sum+x'), ['|>','items',['->',['(',[',','sum','x']], ['+','sum','x']]],  'fold operator with reducer')
+  is(parse('(a,b,c) |> (a,b) -> a + b'), ['|>',['(',[',','a','b','c']],['->',['(',[',','a','b']],['+','a','b']]],  'can be applied to groups (syntax sugar)')
+  is(parse('[a,b,c] |> (a,b) -> a + b'), ['|>',['[',[',','a','b','c']],['->',['(',[',','a','b']],['+','a','b']]],  'can be applied to lists')
+})
+
+t('parse: import', () => {
+  is(parse('@ \'./path/to/module\''), ['@',["'",'./path/to/module']],       'any file can be imported directly')
+  is(parse('@ \'math\''), ['@',["'",'math']],                   'or defined via import-maps.json')
+  is(parse('@ \'my-module#x,y,z\''), ['@',["'",'my-module#x,y,z']],        'import selected members')
+})
+
+t('parse: export', () => {
+  is(parse('x, y, z'),[',','x','y','z'],  'last members in a file get exported (no semi!)')
+})
+
+t.only('parse: errors', t => {
   let log = []
-  try { parse('...x') } catch (e) { log.push('...') }
+  try { console.log(parse('...x')) } catch (e) { log.push('...') }
   is(log, ['...'])
 })
 
