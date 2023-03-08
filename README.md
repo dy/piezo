@@ -73,112 +73,112 @@ a = b, c = d;                // a = b, a = c cnote difference with JS
 b -< (a,b,c);                // returns b if it's in group, null otherwise
 
 //////////////////////////// strings
-hi="hello";                 // strings
-string="{hi} world";        // interpolated string: "hello world"
-"\u0020", "\x20";           // unicode or ascii codes
-string[1]; string.1;        // positive indexing from first element [0]: 'e'
-string[-3];                 // negative indexing from last element [-1]: 'r'
-string[2..10];              // substring
-string[1, 2..10, -1];       // slice/pick multiple elements
-string[-1..0];              // reverse
-string[];                   // length
-string == string;           // comparison (==,!=,>,<)
-string + string;            // concatenation: "hello worldhello world"
-string - string;            // removes all occurences of the right string in the left string: ""
-string / string;            // split: "a b" / " " = ["a", "b"]
-string * list;              // join: " " * ["a", "b"] = "a b"
-string * 2;                 // repeat: "abc" * 2 = "abcabc"
-string ~> "l";              // indexOf: 2
-string ~< "l";              // rightIndexOf: -2
+hi="hello";                  // strings
+string="{hi} world";         // interpolated string: "hello world"
+"\u0020", "\x20";            // unicode or ascii codes
+string[1]; string.1;         // positive indexing from first element [0]: 'e'
+string[-3];                  // negative indexing from last element [-1]: 'r'
+string[2..10];               // substring
+string[1, 2..10, -1];        // slice/pick multiple elements
+string[-1..0];               // reverse
+string[];                    // length
+string == string;            // comparison (==,!=,>,<)
+string + string;             // concatenation: "hello worldhello world"
+string - string;             // removes all occurences of the right string in the left string: ""
+string / string;             // split: "a b" / " " = ["a", "b"]
+string * list;               // join: " " * ["a", "b"] = "a b"
+string * 2;                  // repeat: "abc" * 2 = "abcabc"
+string ~> "l";               // indexOf: 2
+string ~< "l";               // rightIndexOf: -2
 
 //////////////////////////// lists
-list = [1, 2, 3]            // list from elements
-list = [l:2, r:4, c:6];     // list with aliases
-list = [0..10];             // list from range
-list = [0..8 | i -> i*2];   // list comprehension
-list = [list1, list2];      // list from multiple lists (always flat)
-[2]list = list1;            // (sub)list of fixed size
-list.0, list.1, list.2;     // short index access notation
-list.l = 2;                 // alias index access
-list[0];                    // positive indexing from first element [0]: 2
-list[-2]=5;                 // negative indexing from last element [-1]: list becomes [2,4,5,8]
-list[];                     // length
-list[1..3, 5]; list[5..];   // slice
-list[-1..0];                // reverse
-list | x -> x * 2;          // iterate/map items
-list ~> item;               // find index of the item
-list ~< item;               // rfind
-list +-*/ 2;                // math operators act on all members
+list = [1, 2, 3]             // list from elements
+list = [l:2, r:4, c:6];      // list with aliases
+list = [0..10];              // list from range
+list = [0..8 | i -> i*2];    // list comprehension
+list = [list1, list2];       // list from multiple lists (always flat)
+[2]list = list1;             // (sub)list of fixed size
+list.0, list.1, list.2;      // short index access notation
+list.l = 2;                  // alias index access
+list[0];                     // positive indexing from first element [0]: 2
+list[-2]=5;                  // negative indexing from last element [-1]: list becomes [2,4,5,8]
+list[];                      // length
+list[1..3, 5]; list[5..];    // slice
+list[-1..0];                 // reverse
+list | x -> x * 2;           // iterate/map items
+list ~> item;                // find index of the item
+list ~< item;                // rfind
+list +-*/ 2;                 // math operators act on all members
 
 //////////////////////////// statements
-foo();                      // semi-colons at end of line are mandatory
-(c = a + b; c);             // parens define block, return last element
-(a=b+1; a,b,c);             // block can return group
-(a ? ^b; c);                // return/break operator can preliminarily return value
-(foo(); bar(););            // semi-colon after last statement returns void
+foo();                       // semi-colons at end of line are mandatory
+(c = a + b; c);              // parens define block, return last element
+(a=b+1; a,b,c);              // block can return group
+(a ? ^b; c);                 // return/break operator can preliminarily return value
+(foo(); bar(););             // semi-colon after last statement returns void
 
 //////////////////////////// conditions
-sign = a < 0 ? -1 : +1;     // inline ternary
-(2+2 >= 4) ?                // multiline ternary
-  log("Math works!")          //
-: "a" < "b" ?                 // else if
-  log("Sort strings")         //
-: (                           // else
-  log("Get ready");           //
-  log("Last chance")          //
-);                            //
-a > b ? b++;                  // if operator
-a > b ?: b++;                 // elvis operator (else if)
+sign = a < 0 ? -1 : +1;      // inline ternary
+(2+2 >= 4) ?                 // multiline ternary
+  log("Math works!")         //
+: "a" < "b" ?                // else if
+  log("Sort strings")        //
+: (                          // else
+  log("Get ready");          //
+  log("Last chance")         //
+);                           //
+a > b ? b++;                 // if operator
+a > b ?: b++;                // elvis operator (else if)
 
 //////////////////////////// loops
-s = "Hello";                    //
-s[] < 50 <| (s += ", hi");      // inline loop: `while (s.length < 50) do (s += ", hi)"`
-(i=0; i++ < 10 <| (             // multiline loop
-  i < 3 ? ^^;                   // `^^` to break loop (can return value as ^^x)
-  i < 5 ? ^;                    // `^` to continue loop (can return value as ^x)
-  log(i);                       //
-));                             //
-[j++ < 10 <| j * 2];            // list comprehension via loop
+s = "Hello";                 //
+s[] < 50 <| (s += ", hi");   // inline loop: `while (s.length < 50) do (s += ", hi)"`
+(i=0; i++ < 10 <| (          // multiline loop
+  i < 3 ? ^^;                // `^^` to break loop (can return value as ^^x)
+  i < 5 ? ^;                 // `^` to continue loop (can return value as ^x)
+  log(i);                    //
+));                          //
+[j++ < 10 <| j * 2];         // list comprehension via loop
 
 //////////////////////////// functions
-double = n -> n*2;               // inline function
-triple = (n=1) -> (              // optional args
-  n == 0 ? ^n;                   // preliminarily return n
-  n*3                            // returns last value
-);
-triple();                        // 3
-triple(5);                       // 15
-triple(n: 10);                   // 30. named argument.
-copy = triple;                   // capture function
-copy(10);                        // also 30
-clamp = (v=1 -< 0..100) -> v;    // clamp argument
-x = () -> 1,2,3;                 // return group (multiple values)
-gain = ([]in, amp) -> in*amp;    // list argument
-gain = ([100]in, amp) -> in*amp; // sublist argument
+double = n -> n*2;           // inline function
+triple = (n=1) -> (          // optional args
+  n == 0 ? ^n;               // preliminarily return n
+  n*3                        // returns last value
+); 
+triple();                    // 3
+triple(5);                   // 15
+triple(n: 10);               // 30. named argument.
+copy = triple;               // capture function
+copy(10);                    // also 30
+clamp = (v -< 0..10) -> v;   // clamp argument
+x = () -> 1,2,3;             // return group (multiple values)
+mul = ([]in, amp) -> in*amp; // list argument
+mul = ([8]in, amp) -> in*amp;// sublist argument
 
 //////////////////////////// stateful variables
-a = () -> ( *i=0; i++ );         // stateful variable persist value between fn calls
-a(), a();                        // 0, 1
-b = () -> (                      //
-  *[4]i;                         // memory of 4 items
-  i.0 = i.1+1;                   // read previous value
-  i.0                            // return currrent value
-);                               //
-b(), b(), b();                   // 1, 2, 3
+a = () -> ( *i=0; i++ );     // stateful variable persist value between fn calls
+a(), a();                    // 0, 1
+b = () -> (                  //
+  *[4]i;                     // memory of 4 items
+  i.0 = i.1+1;               // read previous value
+  i.0                        // return currrent value
+);                           //
+b(), b(), b();               // 1, 2, 3
 
 ////////////////////////////// map
-[a, b, c] | x -> a(x);      // maps list to new list
-(a, b, c) | a -> a.x * 2;   // maps group items (syntactically)
-10..1 | i -> (              // iteration over range (produces group)
-  i < 3 ? ^^;               // `^^` breaks iteration
-  i < 5 ? ^;                // `^` continues iteration
-);                          // returns group
-[ 1..10 | x -> x * 2 ];     // list comprehension
+[a, b, c] | x -> a(x);       // maps list to new list
+(a, b, c) | a -> a.x * 2;    // maps group items (syntactically)
+10..1 | i -> (               // iteration over range (produces group)
+  i < 3 ? ^^;                // `^^` breaks iteration
+  i < 5 ? ^;                 // `^` continues iteration
+);                           // returns group
+[ 1..10 | x -> x * 2 ];      // list comprehension
 
 ///////////////////////////// fold
-items |> (sum, x) -> sum+x;   // fold operator with reducer
-(a, b, c) |> (a, b) -> a + b; // can be applied to groups (syntax sugar)
-[a, b, c] |> (a, b) -> a + b; // can be applied to lists
+items |> (sum,x) -> sum+x;   // fold operator with reducer
+(a,b,c) |> (a,b) -> a + b;   // can be applied to groups (syntax sugar)
+[a,b,c] |> (a,b) -> a + b;   // can be applied to lists
 
 //////////////////////////// import
 @ './path/to/module';        // any file can be imported directly
