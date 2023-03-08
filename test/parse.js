@@ -187,6 +187,28 @@ t('parse: functions', () => {
   is(parse('mul = ([8]in, amp) -> in*amp'), ['=','mul',['->',['(',[',',['[',['int',8],'in'],'amp']],['*','in','amp']]], 'sublist argument')
 })
 
+t('parse: stateful variables', t => {
+  is(parse(`
+    a = () -> ( *i=0; ++i );      // stateful variable persist value between fn calls
+    a(), a();                     // 0, 1
+  `), [';',
+    ['=','a',['->',['('],['(',[';',['=',['*','i'],['int',0]],['++','i']]]]],
+    [',',['()','a'],['()','a']],
+    null
+  ])
+  is(parse('*[4]i'), ['*',['[',['int',4],'i']], 'memory')
+  is(parse(`b = () -> (                   //
+    *[4]i;                      // memory of 4 items
+    i.0 = i.1+1;                // read previous value
+    i.0                         // return currrent value
+  );`),[';',['=','b',['->',['('], [ '(', [';',
+    ['*',['[',['int',4],'i']],
+    ['=',['.','i','0'],['+',['.','i','1'],['int',1]]],
+    ['.','i','0']
+  ]]]],undefined])
+  is(parse('b(), b(), b();'),[';',[',',['()','b'],['()','b'],['()','b']],undefined], '1, 2, 3')
+})
+
 t('parse: errors', t => {
   let log = []
   try { parse('...x') } catch (e) { log.push('...') }
