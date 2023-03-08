@@ -48,10 +48,11 @@ const num = (a) => {
     if (sep && !d) err('Bad number', n + sep + d)
   }
 
+  if (!n && !d) err('Bad number')
+
   // subscript takes 0/nullish value as wrong token, so we must wrap 0 into token
   // can be useful after (hopefully)
   let node = (numTypes[sep])(n, d);
-  if (!node) err('Bad number')
 
   // parse units, eg. 1s
   if (unit = skip(c => !isNum(c) && isId(c))) node.push(unit)

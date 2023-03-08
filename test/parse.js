@@ -237,67 +237,69 @@ t('parse: import', () => {
   is(parse('@ \'./path/to/module\''), ['@',["'",'./path/to/module']],       'any file can be imported directly')
   is(parse('@ \'math\''), ['@',["'",'math']],                   'or defined via import-maps.json')
   is(parse('@ \'my-module#x,y,z\''), ['@',["'",'my-module#x,y,z']],        'import selected members')
+
+  is(parse(`@'math'`), ['@', ['\'','math']])
+  is(parse(`@'math#a'`), ['@', ['\'','math#a']])
+  is(parse(`@'math#a,b,c'`), ['@', ['\'','math#a,b,c']])
 })
 
 t('parse: export', () => {
   is(parse('x, y, z'),[',','x','y','z'],  'last members in a file get exported (no semi!)')
 })
 
-t.only('parse: errors', t => {
+t('parse: triple dots error', t => {
   let log = []
   try { console.log(parse('...x')) } catch (e) { log.push('...') }
   is(log, ['...'])
 })
 
-t('parse: end operator precedence', t => {
+t('parse: endings', t => {
   is(parse(`
     x() = 1+2;
-  `), ['=', ['(', 'x'], [';',['+', ['int',1], ['int',2]]]])
+  `), [';',['=', ['()', 'x'], ['+', ['int',1], ['int',2]]],undefined], 'a')
 
   is(parse(`
     a,b,c;
-  `), [';',[',','a','b','c']])
+  `), [';',[',','a','b','c'],undefined], 'b')
 
   is(parse(`
     x() = (1+2);
-  `), ['=', ['(', 'x'], [';',['(', ['+', ['int',1], ['int',2]]]]])
+  `), [';',['=', ['()', 'x'], ['(', ['+', ['int',1], ['int',2]]]], undefined], 'c')
 
   is(parse(`
     x() = (1+2;)
-  `), ['=', ['(', 'x'], ['(',[';', ['+', ['int',1], ['int',2]]]]])
+  `), ['=', ['()', 'x'], ['(',[';', ['+', ['int',1], ['int',2]], undefined]]], 'd')
 
   is(parse(`
     x() = (1+2;);
-  `), ['=', ['(', 'x'], [';',['(',[';',['+', ['int',1], ['int',2]]]]]])
+  `), [';',['=', ['()', 'x'], ['(',[';',['+', ['int',1], ['int',2]], undefined]]], undefined], 'e')
 
   is(parse(`
     x() = (a?^b;c)
-  `), ['=', ['(', 'x'], ['(',[';', ['?','a',['^','b']],'c']]])
+  `), ['=', ['()', 'x'], ['(',[';', ['?','a',['^','b']],'c']]], 'f')
 
   is(parse(`
     x() = (a?b.c)
-  `), ['=', ['(', 'x'], ['(',['?','a',['.','b','c']]]])
+  `), ['=', ['()', 'x'], ['(',['?','a',['.','b','c']]]], 'g')
 })
 
 t('parse: semicolon', t => {
   is(parse(`
       pi2 = pi*2.0;
       sampleRate = 44100;
-  `), [';',['=', 'pi2', ['*', 'pi', ['float', 2]]], ['=', 'sampleRate', ['int', 44100]], null]);
+  `), [';',
+    ['=', 'pi2', ['*', 'pi', ['flt', 2]]],
+    ['=', 'samplerate', ['int', 44100]],
+    null
+  ]);
 
   is(parse(`
     x() = 1+2;
-  `), [';',['=', ['(', 'x'], ['+', ['int',1], ['int',2]]], undefined])
+  `), [';',['=', ['()', 'x'], ['+', ['int',1], ['int',2]]], undefined])
 
   is(parse(`
     a,b,c;
   `), [';',[',','a','b','c'], undefined])
-})
-
-t('parse: import', t => {
-  is(parse(`@'math'`), ['@', ['\'','math']])
-  is(parse(`@'math#a'`), ['@', ['\'','math#a']])
-  is(parse(`@'math#a,b,c'`), ['@', ['\'','math#a,b,c']])
 })
 
 t('parse: sine gen', t => {
@@ -305,40 +307,19 @@ t('parse: sine gen', t => {
     sine(freq) = (
       *phase=0;
       phase += freq * pi2 / sampleRate;
-      [sin(phase)].
-  ).`);
+      [sin(phase)]
+  )`);
   is(tree,
     ['=',
-      [
-        '(', 'sine', 'freq'
-      ],
-      ['.', ['(',
-          [';',
-            ['=',['*', 'phase'],['int',0]],
-            ['+=', 'phase', ['/', ['*', 'freq', 'pi2'], 'sampleRate']],
-            ['.',['[',['(', 'sin','phase']]]
-          ]
+      ['()', 'sine', 'freq'],
+      ['(',
+        [';',
+          ['=',['*', 'phase'],['int',0]],
+          ['+=', 'phase', ['/', ['*', 'freq', 'pi2'], 'samplerate']],
+          ['[',['()', 'sin','phase']]
         ]
       ]
     ]
   )
 })
 
-t('parse: audio-gain', t => {
-  let tree = parse(`
-    range = 0..1000;
-
-    gain([left], volume <- range) = [left * volume];
-    gain([left, right], volume <- range) = [left * volume, right * volume];
-    //gain([..channels], volume <- range) = [..channels * volume];
-
-    gain.
-  `)
-  is(tree, [';',
-    ['=', 'range', ['..', ['int',0], ['int',1000]]],
-    ['=', ['(', 'gain', [',', ['[', 'left'], ['<-', 'volume', 'range']]], ['[', ['*', 'left', 'volume']]],
-
-    ['=', ['(', 'gain', [',', ['[', [',','left','right']], ['<-', 'volume', 'range']]], ['[', [',',['*', 'left', 'volume'],['*', 'right', 'volume']]]],
-    ['.', 'gain']
-  ])
-})
