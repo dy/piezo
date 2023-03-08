@@ -11,45 +11,48 @@ It has common syntax and compiles to optimized WASM bytecode, making it availabl
 
 ```fs
 //////////////////////////// naming convention
-foo123, Ab_C_F#, $0, Δx;     // ids permit alnum, #, _, $, unicodes
-foo_bar_δ == Foo_Bar_Δ;      // ids are case-insensitive, snake case
-default=1; eval=fn; else=0;  // ids can be any common words (lino has no reserved words)
+foo123, Ab_C_F#, $0, Δx;      // ids permit alnum, #, _, $, unicodes
+foo_bar_δ == Foo_Bar_Δ;       // ids are case-insensitive, snake case
+default=1; eval=fn; else=0;   // ids can be any common words (lino has no reserved words)
 
 //////////////////////////// numbers
-16, 0x10, 0b0;               // int (dec, hex or binary form)
-16.0, .1, 1e3, 2e-3;         // floats
-true, false = 0b1, 0b0;      // alias booleans (not provided by default)
+16, 0x10, 0b0;                // int (dec, hex or binary form)
+16.0, .1, 1e3, 2e-3;          // floats
+true, false = 0b1, 0b0;       // alias booleans (not provided by default)
 
 //////////////////////////// type cast
-1 / 3; 2 * 3.14;             // ints upgrade to floats implicitly
-3.0 | 0;                     // floats floor to ints explicitly
+1 / 3; 2 * 3.14;              // ints upgrade to floats implicitly
+3.0 | 0;                      // floats floor to ints explicitly
 
 //////////////////////////// units
-1k = 1000; 1pi = 3.1415;     // define units
-1s = 44100; 1ms = 1s/1000;   // useful for sample indexes
-10.1k, 2pi;                  // units deconstruct to numbers: 10100, 6.283
-1h2m3.5s;                    // unit combinations
+1k = 1000; 1pi = 3.1415;      // define units
+1s = 44100; 1ms = 1s/1000;    // useful for sample indexes
+10.1k, 2pi;                   // units deconstruct to numbers: 10100, 6.283
+1h2m3.5s;                     // unit combinations
 
 //////////////////////////// ranges
-1..10;                       // basic range
-1.., ..10;                   // open ranges
-10..1;                       // reverse-direction range
-1.08..108.0;                 // float range
-0>..10, 0..<10, 0>..<10;     // non-inclusive ranges
-(x-1)..(x+1);                // calculated ranges
-(-10..10)[];                 // length (20)
+1..10;                        // basic range
+1.., ..10;                    // open ranges
+10..1;                        // reverse-direction range
+1.08..108.0;                  // float range
+0>..10, 0..<10, 0>..<10;      // non-inclusive ranges
+(x-1)..(x+1);                 // calculated ranges
+(-10..10)[];                  // length (20)
+1..2 + 2..3 == 1..3;          // add ranges
+1..3 - 2.. == 1..2;           // subtract ranges
 
 //////////////////////////// standard operators
-+ - * / % **                 // arithmetical (** for pow)
-&& || !                      // logical
-& | ^ ~                      // int / binary ops
-== != >= <=                  // comparisons
++ - * / % **                  // arithmetical (** for pow)
+&& || !                       // logical
+& | ^ ~                       // int / binary ops
+== != >= <=                   // comparisons
 
 //////////////////////////// clamp operator
-x -< 0..10;                  // clamp(x, 0, 10)
-x -< ..10;                   // min(x, 10)
-x -< 0..;                    // max(0, x)
-x -<= 0..10;                 // x = clamp(x, 0, 10)
+x -< 0..10;                   // clamp(x, 0, 10)
+x -< ..10;                    // min(x, 10)
+x -< 0..;                     // max(0, x)
+x -<= 0..10;                  // x = clamp(x, 0, 10)
+4.. -< ..8 == 4..8            // clamp ranges
 
 //////////////////////////// length operator
 [1,2,3][];                   // 3
