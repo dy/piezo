@@ -129,18 +129,15 @@ sign = a < 0 ? -1 : +1;       // inline ternary
 a > b ? b++;                  // if operator
 a > b ?: b++;                 // elvis operator (else if)
 
-//////////////////////////// loops & iterators
+//////////////////////////// loops
 s = "Hello";                    //
-s[] < 50 <| (s += ", hi");      // inline loop: `while (s.length < 50) s += ", hi"`
-(i <- 10.. <| (                 // multiline loop
+s[] < 50 <| (s += ", hi");      // inline loop: `while (s.length < 50) do (s += ", hi)"`
+(i=0; i++ < 10 <| (             // multiline loop
   i < 3 ? ^^;                   // `^^` to break loop (can return value as ^^x)
   i < 5 ? ^;                    // `^` to continue loop (can return value as ^x)
   log(i);                       //
 ));                             //
-[j++ < 10 <| x * 2];            // list comprehension via loop
-[i <- 0..10 <| i * 2];          // list comprehension via iterator
-a0,a1,a2 = i <- 2;              // iterator creates group: a0=0, a1=1, a2=2
-item, idx <- list;              // 'in' operator
+[j++ < 10 <| j * 2];            // list comprehension via loop
 
 //////////////////////////// functions
 double = n -> n*2;               // inline function
@@ -170,7 +167,7 @@ b(), b(), b();                   // 1, 2, 3
 
 ////////////////////////////// map
 [a, b, c] | x -> a(x);      // maps list to new list
-(a, b, c) | a -> a.x * 2;   // deconstructs group into statements
+(a, b, c) | a -> a.x * 2;   // maps group items (syntactically)
 10..1 | i -> (              // iteration over range (produces group)
   i < 3 ? ^^;               // `^^` breaks iteration
   i < 5 ? ^;                // `^` continues iteration

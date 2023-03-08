@@ -971,6 +971,7 @@ Having wat files is more useful than direct compilation to binary form:
   + `c <- b` is more conventional for `a of b`
   + `x -< 0..10` is nicer for range indication limit and for clamp
   + `x -<= 0..10` is just a nice construct
+  -  `x <- y` vs `x < -y`
 
 ## [x] comments: //, /* vs ;; and (; ;) → use familiar `//`
 
@@ -2315,4 +2316,12 @@ Having wat files is more useful than direct compilation to binary form:
     - actually it's desired precedence...
   - Doesn't look like classic pipe
 
-## [x] Switch operator problem: `a >- b ? c` vs `a > -b ? c`
+## [x] Switch operator problem: `a >- b ? c` vs `a > -b ? c` -> deprecate switch
+  + switch can be more naturally and unambiguously expressed via sequence of ternaries
+
+## [x] `in` operator problem: `a <- b ? c` vs `a < -b ? c` -> try removing `in` operator for now
+  + removing it solves the issue
+  + removing it makes iterators available only as maps: `list | x -> x`
+    + which is less ambiguity
+    + keeps loops logic simple
+
