@@ -1,3 +1,5 @@
+// analyser converts AST into IR, able to be compiled after
+
 export default tree => {
   // language-level sections
   // `type` section is built on stage of WAT compiling
@@ -63,7 +65,7 @@ const tmod = {
 
       // evaluate function body
       fun.body = mapNode(node, right, fun)
-      
+
       // catch function return value
       // [a, b].
       console.log(right)
