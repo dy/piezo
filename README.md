@@ -21,8 +21,8 @@ default=1; eval=fn; else=0;  // ids can be any common words (lino has no reserve
 true, false = 0b1, 0b0;      // alias booleans (not provided by default)
 
 //////////////////////////// type cast
-1 / 3; 2 * 3.14;            // ints upgrade to floats implicitly
-3.0 | 0;                    // floats floor to ints explicitly
+1 / 3; 2 * 3.14;             // ints upgrade to floats implicitly
+3.0 | 0;                     // floats floor to ints explicitly
 
 //////////////////////////// units
 1k = 1000; 1pi = 3.1415;     // define units
@@ -40,10 +40,10 @@ true, false = 0b1, 0b0;      // alias booleans (not provided by default)
 -10..10[];                   // length (20)
 
 //////////////////////////// standard operators
-+ - * / % **                // arithmetical (** for pow)
-&& || !                     // logical
-& | ^ ~                     // int / binary ops
-== != >= <=                 // comparisons
++ - * / % **                 // arithmetical (** for pow)
+&& || !                      // logical
+& | ^ ~                      // int / binary ops
+== != >= <=                  // comparisons
 
 //////////////////////////// clamp operator
 x -< 0..10;                  // clamp(x, 0, 10)
@@ -55,22 +55,22 @@ x -<= 0..10;                 // x = clamp(x, 0, 10)
 [1,2,3][];                   // 3
 (1,2,3)[];                   // 3
 "abc"[];                     // 3
-(-1..+2)[];                    // 3
+(-1..+2)[];                  // 3
 
 //////////////////////////// groups
-a, b, c;                    // groups are syntactic sugar, not tuple data type
-(a, b, c)++;                // they apply operation to multiple elements: (a++, b++, c++)
-(a, (b, c)) == a, b, c;     // groups are always flat
-a,b,c = d,e,f;              // assign: a=d, b=e, c=f
-a,b = b,a;                  // swap: temp=a; a=b; b=temp;
-(a,b) + (c,d);              // operations: (a+c, b+d)
-(a,b).x;                    // (a.x, b.x);
-(a,b).x();                  // (a.x(), b.x());
-a,b,c = (d,e,f);            // a=d; b=e; c=f
-(a,b,c) = d;                // a=d, b=d; c=d
-a = b,c,d;                  // a=b, a=c, a=d
-a = b, c = d;               // a = b, a = c cnote difference with JS
-b -< (a,b,c);               // returns b if it's in group, null otherwise
+a, b, c;                     // groups are syntactic sugar, not tuple data type
+(a, b, c)++;                 // they apply operation to multiple elements: (a++, b++, c++)
+(a, (b, c)) == a, b, c;      // groups are always flat
+a,b,c = d,e,f;               // assign: a=d, b=e, c=f
+a,b = b,a;                   // swap: temp=a; a=b; b=temp;
+(a,b) + (c,d);               // operations: (a+c, b+d)
+(a,b).x;                     // (a.x, b.x);
+(a,b).x();                   // (a.x(), b.x());
+a,b,c = (d,e,f);             // a=d; b=e; c=f
+(a,b,c) = d;                 // a=d, b=d; c=d
+a = b,c,d;                   // a=b, a=c, a=d
+a = b, c = d;                // a = b, a = c cnote difference with JS
+b -< (a,b,c);                // returns b if it's in group, null otherwise
 
 //////////////////////////// strings
 hi="hello";                 // strings
@@ -118,8 +118,8 @@ foo();                      // semi-colons at end of line are mandatory
 (foo(); bar(););            // semi-colon after last statement returns void
 
 //////////////////////////// conditions
-sign = a < 0 ? -1 : +1;       // inline ternary
-(2+2 >= 4) ?                  // multiline ternary
+sign = a < 0 ? -1 : +1;     // inline ternary
+(2+2 >= 4) ?                // multiline ternary
   log("Math works!")          //
 : "a" < "b" ?                 // else if
   log("Sort strings")         //
