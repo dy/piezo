@@ -173,26 +173,18 @@ binary('?:', PREC_TERNARY)
 token('?', PREC_TERNARY, (a, b, c) => (
   a && (b=expr(PREC_TERNARY-1)) && skip(c => c === COLON) && (c=expr(PREC_TERNARY-1), ['?', a, b, c])
 ))
-// [a:b, c:d]
+// a:b, c:d
 binary(':', PREC_LABEL, false)
 
-// a[b]
-token('[', PREC_CALL,  a => a && ['[]', a, expr(0,CBRACK)||err()])
+// a[b], a[]
+token('[', PREC_CALL,  (a,b) => a && (b=expr(0,CBRACK), b ? ['[]', a, b] : ['[]', a]))
 
-// [a,b,c]
-token('[', PREC_TOKEN, (a) => !a && ['[', expr(0,CBRACK)||''])
-
-// a[]
-unary('[]', PREC_CALL, true)
-
-// [1]a
-token('[', PREC_TOKEN, (a,len,name) => !a && (len = expr(0,CBRACK), name = skip(isId)) && !isNum(name.charCodeAt(0)) && ['[',len,name])
+// [a,b,c], [], [1]a, [1,2,3]a
+token('[', PREC_TOKEN, (a,b,name) => !a && (b=expr(0,CBRACK), name = skip(isId), a = ['['], (b||name) && a.push(b||''), name && a.push(name), a ))
 
 // (a,b,c), (a)
-// FIXME: do we need extra wrapper here? can we just return internal token
-token('(', PREC_CALL, a => !a && ['(', expr(0,CPAREN)||err()])
+token('(', PREC_CALL, (a,b) => !a && (b = expr(0,CPAREN), b ? ['(', b] : ['(']))
 
 // a(b,c,d), a()
-token('(', PREC_CALL, (a,b) => a && ['()', a, expr(0, CPAREN)])
-unary('()', PREC_CALL, true)
+token('(', PREC_CALL, (a,b) => a && (b = expr(0, CPAREN), b ? ['()', a, b] : ['()', a]))
 

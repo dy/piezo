@@ -170,6 +170,23 @@ t('parse: loops', t => {
   is(parse('[++j < 10 <| j * 2]'),['[',['<|',['<',['++','j'],['int',10]],['*','j',['int',2]]]], 'list comprehension via loop')
 })
 
+t('parse: functions', () => {
+  is(parse('double = n -> n*2'), ['=','double', ['->', 'n', ['*','n',['int',2]]]], 'inline function')
+  is(parse(`triple = (n=1) -> (
+    n == 0 ? ^n;                // preliminarily return n
+    n*3                         // returns last value
+  )`), ['=','triple',['->',['(',['=','n',['int',1]]], ['(',[';',['?',['==','n',['int',0]], ['^','n']],['*','n',['int',3]]]]]], 'multiline')
+  is(parse('triple()'), ['()','triple'],                     '3')
+  is(parse('triple(5)'), ['()','triple',['int',5]],                    '15')
+  is(parse('triple(n: 10)'), ['()','triple',[':','n',['int',10]]],                '30. named argument.')
+  is(parse('copy = triple'), ['=','copy','triple'],                'capture function')
+  is(parse('copy(10)'), ['()','copy',['int',10]],                     'also 30')
+  is(parse('clamp = (v -< 0..10) -> v'), ['=','clamp',['->',['(',['-<','v',['..',['int',0],['int',10]]]],'v']],    'clamp argument')
+  is(parse('x = () -> 1,2,3'), ['=','x',['->',['('],[',',['int',1],['int',2],['int',3]]]],              'return group (multiple values)')
+  is(parse('mul = ([]in, amp) -> in*amp'), ['=','mul',['->',['(',[',',['[','','in'],'amp']],['*','in','amp']]],  'list argument')
+  is(parse('mul = ([8]in, amp) -> in*amp'), ['=','mul',['->',['(',[',',['[',['int',8],'in'],'amp']],['*','in','amp']]], 'sublist argument')
+})
+
 t('parse: errors', t => {
   let log = []
   try { parse('...x') } catch (e) { log.push('...') }
