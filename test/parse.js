@@ -102,7 +102,7 @@ t('parse: strings', t => {
   is(parse('string / string'),['/','string','string'], 'split: "a b" / " " = ["a", "b"]')
   is(parse('string * list'),['*','string','list'], 'join: " " * ["a", "b"] = "a b"')
   is(parse('string ~> "l"'),['~>','string',['"','l']], 'indexOf: 2')
-  is(parse('string <~ "l"'),['<~','string',['"','l']], 'rightIndexOf: -2')
+  is(parse('string ~< "l"'),['~<','string',['"','l']], 'rightIndexOf: -2')
 })
 
 t('parse: lists', t => {
@@ -121,7 +121,7 @@ t('parse: lists', t => {
   is(parse('list[-1..0]'), ['[]','list',['..',['-',['int',1]],['int',0]]],'reverse')
   is(parse('list | x -> x * 2'), ['|','list',['->','x',['*','x',['int',2]]]],'iterate/map items')
   is(parse('list ~> item'), ['~>','list','item'],'find index of the item')
-  is(parse('list <~ item'), ['<~','list','item'],'rfind')
+  is(parse('list ~< item'), ['~<','list','item'],'rfind')
   is(parse('list + 2'), ['+','list',['int',2]],'math operators act on all members')
 })
 

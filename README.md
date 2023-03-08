@@ -88,7 +88,7 @@ string / string;            // split: "a b" / " " = ["a", "b"]
 string * list;              // join: " " * ["a", "b"] = "a b"
 string * 2;                 // repeat: "abc" * 2 = "abcabc"
 string ~> "l";              // indexOf: 2
-string <~ "l";              // rightIndexOf: -2
+string ~< "l";              // rightIndexOf: -2
 
 //////////////////////////// lists
 list = [1, 2, 3]            // list from elements
@@ -106,7 +106,7 @@ list[1..3, 5]; list[5..];   // slice
 list[-1..0];                // reverse
 list | x -> x * 2;          // iterate/map items
 list ~> item;               // find index of the item
-list <~ item;               // rfind
+list ~< item;               // rfind
 list +-*/ 2;                // math operators act on all members
 
 //////////////////////////// statements

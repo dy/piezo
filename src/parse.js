@@ -126,8 +126,8 @@ binary('<<', PREC_SHIFT)
 binary('->', PREC_FUNC) // a,b->b,a
 binary('-<', PREC_CLAMP) // a -< b
 
-binary('~>', PREC_FIND) // a ~> b
-binary('<~', PREC_FIND) // a <~ b
+binary('~>', PREC_FIND)
+binary('~<', PREC_FIND)
 
 // unaries
 unary('+', PREC_UNARY)
