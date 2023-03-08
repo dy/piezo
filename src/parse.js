@@ -8,14 +8,14 @@ const OPAREN=40, CPAREN=41, OBRACK=91, CBRACK=93, SPACE=32, QUOTE=39, DQUOTE=34,
 
 // precedences
 const PREC_SEMI=1,
-PREC_ASSIGN=3,  // a = b=>c,  a,b = c,d,  a = b||c,  a = b|c (NOTE: different from JS, more Pythony)
-PREC_BOR=3.5, // NOTE: reduced weight to use as pipe operator, may cause side-effects (which ones?)
+PREC_ASSIGN=2,  // a = b=>c,  a,b = c,d,  a = b||c,  a = b|c (NOTE: different from JS, more Pythony)
+PREC_BOR=3, // NOTE: reduced weight to use as pipe operator, may cause side-effects (which ones?)
 PREC_FUNC=4, // a = b=>c, BUT b => c,d
-PREC_SEQUENCE=5, // a => b,c; BUT a, b==c, d,   a, b>=c, d,  a | b,c | d,   a?b:c , d
-PREC_TERNARY=6,
-PREC_LABEL=6.5, // a:b = 2,  a:b, b:c,   a: b&c
-PREC_OR=7,
-PREC_AND=8,
+PREC_SEQUENCE=5, // a => b,c;   a, b==c, d,   a, b>=c, d,   a | b,c | d,   a?b:c , d
+PREC_LABEL=6, // a:b = 2,  a:b, b:c,   a: b&c
+PREC_TERNARY=7,
+PREC_OR=8,
+PREC_AND=9,
 PREC_XOR=10,
 PREC_BAND=11,
 PREC_EQ=12,
@@ -124,7 +124,6 @@ binary('<<', PREC_SHIFT)
 
 // binary('<-', PREC_COMP ) // a <- b
 binary('->', PREC_FUNC) // a,b->b,a
-// binary('>-', PREC_FUNC) // a,b>-c
 binary('-<', PREC_CLAMP) // a -< b
 
 binary('~>', PREC_FIND) // a ~> b
@@ -160,11 +159,16 @@ unary('*', PREC_UNARY)
 // @ 'ab'
 unary('@', PREC_ASSIGN)
 
-// a?b
+// a?b, a?:b
 binary('?', PREC_TERNARY)
+binary('?:', PREC_TERNARY)
 
-// ?:
-token('?', PREC_TERNARY, (a, b, c) => a && (b=expr(2)) && (cur[idx]===':'&&idx++) && (c=expr(3), ['?', a, b, c]))
+// a?b:c,   a ? b?c:d : e,   a ? b : c?d:e
+token('?', PREC_TERNARY, (a, b, c) => (
+  a && (b=expr(PREC_TERNARY-1)) && skip(c => c === COLON) && (c=expr(PREC_TERNARY-1), ['?', a, b, c])
+))
+// [a:b, c:d]
+binary(':', PREC_LABEL, false)
 
 // a[b]
 token('[', PREC_CALL,  a => a && ['[]', a, expr(0,CBRACK)||err()])
@@ -177,9 +181,6 @@ unary('[]', PREC_CALL, true)
 
 // [1]a
 token('[', PREC_TOKEN, (a,len,name) => !a && (len = expr(0,CBRACK), name = skip(isId)) && !isNum(name.charCodeAt(0)) && ['[',len,name])
-
-// [a:b, c:d]
-binary(':', PREC_LABEL)
 
 // (a,b,c), (a)
 // FIXME: do we need extra wrapper here? can we just return internal token

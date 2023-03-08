@@ -73,7 +73,7 @@ a = b, c = d;               // a = b, a = c cnote difference with JS
 
 //////////////////////////// strings
 hi="hello";                 // strings
-string="%hi world";         // interpolated string: "hello world"
+string="{hi} world";        // interpolated string: "hello world"
 "\u0020", "\x20";           // unicode or ascii codes
 string[1]; string.1;        // positive indexing from first element [0]: 'e'
 string[-3];                 // negative indexing from last element [-1]: 'r'
@@ -128,7 +128,6 @@ sign = a < 0 ? -1 : +1;       // inline ternary
 );                            //
 a > b ? b++;                  // if operator
 a > b ?: b++;                 // elvis operator (else if)
-a,b,c >- x ? a++ : b++ : c++; // switch operator
 
 //////////////////////////// loops & iterators
 s = "Hello";                    //

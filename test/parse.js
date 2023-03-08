@@ -88,7 +88,7 @@ t('parse: groups', t => {
 
 t('parse: strings', t => {
   is(parse('hi="hello"'),['=','hi',['"','hello']], 'strings')
-  is(parse('string="%hi world"'),['=','string',['"','%hi world']], 'interpolated string: "hello world"')
+  is(parse('string="{hi} world"'),['=','string',['"','{hi} world']], 'interpolated string: "hello world"')
   is(parse('"\u0020", "\x20"'),[',',['"','\u0020'],['"','\x20']], 'unicode or ascii codes')
   is(parse('string[1]; string.1'),[';',['[]','string',['int',1]],['.','string','1']], 'positive indexing from first element [0]: \'e\'')
   is(parse('string[-3]'),['[]','string',['-',['int',3]]],[], 'negative indexing from last element [-1]: \'r\'')
@@ -134,18 +134,24 @@ t('parse: statements', t => {
 })
 
 t('parse: conditions', t => {
-  // sign = a < 0 ? -1 : +1;       // inline ternary
-  // (2+2 >= 4) ?                  // multiline ternary
-  //   log("Math works!")          //
-  // : "a" < "b" ?                 // else if
-  //   log("Sort strings")         //
-  // : (                           // else
-  //   log("Get ready");           //
-  //   log("Last chance")          //
-  // );                            //
-  // a > b ? b++;                  // if operator
-  // a > b ?: b++;                 // elvis operator (else if)
-  // a,b,c >- x ? a++ : b++ : c++; // switch operator
+  is(parse(`sign = a < 0 ? -1 : +1`), ['=','sign',['?',['<','a',['int',0]], ['-',['int',1]], ['+',['int',1]]]], 'inline ternary')
+  is(parse('a > b ? ++b'), ['?',['>','a','b'],['++','b']], 'if operator')
+  is(parse('a > b ?: ++b'), ['?:', ['>','a','b'], ['++','b']], 'elvis operator (else if)')
+  // FIXME: confusable with a > -b
+  // is(parse('a,b,c >- x ? a : b : c'), ['?', ['>-', [',','a','b','c'], [':','a','b','c']]], 'switch operator')
+  is(parse(`2+2 >= 4 ?        // multiline ternary
+    a
+  : "a" < "b" ?               // else if
+    b
+  : (c)`), ['?',
+    ['>=', ['+',['int',2],['int',2]], ['int',4]],
+    'a',
+    ['?',
+      ['<', ['"','a'],['"','b']],
+      'b',
+      ['(','c']
+    ],
+  ], 'multiline ternary')
 })
 
 t('parse: errors', t => {

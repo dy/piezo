@@ -2314,3 +2314,5 @@ Having wat files is more useful than direct compilation to binary form:
   + Doesn't mess up precedence of `a,b | c`
     - actually it's desired precedence...
   - Doesn't look like classic pipe
+
+## [x] Switch operator problem: `a >- b ? c` vs `a > -b ? c`
