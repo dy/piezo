@@ -55,83 +55,83 @@ x -<= 0..10;                  // x = clamp(x, 0, 10)
 4.. -< ..8 == 4..8            // clamp ranges
 
 //////////////////////////// length operator
-[1,2,3][];                   // 3
-(1,2,3)[];                   // 3
-"abc"[];                     // 3
-(-1..+2)[];                  // 3
+[1,2,3][];                    // 3
+(1,2,3)[];                    // 3
+"abc"[];                      // 3
+(-1..+2)[];                   // 3
 
 //////////////////////////// groups
-a, b, c;                     // groups are syntactic sugar, not tuple data type
-(a, b, c)++;                 // they apply operation to multiple elements: (a++, b++, c++)
-(a, (b, c)) == a, b, c;      // groups are always flat
-a,b,c = d,e,f;               // assign: a=d, b=e, c=f
-a,b = b,a;                   // swap: temp=a; a=b; b=temp;
-(a,b) + (c,d);               // operations: (a+c, b+d)
-(a,b).x;                     // (a.x, b.x);
-(a,b).x();                   // (a.x(), b.x());
-a,b,c = (d,e,f);             // a=d; b=e; c=f
-(a,b,c) = d;                 // a=d, b=d; c=d
-a = b,c,d;                   // a=b, a=c, a=d
-a = b, c = d;                // a = b, a = c cnote difference with JS
-b -< (a,b,c);                // returns b if it's in group, null otherwise
+a, b, c;                      // groups are syntactic sugar, not tuple data type
+(a, b, c)++;                  // they apply operation to multiple elements: (a++, b++, c++)
+(a, (b, c)) == a, b, c;       // groups are always flat
+a,b,c = d,e,f;                // assign: a=d, b=e, c=f
+a,b = b,a;                    // swap: temp=a; a=b; b=temp;
+(a,b) + (c,d);                // operations: (a+c, b+d)
+(a,b).x;                      // (a.x, b.x);
+(a,b).x();                    // (a.x(), b.x());
+a,b,c = (d,e,f);              // a=d; b=e; c=f
+(a,b,c) = d;                  // a=d, b=d; c=d
+a = b,c,d;                    // a=b, a=c, a=d
+a = b, c = d;                 // a = b, a = c cnote difference with JS
+b -< (a,b,c);                 // returns b if it's in group, null otherwise
 
 //////////////////////////// strings
-hi="hello";                  // strings
-string="{hi} world";         // interpolated string: "hello world"
-"\u0020", "\x20";            // unicode or ascii codes
-string[1]; string.1;         // positive indexing from first element [0]: 'e'
-string[-3];                  // negative indexing from last element [-1]: 'r'
-string[2..10];               // substring
-string[1, 2..10, -1];        // slice/pick multiple elements
-string[-1..0];               // reverse
-string[];                    // length
-string == string;            // comparison (==,!=,>,<)
-string + string;             // concatenation: "hello worldhello world"
-string - string;             // removes all occurences of the right string in the left string: ""
-string / string;             // split: "a b" / " " = ["a", "b"]
-string * list;               // join: " " * ["a", "b"] = "a b"
-string * 2;                  // repeat: "abc" * 2 = "abcabc"
-"l" ~> string;               // indexOf: 2
-"l" ~< string;               // rightIndexOf: -2
+hi="hello";                   // strings
+string="{hi} world";          // interpolated string: "hello world"
+"\u0020", "\x20";             // unicode or ascii codes
+string[1]; string.1;          // positive indexing from first element [0]: 'e'
+string[-3];                   // negative indexing from last element [-1]: 'r'
+string[2..10];                // substring
+string[1, 2..10, -1];         // slice/pick multiple elements
+string[-1..0];                // reverse
+string[];                     // length
+string == string;             // comparison (==,!=,>,<)
+string + string;              // concatenation: "hello worldhello world"
+string - string;              // removes all occurences of the right string in the left string: ""
+string / string;              // split: "a b" / " " = ["a", "b"]
+string * list;                // join: " " * ["a", "b"] = "a b"
+string * 2;                   // repeat: "abc" * 2 = "abcabc"
+"l" ~> string;                // indexOf: 2
+"l" ~< string;                // rightIndexOf: -2
 
 //////////////////////////// lists
-list = [1, 2, 3]             // list from elements
-list = [l:2, r:4, c:6];      // list with aliases
-list = [0..10];              // list from range
-list = [0..8 | i -> i*2];    // list comprehension
-list = [list1, list2];       // list from multiple lists (always flat)
-[2]list = list1;             // (sub)list of fixed size
-list.0, list.1, list.2;      // short index access notation
-list.l = 2;                  // alias index access
-list[0];                     // positive indexing from first element [0]: 2
-list[-2]=5;                  // negative indexing from last element [-1]: list becomes [2,4,5,8]
-list[];                      // length
-list[1..3, 5]; list[5..];    // slice
-list[-1..0];                 // reverse
-list | x -> x * 2;           // iterate/map items
-item ~> list;                // find index of the item
-item ~< list;                // rfind
-list +-*/ 2;                 // math operators act on all members
+list = [1, 2, 3]              // list from elements
+list = [l:2, r:4, c:6];       // list with aliases
+list = [0..10];               // list from range
+list = [0..8 | i -> i*2];     // list comprehension
+list = [list1, list2];        // list from multiple lists (always flat)
+[2]list = list1;              // (sub)list of fixed size
+list.0, list.1, list.2;       // short index access notation
+list.l = 2;                   // alias index access
+list[0];                      // positive indexing from first element [0]: 2
+list[-2]=5;                   // negative indexing from last element [-1]: list becomes [2,4,5,8]
+list[];                       // length
+list[1..3, 5]; list[5..];     // slice
+list[-1..0];                  // reverse
+list | x -> x * 2;            // iterate/map items
+item ~> list;                 // find index of the item
+item ~< list;                 // rfind
+list +-*/ 2;                  // math operators act on all members
 
 //////////////////////////// statements
-foo();                       // semi-colons at end of line are mandatory
-(c = a + b; c);              // parens define block, return last element
-(a=b+1; a,b,c);              // block can return group
-(a ? ^b; c);                 // return/break operator can preliminarily return value
-(foo(); bar(););             // semi-colon after last statement returns void
+foo();                        // semi-colons at end of line are mandatory
+(c = a + b; c);               // parens define block, return last element
+(a=b+1; a,b,c);               // block can return group
+(a ? ^b; c);                  // return/break operator can preliminarily return value
+(foo(); bar(););              // semi-colon after last statement returns void
 
 //////////////////////////// conditions
-sign = a < 0 ? -1 : +1;      // inline ternary
-(2+2 >= 4) ?                 // multiline ternary
-  log("Math works!")         //
-: "a" < "b" ?                // else if
-  log("Sort strings")        //
-: (                          // else
-  log("Get ready");          //
-  log("Last chance")         //
-);                           //
-a > b ? b++;                 // if operator
-a > b ?: b++;                // elvis operator (else if)
+sign = a < 0 ? -1 : +1;       // inline ternary
+(2+2 >= 4) ?                  // multiline ternary
+  log("Math works!")          //
+: "a" < "b" ?                 // else if
+  log("Sort strings")         //
+: (                           // else
+  log("Get ready");           //
+  log("Last chance")          //
+);                            //
+a > b ? b++;                  // if operator
+a > b ?: b++;                 // elvis operator (else if)
 
 //////////////////////////// loops
 s = "Hello";                  //
@@ -145,52 +145,52 @@ i=0; i++ < 3 <| i == 0, 1, 2  // list produces group
 [j++ < 10 <| j * 2];          // list comprehension via loop
 
 //////////////////////////// functions
-double = n -> n*2;           // inline function
-triple = (n=1) -> (          // optional args
-  n == 0 ? ^n;               // preliminarily return n
-  n*3                        // returns last value
+double = n -> n*2;            // inline function
+triple = (n=1) -> (           // optional args
+  n == 0 ? ^n;                // preliminarily return n
+  n*3                         // returns last value
 ); 
-triple();                    // 3
-triple(5);                   // 15
-triple(n: 10);               // 30. named argument.
-copy = triple;               // capture function
-copy(10);                    // also 30
-clamp = (v -< 0..10) -> v;   // clamp argument
-x = () -> 1,2,3;             // return group (multiple values)
-mul = ([]in, amp) -> in*amp; // list argument
-mul = ([8]in, amp) -> in*amp;// sublist argument
+triple();                     // 3
+triple(5);                    // 15
+triple(n: 10);                // 30. named argument.
+copy = triple;                // capture function
+copy(10);                     // also 30
+clamp = (v -< 0..10) -> v;    // clamp argument
+x = () -> 1,2,3;              // return group (multiple values)
+mul = ([]in, amp) -> in*amp;  // list argument
+mul = ([8]in, amp) -> in*amp; // sublist argument
 
 //////////////////////////// stateful variables
-a = () -> ( *i=0; i++ );     // stateful variable persist value between fn calls
-a(), a();                    // 0, 1
-b = () -> (                  //
-  *[4]i;                     // memory of 4 items
-  i.0 = i.1+1;               // read previous value
-  i.0                        // return currrent value
-);                           //
-b(), b(), b();               // 1, 2, 3
+a = () -> ( *i=0; i++ );      // stateful variable persist value between fn calls
+a(), a();                     // 0, 1
+b = () -> (                   //
+  *[4]i;                      // memory of 4 items
+  i.0 = i.1+1;                // read previous value
+  i.0                         // return currrent value
+);                            //
+b(), b(), b();                // 1, 2, 3
 
 ///////////////////////////// map
-[a, b, c] | x -> a(x);       // maps list to new list
-(a, b, c) | a -> a.x * 2;    // maps group items (syntactically)
-10..1 | i -> (               // iteration over range (produces group)
-  i < 3 ? ^^;                // `^^` breaks iteration
-  i < 5 ? ^;                 // `^` continues iteration
-);                           // returns group
-[ 1..10 | x -> x * 2 ];      // list comprehension
+[a, b, c] | x -> a(x);        // maps list to new list
+(a, b, c) | a -> a.x * 2;     // maps group items (syntactically)
+10..1 | i -> (                // iteration over range (produces group)
+  i < 3 ? ^^;                 // `^^` breaks iteration
+  i < 5 ? ^;                  // `^` continues iteration
+);                            // returns group
+[ 1..10 | x -> x * 2 ];       // list comprehension
 
 //////////////////////////// fold
-items |> (sum,x) -> sum+x;   // fold operator with reducer
-(a,b,c) |> (a,b) -> a + b;   // can be applied to groups (syntax sugar)
-[a,b,c] |> (a,b) -> a + b;   // can be applied to lists
+items |> (sum,x) -> sum+x;    // fold operator with reducer
+(a,b,c) |> (a,b) -> a + b;    // can be applied to groups (syntax sugar)
+[a,b,c] |> (a,b) -> a + b;    // can be applied to lists
 
 //////////////////////////// import
-@ './path/to/module';        // any file can be imported directly
-@ 'math';                    // or defined via import-maps.json
-@ 'my-module#x,y,z';         // import selected members
+@ './path/to/module';         // any file can be imported directly
+@ 'math';                     // or defined via import-maps.json
+@ 'my-module#x,y,z';          // import selected members
 
 //////////////////////////// export
-x, y, z                      // last members in a file get exported (no semi!)
+x, y, z                       // last members in a file get exported (no semi!)
 ```
 
 
@@ -202,7 +202,7 @@ Provides k-rate amplification of input audio.
 
 ```fs
 gain = ( []input, []output, volume -< 0..100 ) -> (
-  x, i <- input <| output[i] = x * volume;
+  output | x -> x * volume;
 )
 
 gain([0,.1,.2,.3,.4,.5], 2);  // [0,.2,.4,.6,.8,1]
@@ -223,10 +223,11 @@ Biquad filter processor for single-channel input.
 
 1pi = pi;                     // define pi units
 1s = 44100;                   // define time units in samples
+1k = 10000;                   // basic si units
 blockLen = 1024;              // can be redefined from outside
 
-lp = ([blockLen]x, freq = 100 -< 1..10000, Q = 1.0 -< 0.001..3.0) -> (
-  *x1, *x2, *y1, *y2 = 0;     // filter state (defined by callsite)
+lp = ([blockLen]x, freq = 100 -< 1..10k, Q = 1.0 -< 0.001..3.0) -> (
+  *x1, *x2, *y1, *y2 = 0, 0, 0, 0;     // filter state (defined by callsite)
 
   // lpf formula
   w = 2pi * freq / 1s;
@@ -239,14 +240,14 @@ lp = ([blockLen]x, freq = 100 -< 1..10000, Q = 1.0 -< 0.001..3.0) -> (
   b0, b1, b2, a1, a2 *= 1.0 / a0;
 
   // produce output block
-  [ x | x0 -> (
+  x | x0 -> (
     y0 = b0*x0 + b1*x1 + b2*x2 - a1*y1 - a2*y2;
 
     x1, x2 = x0, x1;
     y1, y2 = y0, y1;
 
     y0
-  ) ]
+  )
 );
 
 lp, blockLen        // export
@@ -299,12 +300,12 @@ curve = (x, amt=1.82 -< 0..10) -> (sign(x) * abs(x)) ** amt;
 
 // coin = triangle with pitch jump
 coin = (freq=1675, jump=freq/2, delay=0.06, shape=0) -> (
-  *i=0, *phase=0;
+  *i, *phase = 0, 0;
 
   t = i++ / 1s;
   phase += (freq + t > delay ? jump : 0) * 2pi / 1s;
 
-  oscillator[shape](phase) | x -> adsr(x, 0, 0, .06, .24) | x -> curve(x, 1.82)
+  [0..blockSize] | x -> oscillator[shape](phase) | x -> adsr(x, 0, 0, .06, .24) | x -> curve(x, 1.82)
 );
 ```
 
