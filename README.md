@@ -12,7 +12,7 @@ It has common syntax and compiles to optimized WASM bytecode, making it availabl
 ```fs
 //////////////////////////// naming convention
 foo123, Ab_C_F#, $0, Δx;     // ids permit alnum, #, _, $, unicodes
-foo_bar_δ == Foo_Bar_Δ;      // ids are case-insensitive, dash case
+foo_bar_δ == Foo_Bar_Δ;      // ids are case-insensitive, snake case
 default=1; eval=fn; else=0;  // ids can be any common words (lino has no reserved words)
 
 //////////////////////////// numbers
