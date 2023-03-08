@@ -13,6 +13,7 @@ PREC_BOR=3, // NOTE: reduced weight to use as pipe operator, may cause side-effe
 PREC_FUNC=4, // a = b=>c, BUT b => c,d
 PREC_SEQUENCE=5, // a => b,c;   a, b==c, d,   a, b>=c, d,   a | b,c | d,   a?b:c , d
 PREC_LABEL=6, // a:b = 2,  a:b, b:c,   a: b&c
+PREC_LOOP=6, // a?b:c <| d,   a , b<|c,   b<|c, d
 PREC_TERNARY=7,
 PREC_OR=8,
 PREC_AND=9,
@@ -129,6 +130,9 @@ binary('-<', PREC_CLAMP) // a -< b
 binary('~>', PREC_FIND)
 binary('~<', PREC_FIND)
 
+binary('<|', PREC_LOOP)
+binary('|>', PREC_LOOP)
+
 // unaries
 unary('+', PREC_UNARY)
 unary('-', PREC_UNARY)
@@ -139,8 +143,10 @@ unary('--', PREC_UNARY)
 token('++', PREC_UNARY, a => a && ['-',['++',a],1])
 token('--', PREC_UNARY, a => a && ['+',['--',a],1])
 
-unary('^', PREC_TOKEN) // pin: ^ a
-unary('^^', PREC_TOKEN) // pin: ^ a
+unary('^', PREC_TOKEN) // continue with value: ^ a
+token('^', PREC_TOKEN, a => !a && !expr(PREC_TOKEN) && ['^']) // continue: ^
+unary('^^', PREC_TOKEN) // break with balue: ^ a
+token('^^', PREC_TOKEN, a => !a && !expr(PREC_TOKEN) && ['^^']) // return value: ^ a
 
 // a..b, ..b, a..
 token('..', PREC_RANGE, a => ['..', a, expr(PREC_RANGE)])
