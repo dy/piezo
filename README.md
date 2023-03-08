@@ -131,14 +131,15 @@ a > b ? b++;                 // if operator
 a > b ?: b++;                // elvis operator (else if)
 
 //////////////////////////// loops
-s = "Hello";                 //
-s[] < 50 <| (s += ", hi");   // inline loop: `while (s.length < 50) do (s += ", hi)"`
-(i=0; i++ < 10 <| (          // multiline loop
-  i < 3 ? ^^;                // `^^` to break loop (can return value as ^^x)
-  i < 5 ? ^;                 // `^` to continue loop (can return value as ^x)
-  log(i);                    //
-));                          //
-[j++ < 10 <| j * 2];         // list comprehension via loop
+s = "Hello";                  //
+s[] < 50 <| (s += ", hi");    // inline loop: `while (s.length < 50) do (s += ", hi)"`
+(i=0; i++ < 10 <| (           // multiline loop
+  i < 3 ? ^^;                 // `^^` to break loop (can return value as ^^x)
+  i < 5 ? ^;                  // `^` to continue loop (can return value as ^x)
+  log(i);                     //
+));                           //
+i=0; i++ < 3 <| i == 0, 1, 2  // list produces group
+[j++ < 10 <| j * 2];          // list comprehension via loop
 
 //////////////////////////// functions
 double = n -> n*2;           // inline function
