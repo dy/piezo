@@ -70,6 +70,7 @@ a,b,c = (d,e,f);            // a=d; b=e; c=f
 (a,b,c) = d;                // a=d, b=d; c=d
 a = b,c,d;                  // a=b, a=c, a=d
 a = b, c = d;               // a = b, a = c cnote difference with JS
+b -< (a,b,c);               // returns b if it's in group, null otherwise
 
 //////////////////////////// strings
 hi="hello";                 // strings
