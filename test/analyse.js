@@ -10,19 +10,18 @@ t.only('analyze: sine gen', t => {
     pi2 = pi*2;
     sampleRate = 44100;
 
-    sine(freq) = (
+    sine = (freq) -> (
       *phase=0;
       phase += freq * pi2 / sampleRate;
-      [sin(phase)]
+      sin(phase)
     )
   `))
 
   is(ir, {
-    export: {},
-    import: { math: [ 'sin', 'pi', 'max' ] },
+    export: { sine: true },
+    import: { math: ['sin', 'pi', 'max' ] },
     global: { pi2: [ '*', 'pi', ['int', 2] ], sampleRate: [ 'int', 44100 ] },
-    func:
-    {
+    func: {
       sine: {
         name: 'sine',
         args: ['freq'],

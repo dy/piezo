@@ -14,17 +14,15 @@ export default tree => {
     range: {}
   }
 
-  // [., ...statement] → [;, [., ...statement]]
-  // if (tree[0] !== ';') tree = [';',tree]
-  tmod[tree[0]](tree, ir)
+  tr[tree[0]](tree, ir)
 
   return ir
 }
 
 // module-level transforms
-const tmod = {
+const tr = {
   ';': ([,...statements], ir) => {
-    for (let statement of statements) statement && tmod[statement[0]]?.(statement, ir)
+    for (let statement of statements) statement && tr[statement[0]]?.(statement, ir)
   },
 
   // @ 'math#sin', @ 'path/to/lib'
@@ -36,7 +34,7 @@ const tmod = {
 
   // a = b., a() = b().
   '.': ([_,statement], ir) => {
-    tmod[statement[0]]?.(statement, ir)
+    tr[statement[0]]?.(statement, ir)
   },
 
   '=': (node, ir) => {

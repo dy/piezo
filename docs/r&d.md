@@ -1,4 +1,4 @@
-# [x] name -> lino
+## [x] name -> lino
 
 * soufn, sofn, sofun, so-fun, funzo, zfun
 * sound-fu, zound-fu, zo-fu
@@ -66,8 +66,6 @@
    + reminds Julia lang
    + file can be named literally mono.lisa
    - already exists: https://github.com/Somainer/lisa-lang
-
-# Language design / issues R&D
 
 ## [x] WAT, WASM? All targets
 

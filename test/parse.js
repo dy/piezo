@@ -35,9 +35,9 @@ t('parse: type cast', t => {
 })
 
 t('parse: units', t => {
-  is(parse('1k = 1000; 1pi = 3.1415;'), [';', ['=', ['int', 1, 'k'], ['int', 1000]], ['=', ['int', 1, 'pi'], ['flt', 3.1415]], null])
-  is(parse('1s = 44100; 1ms = 1s/1000;'), [';',['=',['int',1,'s'],['int',44100]], ['=', ['int',1,'ms'], ['/',['int',1,'s'],['int',1000]]], null], 'useful for sample indexes')
-  is(parse('10.1k, 2pi;'),[';', [',', ['flt', 10.1, 'k'], ['int', 2, 'pi']], undefined], 'units deconstruct to numbers: 10100, 6.283')
+  is(parse('1k = 1000; 1pi = 3.1415;'), [';', ['=', ['int', 1, 'k'], ['int', 1000]], ['=', ['int', 1, 'pi'], ['flt', 3.1415]]])
+  is(parse('1s = 44100; 1ms = 1s/1000;'), [';',['=',['int',1,'s'],['int',44100]], ['=', ['int',1,'ms'], ['/',['int',1,'s'],['int',1000]]]], 'useful for sample indexes')
+  is(parse('10.1k, 2pi;'),[';', [',', ['flt', 10.1, 'k'], ['int', 2, 'pi']]], 'units deconstruct to numbers: 10100, 6.283')
   is(parse('1h2m3.5s'), ['int', 1, 'h', ['int', 2, 'm', ['flt', 3.5, 's']]], 'unit combinations')
 })
 
@@ -59,10 +59,10 @@ t('parse: standard operators', t => {
 })
 
 t('parse: clamp operator', t => {
-  is(parse('x -< 0..10;'), [';',['-<', 'x', ['..', ['int',0], ['int',10]]],undefined], 'clamp(x, 0, 10)')
-  is(parse('x -< ..10;'), [';',['-<', 'x', ['..',undefined,['int',10]]],undefined], 'min(x, 10)')
-  is(parse('x -< 0..;'), [';',['-<', 'x', ['..',['int',0],undefined]],undefined], 'max(0, x)')
-  is(parse('x -<= 0..10;'), [';',['-<=', 'x', ['..',['int',0],['int',10]]], undefined], 'x = clamp(x, 0, 10)')
+  is(parse('x -< 0..10;'), [';',['-<', 'x', ['..', ['int',0], ['int',10]]]], 'clamp(x, 0, 10)')
+  is(parse('x -< ..10;'), [';',['-<', 'x', ['..',undefined,['int',10]]]], 'min(x, 10)')
+  is(parse('x -< 0..;'), [';',['-<', 'x', ['..',['int',0],undefined]]], 'max(0, x)')
+  is(parse('x -<= 0..10;'), [';',['-<=', 'x', ['..',['int',0],['int',10]]]], 'x = clamp(x, 0, 10)')
 })
 
 t('parse: length operator', t => {
@@ -130,7 +130,7 @@ t('parse: statements', t => {
   is(parse('(c = a + b; c)'), ['(',[';',['=','c',['+','a','b']],'c']], 'parens define block, return last element')
   is(parse('(a=b+1; a,b,c)'), ['(',[';',['=','a',['+','b',['int',1]]],[',','a','b','c']]], 'block can return group')
   is(parse('(a ? ^b; c)'), ['(',[';',['?','a',['^','b']],'c']], 'return/break operator can preliminarily return value')
-  is(parse('(foo(); bar();)'), ['(',[';',['()','foo'],['()','bar'],null]], 'semi-colon after last statement returns void')
+  is(parse('(foo(); bar();)'), ['(',[';',['()','foo'],['()','bar']]], 'semi-colon after last statement returns void')
 })
 
 t('parse: conditions', t => {
@@ -164,7 +164,7 @@ t('parse: loops', t => {
     ['=','i',['int',0]],
     ['<|',
       ['<',['++','i'],['int',10]],
-      ['(',[';',['?',['<','i',['int',3]],['^^']],['?',['<','i',['int',5]],['^']],null]]
+      ['(',[';',['?',['<','i',['int',3]],['^^']],['?',['<','i',['int',5]],['^']]]]
     ]
   ]], 'multiline loop')
   is(parse('[++j < 10 <| j * 2]'),['[',['<|',['<',['++','j'],['int',10]],['*','j',['int',2]]]], 'list comprehension via loop')
@@ -193,8 +193,7 @@ t('parse: stateful variables', t => {
     a(), a();                     // 0, 1
   `), [';',
     ['=','a',['->',['('],['(',[';',['=',['*','i'],['int',0]],['++','i']]]]],
-    [',',['()','a'],['()','a']],
-    null
+    [',',['()','a'],['()','a']]
   ])
   is(parse('*[4]i'), ['*',['[',['int',4],'i']], 'memory')
   is(parse(`b = () -> (                   //
@@ -205,8 +204,8 @@ t('parse: stateful variables', t => {
     ['*',['[',['int',4],'i']],
     ['=',['.','i','0'],['+',['.','i','1'],['int',1]]],
     ['.','i','0']
-  ]]]],undefined])
-  is(parse('b(), b(), b();'),[';',[',',['()','b'],['()','b'],['()','b']],undefined], '1, 2, 3')
+  ]]]]])
+  is(parse('b(), b(), b();'),[';',[',',['()','b'],['()','b'],['()','b']]], '1, 2, 3')
 })
 
 t('parse: map', () => {
@@ -219,9 +218,8 @@ t('parse: map', () => {
   );                            // returns group
   `), [';',['|',['..',['int',10],['int',1]],['->','i',['(',[';',
     ['?',['<','i',['int',3]], ['^^']],
-    ['?',['<','i',['int',5]], ['^']],
-    null
-  ]]]],undefined])
+    ['?',['<','i',['int',5]], ['^']]
+  ]]]]])
   is(parse('[ 1..10 | x -> x * 2 ]'), ['[',['|',['..',['int',1],['int',10]],
     ['->','x',['*','x',['int',2]]]
   ]],     'list comprehension')
@@ -256,23 +254,23 @@ t('parse: triple dots error', t => {
 t('parse: endings', t => {
   is(parse(`
     x() = 1+2;
-  `), [';',['=', ['()', 'x'], ['+', ['int',1], ['int',2]]],undefined], 'a')
+  `), [';',['=', ['()', 'x'], ['+', ['int',1], ['int',2]]]], 'a')
 
   is(parse(`
     a,b,c;
-  `), [';',[',','a','b','c'],undefined], 'b')
+  `), [';',[',','a','b','c']], 'b')
 
   is(parse(`
     x() = (1+2);
-  `), [';',['=', ['()', 'x'], ['(', ['+', ['int',1], ['int',2]]]], undefined], 'c')
+  `), [';',['=', ['()', 'x'], ['(', ['+', ['int',1], ['int',2]]]]], 'c')
 
   is(parse(`
     x() = (1+2;)
-  `), ['=', ['()', 'x'], ['(',[';', ['+', ['int',1], ['int',2]], undefined]]], 'd')
+  `), ['=', ['()', 'x'], ['(',[';', ['+', ['int',1], ['int',2]]]]], 'd')
 
   is(parse(`
     x() = (1+2;);
-  `), [';',['=', ['()', 'x'], ['(',[';',['+', ['int',1], ['int',2]], undefined]]], undefined], 'e')
+  `), [';',['=', ['()', 'x'], ['(',[';',['+', ['int',1], ['int',2]]]]]], 'e')
 
   is(parse(`
     x() = (a?^b;c)
@@ -289,17 +287,16 @@ t('parse: semicolon', t => {
       sampleRate = 44100;
   `), [';',
     ['=', 'pi2', ['*', 'pi', ['flt', 2]]],
-    ['=', 'samplerate', ['int', 44100]],
-    null
+    ['=', 'samplerate', ['int', 44100]]
   ]);
 
   is(parse(`
     x() = 1+2;
-  `), [';',['=', ['()', 'x'], ['+', ['int',1], ['int',2]]], undefined])
+  `), [';',['=', ['()', 'x'], ['+', ['int',1], ['int',2]]]])
 
   is(parse(`
     a,b,c;
-  `), [';',[',','a','b','c'], undefined])
+  `), [';',[',','a','b','c']])
 })
 
 t('parse: sine gen', t => {

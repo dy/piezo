@@ -6,7 +6,7 @@
     "wabt": "^1.0.27"
   },
   "dependencies": {
-    "subscript": "^7.3.1",
+    "subscript": "^7.4.1",
     "watr": "^1.2.0"
   },
   "name": "sonscript",
