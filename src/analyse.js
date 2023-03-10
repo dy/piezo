@@ -14,15 +14,25 @@ export default tree => {
     range: {}
   }
 
-  tr[tree[0]](tree, ir)
+  if (tree[0] !== ';') tree = [';',tree]
+  globalTr[tree[0]](tree, ir)
 
   return ir
 }
 
-// module-level transforms
-const tr = {
+// global-level transforms
+const globalTr = {
   ';': ([,...statements], ir) => {
-    for (let statement of statements) statement && tr[statement[0]]?.(statement, ir)
+    for (let statement of statements) statement && globalTr[statement[0]]?.(statement, ir)
+
+    // provide exports
+    let last = statements[statements.length - 1]
+    if (typeof last === 'string') ir.export[last] = true
+    if (last[0]==='=') {
+      if (typeof last[1] === 'string') ir.export[last[1]] = true
+      else if (last[1][0] === ',') last[1].slice(1).map(item => (ir.export[item] = true))
+    }
+    else if (last[0]===',') last.slice(1).map(item => ir.export[item] = true)
   },
 
   // @ 'math#sin', @ 'path/to/lib'
@@ -34,62 +44,57 @@ const tr = {
 
   // a = b., a() = b().
   '.': ([_,statement], ir) => {
-    tr[statement[0]]?.(statement, ir)
+    globalTr[statement[0]]?.(statement, ir)
   },
 
   '=': (node, ir) => {
     let [,left,right] = node
 
-    // a() = b
-    if (left[0] === '(') {
-      let [, name, args] = left
+    // a = () -> b
+    if (right[0] === '->') {
+      let name = left, [, args, body] = right
 
+      if (args[0]==='(') [,args] = args
       args = args?.[0]===',' ? args.slice(1) : args ? [args] : []
 
       // init args by name
-      args.forEach(arg => args[arg] = {})
+      // args.forEach(arg => args[arg] = {})
 
       // detect overload
-      if (ir.func[name]) throw Error(`Function \`${name}\` is already defined`)
+      // if (ir.func[name]) throw Error(`Function \`${name}\` is already defined`)
 
-      let fun = ir.func[name] = {
+      // flatten body
+      if (body[0] === '(') body = body[1]
+
+      let fn = ir.func[name] = {
         name,
         args,
         local: {},
         state: {},
-        body: [],
-        return: []
+        body,
+        return: body[0] === ';' ? body[body.length - 1] : body
       }
-
-      // evaluate function body
-      fun.body = mapNode(node, right, fun)
-
-      // catch function return value
-      // [a, b].
-      console.log(right)
-      // FIXME: detect output
-      // if (op === '[' && parent[0] === '.') {
-      //   fun.output.push(...args)
-      // }
+      analyzeExpr(null, fn.body, fn)
     }
     // a = b
     else {
+      if (typeof left !== 'string' && left[0] !== ',') throw ReferenceError(`Invalid left-hand side assignment`)
       ir.global[left] = right
     }
   },
 }
 
 // maps node & analyzes internals
-function mapNode(parent, node, fun) {
+function analyzeExpr(parent, node, fn) {
   let [op, ...args] = node
 
   // *a = init
   if (op === '*') {
     if (args.length === 1) {
       // detect state variables
-      fun.state[args[0]] = parent[0] === '=' ? parent[2] : null
+      fn.state[args[0]] = parent[0] === '=' ? parent[2] : null
     }
   }
 
-  return [op, ...args.map(arg => Array.isArray(arg) ? mapNode(node, arg, fun) : arg)]
+  return [op, ...args.map(arg => Array.isArray(arg) ? analyzeExpr(node, arg, fn) : arg)]
 }

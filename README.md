@@ -118,7 +118,6 @@ foo();                        // semi-colons at end of line are mandatory
 (c = a + b; c);               // parens define block, return last element
 (a=b+1; a,b,c);               // block can return group
 (a ? ^b; c);                  // return/break operator can preliminarily return value
-(foo(); bar(););              // semi-colon after last statement returns void
 
 //////////////////////////// conditions
 sign = a < 0 ? -1 : +1;       // inline ternary
@@ -149,7 +148,7 @@ double = n -> n*2;            // inline function
 triple = (n=1) -> (           // optional args
   n == 0 ? ^n;                // preliminarily return n
   n*3                         // returns last value
-); 
+);
 triple();                     // 3
 triple(5);                    // 15
 triple(n: 10);                // 30. named argument.
