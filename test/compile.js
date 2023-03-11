@@ -54,7 +54,7 @@ t.only('compile: globals', t => {
   is(mod.exports.samplerate.value, 44100)
 
   wat = compile(`
-    pi, pi2, sampleRate = 3.14, pi*2.0, 44100;
+    pi, pi2, sampleRate = 3.14, 3.14*2, 44100;
   `)
   mod = compileWat(wat)
   is(mod.exports.pi.value, 3.14)

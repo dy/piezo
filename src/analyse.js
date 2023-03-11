@@ -1,6 +1,7 @@
 // analyser converts AST into IR, able to be compiled after
 import { INT, FLOAT } from './const.js';
 import parse from './parse.js';
+import desugar from './desugar.js';
 
 export default tree => {
   if (typeof tree === 'string') tree = parse(tree)
@@ -19,6 +20,7 @@ export default tree => {
   }
   // convert single-entry into a finished expression
   if (tree[0] !== ';') tree = [';',tree]
+  tree = desugar(tree)
 
   // global-level transforms
   const globalTr = {
@@ -67,7 +69,7 @@ export default tree => {
         }
         analyzeExpr(null, fn.body, fn)
       }
-      // a = b
+      // a = b,  a,b=1,2
       else {
         if (typeof left !== 'string' && left[0] !== ',') throw ReferenceError(`Invalid left-hand side assignment`)
         console.log(left, right)

@@ -60,7 +60,7 @@ x -<= 0..10;                  // x = clamp(x, 0, 10)
 "abc"[];                      // 3
 (-1..+2)[];                   // 3
 
-//////////////////////////// groups
+//////////////////////////// groups (tuples)
 a, b, c;                      // groups are syntactic sugar, not tuple data type
 (a, b, c)++;                  // they apply operation to multiple elements: (a++, b++, c++)
 (a, (b, c)) == a, b, c;       // groups are always flat
