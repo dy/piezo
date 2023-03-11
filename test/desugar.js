@@ -20,7 +20,11 @@ t.only('desugar: deconstruct', () => {
   // a, b, c;                      // groups are syntactic sugar, not tuple data type
   // (a, b, c)++;                  // they apply operation to multiple elements: (a++, b++, c++)
   // (a, (b, c)) == a, b, c;       // groups are always flat
-  is(desugar(['==',['(',[',','a',['(',[',','b','c']]]], [',','a','b','c']]), [',',['==','a','a'],['==','b','b'],['==','c','c']])
+  // (a, (b, c)) = a, b, c;       // groups are always flat
+  is(desugar(
+    ['=',['(',[',','a',['(',[',','b','c']]]], [',','c','b','a']]),
+    [',',['=','@0','c'],['=','@1','b'],['=','@2','a'],['=','a','@0'],['=','b','@1'],['=','c','@2']]
+  )
   // a,b,c = d,e,f;                // assign: a=d, b=e, c=f
   // a,b = b,a;                    // swap: temp=a; a=b; b=temp;
   // (a,b) + (c,d);                // operations: (a+c, b+d)
