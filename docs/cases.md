@@ -8,7 +8,7 @@
 * [ ] web-audio-api for node
 * [ ] [musicdsp](https://github.com/bdejong/musicdsp/tree/master/source)
 * [ ] [sndkit](https://github.com/paulbatchelor/sndkit)
-* [ ] Compare to alternatives: rust, soul, elementary-audio
+* [ ] Compare to alternatives: rust, [soul](https://soul.dev/), elementary-audio
 * [ ] https://github.com/gleitz/midi-js-soundfonts
 * [ ] bytebeats
 * [ ] pink trombone cases https://github.com/zakaton/Pink-Trombone, https://dood.al/pinktrombone/

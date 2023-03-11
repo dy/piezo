@@ -1,12 +1,14 @@
-// compile to WAST
-
-const INT = 'i32', FLOAT = 'f64'
+// compile source/ast/ir to WAST
+import analyse from "./analyse.js"
+import { INT, FLOAT } from "./const.js"
 
 export default ir => {
+  if (typeof ir === 'string') ir = analyse(ir)
+
   let func, out = [], globals = {}
 
   // serialize expression (depends on current ir, ctx)
-  function expr (node) {
+  const expr = (node) => {
     // literal, like `foo`
     if (typeof node === 'string') {
       if (ir.global[node]) return `(global.get $${node})`
@@ -18,16 +20,16 @@ export default ir => {
     if (Array.isArray(node)) {
       let [op, ...args] = node
 
-      return edict[op]?.(op, ...args) || ''
+      return exprDict[op]?.(op, ...args) || ''
     }
 
     return node
   }
 
   // expressions mapping
-  const edict = {
+  const exprDict = {
     '*': (op, a, b) => `(f64.mul ${expr(a)} ${expr(b)})`,
-    'float': (op, a) => `(f64.const ${expr(a)})`,
+    'flt': (op, a) => `(f64.const ${expr(a)})`,
     // FIXME: handle end operator differently
     // '.': (op, a, b) => (a[0] === '(' && a[1]?.[0] === ';') ?
     //   `${expr(a[1].slice(0,-1))}\n(return ${expr(a[1][a[1].length-1])})` :
@@ -41,7 +43,6 @@ export default ir => {
   for (let name in ir.func) {
     func = ir.func[name]
     let dfn = `func $${name}`
-    if (name[0]!=='_') dfn += ` (export "${name}")`
     dfn += ' ' + func.args.map(a=>`(param $${a} f64)`).join(' ')
     dfn += ' ' + '(result f64)' // TODO: detect result type properly
     dfn += `\n${expr(func.body)}`
@@ -57,11 +58,9 @@ export default ir => {
     let dfn = ir.global[name]
     let node = `global $${name} `
 
-    if (name[0]!=='_') node+=`(export "${name}") `
-
     // simple init
     if (dfn[0] === 'int') node += `${INT} (${INT}.const ${dfn[1]})`
-    else if (dfn[0] === 'float') node += `${FLOAT} (${FLOAT}.const ${dfn[1]})`
+    else if (dfn[0] === 'flt') node += `${FLOAT} (${FLOAT}.const ${dfn[1]})`
     // requires start init
     // TODO: may need detecting expression result type
     else node += `(mut ${FLOAT}) (${FLOAT}.const 0)`, globals[name] = dfn
@@ -79,10 +78,9 @@ export default ir => {
   }
 
   // 4. provide exports
-  // NOTE: handled by individual definitions, since all variables are exported by default
-  // for (let name in exports) {
-  //   out.push(`(export "${name}" (${exports[name]} $${name}))`)
-  // }
+  for (let name in ir.export) {
+    out.push(`(export "${name}" (${ir.export[name]} $${name}))`)
+  }
 
   return out.join('\n')
 }
