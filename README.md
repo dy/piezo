@@ -201,7 +201,7 @@ Provides k-rate amplification of input audio.
 
 ```fs
 gain = ( []input, []output, volume -< 0..100 ) -> (
-  output | x -> x * volume;
+  [ output | x -> x * volume ]
 )
 
 gain([0,.1,.2,.3,.4,.5], 2);  // [0,.2,.4,.6,.8,1]
@@ -239,14 +239,14 @@ lp = ([blockLen]x, freq = 100 -< 1..10k, Q = 1.0 -< 0.001..3.0) -> (
   b0, b1, b2, a1, a2 *= 1.0 / a0;
 
   // produce output block
-  x | x0 -> (
+  [ x | x0 -> (
     y0 = b0*x0 + b1*x1 + b2*x2 - a1*y1 - a2*y2;
 
     x1, x2 = x0, x1;
     y1, y2 = y0, y1;
 
     y0
-  )
+  ) ]
 );
 
 lp, blockLen        // export
