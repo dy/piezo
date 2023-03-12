@@ -7,6 +7,25 @@ It has common syntax and compiles to optimized WASM bytecode, making it availabl
 
 > WORK IN PROGRESS NOTICE: current stage is stabilized syntax and basic cases compilation; it requires full compiler implementation.
 
+## Usage
+
+`npm i lino`
+
+```js
+import * as lino from 'lino'
+
+// create wasm arrayBuffer
+const buffer = lino.compile(`mult = (x,y) -> x*y`)
+
+// create wasm instance
+const module = new WebAssembly.Module(buffer)
+const instance = new WebAssembly.Instance(module)
+
+// use API
+const {mult} = instance.exports
+mult(108) // 216
+```
+
 ## Reference
 
 ```fs
@@ -400,24 +419,6 @@ Features:
 * _length operator_ − `items[]` returns total number of items of either an array, group, string or range.
 
 
-## Usage
-
-`npm i lino`
-
-```js
-import * as lino from 'lino'
-
-// create wasm buffer
-const buffer = lino.compile(`mult = (x,y) -> x*y`)
-
-// create wasm instance
-const module = new WebAssembly.Module(buffer)
-const instance = new WebAssembly.Instance(module)
-
-// use API
-const {mult} = instance.exports
-mult(108) // 216
-```
 
 ## See also
 
