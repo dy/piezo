@@ -23,7 +23,7 @@ const instance = new WebAssembly.Instance(module)
 
 // use API
 const {mult} = instance.exports
-mult(108) // 216
+mult(108,2) // 216
 ```
 
 ## Reference
