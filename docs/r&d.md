@@ -2325,3 +2325,14 @@ Having wat files is more useful than direct compilation to binary form:
 
 ## [x] `a <~ b` vs `a < ~b` -> use `a ~< b` instead
 
+## [ ] Case-insensitive variable names?
+
+1. Case-sensitive
+
++ Enables extra room for naming, eg. `Oscillator` creates oscillator vs `oscillator` is instance
++ Doesn't create exports naming conflict: `foo_bar` is non-js export name, like `samplerate`
++ More conventional: JS, C, Python
+- Possible problem mentioned by despawnerer: `fullName` vs `fullname`.
+~ MySQL is fine being case-insensitive
+
+? Maybe keep it case-insensitive, but match case by-export?

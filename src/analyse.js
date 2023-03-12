@@ -1,5 +1,4 @@
 // analyser converts AST into IR, able to be compiled after
-import { INT, FLOAT } from './const.js';
 import parse from './parse.js';
 import desugar from './desugar.js';
 
@@ -19,30 +18,21 @@ export default tree => {
     range: {}
   }
   // convert single-entry into a finished expression
-  if (tree[0] !== ';') tree = [';',tree]
   tree = desugar(tree)
+  let statements = tree[0] === ';' ? tree.slice(1) : [tree];
 
   // global-level transforms
-  const globalTr = {
-    ';': ([,...statements]) => {
-      for (let statement of statements) statement && globalTr[statement[0]]?.(statement)
-    },
-
-    // @ 'math#sin', @ 'path/to/lib'
-    '@': ([,[,path]]) => {
-      let url = new URL('import:'+path)
-      let {hash, pathname} = url
-      ir.import[pathname] = hash ? hash.slice(1).split(',') : []
-    },
-
-    // a = b., a() = b().
-    '.': ([_,statement]) => {
-      globalTr[statement[0]]?.(statement)
-    },
-
-    '=': (node) => {
-      let [,left,right] = node
-
+  for (let statement of statements) {
+    if (!statement) continue
+    // a;b;
+    if (typeof statement === 'string') ir.global[statement] = null
+    // a,b,c;
+    else if (statement[0] === ',') {
+      statement.map((id,i) => i && (!(id in ir.global)) && (ir.global[id] = null))
+    }
+    // a=b; a,b=b,c; a = () -> b
+    else if (statement[0] === '=') {
+      let [,left,right] = statement
       // a = () -> b
       if (right[0] === '->') {
         let name = left, [, args, body] = right
@@ -72,14 +62,20 @@ export default tree => {
       // a = b,  a,b=1,2
       else {
         if (typeof left !== 'string' && left[0] !== ',') throw ReferenceError(`Invalid left-hand side assignment`)
-        if (typeof left === 'string') return ir.global[left] = right
-        left.map((id,i) => i && (ir.global[id] = right[i]))
+        if (typeof left === 'string') ir.global[left] = right
+        else left.map((id,i) => i && (ir.global[id] = right[i]))
       }
-    },
+    }
+    // @ 'math#sin', @ 'path/to/lib'
+    else if (statement[0] === '@') {
+      let [,path] = statement
+      let url = new URL('import:'+path)
+      let {hash, pathname} = url
+      ir.import[pathname] = hash ? hash.slice(1).split(',') : []
+    }
   }
 
-  globalTr[tree[0]](tree)
-  genExports(tree[tree.length - 1]);
+  genExports(statements[statements.length-1]);
 
   // parse exports from a (last) node statement
   function genExports(node) {
@@ -92,13 +88,13 @@ export default tree => {
       else if (node[1][0] === ',') node[1].slice(1).map(item => (ir.export[item] = extTypeOf(item)))
     }
     // a,b;
-    else if (node[0]===',') node.slice(1).map(item => ir.export[item] = extTypeOf(item))
+    else if (node[0]===',') node.map((item,i) => i && (ir.export[item] = extTypeOf(item)))
   }
 
   // get external type of id
   function extTypeOf(id) {
-    if (ir.func[id]) return 'func'
-    if (ir.global[id]) return 'global'
+    if (id in ir.func) return 'func'
+    if (id in ir.global) return 'global'
     throw Error('Unknown type of `' + id + '`')
   }
 

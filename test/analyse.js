@@ -3,11 +3,11 @@ import parse from '../src/parse.js'
 import analyse from '../src/analyse.js'
 
 t('analyze: export kinds', t => {
-  is(analyse(parse(`x`)).export, {x:true})
-  is(analyse(parse(`x,y`)).export, {x:true,y:true})
-  is(analyse(parse(`x,y,z;`)).export, {x:true,y:true,z:true})
-  is(analyse(parse(`x=1`)).export, {x:true})
-  is(analyse(parse(`x,y=1,2;`)).export, {x:true,y:true})
+  is(analyse(parse(`x`)).export, {x:'global'})
+  is(analyse(parse(`x,y`)).export, {x:'global',y:'global'})
+  is(analyse(parse(`x,y,z;`)).export, {x:'global',y:'global',z:'global'})
+  is(analyse(parse(`x=1`)).export, {x:'global'})
+  is(analyse(parse(`x,y=1,2;`)).export, {x:'global',y:'global'})
 })
 
 t.todo('analyze: return kinds', t => {
