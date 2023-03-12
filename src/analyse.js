@@ -2,7 +2,7 @@
 import parse from './parse.js';
 import desugar from './desugar.js';
 
-export default tree => {
+export default function analyze(tree) {
   if (typeof tree === 'string') tree = parse(tree)
 
   // language-level sections
@@ -35,29 +35,10 @@ export default tree => {
       let [,left,right] = statement
       // a = () -> b
       if (right[0] === '->') {
-        let name = left, [, args, body] = right
-
-        if (args[0]==='(') [,args] = args
-        args = args?.[0]===',' ? args.slice(1) : args ? [args] : []
-
-        // init args by name
-        // args.forEach(arg => args[arg] = {})
-
         // detect overload
-        // if (ir.func[name]) throw Error(`Function \`${name}\` is already defined`)
+        // if (ir.func[left]) throw Error(`Function \`${left}\` is already defined`)
 
-        // flatten body
-        if (body[0] === '(') body = body[1]
-
-        let fn = ir.func[name] = {
-          name,
-          args,
-          local: {},
-          state: {},
-          body,
-          return: body[0] === ';' ? body[body.length - 1] : body
-        }
-        analyzeExpr(null, fn.body, fn)
+        ;(ir.func[left] = analyzeFunc(right, ir)).name = left
       }
       // a = b,  a,b=1,2
       else {
@@ -98,8 +79,25 @@ export default tree => {
     throw Error('Unknown type of `' + id + '`')
   }
 
-  // maps node & analyzes internals
-  function analyzeExpr(parent, node, fn) {
+  return ir
+}
+
+// maps node & analyzes function internals
+export function analyzeFunc([,args, body], ir) {
+  args = args?.[0]===',' ? args.slice(1) : args ? [args] : []
+
+  // init args by name
+  args.forEach(arg => args[arg] = {})
+
+  let func = {
+    args,
+    local: {},
+    state: {},
+    body,
+    return: body[0] === ';' ? body[body.length - 1] : body
+  }
+
+  const expr = (parent, node, func) => {
     let [op, ...args] = node
 
     // *a = init
@@ -110,8 +108,8 @@ export default tree => {
       }
     }
 
-    return [op, ...args.map(arg => Array.isArray(arg) ? analyzeExpr(node, arg, fn) : arg)]
+    return [op, ...args.map(arg => Array.isArray(arg) ? expr(node, arg, func) : arg)]
   }
 
-  return ir
+  return func
 }

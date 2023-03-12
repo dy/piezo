@@ -67,67 +67,55 @@ t('compile: multiple globals', () => {
 
 t('compile: function oneliners', t => {
   // default
-  let mod = compiles(`
-    mult = (a, b) -> a * b;
-  `, `
-    (func $mult (export "mult") (param $a f64) (param $b f64) (result f64)
-      (f64.mul (local.get $a) (local.get $b))
-      (return)
-    )
-  `)
+  let wat = compile(`mult = (a, b) -> a * b;`)
+  let mod = compileWat(wat);
+  // `
+  //   (func $mult (export "mult") (param $a f64) (param $b f64) (result f64)
+  //     (f64.mul (local.get $a) (local.get $b))
+  //     (return)
+  //   )
+  // `
   is(mod.exports.mult(2,4), 8)
 
   // no semi
-  mod = compiles(`mult = (a, b) -> a * b`, `
-  (func $mult (export "mult") (param $a f64) (param $b f64) (result f64)
-    (f64.mul (local.get $a) (local.get $b))
-    (return)
-  )
-  `)
+  wat = compile(`mult = (a, b) -> a * b`)
+  mod = compileWat(wat)
+  // `
+  // (func $mult (export "mult") (param $a f64) (param $b f64) (result f64)
+  //   (f64.mul (local.get $a) (local.get $b))
+  //   (return)
+  // )
+  // `
   is(mod.exports.mult(2,4), 8)
 
   // no result
-  mod = compiles(`
-    mult = (a, b) -> (a * b);
-  `, `
-    (func $mult (export "mult") (param $a f64) (param $b f64) (result f64)
-      (f64.mul (local.get $a) (local.get $b))
-      (return)
-    )
-  `)
+  mod = compileWat(compile(` mult = (a, b) -> (a * b); `))
+  // `
+  //   (func $mult (export "mult") (param $a f64) (param $b f64) (result f64)
+  //     (f64.mul (local.get $a) (local.get $b))
+  //     (return)
+  //   )
+  // `
   is(mod.exports.mult(2,4), 8)
 
-  // no result
-  mod = compiles(`
-    mult (a, b) -> (a * b);
-  `, `
-    (func $mult (export "mult") (param $a f64) (param $b f64) (result f64)
-      (f64.mul (local.get $a) (local.get $b))
-      (return)
-    )
-  `)
+  mod = compileWat(compile(` mult = (a, b) -> (b; a * b)`))
+  // `
+  // (func $mult (export "mult") (param $a f64) (param $b f64) (result f64)
+  // (local.get $b)
+  // (f64.mul (local.get $a) (local.get $b))
+  // (return)
+  // )
+  // `
   is(mod.exports.mult(2,4), 8)
 
-  mod = compiles(`
-  mult (a, b) -> (b; a * b)
-  `, `
-  (func $mult (export "mult") (param $a f64) (param $b f64) (result f64)
-  (local.get $b)
-  (f64.mul (local.get $a) (local.get $b))
-  (return)
-  )
-  `)
-  is(mod.exports.mult(2,4), 8)
-
-  mod = compiles(`
-    mult = (a, b) -> (b; a * b;)
-  `, `
-    (func $mult (export "mult") (param $a f64) (param $b f64) (result f64)
-      (local.get $b)
-      (f64.mul (local.get $a) (local.get $b))
-      (return)
-    )
-  `)
+  mod = compileWat(compile(` mult = (a, b) -> (b; a * b;) `))
+  // `
+  //   (func $mult (export "mult") (param $a f64) (param $b f64) (result f64)
+  //     (local.get $b)
+  //     (f64.mul (local.get $a) (local.get $b))
+  //     (return)
+  //   )
+  // `
   is(mod.exports.mult(2,4), 8)
 })
 
