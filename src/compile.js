@@ -3,8 +3,7 @@ import analyse from "./analyse.js"
 import { INT, FLOAT } from "./const.js"
 
 export default ir => {
-  if (typeof ir === 'string') ir = analyse(ir)
-
+  if (typeof ir === 'string' || Array.isArray(ir)) ir = analyse(ir)
   let func, out = [], globals = {}
 
   // serialize expression (depends on current ir, ctx)
@@ -18,25 +17,33 @@ export default ir => {
 
     // another expression
     if (Array.isArray(node)) {
-      let [op, ...args] = node
+      let [op,...args] = node, [a,b] = args
+      // a * b - make proper cast
+      if (op === '+' || op === '*') {
+        let aType = typeOf(a), bType = typeOf(b)
+        if (aType === 'int' && bType === 'int') return `(i32.mul ${expr(a)} ${expr(b)})`
+        if (aType === 'flt' && bType === 'flt') return `(f64.mul ${expr(a)} ${expr(b)})`
+        if (aType === 'int') return `(f64.mul (f64.convert_i32_s ${expr(a)}) ${expr(b)})`
+        return `(f64.mul ${expr(a)} (f64.convert_i32_s ${expr(b)}))`
+      }
 
-      return exprDict[op]?.(op, ...args) || ''
+      // number primitives: 1.0, 2 etc.
+      if (op === 'flt') return `(f64.const ${a})`
+      if (op === 'int') return `(i32.const ${a})`
+
+      // a; b; c;
+      if (op === ';') return args.map(arg => arg != null ? expr(arg) : '').join('\n')
     }
 
     return node
   }
 
-  // expressions mapping
-  const exprDict = {
-    '*': (op, a, b) => `(f64.mul ${expr(a)} ${expr(b)})`,
-    'flt': (op, a) => `(f64.const ${expr(a)})`,
-    // FIXME: handle end operator differently
-    // '.': (op, a, b) => (a[0] === '(' && a[1]?.[0] === ';') ?
-    //   `${expr(a[1].slice(0,-1))}\n(return ${expr(a[1][a[1].length-1])})` :
-    //   `(return ${expr(a)})`,
-    // (a;b). → (a); b.
-    '(': (op, a, b) => expr(a),
-    ';': (op, ...args) => args.map(arg => arg != null ? expr(arg) : '').join('\n')
+  // find result type of a node
+  function typeOf(node) {
+    let [op, a, b] = node
+    if (op === 'int' || op === 'flt') return op
+    if (op === '+' || op === '*') return (typeOf(a) === 'flt' || typeOf(b) === 'flt' ? 'flt': 'int')
+    return 'flt' // FIXME: likely not any other operation returns float
   }
 
   // 1. declare all functions

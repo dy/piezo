@@ -72,9 +72,8 @@ export default tree => {
       // a = b,  a,b=1,2
       else {
         if (typeof left !== 'string' && left[0] !== ',') throw ReferenceError(`Invalid left-hand side assignment`)
-        console.log(left, right)
-        // FIXME: swizzle h
-        ir.global[left] = right
+        if (typeof left === 'string') return ir.global[left] = right
+        left.map((id,i) => i && (ir.global[id] = right[i]))
       }
     },
   }
@@ -85,19 +84,19 @@ export default tree => {
   // parse exports from a (last) node statement
   function genExports(node) {
     // a;
-    if (typeof node === 'string') ir.export[node] = typeOf(node)
+    if (typeof node === 'string') ir.export[node] = extTypeOf(node)
     if (node[0]==='=') {
       // a=...;
-      if (typeof node[1] === 'string') ir.export[node[1]] = typeOf(node[1])
+      if (typeof node[1] === 'string') ir.export[node[1]] = extTypeOf(node[1])
       // a,b=...;
-      else if (node[1][0] === ',') node[1].slice(1).map(item => (ir.export[item] = typeOf(item)))
+      else if (node[1][0] === ',') node[1].slice(1).map(item => (ir.export[item] = extTypeOf(item)))
     }
     // a,b;
-    else if (node[0]===',') node.slice(1).map(item => ir.export[item] = typeOf(item))
+    else if (node[0]===',') node.slice(1).map(item => ir.export[item] = extTypeOf(item))
   }
 
-  // get ty
-  function typeOf(id) {
+  // get external type of id
+  function extTypeOf(id) {
     if (ir.func[id]) return 'func'
     if (ir.global[id]) return 'global'
     throw Error('Unknown type of `' + id + '`')

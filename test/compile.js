@@ -34,7 +34,7 @@ function compileWat (code, config) {
 }
 
 
-t.only('compile: globals', t => {
+t('compile: globals', t => {
   // TODO: single global
   // TODO: multiply wrong types
   // TODO: define globals via group (a,b,c).
@@ -52,11 +52,13 @@ t.only('compile: globals', t => {
   is(mod.exports.pi.value, 3.14)
   is(mod.exports.pi2.value, 3.14*2)
   is(mod.exports.samplerate.value, 44100)
+})
 
-  wat = compile(`
+t('compile: multiple globals', () => {
+  let wat = compile(`
     pi, pi2, sampleRate = 3.14, 3.14*2, 44100;
   `)
-  mod = compileWat(wat)
+  let mod = compileWat(wat)
   is(mod.exports.pi.value, 3.14)
   is(mod.exports.pi2.value, 3.14*2)
   is(mod.exports.samplerate.value, 44100)

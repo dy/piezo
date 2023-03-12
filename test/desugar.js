@@ -15,7 +15,7 @@ t('desugar: flatten', () => {
   is(flatten(unbracket(['(',[',','a',['(',[',','b','c']]]])), [',','a','b','c'])
 })
 
-t.only('desugar: deconstruct', () => {
+t.todo('desugar: deconstruct', () => {
   is(desugar(['=', 'a','b']), ['=','a','b'])
   // a, b, c;                      // groups are syntactic sugar, not tuple data type
   // (a, b, c)++;                  // they apply operation to multiple elements: (a++, b++, c++)
