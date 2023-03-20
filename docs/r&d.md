@@ -2304,9 +2304,10 @@ Having wat files is more useful than direct compilation to binary form:
 
 ## [ ] !Try-catch
 
-  ! Golang-like `result : err = fn()`
+  ! Golang-like `result ! err = fn()`
     + matches reverse-ternary op
     + also see trytm https://github.com/bdsqqq/try
+  * Or `result = ?fn()`
 
 ## [x] Pipe: replace with `|:` operator? -> let's use lowered-precedence `|` for now and see for side-effects
 
@@ -2336,3 +2337,36 @@ Having wat files is more useful than direct compilation to binary form:
 ~ MySQL is fine being case-insensitive
 
 ? Maybe keep it case-insensitive, but match case by-export?
+
+2. Export operator `'a': a, 'sampleRate': sampleRate.`
++ Explicit export
++ Reverence to erlang and natural languages
++ Extra use of atoms
++ Quotes make nicer indicator of case-sensitivity
++ Solves problem of default exporting `0..10` or `() -> x`
+- redundancy: case can be figured out from name directly
+- some conflict with function return
+~- we can use `^` operator for that purpose: `^sampleRate;`
+  ? Can we use `.` postfix as indicator of procedure / void return?
+- must be last, therefore redundant, since last expression is already exported.
+
+## [ ] Ranges: how to organize in wasm level?
+
+1. v128 as f64x2
+  + stores
+  - need to read vector item
+  - exporting isn't allowed
+  + exporting is possible
+
+2. 2 spots in memory
+  - need to manage memory
+    - screws mem order
+  - need to read from memory
+
+3. function returning 2 values
+  + exportable
+  - extra call
+
+4. immediate values
+  - impossible to export
+  +

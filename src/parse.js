@@ -156,8 +156,7 @@ token('>..<', PREC_RANGE, a => ['>..<', a, expr(PREC_RANGE)])
 token('..<', PREC_RANGE, a => ['..<', a, expr(PREC_RANGE)])
 
 // a.b
-// token('.', PREC_CALL, (a,b) => a && (b=expr(PREC_CALL)) && ['.', a, b])
-// NOTE: we don't parse expression to avoid 0..1 recognize as 0[.1]
+// NOTE: we don't parse expression to avoid 0..1 recognizing as 0[.1]
 token('.', PREC_CALL, (a,b) => a && (b=skip(isId)) && ['.', a, b])
 
 // *a

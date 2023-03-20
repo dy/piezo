@@ -19,22 +19,24 @@ function clean (str) {
 // convert wast code to binary
 let wabt = await Wabt()
 function compileWat (code, config) {
-  const parsed = wabt.parseWat('inline', code, {})
+  const wasmModule = wabt.parseWat('inline', code, {
+    simd: true
+  })
 
-  const binary = parsed.toBinary({
+  const binary = wasmModule.toBinary({
     log: true,
     canonicalize_lebs: true,
     relocatable: false,
     write_debug_names: false,
   })
-  parsed.destroy()
+  wasmModule.destroy()
 
   const mod = new WebAssembly.Module(binary.buffer)
   return new WebAssembly.Instance(mod)
 }
 
 
-t('compile: globals', t => {
+t.only('compile: globals', t => {
   // TODO: single global
   // TODO: multiply wrong types
   // TODO: define globals via group (a,b,c).
@@ -64,6 +66,18 @@ t('compile: multiple globals', () => {
   is(mod.exports.samplerate.value, 44100)
 })
 
+t('compile: numbers', t => {
+  let wat = compile(`x=-1`)
+  let mod = compileWat(wat)
+  is(mod.exports.x.value, -1)
+  wat = compile(`x=-1.0`)
+  mod = compileWat(wat)
+  is(mod.exports.x.value, -1)
+  // TODO
+  // let wat = compile(`a,b,c=-1,-1.0,-`)
+  // let mod = compileWat(wat)
+  // is(mod.exports.a.value, -1)
+})
 
 t('compile: function oneliners', t => {
   // default
@@ -119,18 +133,65 @@ t('compile: function oneliners', t => {
   is(mod.exports.mult(2,4), 8)
 })
 
+t('compile: ranges', t => {
+  // let wat = compile(`x = 0..10; `),
+  //     mod = compileWat(wat)
+  // is(mod.exports.x)
+
+  // basic v128
+  // let mod = compileWat(`
+  //   (func $mult (export "mult") (result f64)
+  //     (local $v v128)
+  //     (local.set $v (v128.const f64x2 2.0 3.0))
+  //     (f64.mul (f64x2.extract_lane 0 (local.get $v)) (f64x2.extract_lane 1 (local.get $v)))
+  //     (return)
+  //   )
+  // `)
+
+  // global v128
+  // let mod = compileWat(`
+  //   (global (export "x") v128 (v128.const f64x2 2.0 3.0))
+  // `)
+
+  // max return values number
+  // const N = 1000
+  // let mod = compileWat(`
+  //   (func $x (export "x") (result ${'f64 '.repeat(N)})
+  //     (local $a f64)
+  //     (local.set $a (f64.const 1.0))
+  //     (return ${'(local.get $a) '.repeat(N)})
+  //   )
+  // `)
+  // console.log(mod.exports.x())
+
+  // TODO
+  // let wat = compile(`clamp = x -> (x -< 0..10);`)
+  // let mod = compileWat(wat)
+
+  let wat = compile(`x = 11 -< 0..10;`)
+  let mod = compileWat(wat)
+  is(mod.exports.x.value, 10)
+
+  wat = compile(`x = 0 -< 1..10;`)
+  mod = compileWat(wat)
+  is(mod.exports.x.value, 1)
+
+  // TODO: ranges
+})
+
 t.todo('compile: audio-gain', t => {
-  is(compile(unbox(parse(`
-    range = 0..1000;
+  let wat = compile(`
+  blockSize = 1024;
+  gain = ([blockSize]data, volume -< 0..1000) -> [data | x -> x * volume];
+  `)
+  let mod = compileWat(wat)
+  let {gain} = mod.exports
+  is(gain([1,2,3],2),[2,4,6])
 
-    gain([left], volume -< range) = [left * volume];
-    gain([left, right], volume -< range) = [left * volume, right * volume];
-    //gain([..channels], volume -< range) = [..channels * volume];
-
-    gain.
-  `))), [
-    ['module', '']
-  ])
+  // let wat = compile(`
+  //   blockSize = 1024;
+  //   gain = ([2, blockSize]data, volume -< 0..1000) -> [data | ch -> (ch | x -> x * volume)];
+  // `)
 })
 
 
