@@ -36,7 +36,7 @@ function compileWat (code, config) {
 }
 
 
-t.only('compile: globals', t => {
+t('compile: globals', t => {
   // TODO: single global
   // TODO: multiply wrong types
   // TODO: define globals via group (a,b,c).
@@ -64,19 +64,26 @@ t('compile: multiple globals', () => {
   is(mod.exports.pi.value, 3.14)
   is(mod.exports.pi2.value, 3.14*2)
   is(mod.exports.samplerate.value, 44100)
+
+  wat = compile(`a,b = -1, -1.0;`)
+  mod = compileWat(wat)
+  is(mod.exports.a.value, -1)
+  is(mod.exports.b.value, -1)
+
+  wat = compile(`a,b = -1, -1.0`)
+  mod = compileWat(wat)
+  is(mod.exports.a.value, -1)
+  is(mod.exports.b.value, -1)
 })
 
-t('compile: numbers', t => {
+t('compile: neg numbers', t => {
   let wat = compile(`x=-1`)
   let mod = compileWat(wat)
   is(mod.exports.x.value, -1)
+
   wat = compile(`x=-1.0`)
   mod = compileWat(wat)
   is(mod.exports.x.value, -1)
-  // TODO
-  // let wat = compile(`a,b,c=-1,-1.0,-`)
-  // let mod = compileWat(wat)
-  // is(mod.exports.a.value, -1)
 })
 
 t('compile: function oneliners', t => {

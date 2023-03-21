@@ -28,7 +28,14 @@ export default function analyze(tree) {
     if (typeof statement === 'string') ir.global[statement] = null
     // a,b,c;
     else if (statement[0] === ',') {
-      statement.map((id,i) => i && (!(id in ir.global)) && (ir.global[id] = null))
+      for (let i = 1; i < statement.length; i++) {
+        let member = statement[i]
+        if (typeof member === 'string') { if (!(member in ir.global)) (ir.global[member] = null) }
+        // (a=1),(b=2),... eg. swizzles
+        // FIXME: what must be here?
+        else if (member[0]==='=') { if (!member[1].startsWith('~') && !(member[1] in ir.global)) (ir.global[member[1]] = null) }
+        else throw Error(`Unknown member ${member}`)
+      }
     }
     // a=b; a,b=b,c; a = () -> b
     else if (statement[0] === '=') {
@@ -57,6 +64,7 @@ export default function analyze(tree) {
   }
 
   genExports(statements[statements.length-1]);
+  console.log(ir)
 
   // parse exports from a (last) node statement
   function genExports(node) {
@@ -68,8 +76,12 @@ export default function analyze(tree) {
       // a,b=...;
       else if (node[1][0] === ',') node[1].slice(1).map(item => (ir.export[item] = extTypeOf(item)))
     }
-    // a,b;
-    else if (node[0]===',') node.map((item,i) => i && (ir.export[item] = extTypeOf(item)))
+    // a,b or a=1,b=2
+    else if (node[0]===',') node.forEach((item,i) => {
+      if (!i) return
+      if (typeof item === 'string') (ir.export[item] = extTypeOf(item))
+      else if (item[0] === '=' && !item[1].startsWith('~')) ir.export[item[1]] = extTypeOf(item[1])
+    })
   }
 
   // get external type of id

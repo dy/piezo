@@ -26,11 +26,12 @@ export default ir => {
 
       // a * b - make proper cast
       if (op === '+' || op === '*' || op === '-') {
-        let aType = typeOf(a), bType = typeOf(b)
+        let aType = typeOf(a)
         if (aType === 'flt' && !b) return `(f64.neg ${expr(a)})`
         if (aType === 'int' && !b) { b = a, a = ['int',0] }
+        let bType = typeOf(b)
         if (aType === 'int' && bType === 'int') return `(i32.${opCmd} ${expr(a)} ${expr(b)})`
-        if (aType === 'flt' && bType === 'flt') return `(f64.${opCmd} ${flt(expr(a))} ${flt(expr(b))})`
+        return `(f64.${opCmd} ${flt(a)} ${flt(b)})`
       }
 
       // a -< range - clamp a to indicated range
@@ -40,7 +41,7 @@ export default ir => {
             minType = typeOf(min), maxType = typeOf(max)
         if (aType === 'int' && minType === 'int' && maxType === 'int')
           return includes.push('$std/i32.smax', '$std/i32.smin'), `(call $std/i32.smax (call $std/i32.smin ${expr(a)} ${expr(max)}) ${expr(min)})`
-        return `(f64.max (f64.min ${flt(expr(a))} ${flt(expr(max))}) ${flt(expr(min))})`
+        return `(f64.max (f64.min ${flt(a)} ${flt(max)}) ${flt(min)})`
       }
 
       // number primitives: 1.0, 2 etc.
@@ -55,10 +56,13 @@ export default ir => {
   }
 
   // convert input expr to float expr
-  function flt(str) {
-    return str.startsWith('(f64.const') ? str :
-      str.startsWith('(i32.const') ?
-      str.replace('(i32.const','(f64.const') : `(f64.convert_i32_s ${str})`
+  function flt(node) {
+    if (node[0] === 'flt' || node[0] === 'int') return `(f64.const ${node[1]})`
+
+    let type = typeOf(node)
+    if (type === 'flt') return expr(node)
+
+    return `(f64.convert_i32_s ${expr(node)})`
   }
 
   // find result type of a node
