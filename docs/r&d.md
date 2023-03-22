@@ -521,7 +521,7 @@ Having wat files is more useful than direct compilation to binary form:
     + the most laconic version
   4. webassembly doesn't use continue, just `^` for break.
 
-### [x] ? Can we use something else but . for export? → export last elements in file
+### [x] ? Can we use something else but . for export? → let's try `a.` as global export operator.
 
   - that seems to create confusion for `a(x,y) = x*y.` case
   - that doesn't seem to belong to natural languages - marking . with export.
@@ -531,7 +531,7 @@ Having wat files is more useful than direct compilation to binary form:
   2. ~~`!a(x,y) = x*y.`~~
   3. ~~`#a(x,y) = x*y.`~~
     - conflicts with cardinality
-  4. Can we export all by default?
+  4. ~~Can we export all by default?~~
     - that bloats default module size
       ~ can be mitigated on imports: main compilable file exports everything, the rest is treeshaked
         ? how do we `export x from './x#x'`?
@@ -546,6 +546,14 @@ Having wat files is more useful than direct compilation to binary form:
     + Ruby has @ for protected methods, which is alternative to _abc
     - mixes up imports/exports: it's hard to see what's what in the file
   7. We can export last function/group, as regular groups do.
+    - not very explicit
+    - can be mixed with declarations
+    - not very apparent
+  9. Use `a,b,c.` as (last) operator in the file
+    + reverence to erlang and natural languages
+    + explicit 
+    - relative conflict with preliminary return in functions `a -> (^x; y)`
+    + file starts with import operator, and ends with export operator.
 
 ## [x] State management → function state identified by callsite
 
@@ -2327,6 +2335,14 @@ Having wat files is more useful than direct compilation to binary form:
 ## [x] `a <~ b` vs `a < ~b` -> use `a ~< b` instead
 
 ## [ ] Case-insensitive variable names?
+
+0. Case-insensitive
+
+- `AbB` vs `ABb` can be different chords, but lino mixes them up together
+- `X1` and `x1` can be different things in math
+- `sampleRate` becomes `sampleRate` - can be confusing
+- export naming requirement: `'AbB': AbB, 'sampleRate': sampleRate.`
+- not conventional
 
 1. Case-sensitive
 
