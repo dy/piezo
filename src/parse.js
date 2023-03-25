@@ -7,7 +7,8 @@ export default (src) => parse(src)
 const OPAREN=40, CPAREN=41, OBRACK=91, CBRACK=93, SPACE=32, QUOTE=39, DQUOTE=34, PERIOD=46, BSLASH=92, _0=48, _9=57, COLON=58, HASH=35, AT=64, _X = 120, _B = 98, PLUS = 43, MINUS = 45
 
 // precedences
-const PREC_SEMI=1,
+const PREC_SEMI=0.5,
+PREC_EXPORT=0.75,
 PREC_ASSIGN=2,  // a = b->c,  a,b = c,d,  a = b||c,  a = b|c (NOTE: different from JS, more Pythony)
 PREC_BOR=3, // NOTE: reduced weight to use as pipe operator, may cause side-effects (which ones?)
 PREC_LOOP=3, // a?b:c <| d,   a , b<|c,   b<|c, d,   a->a+1 <| 2,   a <| b | c |> d
@@ -75,7 +76,7 @@ for (let i = 0; i<=9; i++) lookup[_0+i] = num;
 lookup[PERIOD] = a=>!a && num();
 
 // export is parsed as last-resort period operator, conditioned it's last in the code
-unary('.', PREC_SEMI, true)
+unary('.', PREC_EXPORT, true)
 
 const string = q => (qc, c, str='') => {
   qc&&err('Unexpected string') // must not follow another token

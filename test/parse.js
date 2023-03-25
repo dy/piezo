@@ -242,7 +242,9 @@ t('parse: import', () => {
 })
 
 t('parse: export', () => {
-  is(parse('x, y, z.'),['.',[',','x','y','z']],  'last members in a file get exported (no semi!)')
+  is(parse('x, y, z.'),['.',[',','x','y','z']])
+  is(parse('x=1;x.'),[';',['=','x',['int',1]],['.','x']])
+  is(parse('x=1.'),['.',['=','x',['int',1]]])
   // throws(() => parse('x, y, z. y'), /export/i)
 })
 

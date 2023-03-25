@@ -3,11 +3,13 @@ import parse from '../src/parse.js'
 import analyse from '../src/analyse.js'
 
 t('analyze: export kinds', t => {
-  is(analyse(parse(`x`)).export, {x:'global'})
-  is(analyse(parse(`x,y`)).export, {x:'global',y:'global'})
-  is(analyse(parse(`x,y,z;`)).export, {x:'global',y:'global',z:'global'})
-  is(analyse(parse(`x=1`)).export, {x:'global'})
-  is(analyse(parse(`x,y=1,2;`)).export, {x:'global',y:'global'})
+  throws(() => analyse(parse(`x,y.;z`)), /export/i)
+  is(analyse(parse(`x.`)).export, {x:'global'})
+  is(analyse(parse(`x=1.`)).export, {x:'global'})
+  is(analyse(parse(`x,y.`)).export, {x:'global',y:'global'})
+  is(analyse(parse(`x,y,z.`)).export, {x:'global',y:'global',z:'global'})
+  is(analyse(parse(`x=1;x.`)).export, {x:'global'})
+  is(analyse(parse(`x,y=1,2;x,y.`)).export, {x:'global',y:'global'})
 })
 
 t.todo('analyze: return kinds', t => {
@@ -34,16 +36,16 @@ t('analyze: sine gen', t => {
       *phase=0;
       phase += freq * pi2 / sampleRate;
       sin(phase)
-    )
+    ).
   `))
 
   is(ir, {
-    export: { sine: true },
+    export: { sine: 'func' },
     import: { math: ['sin', 'pi', 'max' ] },
     global: { pi2: [ '*', 'pi', ['int', 2] ], samplerate: [ 'int', 44100 ] },
     func: {
       sine: {
-        name: 'sine',
+        // name: 'sine',
         args: ['freq'],
         local: {},
         state: { phase: ['int', 0 ] },

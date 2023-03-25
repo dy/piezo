@@ -128,7 +128,6 @@ list[1..3, 5]; list[5..];     // slice
 list[-1..0];                  // reverse
 list | x -> x * 2;            // iterate/map items
 item ~< list;                 // find index of item in the list
-list +-*/ 2;                  // math operators act on all members
 
 //////////////////////////// statements
 foo();                        // semi-colons at end of line are mandatory
@@ -157,7 +156,7 @@ s[] < 50 <| (s += ", hi");    // inline loop: `while (s.length < 50) do (s += ",
   i < 5 ? ^;                  // `^` to continue loop (can return value as ^x)
   log(i);                     //
 ));                           //
-i=0; i++ < 3 <| i == 0, 1, 2  // list produces group
+i=0; i++ < 3 <| i             // list produces group 0, 1, 2
 [j++ < 10 <| j * 2];          // list comprehension via loop
 
 //////////////////////////// functions

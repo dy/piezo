@@ -21,25 +21,20 @@ export default function analyze(tree) {
   tree = desugar(tree)
   let statements = tree[0] === ';' ? tree.slice(1) : [tree];
 
-  // global-level transforms
-  for (let statement of statements) {
-    if (!statement) continue
-    // a;b;
-    if (typeof statement === 'string') ir.global[statement] = null
+  const globalExpr = {
     // a,b,c;
-    else if (statement[0] === ',') {
-      for (let i = 1; i < statement.length; i++) {
-        let member = statement[i]
+    ','([,...members]) {
+      for (let member of members) {
         if (typeof member === 'string') { if (!(member in ir.global)) (ir.global[member] = null) }
         // (a=1),(b=2),... eg. swizzles
         // FIXME: what must be here?
         else if (member[0]==='=') { if (!member[1].startsWith('~') && !(member[1] in ir.global)) (ir.global[member[1]] = null) }
         else throw Error(`Unknown member ${member}`)
       }
-    }
+    },
+
     // a=b; a,b=b,c; a = () -> b
-    else if (statement[0] === '=') {
-      let [,left,right] = statement
+    '='([,left,right]) {
       // a = () -> b
       if (right[0] === '->') {
         // detect overload
@@ -53,21 +48,45 @@ export default function analyze(tree) {
         if (typeof left === 'string') ir.global[left] = right
         else left.map((id,i) => i && (ir.global[id] = right[i]))
       }
-    }
+    },
+
     // @ 'math#sin', @ 'path/to/lib'
-    else if (statement[0] === '@') {
-      let [,path] = statement
+    '@'([,path]) {
+      if (Array.isArray(path)) { if (path[0] === "'") path = path[1]; else throw Error('Bad path `' + path + '`') }
       let url = new URL('import:'+path)
       let {hash, pathname} = url
       ir.import[pathname] = hash ? hash.slice(1).split(',') : []
+    },
+
+    // a,b,c . x
+    '.'(statement) {
+      // a.b
+      if (statement.length > 2) throw 'unimplemented'
+
+      // a. or a,b,c.
+      if (statement !== statements[statements.length-1]) throw Error('Export must be the last statement');
+      // otherwise handle as regular assignment statement
+      [,statement] = statement
+      if (typeof statement === 'string') ir.global[statement] = null
+      else globalExpr[statement[0]]?.(statement)
     }
   }
 
+  // global-level transforms
+  for (let statement of statements) {
+    if (!statement) continue
+    // a;b;
+    if (typeof statement === 'string') ir.global[statement] = null
+    // a??b
+    else globalExpr[statement[0]]?.(statement)
+  }
+
   genExports(statements[statements.length-1]);
-  console.log(ir)
 
   // parse exports from a (last) node statement
-  function genExports(node) {
+  function genExports([op, node]) {
+    if (op!=='.') return
+
     // a;
     if (typeof node === 'string') ir.export[node] = extTypeOf(node)
     if (node[0]==='=') {
@@ -88,7 +107,7 @@ export default function analyze(tree) {
   function extTypeOf(id) {
     if (id in ir.func) return 'func'
     if (id in ir.global) return 'global'
-    throw Error('Unknown type of `' + id + '`')
+    throw Error('Undefined `' + id + '`')
   }
 
   return ir
