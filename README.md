@@ -1,11 +1,11 @@
 # lino
 
 **Lino** (*li*ne *no*ise) is sound processing language with enhanced ergonomics and accessibility.<br/>
-It has common syntax and compiles to optimized WASM bytecode, making it available for different environments, eg. [audio worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), workers, [node](https://github.com/audiojs/web-audio-api) etc.
+It has syntax inspired by C/Python/Swift and compiles to optimized WASM bytecode, making it available for different environments, eg. [audio worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), workers, [node](https://github.com/audiojs/web-audio-api) etc.
 
 <!--[Motivation](./docs/motivation.md)  |  [Documentation](./docs/reference.md)  |  [Examples](./docs/examples.md).-->
 
-> WORK IN PROGRESS NOTICE: current stage is stabilized syntax and basic cases compilation; it requires full compiler implementation.
+> WIP: current stage is stabilized syntax and basic cases compilation; it requires full compiler implementation.
 
 ## Usage
 
@@ -30,8 +30,8 @@ mult(108,2) // 216
 
 ```fs
 //////////////////////////// naming convention
-foo123, Ab_C_F#, $0, Δx;      // ids permit alnum, #, _, $, unicodes
-foo_bar_δ == Foo_Bar_Δ;       // ids are case-insensitive, snake case
+fooBar123 != FooBar123;       // ids are case-sensitive
+Ab_C_F#, $0, Δx               // ids permit alnum, unicodes, #, _, $
 default=1; eval=fn; else=0;   // ids can be any common words (lino has no reserved words)
 
 //////////////////////////// numbers
@@ -60,6 +60,20 @@ true, false = 0b1, 0b0;       // alias booleans (not provided by default)
 1..2 + 2..3 == 1..3;          // add ranges
 1..3 - 2.. == 1..2;           // subtract ranges
 
+//////////////////////////// groups (tuples)
+a, b, c;                      // groups are syntactic sugar
+(a, b, c)++;                  // apply operation to multiple elements: (a++, b++, c++)
+(a, (b, c)) == a, b, c;       // groups are always flat
+a,b,c = d,e,f;                // assign: a=d, b=e, c=f
+a,b = b,a;                    // swap: temp=a; a=b; b=temp;
+(a,b) + (c,d);                // operations: (a+c, b+d)
+(a,b).x;                      // (a.x, b.x);
+(a,b).x();                    // (a.x(), b.x());
+a,b,c = (d,e,f);              // a=d; b=e; c=f
+(a,b,c) = d;                  // a=d, b=d; c=d
+a = b,c,d;                    // error: invalid number of elements
+a = b, c = d;                 // note: unlike JS, that is a = (b, c) = d
+
 //////////////////////////// standard operators
 + - * / % **                  // arithmetical (** for pow)
 && || !                       // logical
@@ -72,27 +86,13 @@ x -< ..10;                    // min(x, 10)
 x -< 0..;                     // max(0, x)
 x -<= 0..10;                  // x = clamp(x, 0, 10)
 4.. -< ..8 == 4..8            // clamp ranges
+x -< (x,y,z);                 // return x if it's in group, null otherwise
 
 //////////////////////////// length operator
 [1,2,3][];                    // 3
 (1,2,3)[];                    // 3
 "abc"[];                      // 3
 (-1..+2)[];                   // 3
-
-//////////////////////////// groups (tuples)
-a, b, c;                      // groups are syntactic sugar, not tuple data type
-(a, b, c)++;                  // they apply operation to multiple elements: (a++, b++, c++)
-(a, (b, c)) == a, b, c;       // groups are always flat
-a,b,c = d,e,f;                // assign: a=d, b=e, c=f
-a,b = b,a;                    // swap: temp=a; a=b; b=temp;
-(a,b) + (c,d);                // operations: (a+c, b+d)
-(a,b).x;                      // (a.x, b.x);
-(a,b).x();                    // (a.x(), b.x());
-a,b,c = (d,e,f);              // a=d; b=e; c=f
-(a,b,c) = d;                  // a=d, b=d; c=d
-a = b,c,d;                    // a=b, a=c, a=d
-a = b, c = d;                 // a = b, a = c cnote difference with JS
-b -< (a,b,c);                 // returns b if it's in group, null otherwise
 
 //////////////////////////// strings
 hi="hello";                   // strings
@@ -110,8 +110,7 @@ string - string;              // removes all occurences of the right string in t
 string / string;              // split: "a b" / " " = ["a", "b"]
 string * list;                // join: " " * ["a", "b"] = "a b"
 string * 2;                   // repeat: "abc" * 2 = "abcabc"
-"l" ~> string;                // indexOf: 2
-"l" ~< string;                // rightIndexOf: -2
+"l" ~< string;                // find position of substring in the string
 
 //////////////////////////// lists
 list = [1, 2, 3]              // list from elements
@@ -128,8 +127,7 @@ list[];                       // length
 list[1..3, 5]; list[5..];     // slice
 list[-1..0];                  // reverse
 list | x -> x * 2;            // iterate/map items
-item ~> list;                 // find index of the item
-item ~< list;                 // rfind
+item ~< list;                 // find index of item in the list
 list +-*/ 2;                  // math operators act on all members
 
 //////////////////////////// statements
@@ -208,7 +206,7 @@ items |> (sum,x) -> sum+x;    // fold operator with reducer
 @ 'my-module#x,y,z';          // import selected members
 
 //////////////////////////// export
-x, y, z                       // last members in a file get exported (no semi!)
+x, y, z.                      // last statement in the file ending with . exports all members
 ```
 
 
@@ -221,7 +219,7 @@ Provides k-rate amplification of input audio.
 ```fs
 gain = ( []input, []output, volume -< 0..100 ) -> (
   [ output | x -> x * volume ]
-)
+);
 
 gain([0,.1,.2,.3,.4,.5], 2);  // [0,.2,.4,.6,.8,1]
 ```
@@ -268,7 +266,7 @@ lp = ([blockLen]x, freq = 100 -< 1..10k, Q = 1.0 -< 0.001..3.0) -> (
   ) ]
 );
 
-lp, blockLen        // export
+lp, blockLen.              // export
 ```
 
 * _import_ − done via URI string as `@ 'path/to/lib'`. Members can be imported as `@ 'path/to/lib#a,b,c'`. <!-- Built-in libs are: _math_, _std_. Additional libs: _sonr_, _latr_, _musi_ and [others](). --> _import-map.json_ can provide import aliases.
@@ -422,6 +420,6 @@ Features:
 
 ## See also
 
-* [mono](https://github.com/stagas/mono) – spiritual brother for cowbell.lol
+* [mono](https://github.com/stagas/mono) – spiritual brother for cowbell.lol.
 
 <p align=center><a href="https://github.com/krsnzd/license/">🕉</a></p>
