@@ -2347,7 +2347,7 @@ Having wat files is more useful than direct compilation to binary form:
 - redundancy: case can be figured out from name directly
 - some conflict with function return
 ~- we can use `^` operator for that purpose: `^sampleRate;`
-  ? Can we use `.` postfix as indicator of procedure / void return?
+  ? Can we use `.` postfix as indicator of procedure / void return? nah.
 - must be last, therefore redundant, since last expression is already exported.
 
 ## [ ] Ranges: how to organize in wasm level?
@@ -2369,4 +2369,11 @@ Having wat files is more useful than direct compilation to binary form:
 
 4. immediate values
   - impossible to export
-  +
+  + fastest & direct
+
+## [x] Drop ints and use only f64? -> keep for now, complexity is controllable
+
++ waay less code
++ no type conversions issue
+- no compatibility with bytebeat
+- no meaningful shift/binary operations

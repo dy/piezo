@@ -19,3 +19,4 @@
 * [ ] https://phoboslab.org/log/2023/02/qoa-time-domain-audio-compression
 * [ ] decoders from audio-decode
 * [ ] sonic https://github.com/waywardgeek/sonic
+* [ ] https://github.com/madskjeldgaard/Drums.quark

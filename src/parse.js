@@ -33,7 +33,7 @@ PREC_CALL=22, // a(b), a.b, a[b], a[]
 PREC_TOKEN=23 // [a,b] etc
 
 // make id support #
-parse.id = n => skip(char => isId(char) || char === HASH).toLowerCase()
+parse.id = n => skip(char => isId(char) || char === HASH)
 
 const isNum = c => c >= _0 && c <= _9
 const num = (a) => {
@@ -74,6 +74,8 @@ for (let i = 0; i<=9; i++) lookup[_0+i] = num;
 // .1
 lookup[PERIOD] = a=>!a && num();
 
+// export is parsed as last-resort period operator, conditioned it's last in the code
+unary('.', PREC_SEMI, true)
 
 const string = q => (qc, c, str='') => {
   qc&&err('Unexpected string') // must not follow another token

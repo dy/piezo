@@ -11,12 +11,12 @@ t('parse: common', t => {
 
 t('parse: identifiers', t => {
   // permit @#$_
-  is(parse('Δx, _b#, c_c, $d0'), [',', 'δx', '_b#','c_c','$d0'])
+  is(parse('Δx, _b#, c_c, $d0'), [',', 'Δx', '_b#','c_c','$d0'])
 
   // disregard casing
-  is(parse('A, Bc, d_E'), [',', 'a', 'bc','d_e'])
+  is(parse('A, Bc, d_E'), [',', 'A', 'Bc','d_E'])
 
-  is(parse('Ab_C_F#, $0, Δx'), [',', 'ab_c_f#', '$0', 'δx'])
+  is(parse('Ab_C_F#, $0, Δx'), [',', 'Ab_C_F#', '$0', 'Δx'])
   is(parse('default=1; eval=fn; else=0'), [';', ['=', 'default', ['int',1]], ['=', 'eval', 'fn'], ['=', 'else', ['int',0]]])
 })
 
@@ -25,7 +25,7 @@ t('parse: numbers', t => {
   is(parse('16.0, .1, 1e+3, 2e-3'), [',', ['flt', 16], ['flt', 0.1], ['flt', 1e3], ['flt', 2e-3]]);
   is(parse('true=0b1; false=0b0'), [';', ['=', 'true', ['bin', 1]], ['=', 'false', ['bin', 0]]]);
 
-  throws(() => parse('12.'), /Bad/)
+  // throws(() => parse('12.'), /Bad/)
   throws(() => parse('12e+'), /Bad/)
 })
 
@@ -242,7 +242,8 @@ t('parse: import', () => {
 })
 
 t('parse: export', () => {
-  is(parse('x, y, z'),[',','x','y','z'],  'last members in a file get exported (no semi!)')
+  is(parse('x, y, z.'),['.',[',','x','y','z']],  'last members in a file get exported (no semi!)')
+  // throws(() => parse('x, y, z. y'), /export/i)
 })
 
 t('parse: triple dots error', t => {
@@ -287,7 +288,7 @@ t('parse: semicolon', t => {
       sampleRate = 44100;
   `), [';',
     ['=', 'pi2', ['*', 'pi', ['flt', 2]]],
-    ['=', 'samplerate', ['int', 44100]]
+    ['=', 'sampleRate', ['int', 44100]]
   ]);
 
   is(parse(`
@@ -312,7 +313,7 @@ t('parse: sine gen', t => {
       ['(',
         [';',
           ['=',['*', 'phase'],['int',0]],
-          ['+=', 'phase', ['/', ['*', 'freq', 'pi2'], 'samplerate']],
+          ['+=', 'phase', ['/', ['*', 'freq', 'pi2'], 'sampleRate']],
           ['[',['()', 'sin','phase']]
         ]
       ]
