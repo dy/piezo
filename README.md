@@ -15,7 +15,7 @@ It has syntax inspired by C/Python/Swift and compiles to optimized WASM bytecode
 import * as lino from 'lino'
 
 // create wasm arrayBuffer
-const buffer = lino.compile(`mult = (x,y) -> x*y`)
+const buffer = lino.compile(`mult = (x,y) -> x*y; mult.`)
 
 // create wasm instance
 const module = new WebAssembly.Module(buffer)
