@@ -37,9 +37,9 @@ true, false = 0b1, 0b0;       // alias booleans
 1.08..108.0;                  // float range
 0>..10, 0..<10, 0>..<10;      // non-inclusive ranges
 (x-1)..(x+1);                 // calculated ranges
-(-10..10)[];                  // length (20)
-1..2 + 2..3 == 1..3;          // add ranges
-1..3 - 2.. == 1..2;           // subtract ranges
+(-10..10)[];                  // length: 20
+1..2 + 2..3;                  // add ranges: 1..3
+1..3 - 2..;                   // subtract ranges: 1..2
 
 //////////////////////////// groups (tuples)
 a, b, c;                      // groups are syntactic sugar
@@ -53,7 +53,7 @@ a,b = b,a;                    // swap: temp=a; a=b; b=temp;
 a,b,c = (d,e,f);              // a=d; b=e; c=f
 (a,b,c) = d;                  // a=d, b=d; c=d
 a = b,c,d;                    // error: invalid number of elements
-a = b, c = d;                 // note: unlike JS, that is a = (b, c) = d
+a = b,c = d;                  // note: unlike JS, that is a = (b, c) = d
 
 //////////////////////////// standard operators
 + - * / % **                  // arithmetical (** for pow)
@@ -66,7 +66,7 @@ x -< 0..10;                   // clamp(x, 0, 10)
 x -< ..10;                    // min(x, 10)
 x -< 0..;                     // max(0, x)
 x -<= 0..10;                  // x = clamp(x, 0, 10)
-4.. -< ..8 == 4..8            // clamp ranges
+4.. -< ..8;                   // clamp ranges: 4..8
 x -< (x,y,z);                 // return x if it's in group, null otherwise
 
 //////////////////////////// length operator
@@ -94,7 +94,7 @@ string * 2;                   // repeat: "abc" * 2 = "abcabc"
 "l" ~< string;                // find position of substring in the string
 
 //////////////////////////// lists
-list = [1, 2, 3]              // list from elements
+list = [1, 2, 3];             // list from elements
 list = [l:2, r:4, c:6];       // list with aliases
 list = [0..10];               // list from range
 list = [0..8 | i -> i*2];     // list comprehension
@@ -137,7 +137,7 @@ s[] < 50 <| (s += ", hi");    // inline loop: `while (s.length < 50) do (s += ",
   i < 5 ? ^;                  // `^` to continue loop (can return value as ^x)
   log(i);                     //
 ));                           //
-i=0; i++ < 3 <| i             // list produces group 0, 1, 2
+i=0; i++ < 3 <| i;            // list produces group 0, 1, 2
 [j++ < 10 <| j * 2];          // list comprehension via loop
 
 //////////////////////////// functions
@@ -272,7 +272,7 @@ lp, blockLen.              // export
 * _state variables_ − `*state=init` persists value between <span title="Detected by callsite">function calls*</span>.
 * _groups_ − comma enables group operations as `a,b = c,d` === `a=c, b=d`, `(a,b) + (c,d)` === `(a+b, c+d)` etc.
 * _scope_ − parens `()` besides precedence can indicate function body; returns last element or group.
-* _export_ – last element in a file is automatically exported. Note: no semi must follow.
+* _export_ – last statement with period operator indicates exported entries.
 
 
 ### ZZFX
@@ -406,7 +406,7 @@ melody = (time) -> melodytest(time) * fract(time * 2) ** 6 * 1;
 song = () -> (
   *t=0; time = t++ / sampleRate;
   (kick(time) + snare(time)*.15 + hihat(time)*.05 + melody(time)) / 4
-);
+).
 ```
 
 Features:
@@ -417,8 +417,9 @@ Features:
 
 
 
-## See also
+## Inspiration
 
 * [mono](https://github.com/stagas/mono) – spiritual brother for cowbell.lol.
+* [min](https://github.com/r-lyeh/min)
 
 <p align=center><a href="https://github.com/krsnzd/license/">🕉</a></p>
