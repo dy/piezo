@@ -48,47 +48,47 @@ t('compile: globals', t => {
     pi = 3.14;
     pi2 = pi*2.0;
     sampleRate = 44100;
-    sampleRate, pi, pi2;
+    sampleRate, pi, pi2.
   `)
   let mod = compileWat(wat)
   is(mod.exports.pi.value, 3.14)
   is(mod.exports.pi2.value, 3.14*2)
-  is(mod.exports.samplerate.value, 44100)
+  is(mod.exports.sampleRate.value, 44100)
 })
 
 t('compile: multiple globals', () => {
   let wat = compile(`
-    pi, pi2, sampleRate = 3.14, 3.14*2, 44100;
+    pi, pi2, sampleRate = 3.14, 3.14*2, 44100.
   `)
   let mod = compileWat(wat)
   is(mod.exports.pi.value, 3.14)
   is(mod.exports.pi2.value, 3.14*2)
-  is(mod.exports.samplerate.value, 44100)
+  is(mod.exports.sampleRate.value, 44100)
 
-  wat = compile(`a,b = -1, -1.0;`)
+  wat = compile(`a,b = -1, -1.0.`)
   mod = compileWat(wat)
   is(mod.exports.a.value, -1)
   is(mod.exports.b.value, -1)
 
-  wat = compile(`a,b = -1, -1.0`)
+  wat = compile(`a,b = -1, -1.0.`)
   mod = compileWat(wat)
   is(mod.exports.a.value, -1)
   is(mod.exports.b.value, -1)
 })
 
 t('compile: neg numbers', t => {
-  let wat = compile(`x=-1`)
+  let wat = compile(`x=-1.`)
   let mod = compileWat(wat)
   is(mod.exports.x.value, -1)
 
-  wat = compile(`x=-1.0`)
+  wat = compile(`x=-1.0.`)
   mod = compileWat(wat)
   is(mod.exports.x.value, -1)
 })
 
 t('compile: function oneliners', t => {
   // default
-  let wat = compile(`mult = (a, b) -> a * b;`)
+  let wat = compile(`mult = (a, b) -> a * b.`)
   let mod = compileWat(wat);
   // `
   //   (func $mult (export "mult") (param $a f64) (param $b f64) (result f64)
@@ -99,7 +99,7 @@ t('compile: function oneliners', t => {
   is(mod.exports.mult(2,4), 8)
 
   // no semi
-  wat = compile(`mult = (a, b) -> a * b`)
+  wat = compile(`mult = (a, b) -> a * b.`)
   mod = compileWat(wat)
   // `
   // (func $mult (export "mult") (param $a f64) (param $b f64) (result f64)
@@ -110,7 +110,7 @@ t('compile: function oneliners', t => {
   is(mod.exports.mult(2,4), 8)
 
   // no result
-  mod = compileWat(compile(` mult = (a, b) -> (a * b); `))
+  mod = compileWat(compile(` mult = (a, b) -> (a * b). `))
   // `
   //   (func $mult (export "mult") (param $a f64) (param $b f64) (result f64)
   //     (f64.mul (local.get $a) (local.get $b))
@@ -119,7 +119,7 @@ t('compile: function oneliners', t => {
   // `
   is(mod.exports.mult(2,4), 8)
 
-  mod = compileWat(compile(` mult = (a, b) -> (b; a * b)`))
+  mod = compileWat(compile(` mult = (a, b) -> (b; a * b).`))
   // `
   // (func $mult (export "mult") (param $a f64) (param $b f64) (result f64)
   // (local.get $b)
@@ -129,7 +129,7 @@ t('compile: function oneliners', t => {
   // `
   is(mod.exports.mult(2,4), 8)
 
-  mod = compileWat(compile(` mult = (a, b) -> (b; a * b;) `))
+  mod = compileWat(compile(` mult = (a, b) -> (b; a * b;). `))
   // `
   //   (func $mult (export "mult") (param $a f64) (param $b f64) (result f64)
   //     (local.get $b)
@@ -171,19 +171,18 @@ t('compile: ranges', t => {
   // `)
   // console.log(mod.exports.x())
 
-  // TODO
-  // let wat = compile(`clamp = x -> (x -< 0..10);`)
-  // let mod = compileWat(wat)
-
-  let wat = compile(`x = 11 -< 0..10;`)
+  let wat = compile(`x = 11 -< 0..10.`)
   let mod = compileWat(wat)
   is(mod.exports.x.value, 10)
 
-  wat = compile(`x = 0 -< 1..10;`)
+  wat = compile(`x = 0 -< 1..10.`)
   mod = compileWat(wat)
   is(mod.exports.x.value, 1)
 
-  // TODO: ranges
+  wat = compile(`clamp = x -> (x -< 0..10).`)
+  mod = compileWat(wat)
+  is(mod.exports.clamp(11), 10)
+  is(mod.exports.clamp(-1), 0)
 })
 
 t.todo('compile: audio-gain', t => {
