@@ -7,25 +7,6 @@ It has syntax inspired by C/Python/Swift and compiles to optimized WASM bytecode
 
 > WIP: current stage is stabilized syntax and basic cases compilation; it requires full compiler implementation.
 
-## Usage
-
-`npm i lino`
-
-```js
-import * as lino from 'lino'
-
-// create wasm arrayBuffer
-const buffer = lino.compile(`mult = (x,y) -> x*y; mult.`)
-
-// create wasm instance
-const module = new WebAssembly.Module(buffer)
-const instance = new WebAssembly.Instance(module)
-
-// use API
-const {mult} = instance.exports
-mult(108,2) // 216
-```
-
 ## Reference
 
 ```fs
@@ -206,6 +187,25 @@ items |> (sum,x) -> sum+x;    // fold operator with reducer
 
 //////////////////////////// export
 x, y, z.                      // last statement in the file ending with . exports all members
+```
+
+## Usage
+
+`npm i lino`
+
+```js
+import * as lino from 'lino'
+
+// create wasm arrayBuffer
+const buffer = lino.compile(`mult = (x,y) -> x*y; mult.`)
+
+// create wasm instance
+const module = new WebAssembly.Module(buffer)
+const instance = new WebAssembly.Instance(module)
+
+// use API
+const {mult} = instance.exports
+mult(108,2) // 216
 ```
 
 
