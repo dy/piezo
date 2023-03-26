@@ -12,7 +12,7 @@ It has syntax inspired by C/Python/Swift and compiles to optimized WASM bytecode
 ```fs
 //////////////////////////// naming convention
 fooBar123 != FooBar123;       // ids are case-sensitive
-Ab_C_F#, $0, Δx               // ids permit alnum, unicodes, #, _, $
+Ab_C_F#, $0, Δx;              // ids permit alnum, unicodes, #, _, $
 default=1; eval=fn; else=0;   // ids can be any common words (lino has no reserved words)
 
 //////////////////////////// numbers
