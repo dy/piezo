@@ -18,6 +18,7 @@ default=1; eval=fn; else=0;   // ids can be any common words (lino has no reserv
 //////////////////////////// numbers
 16, 0x10, 0b0;                // int (dec, hex or binary form)
 16.0, .1, 1e3, 2e-3;          // floats
+true, false = 0b1, 0b0;       // alias booleans
 
 //////////////////////////// type cast
 1 / 3; 2 * 3.14;              // ints upgrade to floats implicitly
