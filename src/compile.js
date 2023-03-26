@@ -123,7 +123,7 @@ export default ir => {
   for (let include of includes) {
     if (include in stdlib) out.unshift(stdlib[include])
   }
-  console.log(out.join('\n'))
+  // console.log(out.join('\n'))
 
   return out.join('\n')
 }

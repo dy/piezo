@@ -128,19 +128,16 @@ export function analyzeFunc([,args, body], ir) {
     return: body[0] === ';' ? body[body.length - 1] : body
   }
 
-  const expr = (parent, node, func) => {
+  const detectState = (node) => {
+    if (!Array.isArray(node)) return
+
     let [op, ...args] = node
 
     // *a = init
-    if (op === '*') {
-      if (args.length === 1) {
-        // detect state variables
-        fn.state[args[0]] = parent[0] === '=' ? parent[2] : null
-      }
-    }
-
-    return [op, ...args.map(arg => Array.isArray(arg) ? expr(node, arg, func) : arg)]
+    if (op === '*' && args.length === 1) func.state[args[0]] = true
+    for (let arg of args) detectState(arg)
   }
+  detectState(body)
 
   return func
 }

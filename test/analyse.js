@@ -42,17 +42,17 @@ t('analyze: sine gen', t => {
   is(ir, {
     export: { sine: 'func' },
     import: { math: ['sin', 'pi', 'max' ] },
-    global: { pi2: [ '*', 'pi', ['int', 2] ], samplerate: [ 'int', 44100 ] },
+    global: { pi2: [ '*', 'pi', ['int', 2] ], sampleRate: [ 'int', 44100 ] },
     func: {
       sine: {
-        // name: 'sine',
-        args: ['freq'],
+        name: 'sine',
+        args: Object.assign(['freq'],{freq:{}}),
         local: {},
-        state: { phase: ['int', 0 ] },
+        state: { phase: true },
         return: ['()', 'sin', 'phase'],
         body: [';',
           ['=', ['*', 'phase'], ['int', 0]],
-          ['+=', 'phase', ['/', ['*', 'freq', 'pi2'], 'samplerate']],
+          ['+=', 'phase', ['/', ['*', 'freq', 'pi2'], 'sampleRate']],
           ['()', 'sin', 'phase']
         ],
       }
@@ -60,13 +60,14 @@ t('analyze: sine gen', t => {
     data: {},
     range: {}
   })
+
 })
 
 t('analyze: func args', t => {
-  let ir = analyse(parse(`mult = (a, b) -> a * b`))
+  let ir = analyse(parse(`mult = (a, b) -> a * b.`))
 
   is(ir, {
-    export: {mult: true},
+    export: {mult: 'func'},
     import: {},
     global: {},
     func: {
