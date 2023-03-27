@@ -20,3 +20,4 @@
 * [ ] decoders from audio-decode
 * [ ] sonic https://github.com/waywardgeek/sonic
 * [ ] https://github.com/madskjeldgaard/Drums.quark
+* [ ] https://github.com/austintheriot/hand-crafted-wasm

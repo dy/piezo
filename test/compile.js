@@ -89,6 +89,7 @@ t('compile: neg numbers', t => {
 t('compile: function oneliners', t => {
   // default
   let wat = compile(`mult = (a, b) -> a * b.`)
+  console.log(wat)
   let mod = compileWat(wat);
   // `
   //   (func $mult (export "mult") (param $a f64) (param $b f64) (result f64)
@@ -119,6 +120,7 @@ t('compile: function oneliners', t => {
   // `
   is(mod.exports.mult(2,4), 8)
 
+  console.log(compile(` mult = (a, b) -> (b; a * b).`))
   mod = compileWat(compile(` mult = (a, b) -> (b; a * b).`))
   // `
   // (func $mult (export "mult") (param $a f64) (param $b f64) (result f64)
@@ -183,6 +185,17 @@ t('compile: ranges', t => {
   mod = compileWat(wat)
   is(mod.exports.clamp(11), 10)
   is(mod.exports.clamp(-1), 0)
+})
+
+t('compile: arrays', t => {
+  let wat = compile(`x = [1, 2, 3].`)
+  console.log(wat)
+  let mod = compileWat(wat)
+  let {memory, x} = mod.exports
+  let arr = new Float64Array(memory.buffer, 0, 3), ptr = x.value
+  is(arr[ptr], 1)
+  is(arr[ptr+1], 2)
+  is(arr[ptr+2], 3)
 })
 
 t.todo('compile: audio-gain', t => {

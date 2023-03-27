@@ -2393,3 +2393,14 @@ Having wat files is more useful than direct compilation to binary form:
 + no type conversions issue
 - no compatibility with bytebeat
 - no meaningful shift/binary operations
+
+## [x] Use f32 instead of f64 -> keep f64
+
++ it makes arrays have same stride for storing diffent types
+  - not necessarily good, since there's no meaningful way to export such arrays and also we have to track member types
++ solves issue of endianness of float64 arrays - no way from to read via Float64Array, need to use DataView
+  - fake issue, works fine
++ enough for majority sound purposes
+  - not really, mistakes accumulate
++ more cross-platform compatible
+  - not really

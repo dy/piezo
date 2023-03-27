@@ -2,9 +2,16 @@
 import analyse from "./analyse.js"
 import stdlib from "./stdlib.js"
 
+const F64_PER_PAGE = 8192;
+const BYTES_PER_F64 = 8;
+
 export default ir => {
   if (typeof ir === 'string' || Array.isArray(ir)) ir = analyse(ir)
-  let func, out = [], globals = {}, includes = []
+  let func,
+    out = [], // output code stack
+    inits = [], // start function initiali
+    includes = [], // external libs code to prepend
+    memOffset = 0 // current used memory pointer (number of f64s)
 
   // serialize expression (depends on current ir, ctx)
   const expr = (node) => {
@@ -31,7 +38,7 @@ export default ir => {
         if (aType === 'int' && !b) { b = a, a = ['int',0] }
         let bType = typeOf(b)
         if (aType === 'int' && bType === 'int') return `(i32.${opCmd} ${expr(a)} ${expr(b)})`
-        return `(f64.${opCmd} ${flt(a)} ${flt(b)})`
+        return `(f64.${opCmd} ${fexpr(a)} ${fexpr(b)})`
       }
 
       // a -< range - clamp a to indicated range
@@ -41,7 +48,7 @@ export default ir => {
             minType = typeOf(min), maxType = typeOf(max)
         if (aType === 'int' && minType === 'int' && maxType === 'int')
           return includes.push('$std/i32.smax', '$std/i32.smin'), `(call $std/i32.smax (call $std/i32.smin ${expr(a)} ${expr(max)}) ${expr(min)})`
-        return `(f64.max (f64.min ${flt(a)} ${flt(max)}) ${flt(min)})`
+        return `(f64.max (f64.min ${fexpr(a)} ${fexpr(max)}) ${fexpr(min)})`
       }
 
       // number primitives: 1.0, 2 etc.
@@ -49,14 +56,27 @@ export default ir => {
       if (op === 'int') return `(i32.const ${a})`
 
       // a; b; c;
-      if (op === ';') return args.map(arg => arg != null ? expr(arg) : '').join('\n')
+      if (op === ';') return args.map(arg => arg != null ? expr(arg) : '')
+
+      // [1,2,3]
+      if (op === '[') {
+        let members = args[0][0] === ',' ? args[0].slice(1) : args
+        let offset = node.offset = alloc(members.length)
+        let res = []
+        for (let i = 0; i < members.length; i++) {
+          res.push(`(f64.store (i32.const ${offset + i*BYTES_PER_F64}) ${fexpr(members[i])})`)
+        }
+        res.push(`(i32.const ${offset})`)
+
+        return res
+      }
     }
 
     throw 'Unimplemented operation ' + node[0]
   }
 
   // convert input expr to float expr
-  function flt(node) {
+  function fexpr(node) {
     if (node[0] === 'flt' || node[0] === 'int') return `(f64.const ${node[1]})`
 
     let type = typeOf(node)
@@ -71,7 +91,16 @@ export default ir => {
     if (op === 'int' || op === 'flt') return op
     if (op === '+' || op === '*' || op === '-') return !b ? typeOf(a) : (typeOf(a) === 'flt' || typeOf(b) === 'flt') ? 'flt': 'int'
     if (op === '-<') return typeOf(a) === 'int' && typeOf(b[1]) === 'int' && typeOf(b[2]) === 'int' ? 'int' : 'flt'
+    if (op === '[') return 'ptr' // pointer is int
+    // FIXME: detect saved variable type
     return 'flt' // FIXME: likely not any other operation returns float
+  }
+
+  // arrays are floats for now, returns pointer of the head
+  function alloc(size) {
+    let len = memOffset
+    memOffset += size
+    return len
   }
 
   // 1. declare all functions
@@ -80,7 +109,8 @@ export default ir => {
     let dfn = `func $${name}`
     dfn += ' ' + func.args.map(a=>`(param $${a} f64)`).join(' ')
     dfn += ' ' + '(result f64)' // TODO: detect result type properly
-    dfn += `\n${expr(func.body)}`
+    let statements = expr(func.body)
+    dfn += `\n${statements.join ? statements.join('\n') : statements}`
     dfn += '\n(return)\n'
 
     out.push(`(${dfn})`)
@@ -90,39 +120,46 @@ export default ir => {
 
   // 3. declare all globals
   for (let name in ir.global) {
-    let dfn = ir.global[name]
-    let node = `global $${name} `
-
+    let dfn = ir.global[name], node
     let dfnType = typeOf(dfn)
 
-    // simple init
-    if (dfn[0] === 'int') node += `i32 (i32.const ${dfn[1]})`
-    else if (dfn[0] === 'flt') node += `f64 (f64.const ${dfn[1]})`
-    // requires start init
+    // simple const globals init
+    if (dfn[0] === 'int') node = `(global $${name} i32 (i32.const ${dfn[1]}))`
+    else if (dfn[0] === 'flt') node = `(global $${name} f64 (f64.const ${dfn[1]}))`
+    // array init
+    else if (dfnType === 'ptr') {
+      let memberInits = expr(dfn)
+      node = `(global $${name} i32 ${memberInits.pop()})`
+      inits.push(...memberInits)
+    }
+    // other exression init
     // TODO: may need detecting expression result type
-    else if (dfnType === 'int') node += `(mut i32) (i32.const 0)`, globals[name] = dfn
-    else node += `(mut f64) (f64.const 0)`, globals[name] = dfn
+    else if (dfnType === 'int') node = `(global $${name} (mut i32) (i32.const 0))`, inits.push(`(global.set $${name} ${expr(dfn)})`)
+    else node = `(global $${name} (mut f64) (f64.const 0))`, inits.push(`(global.set $${name} ${expr(dfn)})`)
 
-    out.push(`(${node})`)
+    out.push(node)
   }
 
   // 3.1 init all globals in start
-  if (Object.keys(globals).length) {
-    out.push(`(start $module/init)`)
-    let inits = []
-    for (let name in globals) inits.push( `(global.set $${name} ${expr(globals[name])})` )
-    out.push(`(func $module/init\n${inits.join('\n')}\n)`)
-  }
+  if (inits.length) out.push(
+    `(start $module/init)`,
+    `(func $module/init\n${inits.join('\n')}\n)`
+  )
 
   // 4. provide exports
   for (let name in ir.export) {
     out.push(`(export "${name}" (${ir.export[name]} $${name}))`)
   }
 
-  // 0. declare includes
+  // 5. declare includes
   for (let include of includes) {
     if (include in stdlib) out.unshift(stdlib[include])
   }
+
+  // 6. declare memories
+  if (memOffset) out.unshift(`(memory (export "memory") ${Math.ceil(memOffset / F64_PER_PAGE)})`)
+
+
   // console.log(out.join('\n'))
 
   return out.join('\n')
