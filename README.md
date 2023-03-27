@@ -93,7 +93,7 @@ string * list;                // join: " " * ["a", "b"] = "a b"
 string * 2;                   // repeat: "abc" * 2 = "abcabc"
 "l" ~< string;                // find position of substring in the string
 
-//////////////////////////// lists
+//////////////////////////// arrays
 list = [1, 2, 3];             // list from elements
 list = [l:2, r:4, c:6];       // list with aliases
 list = [0..10];               // list from range
