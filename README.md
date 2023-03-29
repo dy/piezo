@@ -1,7 +1,7 @@
 # lino
 
-**Lino** (*li*ne *no*ise) is mini language for sound processing with focus on ergonomics and accessibility.<br/>
-It has common syntax (inspired by C, JS, Swift, Python) and compiles to WASM bytecode, making it available for different environments, eg. [audio worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), workers, [node](https://github.com/audiojs/web-audio-api) etc. It's my humble attempt to fix JS and fill the gap.
+**Lino** (*li*ne *no*ise) is simple sound processing micro-language with focus on ergonomics and accessibility.<br/>
+It has common syntax (inspired by C, JS, Swift, Python) and compiles to WASM bytecode, making it available for different environments, eg. [audio worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), workers, [node](https://github.com/audiojs/web-audio-api) etc. It's my humble attempt to fill the gap & fix JS.
 
 <!--[Motivation](./docs/motivation.md)  |  [Documentation](./docs/reference.md)  |  [Examples](./docs/examples.md).-->
 
@@ -156,7 +156,7 @@ copy(n: 10);                  // also 30
 clamp = (v -< 0..10) -> v;    // clamp argument
 x = () -> (1,2,3);            // return group (multiple values)
 mul = ([]in, amp) -> in*amp;  // array argument
-mul = ([8]in, amp) -> in*amp; // subarray argument
+mul = ([8]in, amp) -> in*amp; // fixed size array argument
 
 //////////////////////////// stateful variables
 a = () -> ( *i=0; i++ );      // stateful variable persist value between fn calls

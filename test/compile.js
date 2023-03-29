@@ -198,8 +198,14 @@ t('compile: arrays', t => {
   is(arr[ptr+2], 3)
 })
 
-t.todo('compile: subarrays', t => {
+t('compile: subarrays', t => {
   let wat = compile(`[2]x = [1,2,3].`)
+  console.log(wat)
+  let mod = compileWat(wat)
+  let {memory, x} = mod.exports
+  let arr = new Float64Array(memory.buffer, 0, 2), ptr = x.value
+  is(arr[ptr], 1)
+  is(arr[ptr+1], 2)
 })
 
 t.todo('compile: audio-gain', t => {

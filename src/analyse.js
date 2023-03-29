@@ -21,14 +21,28 @@ export default function analyze(tree) {
   tree = desugar(tree)
   let statements = tree[0] === ';' ? tree.slice(1) : [tree];
 
+  const addGlobal = (name, init=null, params={}) => {
+    ir.global[name] = {
+      init,
+      type: init ? typeOf(init) : 'flt', // note: external function types fall to float
+      ...params
+    };
+  }
+
   const globalExpr = {
     // a,b,c;
     ','([,...members]) {
       for (let member of members) {
-        if (typeof member === 'string') { if (!(member in ir.global)) (ir.global[member] = null) }
-        // (a=1),(b=2),... eg. swizzles
-        // FIXME: what must be here?
-        else if (member[0]==='=') { if (!member[1].startsWith('~') && !(member[1] in ir.global)) (ir.global[member[1]] = null) }
+        // FIXME: find later initializers
+        if (typeof member === 'string') {
+          // FIXME: add later-initializer
+          if (!(member in ir.global)) addGlobal(member)
+        }
+        // a=1,b=2,...
+        else if (member[0]==='=') {
+          // FIXME: add later-initializer
+          if (!(member[1] in ir.global)) addGlobal(member[1],member[2])
+        }
         else throw Error(`Unknown member ${member}`)
       }
     },
@@ -44,9 +58,14 @@ export default function analyze(tree) {
       }
       // a = b,  a,b=1,2
       else {
-        if (typeof left !== 'string' && left[0] !== ',') throw ReferenceError(`Invalid left-hand side assignment`)
-        if (typeof left === 'string') ir.global[left] = right
-        else left.map((id,i) => i && (ir.global[id] = right[i]))
+        // a = ...
+        if (typeof left === 'string') addGlobal(left, right)
+        // (a,b) = ...
+        else if (left[0] === ',') left.map((id,i) => i && addGlobal(id,right[i]))
+        // [size]a = ...
+        // FIXME: catch bad size value error: it must be int or float
+        else if (left[0] === '[' && left.length > 1) addGlobal(left[2], right, {size:left[1]})
+        else throw ReferenceError('Invalid left-hand side assignment `' + left + '`')
       }
     },
 
@@ -67,7 +86,7 @@ export default function analyze(tree) {
       if (statement !== statements[statements.length-1]) throw Error('Export must be the last statement');
       // otherwise handle as regular assignment statement
       [,statement] = statement
-      if (typeof statement === 'string') ir.global[statement] = null
+      if (typeof statement === 'string') addGlobal(statement)
       else globalExpr[statement[0]]?.(statement)
     }
   }
@@ -76,8 +95,8 @@ export default function analyze(tree) {
   for (let statement of statements) {
     if (!statement) continue
     // a;b;
-    if (typeof statement === 'string') ir.global[statement] = null
-    // a??b
+    if (typeof statement === 'string') addGlobal(statement)
+    // a * b
     else globalExpr[statement[0]]?.(statement)
   }
 
@@ -87,19 +106,25 @@ export default function analyze(tree) {
   function genExports([op, node]) {
     if (op!=='.') return
 
-    // a;
+    // a.
     if (typeof node === 'string') ir.export[node] = extTypeOf(node)
+    // ...=....
     if (node[0]==='=') {
+      let [,l,r] = node
       // a=...;
-      if (typeof node[1] === 'string') ir.export[node[1]] = extTypeOf(node[1])
+      if (typeof l === 'string') ir.export[l] = extTypeOf(l)
       // a,b=...;
-      else if (node[1][0] === ',') node[1].slice(1).map(item => (ir.export[item] = extTypeOf(item)))
+      else if (l[0] === ',') l.slice(1).map(item => (ir.export[item] = extTypeOf(item)))
+      // [2]a = ...
+      else if (l[0]==='[') ir.export[l[2]] = extTypeOf(l[2])
+      else throw Error('Unknown export expression `' + node + '`')
     }
     // a,b or a=1,b=2
     else if (node[0]===',') node.forEach((item,i) => {
       if (!i) return
       if (typeof item === 'string') (ir.export[item] = extTypeOf(item))
-      else if (item[0] === '=' && !item[1].startsWith('~')) ir.export[item[1]] = extTypeOf(item[1])
+      // a=1,b=2
+      else if (item[0] === '=') ir.export[item[1]] = extTypeOf(item[1])
     })
   }
 

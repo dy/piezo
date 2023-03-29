@@ -13,6 +13,11 @@
   * [ ] Repl with compiler selector
 
 * [x] Parser
+
+* [ ] Add nice serialization (toString) to AST nodes, to return nicely formatted code
+* [ ] Add reference line number to AST nodes to display nice errors
+* [ ] Make `err` function displaying errors nicely
+
 * [ ] Compiler
 * [ ] Processing modules collection
 

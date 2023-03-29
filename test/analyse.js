@@ -43,7 +43,7 @@ t('analyze: sine gen', t => {
   is(ir, {
     export: { sine: 'func' },
     import: { math: ['sin', 'pi', 'max' ] },
-    global: { pi2: [ '*', 'pi', ['int', 2] ], sampleRate: [ 'int', 44100 ] },
+    global: { pi2: { type:'flt',init:[ '*', 'pi', ['int', 2] ]}, sampleRate: {type:'int',init:[ 'int', 44100 ]} },
     func: {
       sine: {
         name: 'sine',

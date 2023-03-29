@@ -17,7 +17,7 @@ export default ir => {
   const expr = (node) => {
     // literal, like `foo`
     if (typeof node === 'string') {
-      if (ir.global[node]) return `(global.get $${node})`
+      if (node in ir.global) return `(global.get $${node})`
       if (func?.local[node] || func?.args[node]) return `(local.get $${node})`
       throw RangeError(`${node} is not defined`)
     }
@@ -109,8 +109,7 @@ export default ir => {
 
   // 3. declare all globals
   for (let name in ir.global) {
-    let dfn = ir.global[name], node
-    let dfnType = typeOf(dfn)
+    let {init:dfn, type:dfnType} = ir.global[name], node
 
     // simple const globals init
     if (dfn[0] === 'int') node = `(global $${name} i32 (i32.const ${dfn[1]}))`
