@@ -421,7 +421,7 @@ Features:
 
 ## Inspiration
 
-* [mono](https://github.com/stagas/mono) – spiritual brother for cowbell.lol.
-* [min](https://github.com/r-lyeh/min)
+* [mono](https://github.com/stagas/mono) – spiritual brother at cowbell.lol.
+* [min](https://github.com/r-lyeh/min) – syntax / style inspiration.
 
 <p align=center><a href="https://github.com/krsnzd/license/">🕉</a></p>
