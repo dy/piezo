@@ -9,7 +9,8 @@ t('analyze: export kinds', t => {
   is(analyse(parse(`x,y.`)).export, {x:'global',y:'global'})
   is(analyse(parse(`x,y,z.`)).export, {x:'global',y:'global',z:'global'})
   is(analyse(parse(`x=1;x.`)).export, {x:'global'})
-  is(analyse(parse(`x,y=1,2;x,y.`)).export, {x:'global',y:'global'})
+  is(analyse(parse(`x=1,y=1;x,y.`)).export, {x:'global',y:'global'})
+  is(analyse(parse(`(x,y)=(1,1).`)).export, {x:'global',y:'global'})
 })
 
 t.todo('analyze: return kinds', t => {
@@ -46,9 +47,8 @@ t('analyze: sine gen', t => {
     func: {
       sine: {
         name: 'sine',
-        args: Object.assign(['freq'],{freq:{}}),
-        local: {},
-        state: { phase: true },
+        args: ['freq'],
+        local: { phase: {type: 'int', stateful: true, init:['int', 0]}, freq: {type:'flt',init:null,arg:true} },
         return: ['()', 'sin', 'phase'],
         body: [';',
           ['=', ['*', 'phase'], ['int', 0]],
@@ -73,9 +73,8 @@ t('analyze: func args', t => {
     func: {
       mult: {
         name: 'mult',
-        args: ['a', 'b'],
-        local: {},
-        state: {},
+        args: ['a','b'],
+        local: {a:{type:'flt',init:null,arg:true},b:{type:'flt',init:null,arg:true}},
         return: ['*', 'a', 'b'],
         body: ['*', 'a', 'b'],
       }

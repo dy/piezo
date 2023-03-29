@@ -57,20 +57,20 @@ t('compile: globals', t => {
 })
 
 t('compile: multiple globals', () => {
-  let wat = compile(`
-    pi, pi2, sampleRate = 3.14, 3.14*2, 44100.
-  `)
+  // FIXME: must throw
+  // let wat = compile(`pi, pi2, sampleRate = 3.14, 3.14*2, 44100.`)
+  let wat = compile(`(pi, pi2, sampleRate) = (3.14, 3.14*2, 44100).`)
   let mod = compileWat(wat)
   is(mod.exports.pi.value, 3.14)
   is(mod.exports.pi2.value, 3.14*2)
   is(mod.exports.sampleRate.value, 44100)
 
-  wat = compile(`a,b = -1, -1.0.`)
+  wat = compile(`(a,b) = (-1, -1.0).`)
   mod = compileWat(wat)
   is(mod.exports.a.value, -1)
   is(mod.exports.b.value, -1)
 
-  wat = compile(`a,b = -1, -1.0.`)
+  wat = compile(`(a,b) = (-1, -1.0).`)
   mod = compileWat(wat)
   is(mod.exports.a.value, -1)
   is(mod.exports.b.value, -1)
@@ -196,6 +196,10 @@ t('compile: arrays', t => {
   is(arr[ptr], 1)
   is(arr[ptr+1], 2)
   is(arr[ptr+2], 3)
+})
+
+t.todo('compile: subarrays', t => {
+  let wat = compile(`[2]x = [1,2,3].`)
 })
 
 t.todo('compile: audio-gain', t => {

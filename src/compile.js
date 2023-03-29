@@ -1,5 +1,5 @@
 // compile source/ast/ir to WAST
-import analyse from "./analyse.js"
+import analyse, {typeOf} from "./analyse.js"
 import stdlib from "./stdlib.js"
 
 const F64_PER_PAGE = 8192;
@@ -83,17 +83,6 @@ export default ir => {
     if (type === 'flt') return expr(node)
 
     return `(f64.convert_i32_s ${expr(node)})`
-  }
-
-  // find result type of a node
-  function typeOf(node) {
-    let [op, a, b] = node
-    if (op === 'int' || op === 'flt') return op
-    if (op === '+' || op === '*' || op === '-') return !b ? typeOf(a) : (typeOf(a) === 'flt' || typeOf(b) === 'flt') ? 'flt': 'int'
-    if (op === '-<') return typeOf(a) === 'int' && typeOf(b[1]) === 'int' && typeOf(b[2]) === 'int' ? 'int' : 'flt'
-    if (op === '[') return 'ptr' // pointer is int
-    // FIXME: detect saved variable type
-    return 'flt' // FIXME: likely not any other operation returns float
   }
 
   // arrays are floats for now, returns pointer of the head

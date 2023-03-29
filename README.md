@@ -11,18 +11,20 @@ It has common elegant syntax (inspired by JS, Swift, Python) and compiles to opt
 
 ```fs
 //////////////////////////// naming convention
-fooBar123 != FooBar123;       // ids are case-sensitive
-Ab_C_F#, $0, Δx;              // ids permit alnum, unicodes, #, _, $
-default=1; eval=fn; else=0;   // ids can be any common words (lino has no reserved words)
+fooBar123 != FooBar123;       // variable names are case-sensitive
+Ab_C_F#, $0, Δx;              // variable names permit alnum, unicodes, #, _, $
+foo=1, bar=2;                 // variables declare without any keyword
+default=1; eval=fn; else=0;   // hint: variable names can be any common words - lino has no reserved words
 
 //////////////////////////// numbers
 16, 0x10, 0b0;                // int (dec, hex or binary form)
 16.0, .1, 1e3, 2e-3;          // floats
-true, false = 0b1, 0b0;       // alias booleans
+true, false = 0b1, 0b0;       // hint: alias booleans
 
 //////////////////////////// type cast
-1 / 3; 2 * 3.14;              // ints upgrade to floats implicitly
-3.0 | 0;                      // floats floor to ints explicitly
+1 * 2; 12 - 10;               // ints persist type if possible
+1 / 3; 2 * 3.14;              // ints cast to floats otherwise
+3.14 | 0; ~~2.5;              // floats cast to ints in binary operations
 
 //////////////////////////// units
 1k = 1000; 1pi = 3.1415;      // define units
@@ -44,16 +46,16 @@ true, false = 0b1, 0b0;       // alias booleans
 //////////////////////////// groups (tuples)
 a, b, c;                      // groups are syntactic sugar
 (a, b, c)++;                  // apply operation to multiple elements: (a++, b++, c++)
-(a, (b, c)) == a, b, c;       // groups are always flat
-a,b,c = d,e,f;                // assign: a=d, b=e, c=f
-a,b = b,a;                    // swap: temp=a; a=b; b=temp;
+(a, (b, c));                  // groups are always flat == (a, b, c)
+(a,b,c) = (d,e,f);            // assign: a=d, b=e, c=f
+(a,b) = (b,a);                // swap: temp=a; a=b; b=temp;
 (a,b) + (c,d);                // operations: (a+c, b+d)
 (a,b).x;                      // (a.x, b.x);
 (a,b).x();                    // (a.x(), b.x());
-a,b,c = (d,e,f);              // a=d; b=e; c=f
-(a,b,c) = d;                  // a=d, b=d; c=d
-a = b,c,d;                    // error: invalid number of elements
-a = b,c = d;                  // note: unlike JS, that is a = (b, c) = d
+(a,b,c) = (d,e,f);            // (a=d, b=e, c=f);
+(a,b,c) = d;                  // (a=d, b=d, c=d);
+a = (b,c,d);                  // error: wrong number of assignment elements
+a = b, c = d;                 // note: assignment precedence is higher == (a = b), (c = d)
 
 //////////////////////////// standard operators
 + - * / % **                  // arithmetical (** for pow)
@@ -108,7 +110,7 @@ list[];                       // length
 list[1..3, 5]; list[5..];     // slice
 list[-1..0];                  // reverse
 list | x -> x * 2;            // iterate/map items
-item ~< list;                 // find index of item in the list
+2 ~< list;                    // find index of item in the list
 
 //////////////////////////// statements
 foo();                        // semi-colons at end of line are mandatory
@@ -150,11 +152,11 @@ triple();                     // 3
 triple(5);                    // 15
 triple(n: 10);                // 30. named argument.
 copy = triple;                // capture function
-copy(10);                     // also 30
+copy(n: 10);                  // also 30
 clamp = (v -< 0..10) -> v;    // clamp argument
-x = () -> 1,2,3;              // return group (multiple values)
-mul = ([]in, amp) -> in*amp;  // list argument
-mul = ([8]in, amp) -> in*amp; // sublist argument
+x = () -> (1,2,3);            // return group (multiple values)
+mul = ([]in, amp) -> in*amp;  // array argument
+mul = ([8]in, amp) -> in*amp; // subarray argument
 
 //////////////////////////// stateful variables
 a = () -> ( *i=0; i++ );      // stateful variable persist value between fn calls

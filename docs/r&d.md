@@ -2334,7 +2334,7 @@ Having wat files is more useful than direct compilation to binary form:
 
 ## [x] `a <~ b` vs `a < ~b` -> use `a ~< b` instead
 
-## [ ] Case-insensitive variable names?
+## [x] Case-insensitive variable names? -> let's use case-sensitive, too many benefits
 
 0. Case-insensitive
 
@@ -2404,3 +2404,19 @@ Having wat files is more useful than direct compilation to binary form:
   - not really, mistakes accumulate
 + more cross-platform compatible
   - not really
+
+## [x] Comma operator precedence: a,b=c,d -> let's use more familiar flowy JS style a=1, b=2
+
+1. a,b=c,d -> (a,b)=(c,d)
+
++ python style
++ allows shothand nice swaps
+- problem with fn arguments parsing `(a=1,b=2) => `
+
+2. a,b=c,d -> (a),(b=c),(d)
+
++ js style
++ more fluent imho
++ allows function arguments
+- forces group-assign be parenthesized (a,b,c) = (d, e, f)
++ allows comma-style operations sequence, rather than python-like meaning, eg a++, b+=2, c=4,

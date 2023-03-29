@@ -115,29 +115,87 @@ export default function analyze(tree) {
 
 // maps node & analyzes function internals
 export function analyzeFunc([,args, body], ir) {
-  args = args?.[0]===',' ? args.slice(1) : args ? [args] : []
-
-  // init args by name
-  args.forEach(arg => args[arg] = {})
 
   let func = {
-    args,
+    args:[],
     local: {},
-    state: {},
     body,
     return: body[0] === ';' ? body[body.length - 1] : body
   }
 
-  const detectState = (node) => {
+  const addLocal = (name,init=null,params={}) => {
+    func.local[name] = {
+      init,
+      type: init ? typeOf(init) : 'flt', // note: external function types fall to float
+      ...params
+    };
+  }
+
+  // init args by name
+  if (args) {
+    // (a) =>
+    if (typeof args === 'string') addLocal(args), func.args.push(args)
+    // (a=1)
+    else if (args[0] === '=') addLocal(args[1], args[2]), func.args.push(args[1])
+    //(a,b)=>, (a=1,b=2)=>, (a=(1;2))=>
+    else if (args[0] === ',') {
+      for (let arg of args.slice(1)) {
+        if (typeof arg === 'string') addLocal(arg), func.args.push(arg)
+        else if (arg[0] === '=') addLocal(arg[1], arg[2]), func.args.push(arg[1])
+        else throw Error('Bad arguments syntax')
+      }
+    }
+    else throw Error('Bad arguments syntax')
+  }
+  args = args?.[0]===',' ? args.slice(1) : args ? [args] : []
+  // FIXME: better args detection, as locals maybe?
+  for (let arg of args) addLocal(arg,null,{arg:true})
+
+  const detectLocals = (node) => {
+    // a;
     if (!Array.isArray(node)) return
 
-    let [op, ...args] = node
+    let [op, ...statements] = node
 
-    // *a = init
-    if (op === '*' && args.length === 1) func.state[args[0]] = true
-    for (let arg of args) detectState(arg)
+    // *a = init, a = init, a = b = c
+    if (op === '=') {
+      let [l,r] = statements
+      // *a = init
+      if (l[0] === '*') {
+        // *a = ...
+        if (typeof l[1] === 'string') addLocal(l[1],r,{stateful:true})
+        // *(a,b,c) = ...
+        else if (l[1][0] === '(') throw 'Unimplemented'
+        else throw Error('Bad syntax `*' + l[1] + '`')
+      }
+      // a = ...
+      else if (typeof l === 'string') {
+        addLocal(l,r)
+      }
+      // (a,b,c) =
+      else if (l[0]==='(') throw 'Unimplemented'
+    }
+    // *a;
+    else if (op === '*' && statements.length === 1) {
+      addLocal(statements[0],null,{stateful:true})
+    }
+    else {
+      for (let arg of statements) detectLocals(arg)
+    }
   }
-  detectState(body)
+  detectLocals(body)
 
   return func
+}
+
+// find result type of a node
+export function typeOf(node) {
+  if (!node) return null // FIXME: null means type will be detected later?
+  let [op, a, b] = node
+  if (op === 'int' || op === 'flt') return op
+  if (op === '+' || op === '*' || op === '-') return !b ? typeOf(a) : (typeOf(a) === 'flt' || typeOf(b) === 'flt') ? 'flt': 'int'
+  if (op === '-<') return typeOf(a) === 'int' && typeOf(b[1]) === 'int' && typeOf(b[2]) === 'int' ? 'int' : 'flt'
+  if (op === '[') return 'ptr' // pointer is int
+  // FIXME: detect saved variable type
+  return 'flt' // FIXME: likely not any other operation returns float
 }
