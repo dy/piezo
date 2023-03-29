@@ -24,7 +24,7 @@ export default function analyze(tree) {
   const addGlobal = (name, init=null, params={}) => {
     ir.global[name] = {
       init,
-      type: init ? typeOf(init) : 'flt', // note: external function types fall to float
+      type: init ? typeOf(init, ir.global, ir.local) : 'flt', // note: external function types fall to float
       ...params
     };
   }
@@ -56,7 +56,7 @@ export default function analyze(tree) {
 
         ;(ir.func[left] = analyzeFunc(right, ir)).name = left
       }
-      // a = b,  a,b=1,2
+      // a = b,  a,b=1,2, [x]a =
       else {
         // a = ...
         if (typeof left === 'string') addGlobal(left, right)
@@ -214,13 +214,17 @@ export function analyzeFunc([,args, body], ir) {
 }
 
 // find result type of a node
-export function typeOf(node) {
+export function typeOf(node, scope) {
   if (!node) return null // FIXME: null means type will be detected later?
   let [op, a, b] = node
   if (op === 'int' || op === 'flt') return op
   if (op === '+' || op === '*' || op === '-') return !b ? typeOf(a) : (typeOf(a) === 'flt' || typeOf(b) === 'flt') ? 'flt': 'int'
   if (op === '-<') return typeOf(a) === 'int' && typeOf(b[1]) === 'int' && typeOf(b[2]) === 'int' ? 'int' : 'flt'
   if (op === '[') return 'ptr' // pointer is int
-  // FIXME: detect saved variable type
+  if (op === '|') {
+    let aType = typeOf(a), bType = typeOf(b)
+    console.log(a,aType, b,bType)
+  }
+  throw Error('Cannot define type' + node)
   return 'flt' // FIXME: likely not any other operation returns float
 }

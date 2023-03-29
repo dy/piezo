@@ -1,6 +1,6 @@
 // test wast compiler
 
-import t, { is, ok, same, throws } from 'tst'
+import t, { is, not, ok, same, throws } from 'tst'
 import parse from '../src/parse.js'
 import analyse from '../src/analyse.js'
 import compile from '../src/compile.js'
@@ -36,7 +36,7 @@ function compileWat (code, config) {
 }
 
 
-t('compile: globals', t => {
+t('compile: simple globals', t => {
   // TODO: single global
   // TODO: multiply wrong types
   // TODO: define globals via group (a,b,c).
@@ -56,7 +56,7 @@ t('compile: globals', t => {
   is(mod.exports.sampleRate.value, 44100)
 })
 
-t('compile: multiple globals', () => {
+t('compile: simple multiple globals', () => {
   // FIXME: must throw
   // let wat = compile(`pi, pi2, sampleRate = 3.14, 3.14*2, 44100.`)
   let wat = compile(`(pi, pi2, sampleRate) = (3.14, 3.14*2, 44100).`)
@@ -76,7 +76,7 @@ t('compile: multiple globals', () => {
   is(mod.exports.b.value, -1)
 })
 
-t('compile: neg numbers', t => {
+t('compile: simple neg numbers', t => {
   let wat = compile(`x=-1.`)
   let mod = compileWat(wat)
   is(mod.exports.x.value, -1)
@@ -86,7 +86,7 @@ t('compile: neg numbers', t => {
   is(mod.exports.x.value, -1)
 })
 
-t('compile: function oneliners', t => {
+t('compile: simple function oneliners', t => {
   // default
   let wat = compile(`mult = (a, b) -> a * b.`)
   console.log(wat)
@@ -142,7 +142,7 @@ t('compile: function oneliners', t => {
   is(mod.exports.mult(2,4), 8)
 })
 
-t('compile: ranges', t => {
+t('compile: simple ranges', t => {
   // let wat = compile(`x = 0..10; `),
   //     mod = compileWat(wat)
   // is(mod.exports.x)
@@ -187,7 +187,7 @@ t('compile: ranges', t => {
   is(mod.exports.clamp(-1), 0)
 })
 
-t('compile: arrays', t => {
+t('compile: simple arrays', t => {
   let wat = compile(`x = [1, 2, 3].`)
   console.log(wat)
   let mod = compileWat(wat)
@@ -198,7 +198,7 @@ t('compile: arrays', t => {
   is(arr[ptr+2], 3)
 })
 
-t('compile: subarrays', t => {
+t('compile: simple subarrays', t => {
   let wat = compile(`[2]x = [1,2,3].`)
   console.log(wat)
   let mod = compileWat(wat)
@@ -206,6 +206,17 @@ t('compile: subarrays', t => {
   let arr = new Float64Array(memory.buffer, 0, 2), ptr = x.value
   is(arr[ptr], 1)
   is(arr[ptr+1], 2)
+})
+
+t.only('compile: simple pipe', t => {
+  let wat = compile(`[2]x = [1,2,3]; y = x | x -> x * 2.`)
+  console.log(wat)
+  let mod = compileWat(wat)
+  let {memory, y} = mod.exports
+  let arr = new Float64Array(memory.buffer, 0, 3), ptr = y.value
+  is(arr[ptr], 2)
+  is(arr[ptr+1], 4)
+  not(arr[ptr+2], 6)
 })
 
 t.todo('compile: audio-gain', t => {

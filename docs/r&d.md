@@ -2420,3 +2420,20 @@ Having wat files is more useful than direct compilation to binary form:
 + allows function arguments
 - forces group-assign be parenthesized (a,b,c) = (d, e, f)
 + allows comma-style operations sequence, rather than python-like meaning, eg a++, b+=2, c=4,
+
+## [x] Should var scope be defined by parens `(x=1;(y=2;);y)` or by function? -> we should use parens as scope, but create scope only if new vars are defined there
+
+
+1. By parens: `y==undefined`
+
++ see "scope or not to scope"
++ universal scope definition, just referential to parent scope
++ allows cleaner namespace, no name contamination
++ allows easier namespaces
+- harder to implement
++ streamlines scopes mechanism
++ allows merging globalParse & localParse mechanism, we just have to properly detect variables.
+
+2. By function: `y==2`
++ closer to webassembly
+- less usefulness

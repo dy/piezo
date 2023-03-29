@@ -14,14 +14,16 @@
 
 * [x] Parser
 
+* [ ] Add proper scope mechanism:
+* [ ] Simple loops
+* [ ] Audio gain example
+* [ ] Sine gen example
+* [ ] All reference cases
 * [ ] Add nice serialization (toString) to AST nodes, to return nicely formatted code
 * [ ] Add reference line number to AST nodes to display nice errors
 * [ ] Make `err` function displaying errors nicely
 
-* [ ] Compiler
 * [ ] Processing modules collection
-
-* [ ] mono sine wave + gain case
 
 * [ ] stdlib
   * cos, sin, pow, mod
@@ -33,12 +35,12 @@
 
 * [ ] *state
   * [ ] instances state can be allocated as global variables in advance by stacktrace
-* [ ] . end operator
 
 * [ ] sonr expressions
   * `sin(432 + 10*sin(8)) * adsr(0, 0, .4, 0)`
 
 * [ ] Loudness meter for waveplay
+
 
 ## Test cases
 

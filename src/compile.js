@@ -12,7 +12,7 @@ export default ir => {
     inits = [], // start function initiali
     includes = [], // external libs code to prepend
     memOffset = 0 // current used memory pointer (number of f64s)
-
+console.log(ir)
   // serialize expression (depends on current ir, ctx)
   const expr = (node) => {
     // literal, like `foo`
