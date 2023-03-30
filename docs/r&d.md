@@ -2491,3 +2491,10 @@ Having wat files is more useful than direct compilation to binary form:
 + allows other subscopes, like import, export, args etc
 - doesn't do direct inheritance
   + enhances inheritance by maintaining pure object
+
+## [x] Remove desugaring or keep? -> remove, make desugaring in analyser
+
+- desugaring solves initially
++ removing is shorter
++ desugaring can be done in-place
++ it can be helpful to maintain parentheses, since parens define scope
