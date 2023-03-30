@@ -25,6 +25,8 @@
 
 * [ ] Processing modules collection
 
+* [ ] Demo page in style of assembly AI with wavefont marquee player
+
 * [ ] stdlib
   * cos, sin, pow, mod
 

@@ -27,20 +27,22 @@ t.todo('analyze: return kinds', t => {
 })
 
 t('analyze: sine gen', t => {
-  let ir = analyse(parse(`
-    @ 'math#sin,pi,max';
+  let scope = analyse(parse(`
+    //@ 'math#sin,PI';
+    @ 'math';
 
-    pi2 = pi*2;
+    PI2 = PI*2;
     sampleRate = 44100;
 
-    sine = (freq) -> (
+    sine = (freq-<0..20000) -> (
       *phase=0;
-      phase += freq * pi2 / sampleRate;
+      phase += freq * PI2 / sampleRate;
       sin(phase)
     ).
   `))
+  console.log(scope)
 
-  is(ir, {
+  is(scope, {
     export: { sine: 'func' },
     import: { math: ['sin', 'pi', 'max' ] },
     global: { pi2: { type:'flt',init:[ '*', 'pi', ['int', 2] ]}, sampleRate: {type:'int',init:[ 'int', 44100 ]} },

@@ -2340,9 +2340,21 @@ Having wat files is more useful than direct compilation to binary form:
 
 - `AbB` vs `ABb` can be different chords, but lino mixes them up together
 - `X1` and `x1` can be different things in math
-- `sampleRate` becomes `sampleRate` - can be confusing
+- `sampleRate` becomes `samplerate` - can be confusing
 - export naming requirement: `'AbB': AbB, 'sampleRate': sampleRate.`
-- not conventional
+  ~ can take exact name though
+- not much conventional, only MySQL and other oldies
++ solves problem mentioned by despawnerer
++ lowcase is typographycally more expressive
++ code can be more robust in case-enforcing environments, eg. as url string
+
+0.5 Capfirst-sensitive, (`Abc` == `ABc`) != (`aBC` == `abc`)
+
++ fixes problem of math/class capfirst difference (math `X1` vs `x1`, `Oscillator` vs `oscillator`)
++ fixes problem of despawnerer's `fullName` == `fullname`
++ capfirst is typographycally meaningful
+- code is not robust to case-insensitive environments
+- import looks like `@math#Pi` still
 
 1. Case-sensitive
 
@@ -2351,13 +2363,17 @@ Having wat files is more useful than direct compilation to binary form:
 + More conventional: JS, C, Python
 - Possible problem mentioned by despawnerer: `fullName` vs `fullname`.
 ~ MySQL is fine being case-insensitive
+- import becomes case-sensitive `@math#pi` vs `@math#PI`
+- upcase consts are ugly
+  ~ can be replaced with units
+- less meaning to atoms
 
 ? Maybe keep it case-insensitive, but match case by-export?
 
 2. Export operator `'a': a, 'sampleRate': sampleRate.`
 + Explicit export
 + Reverence to erlang and natural languages
-+ Extra use of atoms
++ Extra use & meaning of atoms
 + Quotes make nicer indicator of case-sensitivity
 + Solves problem of default exporting `0..10` or `() -> x`
 - redundancy: case can be figured out from name directly
@@ -2365,6 +2381,14 @@ Having wat files is more useful than direct compilation to binary form:
 ~- we can use `^` operator for that purpose: `^sampleRate;`
   ? Can we use `.` postfix as indicator of procedure / void return? nah.
 - must be last, therefore redundant, since last expression is already exported.
+  ~ nah - export and return are different operations
+
+3. Use atoms as case-sensitive variable names
++ enables quote-less imports `@math#pi` and `@'math#PI'`
+  + `#` is part of variable name anyways
+- `'Oscillator'()` is unusual construct...
+- not clear if `'oscillator'`, `'Oscillator'`, `oscillator` and `Oscillator` resolve to the same
+
 
 ## [ ] Ranges: how to organize in wasm level?
 
@@ -2387,7 +2411,7 @@ Having wat files is more useful than direct compilation to binary form:
   - impossible to export
   + fastest & direct
 
-## [x] Drop ints and use only f64? -> keep for now, complexity is controllable
+## [x] Drop ints and use only f64? -> keep both for now, complexity is controllable
 
 + waay less code
 + no type conversions issue
@@ -2437,3 +2461,33 @@ Having wat files is more useful than direct compilation to binary form:
 2. By function: `y==2`
 + closer to webassembly
 - less usefulness
+
+## [x] IR: nested scopes, each scope has own toString() method -> yes, good clean uniform approach
+
++ unifies returning structure
++ differentiates scopes with same interface
+
+## [x] How to solve problem of array `length` - it can't be used as variable name? -> use .vars
+
+* it's not just .length - it's any array methods
+
+1. Catch any set of variable with that name and map to some other name
+- too many modifications in code
++ fastest
+
+2. Extend array class with own class and redefine that property
+
+3. Use proxy to intercept access to .length
+
+4. Inherit from array as `Object.create(arr)`
++ we inherit anyways
+
+5. Inherit from array as `Object.create(Array.prototype)`
+- 10 times slower than direct array
+
+6. Just store in `scope.var`
++ fastest
++ no pollution
++ allows other subscopes, like import, export, args etc
+- doesn't do direct inheritance
+  + enhances inheritance by maintaining pure object

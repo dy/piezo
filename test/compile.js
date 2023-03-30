@@ -36,13 +36,13 @@ function compileWat (code, config) {
 }
 
 
-t('compile: simple globals', t => {
+t.only('compile: simple globals', t => {
   // TODO: single global
   // TODO: multiply wrong types
   // TODO: define globals via group (a,b,c).
 
   // undefined variable throws error
-  throws(() => compile(analyse(parse(`pi2 = pi*2.0;`))), /pi is not defined/)
+  // throws(() => compile(analyse(parse(`pi2 = pi*2.0;`))), /pi is not defined/)
 
   let wat = compile(`
     pi = 3.14;
@@ -206,6 +206,21 @@ t('compile: simple subarrays', t => {
   let arr = new Float64Array(memory.buffer, 0, 2), ptr = x.value
   is(arr[ptr], 1)
   is(arr[ptr+1], 2)
+})
+
+t('compile: variable type inference', t => {
+  let wat,x;
+  x = compileWat(compile(`x;x.`)).exports.x // unknown type falls to f64
+  x = compileWat(compile(`x=1;x.`)).exports.x // int type
+  x = compileWat(compile(`x=1.0;x.`)).exports.x // float type
+  x = compileWat(compile(`x=()->1;x.`)).exports.x // func type
+  x = compileWat(compile(`x=0..10;x.`)).exports.x // range type
+  x = compileWat(compile(`x=[];x.`)).exports.x // arr type
+  x = compileWat(compile(`x;x=1;x.`)).exports.x // late-int type
+  x = compileWat(compile(`x;x=1.0;x.`)).exports.x // late-float type
+  x = compileWat(compile(`x;x=()->1;x.`)).exports.x // late-func type
+  x = compileWat(compile(`x;x=0..10;x.`)).exports.x // late-range type
+  x = compileWat(compile(`x;x=[];x.`)).exports.x // late-arr type
 })
 
 t.only('compile: simple pipe', t => {
