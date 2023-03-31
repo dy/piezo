@@ -1,25 +1,18 @@
 // compile source/ast/ir to WAST
 import analyse, { err, getResultType } from "./analyse.js"
 import stdlib from "./stdlib.js"
-import * as CONST from './const.js'
+import {FLOAT,INT,RANGE,PTR,FUNC} from './const.js'
 
 const F64_PER_PAGE = 8192;
 const BYTES_PER_F64 = 8;
-const TYPE = {
-  [CONST.FLOAT]:'f64',
-  [CONST.INT]:'i32',
-  [CONST.PTR]:'i32',
-  [CONST.FUNC]:'i32'
-}
 
-export default scope => {
+export default function compile(scope) {
   if (typeof scope === 'string' || Array.isArray(scope)) scope = analyse(scope)
   console.log(scope)
 
   let out = [], // output code stack
     inits = [], // start function initializers
     includes = [], // pieces to prepend
-    exports = [], // pieces to export
     globals = [],
     memOffset = 0 // current used memory pointer (number of f64s)
 
@@ -30,11 +23,11 @@ export default scope => {
     if (typeof statement === 'string') {
       let name = statement, v = scope.vars[name]
       if (!globals.includes(name)) {
-        const wtype = (TYPE[v.type]||TYPE[CONST.FLOAT])
+        const wtype = (v.type===INT?'i32':'f64')
         out.push(`(global $${name} ${v.mutable ? `(mut ${wtype})` : wtype} (${wtype}.const 0))`)
         globals.push(name)
       }
-      else out.push(`(global.get $${name})`)
+      // else out.push(`(global.get $${name})`)
     }
     // imports
     else if (statement[0] === '@') {
@@ -45,60 +38,80 @@ export default scope => {
     }
     // assignments - either global instructions or functions
     else if (statement[0] === '=') {
-      let [,name,init] = statement,
-          v = scope.vars[name], res,
-          wtype = TYPE[v.type]||TYPE[CONST.FLOAT]
-
-      // simple const globals init
-      if (init[0] === 'int') res = `(global $${name} ${wtype} (${wtype}.const ${init[1]}))`
-      else if (init[0] === 'flt') res = `(global $${name} ${wtype} (${wtype}.const ${init[1]}))`
-      // global fn init
-      else if (init[0] === '->') {
-        let vars = Object.getOwnPropertyNames(init.vars)
-        let dfn = `func $${name}`
-        let [,...body] = init, last = body[body.length-1]
-
-        // define params
-        vars.filter(id=>scope.vars[id].arg).forEach(id => {
-          dfn += ` (param $${id} ${v.type===CONST.PTR ? 'i32' : 'f64'})`
-        })
-
-        // TODO: detect result type properly
-        dfn += ` (result ${TYPE[getResultType(last)]})\n`
-
-        // define locals
-        vars.filter(id=>!scope.vars[id].arg).forEach(id => {
-          dfn += ` (local $${id} ${v.type===CONST.PTR ? 'i32' : 'f64'})`
-        })
-
-        // init body
-        body.forEach(node => dfn += `\n` + expr(node))
-
-        dfn += '\n(return)\n'
-        out.push(`(${dfn})`)
+      globalAssign(statement)
+    }
+    // sequence in only applies members in init
+    else if (statement[0] === ',') {
+      let [,...members] = statement
+      let init = ''
+      for (let member of members) {
+        if (member[0] === '=') globalAssign(member)
+        // FIXME: this is duplication
+        else {
+          let name = member, v = scope.vars[name]
+          if (!globals.includes(name)) {
+            const wtype = (v.type===INT?'i32':'f64')
+            out.push(`(global $${name} ${v.mutable ? `(mut ${wtype})` : wtype} (${wtype}.const 0))`)
+            globals.push(name)
+          }
+        }
       }
-      // array init
-      else if (v.type === CONST.PTR) {
-        let memberInits = expr(init)
-        res = `(global $${name} ${wtype} ${memberInits.pop()})`
-        inits.push(...memberInits)
-      }
-      // other exression init
-      // TODO: may need detecting expression result type
-      else if (wtype == TYPE[CONST.INT]) {
-        res = `(global $${name} (mut ${wtype}) (${wtype}.const 0))`
-        globals.push(name)
-        inits.push(`(global.set $${name} ${expr(init)})`)
-      }
-      else {
-        res = `(global $${name} (mut ${wtype}) (${wtype}.const 0))`
-        globals.push(name)
-        inits.push(`(global.set $${name} ${expr(init)})`)
-      }
-
-      out.push(res)
+      if (init) inits.push(init)
     }
     else err('Unknown instruction `' + statement[0] + '`',statement)
+  }
+
+  function globalAssign([,name,init]) {
+    let v = scope.vars[name], res
+
+    globals.push(name)
+
+    // simple const globals init
+    if (init[0] === 'int') res = `(global $${name} i32 (i32.const ${init[1]}))`
+    else if (init[0] === 'flt') res = `(global $${name} f64 (f64.const ${init[1]}))`
+    // global fn init
+    else if (init[0] === '->') {
+      let vars = Object.getOwnPropertyNames(init.vars)
+      let dfn = `func $${name}`
+      let [,...body] = init, last = body[body.length-1]
+
+      // define params
+      vars.filter(id=>scope.vars[id].arg).forEach(id => {
+        dfn += ` (param $${id} ${v.type===PTR ? 'i32' : 'f64'})`
+      })
+
+      // TODO: detect result type properly
+      dfn += ` (result ${getResultType(last) == FLOAT ? 'f64' : 'i32'})\n`
+
+      // define locals
+      vars.filter(id=>!scope.vars[id].arg).forEach(id => {
+        dfn += ` (local $${id} ${v.type===PTR ? 'i32' : 'f64'})`
+      })
+
+      // init body
+      body.forEach(node => dfn += `\n` + expr(node))
+
+      dfn += '\n(return)\n'
+      out.push(`(${dfn})`)
+    }
+    // array init
+    else if (v.type === PTR) {
+      let memberInits = expr(init)
+      res = `(global $${name} ${wtype} ${memberInits.pop()})`
+      inits.push(...memberInits)
+    }
+    // other exression init
+    // TODO: may need detecting expression result type
+    else if (v.type == INT) {
+      res = `(global $${name} (mut i32) (i32.const 0))`
+      inits.push(`(global.set $${name} ${expr(init)})`)
+    }
+    else {
+      res = `(global $${name} (mut f64) (f64.const 0))`
+      inits.push(`(global.set $${name} ${expr(init)})`)
+    }
+
+    out.push(res)
   }
 
   // 3.1 init all globals in start
@@ -108,9 +121,12 @@ export default scope => {
   )
 
   // 4. provide exports
-  for (let name in exports) {
-    out.push(`(export "${name}" (${exports[name]} $${name}))`)
+  let exportDfn = ``
+  for (let name in scope.vars) {
+    let v = scope.vars[name]
+    if (v.export) exportDfn += `(export "${name}" (${v.type === PTR ? 'func' : 'global'} $${name}))`
   }
+  if (exportDfn) out.push(exportDfn)
 
   // 5. declare includes
   for (let include of includes) {
@@ -144,11 +160,9 @@ export default scope => {
 
     // a * b - make proper cast
     if (op === '+' || op === '*' || op === '-') {
-      let aType = getResultType(a, scope)
-      if (aType === 'flt' && !b) return `(f64.neg ${expr(a)})`
-      if (aType === 'int' && !b) { b = a, a = ['int',0] }
-      let bType = getResultType(b, scope)
-      if (aType === 'int' && bType === 'int') return `(i32.${opCmd} ${expr(a)} ${expr(b)})`
+      if (getResultType(a, scope) === FLOAT && !b) return `(f64.neg ${expr(a)})`
+      if (getResultType(a, scope) === INT && !b) { b = a, a = ['int',0] }
+      if (getResultType(a, scope) === INT && getResultType(b, scope) === INT) return `(i32.${opCmd} ${expr(a)} ${expr(b)})`
       return `(f64.${opCmd} ${fexpr(a)} ${fexpr(b)})`
     }
 
@@ -157,7 +171,7 @@ export default scope => {
       if (b[0] !== '..') throw Error('Only primitive ranges are supported for now')
       let aType = getResultType(a, scope), [,min,max] = b,
           minType = getResultType(min, scope), maxType = getResultType(max, scope)
-      if (aType === 'int' && minType === 'int' && maxType === 'int')
+      if (aType === INT && minType === INT && maxType === INT)
         return includes.push('$std/i32.smax', '$std/i32.smin'), `(call $std/i32.smax (call $std/i32.smin ${expr(a)} ${expr(max)}) ${expr(min)})`
       return `(f64.max (f64.min ${fexpr(a)} ${fexpr(max)}) ${fexpr(min)})`
     }
@@ -182,6 +196,13 @@ export default scope => {
       return res
     }
 
+    // a = b
+    if (op === '=') {
+      let v = scope.vars[a]
+      // FIXME: b here can contain paren scope, then it's going to be messy - it needs to take only result
+      return `(${v.global?'global':'local'}.set $${a} ${expr(b)})`
+    }
+
     throw 'Unimplemented operation ' + node[0]
   }
 
@@ -190,7 +211,7 @@ export default scope => {
     if (node[0] === 'flt' || node[0] === 'int') return `(f64.const ${node[1]})`
 
     let type = getResultType(node, scope)
-    if (type === 'flt') return expr(node)
+    if (type === FLOAT) return expr(node)
 
     return `(f64.convert_i32_s ${expr(node)})`
   }
@@ -201,5 +222,4 @@ export default scope => {
     memOffset += size
     return len
   }
-
 }

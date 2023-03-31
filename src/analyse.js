@@ -13,14 +13,16 @@ export default function analyze(node) {
 
   // global entry
   let scope = Object.assign([null],{
-    vars:Object.create(null),
-    exports:{}
+    vars:Object.create(null)
   })
 
   if (typeof node === 'string') return [null, node]
-  if (!(node[0] in expr)) err('Unknown operator `' + node[0] + '`')
+  if (node[0] !== ';') node = [';',node]
 
   expr[node[0]](node, scope)
+
+  // mark all global vars
+  for (let n in scope.vars) scope.vars[n].global = true
 
   return scope
 }
@@ -38,7 +40,7 @@ const expr = {
         // a ... b;
         else if (statement[0] in expr) {
           // if internal op returns null - exclude statement for compiler
-          if (result = expr[statement[0]](statement, scope)) scope.push(result)
+          if (result = expr[statement[0]](statement, scope)) result[0]===';'?scope.push(...result.slice(1)):scope.push(result)
         }
         else err('Unknown operator `' + statement[0] + '`', statement)
       }
@@ -48,10 +50,11 @@ const expr = {
   // a,b,c;
   ','([,...members], scope) {
     for (let member of members) {
-      if (typeof member === 'string') scope.vars[member]={}
+      // a,b,c
+      if (typeof member === 'string') scope.vars[member]||={}
       // a=1,b=2,...
       else if (member[0]==='=') expr['='](member, scope)
-      else err(`Unknown member ${member}`)
+      // else err(`Unknown member ${member}`)
     }
     return [',',...members]
   },
@@ -59,13 +62,28 @@ const expr = {
   'flt'(node){return node},
   // a=b; a,b=b,c; a = () -> b
   '='([,left,right], scope) {
-    if (Array.isArray(right)) right = right[0] in expr ? expr[right[0]](right, scope) : err('Unknown operation ' + right[0], right)
+    if (left[0]==='(') left = left[1]
+    if (right[0]==='(') right = right[1]
+
+    // =a,b,c
+    if (Array.isArray(right)) {
+      right = right[0] in expr ? expr[right[0]](right, scope) : err('Unknown operation ' + right[0], right)
+    }
 
     // a = b,  a,b=1,2, [x]a =
     // a = ...
     if (typeof left === 'string') scope.vars[left] = {type:getResultType(right, scope)}
     // (a,b) = ...
-    else if (left[0] === ',') left.slice(1).forEach((id) => scope.vars[id] = {type:getResultType(right[i], scope)})
+    else if (left[0] === ',') {
+      // desugar here
+      if (left.length !== right.length) err('Unequal number of members in right/left sides of assignment', left)
+      let [,...ls]=left, [,...rs]=right;
+      // FIXME: narrow down that complexity assignments: not always `tmp/` is necessary
+      ls.forEach((id,i) => scope.vars['tmp/'+id] = {...(scope.vars[id] = {type:getResultType(rs[i], scope)})} )
+      let tmps = ls.map((id,i) => ['=','tmp/'+id, rs[i]])
+      let untmps = ls.map((id,i) => ['=',ls[i],'tmp/'+id])
+      return [';',[',',...tmps],[',',...untmps]]
+    }
     // [size]a = ...
     else if (left[0] === '[' && left.length > 1) {
       let [,size,name]=left
@@ -83,7 +101,6 @@ const expr = {
       else err('Bad syntax `*' + left[1] + '`', left)
     }
     else err('Invalid left-hand side assignment `' + left + '`', left)
-
     return ['=', left, right]
   },
   // *a or a*b
@@ -95,7 +112,7 @@ const expr = {
     return ['*',a]
   },
   // +a or a+b
-  '+'([,a,b],scope){
+  '+'([,a,b], scope){
     // +a
     if (!b) return ['+', a]
     return ['+',a,b]
@@ -148,18 +165,21 @@ const expr = {
     // save exports
     if (a[0]==='=') {
       let [,l,r] = a
+      if (l[0]==='(') [,l]=l; if (r[0]==='(') [,r]=r; // unbracket
+
       // a=...;
       if (typeof l === 'string') scope.vars[l].export = true
       // a,b=...;
-      else if (l[0] === ',') l.slice(1).map(member => (scope.vars[member] = true))
+      else if (l[0] === ',') l.slice(1).map(member => {
+        scope.vars[member].export = true
+      })
       // [2]a = ...
       else if (l[0]==='[') scope.vars[l[2]].export = true
       else err('Unknown export expression `' + a + '`')
     }
     // a,b or a=1,b=2
-    else if (a[0]===',') a.forEach((item,i) => {
-      if (!i) return
-      if (typeof item === 'string') (scope.vars[item].export = true)
+    else if (a[0]===',') a.slice(1).forEach(item => {
+      if (typeof item === 'string') scope.vars[item].export = true
       // a=1,b=2
       else if (item[0] === '=') scope.vars[item[1]].export = true
     })

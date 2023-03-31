@@ -41,7 +41,7 @@ t.only('compile: simple globals', t => {
   // TODO: multiply wrong types
   // TODO: define globals via group (a,b,c).
 
-  // undefined variable throws error
+  // FIXME: undefined variable throws error
   // throws(() => compile(analyse(parse(`pi2 = pi*2.0;`))), /pi is not defined/)
 
   let wat = compile(`
@@ -56,7 +56,7 @@ t.only('compile: simple globals', t => {
   is(mod.exports.sampleRate.value, 44100)
 })
 
-t('compile: simple multiple globals', () => {
+t.only('compile: simple multiple globals', () => {
   // FIXME: must throw
   // let wat = compile(`pi, pi2, sampleRate = 3.14, 3.14*2, 44100.`)
   let wat = compile(`(pi, pi2, sampleRate) = (3.14, 3.14*2, 44100).`)
