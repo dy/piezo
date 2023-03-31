@@ -1,6 +1,5 @@
 import t, { is, ok, same, throws } from 'tst'
 import parse from '../src/parse.js'
-import desugar from '../src/desugar.js'
 
 
 t('parse: common', t => {
@@ -77,8 +76,8 @@ t('parse: groups', t => {
   is(parse('a, b, c'), [',','a','b','c'], 'groups are syntactic sugar, not data type')
   is(parse('++(a, b, c)'), ['++',['(',[',','a','b','c']]], 'they apply operation to multiple elements: (a++, b++, c++)')
   is(parse('(a, (b, c)) == (a, b, c)'), ['==',['(',[',','a',['(',[',','b','c']]]],['(',[',','a','b','c']]], 'groups are always flat')
-  is(desugar(parse('(a,b,c) = (d,e,f)')), ['=',[',','a','b','c'],[',','d','e','f']], 'assign: a=d, b=e, c=f')
-  is(desugar(parse('(a,b) = (b,a)')), ['=', [',','a','b'], [',', 'b', 'a']], 'swap: temp=a; a=b; b=temp;')
+  is(parse('(a,b,c) = (d,e,f)'), ['=',['(',[',','a','b','c']],['(',[',','d','e','f']]], 'assign: a=d, b=e, c=f')
+  is(parse('(a,b) = (b,a)'), ['=', ['(',[',','a','b']], ['(',[',', 'b', 'a']]], 'swap: temp=a; a=b; b=temp;')
   is(parse('(a,b) + (c,d)'), ['+',['(',[',','a','b']],['(',[',','c','d']]], 'operations: (a+c, b+d)')
   is(parse('(a,b).x'), ['.',['(',[',','a','b']],'x'], '(a.x, b.x);')
   is(parse('(a,b).x()'), ['()',['.',['(',[',','a','b']],'x']], '(a.x(), b.x());')
@@ -188,8 +187,8 @@ t('parse: functions', () => {
   is(parse('mul = ([8]in, amp) -> in*amp'), ['=','mul',['->',['(',[',',['[',['int',8],'in'],'amp']],['*','in','amp']]], 'sublist argument')
 })
 t('parse: argument cases', t => {
-  is(desugar(parse('(a,b) -> a')), ['->', [',','a','b'], 'a'], 'inline function')
-  is(desugar(parse('(a=1,b) -> a')), ['->', [',',['=','a',['int',1]],'b'], 'a'], 'inline function')
+  is(parse('(a,b) -> a'), ['->',['(', [',','a','b']], 'a'], 'inline function')
+  is(parse('(a=1,b) -> a'), ['->', ['(',[',',['=','a',['int',1]],'b']], 'a'], 'inline function')
 })
 
 t('parse: stateful variables', t => {

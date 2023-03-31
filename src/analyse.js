@@ -1,230 +1,254 @@
 // analyser converts AST into IR, able to be compiled after
 import parse from './parse.js';
-import desugar from './desugar.js';
+import stdlib from './stdlib.js';
+import * as CONST from './const.js';
 
-export default function analyze(tree) {
-  if (typeof tree === 'string') tree = parse(tree)
+// detect variables & types, analyze internal scopes
+export default function analyze(node) {
+  if (typeof node === 'string') node = parse(node)
 
-  // language-level sections
-  // `type` section is built on stage of WAT compiling
-  // `memory`/`table` sections are covered by arrays
-  // intermediate module representation
-  let ir = {
-    func: {},
-    export: {},
-    import: {},
-    global: {},
-    data: {},
-    range: {}
-  }
-  // convert single-entry into a finished expression
-  tree = desugar(tree)
-  let statements = tree[0] === ';' ? tree.slice(1) : [tree];
+  // scopes are arrays with defined variables on them
+  // nested scopes inherit parent scopes, so variables are available by prototype chain
+  // array stores [opName, ...bodyStatements]
 
-  const addGlobal = (name, init=null, params={}) => {
-    ir.global[name] = {
-      init,
-      type: init ? typeOf(init, ir.global, ir.local) : 'flt', // note: external function types fall to float
-      ...params
-    };
-  }
+  // global entry
+  let scope = Object.assign([null],{
+    vars:Object.create(null)
+  })
 
-  const globalExpr = {
-    // a,b,c;
-    ','([,...members]) {
-      for (let member of members) {
-        // FIXME: find later initializers
-        if (typeof member === 'string') {
-          // FIXME: add later-initializer
-          if (!(member in ir.global)) addGlobal(member)
-        }
-        // a=1,b=2,...
-        else if (member[0]==='=') {
-          // FIXME: add later-initializer
-          if (!(member[1] in ir.global)) addGlobal(member[1],member[2])
-        }
-        else throw Error(`Unknown member ${member}`)
-      }
-    },
+  if (typeof node === 'string') return [null, node]
+  if (node[0] !== ';') node = [';',node]
 
-    // a=b; a,b=b,c; a = () -> b
-    '='([,left,right]) {
-      // a = () -> b
-      if (right[0] === '->') {
-        // detect overload
-        // if (ir.func[left]) throw Error(`Function \`${left}\` is already defined`)
+  expr[node[0]](node, scope)
 
-        ;(ir.func[left] = analyzeFunc(right, ir)).name = left
-      }
-      // a = b,  a,b=1,2, [x]a =
-      else {
-        // a = ...
-        if (typeof left === 'string') addGlobal(left, right)
-        // (a,b) = ...
-        else if (left[0] === ',') left.map((id,i) => i && addGlobal(id,right[i]))
-        // [size]a = ...
-        // FIXME: catch bad size value error: it must be int or float
-        else if (left[0] === '[' && left.length > 1) addGlobal(left[2], right, {size:left[1]})
-        else throw ReferenceError('Invalid left-hand side assignment `' + left + '`')
-      }
-    },
+  // mark all global vars
+  for (let n in scope.vars) scope.vars[n].global = true
 
-    // @ 'math#sin', @ 'path/to/lib'
-    '@'([,path]) {
-      if (Array.isArray(path)) { if (path[0] === "'") path = path[1]; else throw Error('Bad path `' + path + '`') }
-      let url = new URL('import:'+path)
-      let {hash, pathname} = url
-      ir.import[pathname] = hash ? hash.slice(1).split(',') : []
-    },
-
-    // a,b,c . x
-    '.'(statement) {
-      // a.b
-      if (statement.length > 2) throw 'unimplemented'
-
-      // a. or a,b,c.
-      if (statement !== statements[statements.length-1]) throw Error('Export must be the last statement');
-      // otherwise handle as regular assignment statement
-      [,statement] = statement
-      if (typeof statement === 'string') addGlobal(statement)
-      else globalExpr[statement[0]]?.(statement)
-    }
-  }
-
-  // global-level transforms
-  for (let statement of statements) {
-    if (!statement) continue
-    // a;b;
-    if (typeof statement === 'string') addGlobal(statement)
-    // a * b
-    else globalExpr[statement[0]]?.(statement)
-  }
-
-  genExports(statements[statements.length-1]);
-
-  // parse exports from a (last) node statement
-  function genExports([op, node]) {
-    if (op!=='.') return
-
-    // a.
-    if (typeof node === 'string') ir.export[node] = extTypeOf(node)
-    // ...=....
-    if (node[0]==='=') {
-      let [,l,r] = node
-      // a=...;
-      if (typeof l === 'string') ir.export[l] = extTypeOf(l)
-      // a,b=...;
-      else if (l[0] === ',') l.slice(1).map(item => (ir.export[item] = extTypeOf(item)))
-      // [2]a = ...
-      else if (l[0]==='[') ir.export[l[2]] = extTypeOf(l[2])
-      else throw Error('Unknown export expression `' + node + '`')
-    }
-    // a,b or a=1,b=2
-    else if (node[0]===',') node.forEach((item,i) => {
-      if (!i) return
-      if (typeof item === 'string') (ir.export[item] = extTypeOf(item))
-      // a=1,b=2
-      else if (item[0] === '=') ir.export[item[1]] = extTypeOf(item[1])
-    })
-  }
-
-  // get external type of id
-  function extTypeOf(id) {
-    if (id in ir.func) return 'func'
-    if (id in ir.global) return 'global'
-    throw Error('Undefined `' + id + '`')
-  }
-
-  return ir
+  return scope
 }
 
-// maps node & analyzes function internals
-export function analyzeFunc([,args, body], ir) {
-
-  let func = {
-    args:[],
-    local: {},
-    body,
-    return: body[0] === ';' ? body[body.length - 1] : body
-  }
-
-  const addLocal = (name,init=null,params={}) => {
-    func.local[name] = {
-      init,
-      type: init ? typeOf(init) : 'flt', // note: external function types fall to float
-      ...params
-    };
-  }
-
-  // init args by name
-  if (args) {
-    // (a) =>
-    if (typeof args === 'string') addLocal(args), func.args.push(args)
-    // (a=1)
-    else if (args[0] === '=') addLocal(args[1], args[2]), func.args.push(args[1])
-    //(a,b)=>, (a=1,b=2)=>, (a=(1;2))=>
-    else if (args[0] === ',') {
-      for (let arg of args.slice(1)) {
-        if (typeof arg === 'string') addLocal(arg), func.args.push(arg)
-        else if (arg[0] === '=') addLocal(arg[1], arg[2]), func.args.push(arg[1])
-        else throw Error('Bad arguments syntax')
+const expr = {
+  // a;b;c
+  ';'([,...statements], scope) {
+    let result
+    for (let statement of statements) {
+      // ;;
+      if (!statement);
+      else {
+        // a;b; - will be initialized after
+        if (typeof statement === 'string') scope.push(statement), scope.vars[statement]={}
+        // a ... b;
+        else if (statement[0] in expr) {
+          // if internal op returns null - exclude statement for compiler
+          if (result = expr[statement[0]](statement, scope)) result[0]===';'?scope.push(...result.slice(1)):scope.push(result)
+        }
+        else err('Unknown operator `' + statement[0] + '`', statement)
       }
     }
-    else throw Error('Bad arguments syntax')
-  }
-  args = args?.[0]===',' ? args.slice(1) : args ? [args] : []
-  // FIXME: better args detection, as locals maybe?
-  for (let arg of args) addLocal(arg,null,{arg:true})
-
-  const detectLocals = (node) => {
-    // a;
-    if (!Array.isArray(node)) return
-
-    let [op, ...statements] = node
-
-    // *a = init, a = init, a = b = c
-    if (op === '=') {
-      let [l,r] = statements
-      // *a = init
-      if (l[0] === '*') {
-        // *a = ...
-        if (typeof l[1] === 'string') addLocal(l[1],r,{stateful:true})
-        // *(a,b,c) = ...
-        else if (l[1][0] === '(') throw 'Unimplemented'
-        else throw Error('Bad syntax `*' + l[1] + '`')
-      }
-      // a = ...
-      else if (typeof l === 'string') {
-        addLocal(l,r)
-      }
-      // (a,b,c) =
-      else if (l[0]==='(') throw 'Unimplemented'
+    // NOTE: statements are written to current scope, so we return nothing
+  },
+  // a,b,c;
+  ','([,...members], scope) {
+    for (let member of members) {
+      // a,b,c
+      if (typeof member === 'string') scope.vars[member]||={}
+      // a=1,b=2,...
+      else if (member[0]==='=') expr['='](member, scope)
+      // else err(`Unknown member ${member}`)
     }
+    return [',',...members]
+  },
+  'int'(node){return node},
+  'flt'(node){return node},
+  // a=b; a,b=b,c; a = () -> b
+  '='([,left,right], scope) {
+    if (left[0]==='(') left = left[1]
+    if (right[0]==='(') right = right[1]
+
+    // =a,b,c
+    if (Array.isArray(right)) {
+      right = right[0] in expr ? expr[right[0]](right, scope) : err('Unknown operation ' + right[0], right)
+    }
+
+    // a = b,  a,b=1,2, [x]a =
+    // a = ...
+    if (typeof left === 'string') scope.vars[left] = {type:getResultType(right, scope)}
+    // (a,b) = ...
+    else if (left[0] === ',') {
+      // desugar here
+      if (left.length !== right.length) err('Unequal number of members in right/left sides of assignment', left)
+      let [,...ls]=left, [,...rs]=right;
+      // FIXME: narrow down that complexity assignments: not always `tmp/` is necessary
+      ls.forEach((id,i) => scope.vars['tmp/'+id] = {...(scope.vars[id] = {type:getResultType(rs[i], scope)})} )
+      let tmps = ls.map((id,i) => ['=','tmp/'+id, rs[i]])
+      let untmps = ls.map((id,i) => ['=',ls[i],'tmp/'+id])
+      return [';',[',',...tmps],[',',...untmps]]
+    }
+    // [size]a = ...
+    else if (left[0] === '[' && left.length > 1) {
+      let [,size,name]=left
+      let sizeType = getResultType(size, scope)
+      // bad size value error: it must be int
+      if (sizeType !== CONST.INT) err('Array size is not integer', left)
+      scope.vars[name] = {type:getResultType(right, scope), size}
+    }
+    // *a = ...
+    else if (left[0] === '*' && left.length < 3) {
+      // *a = ...
+      if (typeof left[1] === 'string') scope.vars[left[1]] = {type:getResultType(right, scope),stateful:true}
+      // *(a,b,c) = ...
+      else if (left[1][0] === '(') throw 'Unimplemented'
+      else err('Bad syntax `*' + left[1] + '`', left)
+    }
+    else err('Invalid left-hand side assignment `' + left + '`', left)
+    return ['=', left, right]
+  },
+  // *a or a*b
+  '*'([,a,b], scope) {
+    // a*b;
+    if (b) return ['*',a,b]
     // *a;
-    else if (op === '*' && statements.length === 1) {
-      addLocal(statements[0],null,{stateful:true})
-    }
-    else {
-      for (let arg of statements) detectLocals(arg)
-    }
-  }
-  detectLocals(body)
+    scope.vars[a] = {type:null, stateful:true}
+    return ['*',a]
+  },
+  // +a or a+b
+  '+'([,a,b], scope){
+    // +a
+    if (!b) return ['+', a]
+    return ['+',a,b]
+  },
+  '/'([,a,b], scope) {
+    return ['/',a,b]
+  },
+  '-<'(node){return node},
+  // a+=b -> a=a+1
+  '+='([,left,right], scope){
+    let node = ['=',left,['+',left,right]]
+    return expr['='](node, scope)
+  },
+  // @ 'math#sin', @ 'path/to/lib'
+  '@'(impNode, scope) {
+    if (scope.length > 1) err('Import must be the first node')
+    if (scope[0]) err('Import must be in global scope')
+    let [,path] = impNode
+    if (Array.isArray(path)) path[0] === "'" ? path = path[1] : err('Bad path `' + path + '`')
+    let url = new URL('import:'+path)
+    let {hash, pathname} = url
 
-  return func
+    // FIXME: include directive into syntax tree
+    // let src = fetchSource(pathname)
+    // let include = parse(src)
+    // node.splice(node.indexOf(impNode), 1, null, include)
+
+    let lib = stdlib[pathname], members = hash ? hash.slice(1).split(',') : Object.keys(lib)
+    for (let member of members) {
+      scope.vars[member] = { import: true, type: lib[member][1] }
+    }
+
+    return ['@', pathname, members]
+  },
+  // a,b,c . x
+  '.'(expNode, scope) {
+    if (scope[0]) err('Export must be in global scope')
+    // if (expNode !== node && expNode !== node[node.length-1]) err('Export must be the last node');
+
+    let [,a,b] = expNode
+
+    // a.b
+    if (b) throw 'prop access is unimplemented'
+
+    // a.
+    if (typeof a === 'string') return (scope.vars[a]||={}).export=true, null
+
+    let result = expr[a[0]]?.(a, scope) // apply analyzer to expression if required
+
+    // save exports
+    if (a[0]==='=') {
+      let [,l,r] = a
+      if (l[0]==='(') [,l]=l; if (r[0]==='(') [,r]=r; // unbracket
+
+      // a=...;
+      if (typeof l === 'string') scope.vars[l].export = true
+      // a,b=...;
+      else if (l[0] === ',') l.slice(1).map(member => {
+        scope.vars[member].export = true
+      })
+      // [2]a = ...
+      else if (l[0]==='[') scope.vars[l[2]].export = true
+      else err('Unknown export expression `' + a + '`')
+    }
+    // a,b or a=1,b=2
+    else if (a[0]===',') a.slice(1).forEach(item => {
+      if (typeof item === 'string') scope.vars[item].export = true
+      // a=1,b=2
+      else if (item[0] === '=') scope.vars[item[1]].export = true
+    })
+    return result
+  },
+  // args -> body
+  '->'([,args,body], scope) {
+    scope = Object.assign(['->'],{
+      vars: Object.create(scope.vars),
+      result: null
+    })
+
+    const init = [';']
+    if (args && args.length > 1) {
+      if (args[0]==='(') [,args]=args;
+      if (args[0] !== ',') args = [',',args]
+      // (a,b)->, (a=1,b=2)->, (a=(1;2))->
+      for (let arg of args.slice(1)) {
+        if (typeof arg === 'string') scope.vars[arg]={arg:true, type:CONST.FLOAT}
+        else if (arg[0] === '=') scope.vars[arg[1]]={arg:true, type:CONST.FLOAT}, init.push(args)
+        else if (arg[0] === '-<') scope.vars[arg[1]]={arg:true, type:CONST.FLOAT}, init.push(arg)
+        else err('Bad arguments syntax', body)
+      }
+    }
+
+    // args init is handled as regular instructions - it can clarify types after
+    expr[';'](init, scope)
+    expr[';'](body[0]===';'?body:[';',body], scope)
+
+    // returned scope has directly list of instructions
+    return scope
+  },
+  // sin()
+  '()'([,name,args], scope) {
+    return ['()',name,args]
+  }
 }
 
 // find result type of a node
-export function typeOf(node, scope) {
-  if (!node) return null // FIXME: null means type will be detected later?
+export function getResultType(node, scope) {
+  if (!node) return null // null means type will be detected later?
+  if (typeof node === 'string') return scope.vars[node].type
   let [op, a, b] = node
-  if (op === 'int' || op === 'flt') return op
-  if (op === '+' || op === '*' || op === '-') return !b ? typeOf(a) : (typeOf(a) === 'flt' || typeOf(b) === 'flt') ? 'flt': 'int'
-  if (op === '-<') return typeOf(a) === 'int' && typeOf(b[1]) === 'int' && typeOf(b[2]) === 'int' ? 'int' : 'flt'
-  if (op === '[') return 'ptr' // pointer is int
+  if (op === 'int') return CONST.INT
+  if (op === 'flt') return CONST.FLOAT
+  if (op === '+' || op === '*' || op === '-') return !b ? getResultType(a, scope) : (getResultType(a, scope) === CONST.FLOAT || getResultType(b, scope) === CONST.FLOAT) ? CONST.FLOAT: CONST.INT
+  if (op === '/') return (getResultType(a, scope) === CONST.INT && getResultType(b, scope) === CONST.INT) ? CONST.INT: CONST.FLOAT
+  if (op === '-<') return getResultType(a, scope) === CONST.INT && getResultType(b[1], scope) === CONST.INT && getResultType(b[2], scope) === CONST.INT ? CONST.INT : CONST.FLOAT
+  if (op === '[') return CONST.PTR // pointer is int
+  if (op === '->') return CONST.FUNC
   if (op === '|') {
-    let aType = typeOf(a), bType = typeOf(b)
-    console.log(a,aType, b,bType)
+    let aType = getResultType(a, scope), bType = getResultType(b, scope)
+    console.log('todo',a,aType, b,bType)
   }
-  throw Error('Cannot define type' + node)
-  return 'flt' // FIXME: likely not any other operation returns float
+  err('Cannot define type', node)
+}
+
+export function err(msg, node={}) {
+  throw Error((msg || 'Bad syntax') + ' `' + node.toString() + '`' )
+}
+
+// fetch source file by path - uses import maps algorighm
+// FIXME: can extend with importmap
+const coreModules = {math:'./math.lino'}
+function fetchSource (path) {
+  let fullPath = import.meta.resolve(coreModules[path])
+  let xhr = new XMLHttpRequest ()
+  xhr.open ('GET', fullPath, false /* SYNCHRONOUS XHR FTW :) */)
+  xhr.send (null)
+  // result = (nodeRequire ('fs').readFileSync (path, { encoding: 'utf8' }))
+  return xhr.responseText
 }
