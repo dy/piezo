@@ -8,7 +8,7 @@ const BYTES_PER_F64 = 8;
 
 export default function compile(scope) {
   if (typeof scope === 'string' || Array.isArray(scope)) scope = analyse(scope)
-  console.log(scope)
+  console.log('compile',scope)
 
   let out = [], // output code stack
     inits = [], // start function initializers
@@ -19,51 +19,36 @@ export default function compile(scope) {
   // process global instructions sequentially
   let [,...statements] = scope
   for (let statement of statements) {
-    // direct elements
-    if (typeof statement === 'string') {
-      let name = statement, v = scope.vars[name]
-      if (!globals.includes(name)) {
-        const wtype = (v.type===INT?'i32':'f64')
-        out.push(`(global $${name} ${v.mutable ? `(mut ${wtype})` : wtype} (${wtype}.const 0))`)
-        globals.push(name)
-      }
-      // else out.push(`(global.get $${name})`)
-    }
     // imports
-    else if (statement[0] === '@') {
+    if (statement[0] === '@') {
       let [,lib, members] = statement
       for (let member of members) {
-        console.log(member)
+        console.log('TODO',member)
       }
     }
-    // assignments - either global instructions or functions
-    else if (statement[0] === '=') {
-      globalAssign(statement)
-    }
-    // sequence in only applies members in init
+    // assignments or just instructions
+    else if (statement[0] === '=' || typeof statement === 'string') globalExpr(statement)
+    // sequence applies on members
     else if (statement[0] === ',') {
       let [,...members] = statement
-      let init = ''
-      for (let member of members) {
-        if (member[0] === '=') globalAssign(member)
-        // FIXME: this is duplication
-        else {
-          let name = member, v = scope.vars[name]
-          if (!globals.includes(name)) {
-            const wtype = (v.type===INT?'i32':'f64')
-            out.push(`(global $${name} ${v.mutable ? `(mut ${wtype})` : wtype} (${wtype}.const 0))`)
-            globals.push(name)
-          }
-        }
-      }
-      if (init) inits.push(init)
+      for (let member of members) globalExpr(member)
     }
     else err('Unknown instruction `' + statement[0] + '`',statement)
   }
 
-  function globalAssign([,name,init]) {
-    let v = scope.vars[name], res
+  function globalExpr(statement) {
+    // a; - just declare
+    if (typeof statement === 'string') {
+      let name = statement, v = scope.vars[name]
+      if (!globals.includes(name)) {
+        if (v.type === INT) out.push(`(global $${name} ${v.mutable ? `(mut i32)` : `i32`} (i32.const 0))`)
+        else out.push(`(global $${name} ${v.mutable ? `(mut f64)` : `f64`} (f64.const 0))`)
+        globals.push(name)
+      }
+      return
+    }
 
+    let [,name,init] = statement, v = scope.vars[name], res
     globals.push(name)
 
     // simple const globals init
@@ -71,9 +56,10 @@ export default function compile(scope) {
     else if (init[0] === 'flt') res = `(global $${name} f64 (f64.const ${init[1]}))`
     // global fn init
     else if (init[0] === '->') {
-      let vars = Object.getOwnPropertyNames(init.vars)
-      let dfn = `func $${name}`
-      let [,...body] = init, last = body[body.length-1]
+      let parent = scope
+      scope = init
+      let vars = Object.getOwnPropertyNames(scope.vars)
+      let dfn = `func $${name}`, last = scope[scope.length-1]
 
       // define params
       vars.filter(id=>scope.vars[id].arg).forEach(id => {
@@ -81,7 +67,7 @@ export default function compile(scope) {
       })
 
       // TODO: detect result type properly
-      dfn += ` (result ${getResultType(last) == FLOAT ? 'f64' : 'i32'})\n`
+      dfn += ` (result ${getResultType(last, scope.vars) == FLOAT ? 'f64' : 'i32'})\n`
 
       // define locals
       vars.filter(id=>!scope.vars[id].arg).forEach(id => {
@@ -89,9 +75,10 @@ export default function compile(scope) {
       })
 
       // init body
-      body.forEach(node => dfn += `\n` + expr(node))
+      scope.slice(1).forEach(node => dfn += `\t` + expr(node))
+      scope = parent
 
-      dfn += '\n(return)\n'
+      dfn += '\n\t(return)\n'
       out.push(`(${dfn})`)
     }
     // array init
@@ -114,41 +101,36 @@ export default function compile(scope) {
     out.push(res)
   }
 
-  // 3.1 init all globals in start
+  // Init all globals in start
   if (inits.length) out.push(
     `(start $module/init)`,
     `(func $module/init\n${inits.join('\n')}\n)`
   )
 
-  // 4. provide exports
+  // Provide exports
   let exportDfn = ``
   for (let name in scope.vars) {
     let v = scope.vars[name]
-    if (v.export) exportDfn += `(export "${name}" (${v.type === PTR ? 'func' : 'global'} $${name}))`
+    if (v.export) exportDfn += `(export "${name}" (${v.type === FUNC ? 'func' : 'global'} $${name}))`
   }
   if (exportDfn) out.push(exportDfn)
 
-  // 5. declare includes
+  // Declare includes
   for (let include of includes) {
     if (include in stdlib) out.unshift(stdlib[include])
   }
 
-  // 6. declare memories
+  // Declare memories
   if (memOffset) out.unshift(`(memory (export "memory") ${Math.ceil(memOffset / F64_PER_PAGE)})`)
 
   console.log(out.join('\n'))
 
   return out.join('\n')
 
-
   // serialize expression (depends on current ir, ctx)
   function expr (node) {
     // literal, like `foo`
-    if (typeof node === 'string') {
-      if (node in scope.vars) return `(global.get $${node})`
-      if (func?.local[node] || func?.args[node]) return `(local.get $${node})`
-      throw RangeError(`${node} is not defined`)
-    }
+    if (typeof node === 'string') return `(${scope.vars[node].global?'global':'local'}.get $${node})`
 
     // another expression
     let [op,...args] = node, [a,b] = args
@@ -160,17 +142,18 @@ export default function compile(scope) {
 
     // a * b - make proper cast
     if (op === '+' || op === '*' || op === '-') {
-      if (getResultType(a, scope) === FLOAT && !b) return `(f64.neg ${expr(a)})`
-      if (getResultType(a, scope) === INT && !b) { b = a, a = ['int',0] }
-      if (getResultType(a, scope) === INT && getResultType(b, scope) === INT) return `(i32.${opCmd} ${expr(a)} ${expr(b)})`
+      let aType = getResultType(a,scope.vars), bType = getResultType(b,scope.vars);
+      if (aType === FLOAT && !b) return `(f64.neg ${expr(a)})`
+      if (aType === INT && !b) { b = a, a = ['int',0] }
+      if (aType === INT && bType === INT) return `(i32.${opCmd} ${expr(a)} ${expr(b)})`
       return `(f64.${opCmd} ${fexpr(a)} ${fexpr(b)})`
     }
 
     // a -< range - clamp a to indicated range
     if (op === '-<') {
       if (b[0] !== '..') throw Error('Only primitive ranges are supported for now')
-      let aType = getResultType(a, scope), [,min,max] = b,
-          minType = getResultType(min, scope), maxType = getResultType(max, scope)
+      let aType = getResultType(a, scope.vars), [,min,max] = b,
+          minType = getResultType(min, scope.vars), maxType = getResultType(max, scope.vars)
       if (aType === INT && minType === INT && maxType === INT)
         return includes.push('$std/i32.smax', '$std/i32.smin'), `(call $std/i32.smax (call $std/i32.smin ${expr(a)} ${expr(max)}) ${expr(min)})`
       return `(f64.max (f64.min ${fexpr(a)} ${fexpr(max)}) ${fexpr(min)})`
@@ -210,7 +193,7 @@ export default function compile(scope) {
   function fexpr(node) {
     if (node[0] === 'flt' || node[0] === 'int') return `(f64.const ${node[1]})`
 
-    let type = getResultType(node, scope)
+    let type = getResultType(node, scope.vars)
     if (type === FLOAT) return expr(node)
 
     return `(f64.convert_i32_s ${expr(node)})`

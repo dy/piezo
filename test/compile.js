@@ -36,7 +36,7 @@ function compileWat (code, config) {
 }
 
 
-t.only('compile: simple globals', t => {
+t('compile: simple globals', t => {
   // TODO: single global
   // TODO: multiply wrong types
   // TODO: define globals via group (a,b,c).
@@ -56,7 +56,7 @@ t.only('compile: simple globals', t => {
   is(mod.exports.sampleRate.value, 44100)
 })
 
-t.only('compile: simple multiple globals', () => {
+t('compile: simple multiple globals', () => {
   // FIXME: must throw
   // let wat = compile(`pi, pi2, sampleRate = 3.14, 3.14*2, 44100.`)
   let wat = compile(`(pi, pi2, sampleRate) = (3.14, 3.14*2, 44100).`)
@@ -89,60 +89,27 @@ t('compile: simple neg numbers', t => {
 t('compile: simple function oneliners', t => {
   // default
   let wat = compile(`mult = (a, b) -> a * b.`)
-  console.log(wat)
   let mod = compileWat(wat);
-  // `
-  //   (func $mult (export "mult") (param $a f64) (param $b f64) (result f64)
-  //     (f64.mul (local.get $a) (local.get $b))
-  //     (return)
-  //   )
-  // `
   is(mod.exports.mult(2,4), 8)
 
   // no semi
   wat = compile(`mult = (a, b) -> a * b.`)
   mod = compileWat(wat)
-  // `
-  // (func $mult (export "mult") (param $a f64) (param $b f64) (result f64)
-  //   (f64.mul (local.get $a) (local.get $b))
-  //   (return)
-  // )
-  // `
   is(mod.exports.mult(2,4), 8)
 
   // no result
   mod = compileWat(compile(` mult = (a, b) -> (a * b). `))
-  // `
-  //   (func $mult (export "mult") (param $a f64) (param $b f64) (result f64)
-  //     (f64.mul (local.get $a) (local.get $b))
-  //     (return)
-  //   )
-  // `
   is(mod.exports.mult(2,4), 8)
 
-  console.log(compile(` mult = (a, b) -> (b; a * b).`))
+  // console.log(compile(` mult = (a, b) -> (b; a * b).`))
   mod = compileWat(compile(` mult = (a, b) -> (b; a * b).`))
-  // `
-  // (func $mult (export "mult") (param $a f64) (param $b f64) (result f64)
-  // (local.get $b)
-  // (f64.mul (local.get $a) (local.get $b))
-  // (return)
-  // )
-  // `
   is(mod.exports.mult(2,4), 8)
 
   mod = compileWat(compile(` mult = (a, b) -> (b; a * b;). `))
-  // `
-  //   (func $mult (export "mult") (param $a f64) (param $b f64) (result f64)
-  //     (local.get $b)
-  //     (f64.mul (local.get $a) (local.get $b))
-  //     (return)
-  //   )
-  // `
   is(mod.exports.mult(2,4), 8)
 })
 
-t('compile: simple ranges', t => {
+t.only('compile: simple ranges', t => {
   // let wat = compile(`x = 0..10; `),
   //     mod = compileWat(wat)
   // is(mod.exports.x)
@@ -187,7 +154,7 @@ t('compile: simple ranges', t => {
   is(mod.exports.clamp(-1), 0)
 })
 
-t('compile: simple arrays', t => {
+t.only('compile: simple arrays', t => {
   let wat = compile(`x = [1, 2, 3].`)
   console.log(wat)
   let mod = compileWat(wat)
@@ -198,7 +165,7 @@ t('compile: simple arrays', t => {
   is(arr[ptr+2], 3)
 })
 
-t('compile: simple subarrays', t => {
+t.only('compile: simple subarrays', t => {
   let wat = compile(`[2]x = [1,2,3].`)
   console.log(wat)
   let mod = compileWat(wat)
@@ -208,7 +175,7 @@ t('compile: simple subarrays', t => {
   is(arr[ptr+1], 2)
 })
 
-t('compile: variable type inference', t => {
+t.only('compile: variable type inference', t => {
   let wat,x;
   x = compileWat(compile(`x;x.`)).exports.x // unknown type falls to f64
   x = compileWat(compile(`x=1;x.`)).exports.x // int type

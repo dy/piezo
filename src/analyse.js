@@ -33,17 +33,15 @@ const expr = {
     let result
     for (let statement of statements) {
       // ;;
-      if (!statement);
-      else {
-        // a;b; - will be initialized after
-        if (typeof statement === 'string') scope.push(statement), scope.vars[statement]={}
-        // a ... b;
-        else if (statement[0] in expr) {
-          // if internal op returns null - exclude statement for compiler
-          if (result = expr[statement[0]](statement, scope)) result[0]===';'?scope.push(...result.slice(1)):scope.push(result)
-        }
-        else err('Unknown operator `' + statement[0] + '`', statement)
+      if (!statement) continue
+      // a;b; - will be initialized after
+      if (typeof statement === 'string') scope.push(statement), scope.vars[statement]||={}
+      // a ... b;
+      else if (statement[0] in expr) {
+        // if internal op returns null - exclude statement for compiler
+        if (result = expr[statement[0]](statement, scope)) result[0]===';'?scope.push(...result.slice(1)):scope.push(result)
       }
+      else err('Unknown operator `' + statement[0] + '`', statement)
     }
     // NOTE: statements are written to current scope, so we return nothing
   },
@@ -72,14 +70,14 @@ const expr = {
 
     // a = b,  a,b=1,2, [x]a =
     // a = ...
-    if (typeof left === 'string') scope.vars[left] = {type:getResultType(right, scope)}
+    if (typeof left === 'string') scope.vars[left] = {type:getResultType(right, scope.vars)}
     // (a,b) = ...
     else if (left[0] === ',') {
       // desugar here
       if (left.length !== right.length) err('Unequal number of members in right/left sides of assignment', left)
       let [,...ls]=left, [,...rs]=right;
       // FIXME: narrow down that complexity assignments: not always `tmp/` is necessary
-      ls.forEach((id,i) => scope.vars['tmp/'+id] = {...(scope.vars[id] = {type:getResultType(rs[i], scope)})} )
+      ls.forEach((id,i) => scope.vars['tmp/'+id] = {...(scope.vars[id] = {type:getResultType(rs[i], scope.vars)})} )
       let tmps = ls.map((id,i) => ['=','tmp/'+id, rs[i]])
       let untmps = ls.map((id,i) => ['=',ls[i],'tmp/'+id])
       return [';',[',',...tmps],[',',...untmps]]
@@ -87,15 +85,15 @@ const expr = {
     // [size]a = ...
     else if (left[0] === '[' && left.length > 1) {
       let [,size,name]=left
-      let sizeType = getResultType(size, scope)
+      let sizeType = getResultType(size, scope.vars)
       // bad size value error: it must be int
       if (sizeType !== CONST.INT) err('Array size is not integer', left)
-      scope.vars[name] = {type:getResultType(right, scope), size}
+      scope.vars[name] = {type:getResultType(right, scope.vars), size}
     }
     // *a = ...
     else if (left[0] === '*' && left.length < 3) {
       // *a = ...
-      if (typeof left[1] === 'string') scope.vars[left[1]] = {type:getResultType(right, scope),stateful:true}
+      if (typeof left[1] === 'string') scope.vars[left[1]] = {type:getResultType(right, scope.vars),stateful:true}
       // *(a,b,c) = ...
       else if (left[1][0] === '(') throw 'Unimplemented'
       else err('Bad syntax `*' + left[1] + '`', left)
@@ -116,6 +114,12 @@ const expr = {
     // +a
     if (!b) return ['+', a]
     return ['+',a,b]
+  },
+  // -a or a-b
+  '-'([,a,b], scope){
+    // -a
+    if (!b) return ['-', a]
+    return ['-',a,b]
   },
   '/'([,a,b], scope) {
     return ['/',a,b]
@@ -195,6 +199,7 @@ const expr = {
     const init = [';']
     if (args && args.length > 1) {
       if (args[0]==='(') [,args]=args;
+      if (body[0]==='(') [,body]=body;
       if (args[0] !== ',') args = [',',args]
       // (a,b)->, (a=1,b=2)->, (a=(1;2))->
       for (let arg of args.slice(1)) {
@@ -207,7 +212,7 @@ const expr = {
 
     // args init is handled as regular instructions - it can clarify types after
     expr[';'](init, scope)
-    expr[';'](body[0]===';'?body:[';',body], scope)
+    expr[';'](body[0]===';'?body:[';',body[0]==='('?body[1]:body], scope)
 
     // returned scope has directly list of instructions
     return scope
@@ -219,19 +224,19 @@ const expr = {
 }
 
 // find result type of a node
-export function getResultType(node, scope) {
+export function getResultType(node, vars) {
   if (!node) return null // null means type will be detected later?
-  if (typeof node === 'string') return scope.vars[node].type
+  if (typeof node === 'string') return vars[node].type
   let [op, a, b] = node
   if (op === 'int') return CONST.INT
   if (op === 'flt') return CONST.FLOAT
-  if (op === '+' || op === '*' || op === '-') return !b ? getResultType(a, scope) : (getResultType(a, scope) === CONST.FLOAT || getResultType(b, scope) === CONST.FLOAT) ? CONST.FLOAT: CONST.INT
-  if (op === '/') return (getResultType(a, scope) === CONST.INT && getResultType(b, scope) === CONST.INT) ? CONST.INT: CONST.FLOAT
-  if (op === '-<') return getResultType(a, scope) === CONST.INT && getResultType(b[1], scope) === CONST.INT && getResultType(b[2], scope) === CONST.INT ? CONST.INT : CONST.FLOAT
+  if (op === '+' || op === '*' || op === '-') return !b ? getResultType(a, vars) : (getResultType(a, vars) === CONST.FLOAT || getResultType(b, vars) === CONST.FLOAT) ? CONST.FLOAT: CONST.INT
+  if (op === '/') return (getResultType(a, vars) === CONST.INT && getResultType(b, vars) === CONST.INT) ? CONST.INT: CONST.FLOAT
+  if (op === '-<') return getResultType(a, vars) === CONST.INT && getResultType(b[1], vars) === CONST.INT && getResultType(b[2], vars) === CONST.INT ? CONST.INT : CONST.FLOAT
   if (op === '[') return CONST.PTR // pointer is int
   if (op === '->') return CONST.FUNC
   if (op === '|') {
-    let aType = getResultType(a, scope), bType = getResultType(b, scope)
+    let aType = getResultType(a, vars), bType = getResultType(b, vars)
     console.log('todo',a,aType, b,bType)
   }
   err('Cannot define type', node)
