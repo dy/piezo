@@ -2347,6 +2347,7 @@ Having wat files is more useful than direct compilation to binary form:
 + solves problem mentioned by despawnerer
 + lowcase is typographycally more expressive
 + code can be more robust in case-enforcing environments, eg. as url string
+- `1Ms` vs `1ms` is critical
 
 0.5 Capfirst-sensitive, (`Abc` == `ABc`) != (`aBC` == `abc`)
 
