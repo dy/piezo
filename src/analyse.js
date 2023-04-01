@@ -43,6 +43,7 @@ const expr = {
       }
       else err('Unknown operator `' + statement[0] + '`', statement)
     }
+    // FIXME: there's something fishy going on, need streamlining, writing to scope must be a unique thing, not in ; operator
     // NOTE: statements are written to current scope, so we return nothing
   },
   // a,b,c;
@@ -63,7 +64,7 @@ const expr = {
     if (left[0]==='(') left = left[1]
     if (right[0]==='(') right = right[1]
 
-    // =a,b,c
+    // =a,b,c    =a|b|c    =expr
     if (Array.isArray(right)) {
       right = right[0] in expr ? expr[right[0]](right, scope) : err('Unknown operation ' + right[0], right)
     }
@@ -71,14 +72,13 @@ const expr = {
     // a = b,  a,b=1,2, [x]a =
     // a = ...
     if (typeof left === 'string') {
-      let type = getResultType(right, scope.vars)
+      let {type} = desc(right, scope.vars)
       if (!scope.vars[left]) scope.vars[left] = {type}
       else {
         scope.vars[left].mutable = true
         if (!scope.vars[left].type) scope.vars[left].type = type
         else if (scope.vars[left].type !== type) err('Changing value type from `' + scope.vars[left].type + '` to ' + '`' + type + '`')
       }
-
     }
     // (a,b) = ...
     else if (left[0] === ',') {
@@ -86,15 +86,16 @@ const expr = {
       if (left.length !== right.length) err('Unequal number of members in right/left sides of assignment', left)
       let [,...ls]=left, [,...rs]=right;
       // FIXME: narrow down that complexity assignments: not always `tmp/` is necessary
-      ls.forEach((id,i) => scope.vars['tmp/'+id] = {...(scope.vars[id] = {type:getResultType(rs[i], scope.vars)})} )
-      let tmps = ls.map((id,i) => ['=','tmp/'+id, rs[i]])
-      let untmps = ls.map((id,i) => ['=',ls[i],'tmp/'+id])
+      let count = Object.keys(scope.vars).length
+      ls.forEach((id,i) => scope.vars[`tmp${count}/${id}`] = {...(scope.vars[id] = desc(rs[i], scope.vars))} )
+      let tmps = ls.map((id,i) => ['=',`tmp${count}/${id}`, rs[i]])
+      let untmps = ls.map((id,i) => ['=',ls[i],`tmp${count}/${id}`])
       return [';',[',',...tmps],[',',...untmps]]
     }
     // [size]a = ...
     else if (left[0] === '[' && left.length > 1) {
       let [,size,name]=left
-      let sizeType = getResultType(size, scope.vars)
+      let sizeType = desc(size, scope.vars).type
       // bad size value error: it must be int
       if (sizeType !== INT) err('Array size is not integer', left)
       scope.vars[name] = {type:PTR, size}
@@ -102,7 +103,7 @@ const expr = {
     // *a = ...
     else if (left[0] === '*' && left.length < 3) {
       // *a = ...
-      if (typeof left[1] === 'string') scope.vars[left[1]] = {type:getResultType(right, scope.vars),stateful:true}
+      if (typeof left[1] === 'string') (scope.vars[left[1]] = desc(right, scope.vars)).stateful=true
       // *(a,b,c) = ...
       else if (left[1][0] === '(') throw 'Unimplemented'
       else err('Bad syntax `*' + left[1] + '`', left)
@@ -201,8 +202,7 @@ const expr = {
   // args -> body
   '->'([,args,body], scope) {
     scope = Object.assign(['->'],{
-      vars: Object.create(scope.vars),
-      result: null
+      vars: Object.create(scope.vars)
     })
 
     const init = [';']
@@ -227,31 +227,85 @@ const expr = {
     // returned scope has directly list of instructions
     return scope
   },
+  '('([,body],scope) {
+    scope = Object.assign(['('],{ vars: Object.create(scope.vars) })
+
+    // args init is handled as regular instructions - it can clarify types after
+    expr[';'](body[0]===';'?body:[';',body[0]==='('?body[1]:body], scope)
+
+    return scope
+  },
   // sin()
   '()'([,name,args], scope) {
     return ['()',name,args]
   },
+  // a[]
+  '[]'([,a,b]) {
+    return ['[]',a,b]
+  },
   // [1,2,3]
   '['(node) { return node },
   // a..b
-  '..'(node) { return node }
+  '..'(node) { return node },
+  // a | b, a | x -> y
+  '|'([,a,b],scope) {
+    let aType = desc(a, scope.vars).type, bType = desc(b, scope.vars).type
+    // arg | x -> body,  immediate function gets converted into loop
+    if (b[0] === '->') {
+      // a | x -> body   becomes    (a = arg; i = 0; i < arg[] <| (x = arg[i]; body))
+      let func = expr['->'](b,scope), argName = Object.keys(func.vars)[0]
+      // FIXME: modify pipe/args and idx depending on stack callsite, to avoid name conflict in nested pipes
+      return expr['('](['(',[';',
+        ['=','pipe/arg',a],
+        ['=','pipe/idx',['int',0]],
+        ['<|',
+          ['<','pipe/idx',['int',aType.size]],
+          // we gotta pass function arguments to scope
+          [';',['=',argName,['[]','pipe/arg','pipe/idx']], ...func.slice(1)]
+        ]
+      ]], scope)
+    }
+    // a | filter,   non-immediate function gets called
+    else if (bType === FUNC) {
+
+    }
+    // a | b,   binary OR
+    else {
+
+    }
+  },
+  // cond <| body
+  '<|'([,cond,body],scope) {
+    scope = Object.assign(['<|',cond],{
+      vars: Object.create(scope.vars)
+    })
+    // body may have vars scope defined by pipe
+    Object.assign(scope.vars, body.vars||{})
+
+    // args init is handled as regular instructions - it can clarify types after
+    expr[';'](body[0]===';'?body:[';',body[0]==='('?body[1]:body], scope)
+
+    return ['<|',cond,scope]
+  }
 }
 
-// find result type of a node
-export function getResultType(node, vars) {
+// get descriptor of a node or variable: includes type and other info
+export function desc(node, vars) {
   if (!node) return null // null means type will be detected later?
-  if (typeof node === 'string') return vars[node].type
+  if (typeof node === 'string') return vars[node]
   let [op, a, b] = node
-  if (op === 'int') return INT
-  if (op === 'flt') return FLOAT
-  if (op === '+' || op === '*' || op === '-') return !b ? getResultType(a, vars) : (getResultType(a, vars) === FLOAT || getResultType(b, vars) === FLOAT) ? FLOAT: INT
-  if (op === '/') return (getResultType(a, vars) === INT && getResultType(b, vars) === INT) ? INT: FLOAT
-  if (op === '-<') return getResultType(a, vars) === INT && getResultType(b[1], vars) === INT && getResultType(b[2], vars) === INT ? INT : FLOAT
-  if (op === '[') return PTR // pointer is int
-  if (op === '->') return FUNC
+  if (op === 'int') return {type:INT}
+  if (op === 'flt') return {type:FLOAT}
+  if (op === '+' || op === '*' || op === '-') return !b ? desc(a, vars) : (desc(a, vars).type === FLOAT || desc(b, vars).type === FLOAT) ? {type:FLOAT}: {type:INT}
+  if (op === '/') return (desc(a, vars).type === INT && desc(b, vars).type === INT) ? {type:INT}: {type:FLOAT}
+  if (op === '-<') return desc(a, vars).type === INT && desc(b[1], vars).type === INT && desc(b[2], vars).type === INT ? {type:INT} : {type:FLOAT}
+  if (op === '[') return {type:PTR} // pointer is int
+  if (op === '->') return {type:FUNC}
+  if (op === '[]') return !b ? {type:INT} : {type:FLOAT} // FIXME: array can include other than float values
   if (op === '|') {
-    let aType = getResultType(a, vars), bType = getResultType(b, vars)
-    console.log('todo',a,aType, b,bType)
+    let aDesc = desc(a, vars), bDesc = desc(b, vars)
+    if (aDesc.type === PTR) return aDesc
+    console.log('todo - detect type from |',a, b)
   }
   err('Cannot define type', node)
 }

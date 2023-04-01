@@ -190,7 +190,7 @@ t('compile: variable type inference', t => {
   x = compileWat(compile(`x;x=[];x.`)).exports.x // late-arr type
 })
 
-t.todo('compile: simple pipe', t => {
+t.only('compile: simple pipe', t => {
   let wat = compile(`[2]x = [1,2,3]; y = x | x -> x * 2.`)
   console.log(wat)
   let mod = compileWat(wat)

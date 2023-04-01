@@ -1,5 +1,5 @@
 // compile source/ast/ir to WAST
-import analyse, { err, getResultType } from "./analyse.js"
+import analyse, { err, desc } from "./analyse.js"
 import stdlib from "./stdlib.js"
 import {FLOAT,INT,RANGE,PTR,FUNC} from './const.js'
 
@@ -72,7 +72,7 @@ export default function compile(scope) {
       })
 
       // TODO: detect result type properly
-      dfn += ` (result ${getResultType(last, scope.vars) == FLOAT ? 'f64' : 'i32'})\n`
+      dfn += ` (result ${desc(last, scope.vars).type == FLOAT ? 'f64' : 'i32'})\n`
 
       // define locals
       vars.filter(id=>!scope.vars[id].arg).forEach(id => {
@@ -146,7 +146,7 @@ export default function compile(scope) {
 
     // a * b - make proper cast
     if (op === '+' || op === '*' || op === '-') {
-      let aType = getResultType(a,scope.vars), bType = getResultType(b,scope.vars);
+      let aType = desc(a,scope.vars).type, bType = desc(b,scope.vars).type;
       if (aType === FLOAT && !b) return `(f64.neg ${expr(a)})`
       if (aType === INT && !b) { b = a, a = ['int',0] }
       if (aType === INT && bType === INT) return `(i32.${opCmd} ${expr(a)} ${expr(b)})`
@@ -156,8 +156,8 @@ export default function compile(scope) {
     // a -< range - clamp a to indicated range
     if (op === '-<') {
       if (b[0] !== '..') throw Error('Only primitive ranges are supported for now')
-      let aType = getResultType(a, scope.vars), [,min,max] = b,
-          minType = getResultType(min, scope.vars), maxType = getResultType(max, scope.vars)
+      let aType = desc(a, scope.vars).type, [,min,max] = b,
+          minType = desc(min, scope.vars).type, maxType = desc(max, scope.vars).type
       if (aType === INT && minType === INT && maxType === INT)
         return includes.push(['std','i32.smax'], ['std','i32.smin']), `(call $std/i32.smax (call $std/i32.smin ${expr(a)} ${expr(max)}) ${expr(min)})`
       return `(f64.max (f64.min ${fexpr(a)} ${fexpr(max)}) ${fexpr(min)})`
@@ -191,14 +191,19 @@ export default function compile(scope) {
       return `(${v.global?'global':'local'}.set $${a} ${expr(b)})`
     }
 
-    throw 'Unimplemented operation ' + node[0]
+    // a | b
+    if (op === '|') {
+      console.log(a,b)
+    }
+
+    err('Unimplemented operation ' + node[0], node)
   }
 
   // convert input expr to float expr
   function fexpr(node) {
     if (node[0] === 'flt' || node[0] === 'int') return `(f64.const ${node[1]})`
 
-    let type = getResultType(node, scope.vars)
+    let {type} = desc(node, scope.vars)
     if (type === FLOAT) return expr(node)
 
     return `(f64.convert_i32_s ${expr(node)})`
