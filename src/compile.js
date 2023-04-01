@@ -41,19 +41,24 @@ export default function compile(scope) {
     if (typeof statement === 'string') {
       let name = statement, v = scope.vars[name]
       if (!globals.includes(name)) {
-        if (v.type === INT) out.push(`(global $${name} ${v.mutable ? `(mut i32)` : `i32`} (i32.const 0))`)
+        if (v.type === INT || v.type === PTR) out.push(`(global $${name} ${v.mutable ? `(mut i32)` : `i32`} (i32.const 0))`)
         else out.push(`(global $${name} ${v.mutable ? `(mut f64)` : `f64`} (f64.const 0))`)
         globals.push(name)
       }
       return
     }
 
-    let [,name,init] = statement, v = scope.vars[name], res
-    globals.push(name)
+    let [,name,init] = statement
+
+    // [size]x
+    if (name[0] === '[') name = name[2]
+    let v = scope.vars[name]
 
     // simple const globals init
-    if (init[0] === 'int') res = `(global $${name} i32 (i32.const ${init[1]}))`
-    else if (init[0] === 'flt') res = `(global $${name} f64 (f64.const ${init[1]}))`
+    if (init[0] === 'int')
+      globals.includes(name) ? inits.push(`(global.set $${name} (i32.const ${init[1]}))`) : out.push(`(global $${name} i32 (i32.const ${init[1]}))`)
+    else if (init[0] === 'flt')
+      globals.includes(name) ? inits.push(`(global.set $${name} (f64.const ${init[1]}))`) : out.push(`(global $${name} f64 (f64.const ${init[1]}))`)
     // global fn init
     else if (init[0] === '->') {
       let parent = scope
@@ -84,21 +89,22 @@ export default function compile(scope) {
     // array init
     else if (v.type === PTR) {
       let memberInits = expr(init)
-      res = `(global $${name} ${wtype} ${memberInits.pop()})`
+      if (!globals.includes(name)) out.push(`(global $${name} i32 ${memberInits.pop()})`)
+      else inits.push(`(global.set $${name} ${memberInits.pop()})`)
       inits.push(...memberInits)
     }
     // other exression init
     // TODO: may need detecting expression result type
     else if (v.type == INT) {
-      res = `(global $${name} (mut i32) (i32.const 0))`
+      out.push(`(global $${name} (mut i32) (i32.const 0))`)
       inits.push(`(global.set $${name} ${expr(init)})`)
     }
     else {
-      res = `(global $${name} (mut f64) (f64.const 0))`
+      out.push(`(global $${name} (mut f64) (f64.const 0))`)
       inits.push(`(global.set $${name} ${expr(init)})`)
     }
 
-    out.push(res)
+    globals.push(name)
   }
 
   // Init all globals in start
@@ -116,9 +122,7 @@ export default function compile(scope) {
   if (exportDfn) out.push(exportDfn)
 
   // Declare includes
-  for (let include of includes) {
-    if (include in stdlib) out.unshift(stdlib[include])
-  }
+  for (let [lib,member] of includes) out.unshift(stdlib[lib][member])
 
   // Declare memories
   if (memOffset) out.unshift(`(memory (export "memory") ${Math.ceil(memOffset / F64_PER_PAGE)})`)
@@ -155,7 +159,7 @@ export default function compile(scope) {
       let aType = getResultType(a, scope.vars), [,min,max] = b,
           minType = getResultType(min, scope.vars), maxType = getResultType(max, scope.vars)
       if (aType === INT && minType === INT && maxType === INT)
-        return includes.push('$std/i32.smax', '$std/i32.smin'), `(call $std/i32.smax (call $std/i32.smin ${expr(a)} ${expr(max)}) ${expr(min)})`
+        return includes.push(['std','i32.smax'], ['std','i32.smin']), `(call $std/i32.smax (call $std/i32.smin ${expr(a)} ${expr(max)}) ${expr(min)})`
       return `(f64.max (f64.min ${fexpr(a)} ${fexpr(max)}) ${fexpr(min)})`
     }
 
@@ -168,12 +172,13 @@ export default function compile(scope) {
 
     // [1,2,3]
     if (op === '[') {
-      let members = args[0][0] === ',' ? args[0].slice(1) : args
+      let members = !args.length ? [] : args[0][0] === ',' ? args[0].slice(1) : args
       let offset = node.offset = alloc(members.length)
       let res = []
       for (let i = 0; i < members.length; i++) {
         res.push(`(f64.store (i32.const ${offset + i*BYTES_PER_F64}) ${fexpr(members[i])})`)
       }
+      // store memory ptr as last op
       res.push(`(i32.const ${offset})`)
 
       return res

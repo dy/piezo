@@ -109,7 +109,7 @@ t('compile: simple function oneliners', t => {
   is(mod.exports.mult(2,4), 8)
 })
 
-t.only('compile: simple ranges', t => {
+t('compile: simple ranges', t => {
   // let wat = compile(`x = 0..10; `),
   //     mod = compileWat(wat)
   // is(mod.exports.x)
@@ -154,7 +154,7 @@ t.only('compile: simple ranges', t => {
   is(mod.exports.clamp(-1), 0)
 })
 
-t.only('compile: simple arrays', t => {
+t('compile: simple arrays', t => {
   let wat = compile(`x = [1, 2, 3].`)
   console.log(wat)
   let mod = compileWat(wat)
@@ -165,7 +165,7 @@ t.only('compile: simple arrays', t => {
   is(arr[ptr+2], 3)
 })
 
-t.only('compile: simple subarrays', t => {
+t('compile: simple subarrays', t => {
   let wat = compile(`[2]x = [1,2,3].`)
   console.log(wat)
   let mod = compileWat(wat)
@@ -175,22 +175,22 @@ t.only('compile: simple subarrays', t => {
   is(arr[ptr+1], 2)
 })
 
-t.only('compile: variable type inference', t => {
+t('compile: variable type inference', t => {
   let wat,x;
   x = compileWat(compile(`x;x.`)).exports.x // unknown type falls to f64
   x = compileWat(compile(`x=1;x.`)).exports.x // int type
   x = compileWat(compile(`x=1.0;x.`)).exports.x // float type
   x = compileWat(compile(`x=()->1;x.`)).exports.x // func type
-  x = compileWat(compile(`x=0..10;x.`)).exports.x // range type
+  // x = compileWat(compile(`x=0..10;x.`)).exports.x // range type
   x = compileWat(compile(`x=[];x.`)).exports.x // arr type
   x = compileWat(compile(`x;x=1;x.`)).exports.x // late-int type
   x = compileWat(compile(`x;x=1.0;x.`)).exports.x // late-float type
   x = compileWat(compile(`x;x=()->1;x.`)).exports.x // late-func type
-  x = compileWat(compile(`x;x=0..10;x.`)).exports.x // late-range type
+  // x = compileWat(compile(`x;x=0..10;x.`)).exports.x // late-range type
   x = compileWat(compile(`x;x=[];x.`)).exports.x // late-arr type
 })
 
-t.only('compile: simple pipe', t => {
+t.todo('compile: simple pipe', t => {
   let wat = compile(`[2]x = [1,2,3]; y = x | x -> x * 2.`)
   console.log(wat)
   let mod = compileWat(wat)

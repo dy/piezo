@@ -1,7 +1,7 @@
 // analyser converts AST into IR, able to be compiled after
 import parse from './parse.js';
 import stdlib from './stdlib.js';
-import * as CONST from './const.js';
+import {PTR, FLOAT, INT, RANGE, STR, FUNC} from './const.js';
 
 // detect variables & types, analyze internal scopes
 export default function analyze(node) {
@@ -70,7 +70,16 @@ const expr = {
 
     // a = b,  a,b=1,2, [x]a =
     // a = ...
-    if (typeof left === 'string') scope.vars[left] = {type:getResultType(right, scope.vars)}
+    if (typeof left === 'string') {
+      let type = getResultType(right, scope.vars)
+      if (!scope.vars[left]) scope.vars[left] = {type}
+      else {
+        scope.vars[left].mutable = true
+        if (!scope.vars[left].type) scope.vars[left].type = type
+        else if (scope.vars[left].type !== type) err('Changing value type from `' + scope.vars[left].type + '` to ' + '`' + type + '`')
+      }
+
+    }
     // (a,b) = ...
     else if (left[0] === ',') {
       // desugar here
@@ -87,8 +96,8 @@ const expr = {
       let [,size,name]=left
       let sizeType = getResultType(size, scope.vars)
       // bad size value error: it must be int
-      if (sizeType !== CONST.INT) err('Array size is not integer', left)
-      scope.vars[name] = {type:getResultType(right, scope.vars), size}
+      if (sizeType !== INT) err('Array size is not integer', left)
+      scope.vars[name] = {type:PTR, size}
     }
     // *a = ...
     else if (left[0] === '*' && left.length < 3) {
@@ -197,15 +206,16 @@ const expr = {
     })
 
     const init = [';']
-    if (args && args.length > 1) {
+    if (args) {
       if (args[0]==='(') [,args]=args;
       if (body[0]==='(') [,body]=body;
-      if (args[0] !== ',') args = [',',args]
+      if (!args) args = [',']
+      else if (args[0] !== ',') args = [',',args]
       // (a,b)->, (a=1,b=2)->, (a=(1;2))->
       for (let arg of args.slice(1)) {
-        if (typeof arg === 'string') scope.vars[arg]={arg:true, type:CONST.FLOAT}
-        else if (arg[0] === '=') scope.vars[arg[1]]={arg:true, type:CONST.FLOAT}, init.push(args)
-        else if (arg[0] === '-<') scope.vars[arg[1]]={arg:true, type:CONST.FLOAT}, init.push(arg)
+        if (typeof arg === 'string') scope.vars[arg]={arg:true, type:FLOAT}
+        else if (arg[0] === '=') scope.vars[arg[1]]={arg:true, type:FLOAT}, init.push(args)
+        else if (arg[0] === '-<') scope.vars[arg[1]]={arg:true, type:FLOAT}, init.push(arg)
         else err('Bad arguments syntax', body)
       }
     }
@@ -220,7 +230,11 @@ const expr = {
   // sin()
   '()'([,name,args], scope) {
     return ['()',name,args]
-  }
+  },
+  // [1,2,3]
+  '['(node) { return node },
+  // a..b
+  '..'(node) { return node }
 }
 
 // find result type of a node
@@ -228,13 +242,13 @@ export function getResultType(node, vars) {
   if (!node) return null // null means type will be detected later?
   if (typeof node === 'string') return vars[node].type
   let [op, a, b] = node
-  if (op === 'int') return CONST.INT
-  if (op === 'flt') return CONST.FLOAT
-  if (op === '+' || op === '*' || op === '-') return !b ? getResultType(a, vars) : (getResultType(a, vars) === CONST.FLOAT || getResultType(b, vars) === CONST.FLOAT) ? CONST.FLOAT: CONST.INT
-  if (op === '/') return (getResultType(a, vars) === CONST.INT && getResultType(b, vars) === CONST.INT) ? CONST.INT: CONST.FLOAT
-  if (op === '-<') return getResultType(a, vars) === CONST.INT && getResultType(b[1], vars) === CONST.INT && getResultType(b[2], vars) === CONST.INT ? CONST.INT : CONST.FLOAT
-  if (op === '[') return CONST.PTR // pointer is int
-  if (op === '->') return CONST.FUNC
+  if (op === 'int') return INT
+  if (op === 'flt') return FLOAT
+  if (op === '+' || op === '*' || op === '-') return !b ? getResultType(a, vars) : (getResultType(a, vars) === FLOAT || getResultType(b, vars) === FLOAT) ? FLOAT: INT
+  if (op === '/') return (getResultType(a, vars) === INT && getResultType(b, vars) === INT) ? INT: FLOAT
+  if (op === '-<') return getResultType(a, vars) === INT && getResultType(b[1], vars) === INT && getResultType(b[2], vars) === INT ? INT : FLOAT
+  if (op === '[') return PTR // pointer is int
+  if (op === '->') return FUNC
   if (op === '|') {
     let aType = getResultType(a, vars), bType = getResultType(b, vars)
     console.log('todo',a,aType, b,bType)
