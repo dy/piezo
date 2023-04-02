@@ -1890,6 +1890,8 @@ Having wat files is more useful than direct compilation to binary form:
     + relatively exceptional character, compared to #, :, &
     - conflicts with npm namespaces `osc1, osc2 @ '@audio-lab/synt'`
       ~ we may not necessarily want to resolve node_modules path, it's going to be either just `synth` or full path.
+    + no case-sensitivity problem, `math#PI` and `math#pi` are different
+    + it's more obvious that variables become part of scope, rather than figuring out vars from atom `'#a,b,c'`
   *! what if npm module namespace convention? `'@math/sin,cos'`, `'./my-sound.son/*'`
     ~ similar to just @
   * `'math' / sin, cos;`
@@ -1913,7 +1915,7 @@ Having wat files is more useful than direct compilation to binary form:
     * it's better to always assign to a variable to make importable parts explicit.
     - conflicts with notes. We need to import all of them.
 
-### [x] Import subparts → try `@ 'math#floor,cos,sin'`
+### [x] Import subparts → try `@ 'math#floor,cos,sin'` -> nah, try `floor, sin, cos @ 'math'`
 
   1. `@ 'math': sin, cos`
     + defines global functions
@@ -2389,7 +2391,7 @@ Having wat files is more useful than direct compilation to binary form:
   + `#` is part of variable name anyways
 - `'Oscillator'()` is unusual construct...
 - not clear if `'oscillator'`, `'Oscillator'`, `oscillator` and `Oscillator` resolve to the same
-
+- can cause conflicts with "bad" names, like `pipe/arg`
 
 ## [ ] Ranges: how to organize in wasm level?
 
@@ -2501,3 +2503,4 @@ Having wat files is more useful than direct compilation to binary form:
 + removing is shorter
 + desugaring can be done in-place
 + it can be helpful to maintain parentheses, since parens define scope
++ good for parens opening, not always scope is needed

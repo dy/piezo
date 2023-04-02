@@ -183,9 +183,8 @@ items |> (sum,x) -> sum+x;    // fold operator with reducer
 [a,b,c] |> (a,b) -> a + b;    // can be applied to lists
 
 //////////////////////////// import
-@ './path/to/module';         // any file can be imported directly
-@ 'math';                     // or defined via import-maps.json
-@ 'my-module#x,y,z';          // import selected members
+x, y, z @ './path/to/module'; // any file can be imported directly
+pi, sin, max @ 'math';        // or defined via import-maps.json
 
 //////////////////////////// export
 x, y, z.                      // last statement in the file ending with . exports all members
