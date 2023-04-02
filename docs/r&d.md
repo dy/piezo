@@ -2468,7 +2468,7 @@ Having wat files is more useful than direct compilation to binary form:
 + unifies returning structure
 + differentiates scopes with same interface
 
-## [x] How to solve problem of array `length` - it can't be used as variable name? -> use .vars
+## [x] How to solve problem of array `length` in scope definitino - it can't be used as variable name? -> use .scope
 
 * it's not just .length - it's any array methods
 
@@ -2492,6 +2492,8 @@ Having wat files is more useful than direct compilation to binary form:
 + allows other subscopes, like import, export, args etc
 - doesn't do direct inheritance
   + enhances inheritance by maintaining pure object
+
+7. Store `node.scope` as vars.
 
 ## [x] Remove desugaring or keep? -> remove, make desugaring in analyser
 

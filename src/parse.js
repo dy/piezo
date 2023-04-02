@@ -1,5 +1,6 @@
 // parser converts syntax into AST/calltree
 import parse, { lookup, skip, cur, idx, err, expr, token, unary, binary, nary, isId } from 'subscript/parse.js'
+import { FLOAT, INT } from './const.js'
 
 export default (src) => parse(src)
 
@@ -64,11 +65,11 @@ const num = (a) => {
   return node
 }
 const numTypes = {
-  '': (n, d) => ['int', +n],
-  '.': (n, d) => ['flt', Number(n+'.'+d)],
-  'e': (n, d) => ['flt', Number(n+'e'+d)],
-  'x': (n, d) => ['hex', parseInt(d, 16)],
-  'b': (n, d) => ['bin', parseInt(d, 2)]
+  '': (n, d) => [INT, +n],
+  '.': (n, d) => [FLOAT, Number(n+'.'+d)],
+  'e': (n, d) => [FLOAT, Number(n+'e'+d)],
+  'x': (n, d) => [INT, parseInt(d, 16)],
+  'b': (n, d) => [INT, parseInt(d, 2)]
 }
 // 0-9
 for (let i = 0; i<=9; i++) lookup[_0+i] = num;
