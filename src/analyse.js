@@ -113,7 +113,11 @@ export default function analyze(node) {
       let parent = scope
       scope = Object.create(scope)
 
-      let init = [';'], out = Object.assign(['->'], {args:[],body:null})
+      let init = [';'], out = Object.assign(['->'], {
+        scope,
+        args:[], // collected arg names in order
+        result:null // result type
+      })
       if (args) {
         if (args[0]==='(') [,args]=args;
         args = !args ? [] : args[0] === ',' ? args.slice(1) : [args];
@@ -127,8 +131,8 @@ export default function analyze(node) {
         }
       }
 
-      out.push(expr(init), out.body = expr(body[0]==='(' ? body[1] : body))
-      out.scope = scope
+      out.push(expr(init), body = expr(body[0]==='(' ? body[1] : body))
+      out.result = desc(body[0] === ';' ? body[body.length - 1] : body, scope) // detect result type
       scope = parent
       return out
     },
@@ -155,7 +159,7 @@ export default function analyze(node) {
               argName && ['=',argName,['[]','pipe/arg','pipe/idx']],
               idxName && ['=',idxName,'pipe/idx'],
               ['++','pipe/idx'],
-              fn.body
+              fn[2] // write only body
             ]
           ]
         ])]
@@ -190,15 +194,15 @@ export default function analyze(node) {
 
       let lib = stdlib[pathname], members = hash ? hash.slice(1).split(',') : Object.keys(lib)
       for (let member of members) {
-        scope[member] = { import: true, type: lib[member][1] }
+        scope[member] = { import: pathname, type: lib[member][1] }
       }
-
-      return ['@', pathname, members]
+      // we return nothing since member is marked as imported
     },
+
     // a,b,c . x
     '.'([,a,b]) {
       // a.b
-      if (b) throw 'prop access is unimplemented'
+      if (b) err('prop access is unimplemented ' + a + b, a)
 
       // a.
       if (Object.getPrototypeOf(scope)) err('Export must be in global scope')
@@ -206,22 +210,35 @@ export default function analyze(node) {
 
       a = expr(a)
 
-      if (typeof a === 'string') return scope[a].export=true, a
+      if (typeof a === 'string') scope[a].export=true
 
-      // save exports
-      if (a[0]==='=') {
+      // a=b
+      else if (a[0]==='=') {
         let [,l,r] = a
         if (l[0]==='(') [,l]=l; if (r[0]==='(') [,r]=r; // unbracket
         // a=...;
         if (typeof l === 'string') scope[l].export = true
         else err('Unknown export expression `' + a + '`')
       }
-      // a,b or a=1,b=2
-      else if (a[0]===',') a.slice(1).forEach(expr['.'])
 
-      return ['.',a]
+      // a,b  or  a=1,b=2  or  (a)
+      else if (a[0]===','||a[0]==='(') a.slice(1).forEach(node => expr['.'](['.',node]))
+
+      // we get rid of '.' for compiler, since all vars are marked as exported
+      return a
     },
 
+    // [1,2,[3,4]]
+    '['([,init]) {
+      // flatten & make sure output is list
+      if (init[0]!==',') init = [',',init]
+      let members = [',']
+      for (let m of init.slice(1)) {
+        m = expr(m)
+        m[0] === '[' ? members.push(...m[1].slice(1)) : members.push(m)
+      }
+      return ['[',members]
+    }
   })
 
   // evaluate
