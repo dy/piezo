@@ -240,8 +240,8 @@ export function desc(node, scope) {
   if (typeof node === 'string') return scope[node] || err('Cannote get descriptor of node', node)
 
   let [op, a, b] = node
-  if (op === 'int') return {type:INT}
-  if (op === 'flt') return {type:FLOAT}
+  if (op === INT) return {type:INT}
+  if (op === FLOAT) return {type:FLOAT}
   if (op === '+' || op === '*' || op === '-') return !b ? desc(a, scope) : (desc(a, scope).type === FLOAT || desc(b, scope).type === FLOAT) ? {type:FLOAT}: {type:INT}
   if (op === '/') return (desc(a, scope).type === INT && desc(b, scope).type === INT) ? {type:INT}: {type:FLOAT}
   if (op === '-<') return desc(a, scope).type === INT && desc(b[1], scope).type === INT && desc(b[2], scope).type === INT ? {type:INT} : {type:FLOAT}
