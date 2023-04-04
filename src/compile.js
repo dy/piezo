@@ -13,7 +13,6 @@ export default function compile(node) {
   let out = [], // output code stack
     inits = [], // start function initializers
     includes = [], // pieces to prepend
-    globals = [], // used global names
     memcount = 0, // current used memory pointer (number of f64s)
     scope = node.scope // current scope
 
@@ -22,28 +21,40 @@ export default function compile(node) {
     // a; - just declare
     if (typeof statement === 'string') {
       let name = statement, v = scope[name]
-      if (!globals.includes(name)) {
-        if (v.type === INT || v.type === PTR) out.push(`(global $${name} ${v.mutable ? `(mut i32)` : `i32`} (i32.const 0))`)
-        else out.push(`(global $${name} ${v.mutable ? `(mut f64)` : `f64`} (f64.const 0))`)
-        globals.push(name)
+      if (!v.defined) {
+        if (v.type === INT || v.type === PTR) (v.global?out:inits).push(`(${v.global?'global':'local'} $${name} ${v.mutable ? `(mut i32)` : `i32`} (i32.const 0))`)
+        else (v.global?out:inits).push(`(${v.global?'global':'local'} $${name} ${v.mutable ? `(mut f64)` : `f64`} (f64.const 0))`)
+        v.defined = true
       }
     }
     else if (statement[0]===';'||statement[0]===',') for (let s of statement.slice(1)) gexpr(s)
+    else if (statement[0]==='(') {
+      let parent = scope
+      scope = statement.scope
+      gexpr(statement[1])
+      scope = parent
+    }
     else if (statement[0]==='=') {
-      let [,name,init] = statement
+      let [,name,init] = statement, v = scope[name]
 
       // [size]x
       if (name[0] === '[') name = name[2]
 
       if (init[0] === INT) {
-        globals.includes(name) ? inits.push(`(global.set $${name} (i32.const ${init[1]}))`) : out.push(`(global $${name} i32 (i32.const ${init[1]}))`)
+        if (!v.defined)
+          v.global ? out.push(`(global $${name} (mut i32) (i32.const 0))`) : inits.push(`(local $${name} i32)`)
+          inits.push(`(${v.global?'global':'local'}.set $${name} (i32.const ${init[1]}))`)
+
       }
       else if (init[0] === FLOAT) {
-        globals.includes(name) ? inits.push(`(global.set $${name} (f64.const ${init[1]}))`) : out.push(`(global $${name} f64 (f64.const ${init[1]}))`)
+        if (!v.defined)
+          v.global ? out.push(`(global $${name} (mut f64) (f64.const 0))`) : inits.push(`(local $${name} f64)`)
+          inits.push(`(${v.global?'global':'local'}.set $${name} (f64.const ${init[1]}))`)
       }
       else if (init[0] === '[') {
-        if (!globals.includes(name)) out.push(`(global $${name} i32 (i32.const ${memcount}))`)
-        else inits.push(`(global.set $${name} (i32.const ${memcount}))`)
+        // FIXME: maybe we better off with alloc/free here instead, than forcing local mem use
+        if (!v.defined) (v.global?out:inits).push(`(${v.global?'global':'local'} $${name} i32 (i32.const ${memcount}))`)
+        else inits.push(`(${v.global?'global':'local'}.set $${name} (i32.const ${memcount}))`)
         let [,[,...members]] = init
         for (let member of members) inits.push(expr(member))
         memcount += members.length
@@ -77,18 +88,20 @@ export default function compile(node) {
         scope = parent
       }
       // other exression init
-      else if (scope[name].type == INT) {
-        out.push(`(global $${name} (mut i32) (i32.const 0))`)
-        inits.push(`(global.set $${name} ${expr(init)})`)
+      else if (v.type == INT) {
+        if (!v.defined)
+          v.global ? out.push(`(global $${name} (mut i32) (i32.const 0))`) : inits.push(`(local $${name} i32)`)
+        inits.push(`(${v.global?'global':'local'}.set $${name} ${expr(init)})`)
       }
       // default unknown vars fall to f64
-      else if (scope[name].type == FLOAT) {
-        out.push(`(global $${name} (mut f64) (f64.const 0))`)
-        inits.push(`(global.set $${name} ${expr(init)})`)
+      else if (v.type == FLOAT) {
+        if (!v.defined)
+          v.global ? out.push(`(global $${name} (mut f64) (f64.const 0))`) : inits.push(`(local $${name} f64)`)
+        inits.push(`(${v.global?'global':'local'}.set $${name} ${expr(init)})`)
       }
       else err('Undefined variable ' + name)
 
-      globals.push(name)
+      v.defined = true
     }
     else err('Unknown instruction `' + statement[0] + '`',statement)
   }
@@ -174,9 +187,10 @@ export default function compile(node) {
   gexpr(node)
 
   // Init all globals in start
+  // FIXME: ugh, sorting, for real?
   if (inits.length) out.push(
     `(start $module/init)`,
-    `(func $module/init\n${inits.join('\n')}\n)`
+    `(func $module/init\n${inits.sort((a,b)=>a.startsWith('(local ') ? -1 : 1).join('\n')}\n)`
   )
 
   // Provide exports

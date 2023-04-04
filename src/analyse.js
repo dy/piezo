@@ -63,7 +63,7 @@ export default function analyze(node) {
         else {
           scope[left].mutable = true
           if (!scope[left].type) Object.assign(scope[left], rDesc)
-          else if (scope[left].type !== rDesc.type) err('Changing value type from `' + scope[left].type + '` to ' + '`' + type + '`')
+          else if (scope[left].type !== rDesc.type) err('Changing value type from `' + scope[left].type + '` to ' + '`' + rDesc.type + '`')
         }
         return ['=',left,right]
       }
@@ -89,7 +89,7 @@ export default function analyze(node) {
         // FIXME: add callsite id to that tmp variable
         // FIXME: make sure left side contains only names or props
         let temp = ls.map((id,i) => ['=',`tmp/${id}`, rs[i]])
-        let untemp = ls.map((id,i) => ['=',ls[i],`tmp/${id}`])
+        let untemp = ls.map((id,i) => ['=',expr(ls[i]),`tmp/${id}`]) // catch left ids into current scope
         return expr(['(',[';',...temp,[',',...untemp]]])
       }
 
@@ -101,12 +101,12 @@ export default function analyze(node) {
       let parent = scope
       scope = Object.create(scope)
 
+      // FIXME: note that internal scope may get lost here (hope not)
       while (body[0]==='(' && body.length == 2) body = body[1]
-      let intern = expr(body)
-      intern.scope = scope
-
+      body = ['(',expr(body)]
+      body.scope = scope
       scope = parent
-      return intern
+      return body
     },
     // args -> body
     '->'([,args,body]) {
@@ -200,7 +200,7 @@ export default function analyze(node) {
     },
 
     // a,b,c . x
-    '.'([,a,b]) {
+    '.'([,a,b], skip=false) {
       // a.b
       if (b) err('prop access is unimplemented ' + a + b, a)
 
@@ -208,7 +208,7 @@ export default function analyze(node) {
       if (Object.getPrototypeOf(scope)) err('Export must be in global scope')
       // FIXME: if (expNode !== node && expNode !== node[node.length-1]) err('Export must be the last node');
 
-      a = expr(a)
+      if (!skip) a = expr(a)
 
       if (typeof a === 'string') scope[a].export=true
 
@@ -221,8 +221,17 @@ export default function analyze(node) {
         else err('Unknown export expression `' + a + '`')
       }
 
-      // a,b  or  a=1,b=2  or  (a)
-      else if (a[0]===','||a[0]==='(') a.slice(1).forEach(node => expr['.'](['.',node]))
+      // a,b  or  a=1,b=2
+      else if (a[0]===',') {
+        a.slice(1).forEach(a => expr['.'](['.',a], true))
+      }
+      // TODO (a) or (a,b,c)
+      else if (a[0]==='(') {
+        let members = a[1][0]===';'?a[1][a[1].length-1]:a[1]
+        if (members[0]!==',') members = [',',members]
+        members.slice(1).forEach(a => expr['.'](['.',a], true))
+      }
+      else err('Unknown expr ' + a[0], a)
 
       // we get rid of '.' for compiler, since all vars are marked as exported
       return a
@@ -243,6 +252,9 @@ export default function analyze(node) {
 
   // evaluate
   node = expr(node)
+
+  // (a) -> (a);, to provide global scope
+  if (node[0] !== ';') node = [';',node]
 
   // mark all global vars
   for (let n in scope) scope[n].global = true
