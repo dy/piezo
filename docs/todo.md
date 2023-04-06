@@ -14,7 +14,7 @@
 
 * [x] Parser
 
-* [ ] Add proper scope mechanism (streamline compiler)
+* [x] Add proper scope mechanism (streamline compiler)
 * [ ] Implement memory alloc
 * [ ] Simple loops
 * [ ] Audio gain example
