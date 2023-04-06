@@ -43,7 +43,7 @@ true = 0b1, false = 0b0;      // hint: alias booleans
 1..2 + 2..3;                  // add ranges: 1..3
 1..3 - 2..;                   // subtract ranges: 1..2
 
-//////////////////////////// groups (tuples)
+//////////////////////////// groups
 a, b, c;                      // groups are syntactic sugar
 (a, b, c)++;                  // apply operation to multiple elements: (a++, b++, c++)
 (a, (b, c));                  // groups are always flat == (a, b, c)
@@ -53,9 +53,10 @@ a, b, c;                      // groups are syntactic sugar
 (a,b).x;                      // (a.x, b.x);
 (a,b).x();                    // (a.x(), b.x());
 (a,b,c) = (d,e,f);            // (a=d, b=e, c=f);
-(a,b,c) = d;                  // (a=d, b=d, c=d);
+(a,b,c) = d;                  // error: wrong number of assignment elements
 a = (b,c,d);                  // error: wrong number of assignment elements
 a = b, c = d;                 // note: assignment precedence is higher == (a = b), (c = d)
+(a,b,c) = fn();               // functions can return multiple values;
 
 //////////////////////////// standard operators
 + - * / % **                  // arithmetical (** for pow)
@@ -76,41 +77,6 @@ x -< (x,y,z);                 // return x if it's in group, null otherwise
 (1,2,3)[];                    // 3
 "abc"[];                      // 3
 (-1..+2)[];                   // 3
-
-//////////////////////////// strings
-hi="hello";                   // strings
-string="{hi} world";          // interpolated string: "hello world"
-"\u0020", "\x20";             // unicode or ascii codes
-string[1]; string.1;          // positive indexing from first element [0]: 'e'
-string[-3];                   // negative indexing from last element [-1]: 'r'
-string[2..10];                // substring
-string[1, 2..10, -1];         // slice/pick multiple elements
-string[-1..0];                // reverse
-string[];                     // length
-string == string;             // comparison (==,!=,>,<)
-string + string;              // concatenation: "hello worldhello world"
-string - string;              // removes all occurences of the right string in the left string: ""
-string / string;              // split: "a b" / " " = ["a", "b"]
-string * list;                // join: " " * ["a", "b"] = "a b"
-string * 2;                   // repeat: "abc" * 2 = "abcabc"
-"l" ~< string;                // find position of substring in the string
-
-//////////////////////////// arrays
-list = [1, 2, 3];             // list from elements
-list = [l:2, r:4, c:6];       // list with aliases
-list = [0..10];               // list from range
-list = [0..8 | i -> i*2];     // list comprehension
-list = [list1, list2];        // list from multiple lists (always flat)
-[2]list = list1;              // (sub)list of fixed size
-list.0, list.1, list.2;       // short index access notation
-list.l = 2;                   // alias index access
-list[0];                      // positive indexing from first element [0]: 2
-list[-2]=5;                   // negative indexing from last element [-1]: list becomes [2,4,5,8]
-list[];                       // length
-list[1..3, 5]; list[5..];     // slice
-list[-1..0];                  // reverse
-list | x -> x * 2;            // iterate/map items
-2 ~< list;                    // find index of item in the list
 
 //////////////////////////// statements
 foo();                        // semi-colons at end of line are mandatory
@@ -155,16 +121,26 @@ copy = triple;                // capture function
 copy(n: 10);                  // also 30
 clamp = (v -< 0..10) -> v;    // clamp argument
 x = () -> (1,2,3);            // return group (multiple values)
-mul = ([]in, amp) -> in*amp;  // array argument
-mul = ([8]in, amp) -> in*amp; // fixed size array argument
+(a,b,c) = x();                // assign to a group
+mul = ([]in, amp) -> in*amp;  // memory pointer argument
+mul = ([8]in, amp) -> in*amp; // fixed size mem pointer argument
+
+//////////////////////////// memory
+*[4]i = (1,2,3,4);            // allocate & init memory of 4 items
+i.0, i.1, i.2, i.3;           // access item by static index (0-based)
+i[0], i[1], i[-1];            // access by dynamic index, negative for last element
+i[];                          // get length
+i = (3,4,5,6);                // write multiple values
+i[1..3] = (7,8);              // write to a subrange
+i << 2; i >> 3;               // shift values in memory right or left
 
 //////////////////////////// stateful variables
-a = () -> ( *i=0; i++ );      // stateful variable persist value between fn calls
+a = () -> ( *i=0; i++ );      // stateful variable - persist value between fn calls
 a(), a();                     // 0, 1
 b = () -> (                   //
-  *[4]i;                      // memory of 4 items
-  i.0 = i.1+1;                // read previous value
-  i.0                         // return currrent value
+  *[4]i;                      // local memory of 4 items
+  i >> 1;                     // shift memory right by 1 every fn call
+  i.0 = i.1+1;                // write previous value i.1 to current value i.0, return i.0
 );                            //
 b(), b(), b();                // 1, 2, 3
 
@@ -190,6 +166,45 @@ pi, sin, max @ 'math';        // or defined via import-maps.json
 x, y, z.                      // last statement in the file ending with . exports all members
 ```
 
+<!--
+
+//////////////////////////// strings
+hi="hello";                   // strings
+string="{hi} world";          // interpolated string: "hello world"
+"\u0020", "\x20";             // unicode or ascii codes
+string[1]; string.1;          // positive indexing from first element [0]: 'e'
+string[-3];                   // negative indexing from last element [-1]: 'r'
+string[2..10];                // substring
+string[1, 2..10, -1];         // slice/pick multiple elements
+string[-1..0];                // reverse
+string[];                     // length
+string == string;             // comparison (==,!=,>,<)
+string + string;              // concatenation: "hello worldhello world"
+string - string;              // removes all occurences of the right string in the left string: ""
+string / string;              // split: "a b" / " " = ["a", "b"]
+string * list;                // join: " " * ["a", "b"] = "a b"
+string * 2;                   // repeat: "abc" * 2 = "abcabc"
+"l" ~< string;                // find position of substring in the string
+
+//////////////////////////// arrays
+list = [1, 2, 3];             // list from elements
+list = [l:2, r:4, c:6];       // list with aliases
+list = [0..10];               // list from range
+list = [0..8 | i -> i*2];     // list comprehension
+list = [list1, list2];        // list from multiple lists (always flat)
+[2]list = list1;              // (sub)list of fixed size
+list.0, list.1, list.2;       // short index access notation
+list.l = 2;                   // alias index access
+list[0];                      // positive indexing from first element [0]: 2
+list[-2]=5;                   // negative indexing from last element [-1]: list becomes [2,4,5,8]
+list[];                       // length
+list[1..3, 5]; list[5..];     // slice
+list[-1..0];                  // reverse
+list | x -> x * 2;            // iterate/map items
+2 ~< list;                    // find index of item in the list
+
+-->
+
 ## Examples
 
 ### Gain Processor
@@ -197,11 +212,12 @@ x, y, z.                      // last statement in the file ending with . export
 Provides k-rate amplification of input audio.
 
 ```fs
-gain = ( [1024]input, volume -< 0..100 ) -> (
-  [ input | x -> x * volume ]
+gain = ( []in, volume -< 0..100 ) -> (
+  in | x -> x * volume
 );
 
-gain([0,.1,.2,.3,.4,.5], 2);  // [0,.2,.4,.6,.8,1]
+out = gain([0, .1, .2, .3, .4, .5], 2); // gain
+// out == (0, .2, .4, .6, .8, 1);       // output contains result values
 ```
 
 * _functions_ − arrow `(foo, bar -< 0..10, baz=dflt) -> (expr1; expr2)` defines a function. Arguments may have range or default value indicators. Function returns last expression or sequence.
@@ -220,9 +236,8 @@ Biquad filter processor for single-channel input.
 1pi = pi;                     // define pi units
 1s = 44100;                   // define time units in samples
 1k = 10000;                   // basic si units
-blockLen = 1024;              // can be redefined from outside
 
-lp = ([blockLen]x, freq = 100 -< 1..10k, Q = 1.0 -< 0.001..3.0) -> (
+lp = ([]x, []y, freq = 100 -< 1..10k, Q = 1.0 -< 0.001..3.0) -> (
   *x1=0, *x2=0, *y1=0, *y2=0;     // filter state (defined by callsite)
 
   // lpf formula
@@ -235,15 +250,15 @@ lp = ([blockLen]x, freq = 100 -< 1..10k, Q = 1.0 -< 0.001..3.0) -> (
 
   (b0, b1, b2, a1, a2) *= 1.0 / a0;
 
-  // produce output block
-  [ x | x0 -> (
+  // write to y
+  y = x | x0 -> (
     y0 = b0*x0 + b1*x1 + b2*x2 - a1*y1 - a2*y2;
 
     (x1, x2) = (x0, x1);
     (y1, y2) = (y0, y1);
 
     y0
-  ) ]
+  )
 );
 
 lp, blockLen.              // export

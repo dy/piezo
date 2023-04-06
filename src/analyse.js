@@ -239,6 +239,7 @@ export default function analyze(node) {
 
     // [1,2,[3,4]]
     '['([,init]) {
+      if (!init) init = [',']
       // flatten & make sure output is list
       if (init[0]!==',') init = [',',init]
       let members = [',']

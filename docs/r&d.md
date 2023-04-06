@@ -2504,3 +2504,101 @@ Having wat files is more useful than direct compilation to binary form:
 + desugaring can be done in-place
 + it can be helpful to maintain parentheses, since parens define scope
 + good for parens opening, not always scope is needed
+
+## [x] Dynamic arrays, eg. `a->[1,a,2]` -> wait for structs generally, currently try memory pointers approach
+
+1. Alloc memory every return
+- needs somehow freeing memory, gc or manually
+  - there doesn't seem to exist a reliable gc way, still would need manual run
+- harder for user to read values back: dealing with typed arrays, need to know $memory naming
+
+2. Reuse memory by callsite
+- Subsequent call erases memory
+- Makes some conflict with stateful memory `*[10]a = [1,2,3]`, since that's almost identical by meaning except for auto-sliding
+
+3. Use multiple returns
++ Perfect user api
++ No memory collection issues
+- Limited to 1000 items
+  ~ can be fine-ish for low-latency sounds
+- Compiles to bloated unrolled code
++ Limits lino to static (fixed-size) toy language
+- arrays make no point then
+
+4. Use wasm gc structs
++ standard way
++ perfect user api
+- not supported by anyone cept flagged chrome
+  - chance it will ever be implemented is very small, since it super-complicates gc
+  - gc: seems to undermine the point of wasm
+
+5. Prohibit dynamic arrays allocation: only global (exported) arrays
++ Maintains the old-school spirit of work with memory
++ That's good practice for DSP
+- That's inconsistent language API
+
+6. Prohibit arrays generally, in favor of work with memory
++ No need to add them until needed
++ Direct work with memory is more apparent
+~ `x -> *[3]=(1,2,3)` returns internal fn memory, apparently
++! we can redefine `<<` and `>>` for memory as shift operators, so that it's more apparent
+  * `*[3]x; x << 1;` - shift left, `*[3]x; x >> 1;` - shift right
+~? what's the difference between `([12]x) -> x` and `(*[12]x) -> x`
+  * `*[123]x` allocates memory, whereas `[12]x` indicates reference to existing memory
+    ? does that mean we can do `[123]x = memoryPtr`?
+      ? whould we let creating at any offset then, eg `[123,6]x = memoryPtr`
++ that makes undefined-length arrays more attainable: `([]x)` means function can take any memory pointer
+  * and we can track allocated memories, easiest way is to have length be `ptr-1`.
+! we can define `|=` operator as `x |= x -> x*2` which transforms array in-place
+  + `y = x | x -> x*2` maps x memory to y
+? whad does `([]x) -> x | mult` return?
+  ? temporary internal representation of mapped x items?
+  ? or function itself becomes a macro, so that once applied somewhere else it just "unfolds"?
+  -> the semantics is similar to loop, what does `i < 10 <| i * 2` mean? By itself it returns group, but if forwarded into `[]` it populates memory
+
+6.1 Make global `*[10]a` a memory reference.
++ Generally `*` points to memory
++ It's logically static - doesn't depend on callsite
++ Array here can be replaced with group, denoting init values
+
+6.2 What difference does it make creating array as `*[3]a = [1,2,3]` vs `[3]a = [1,2,3]` vs `*[1,2,3]`?
+
+* `*[]` can save into callstack, `[]` can just directly allocate.
+  - direct allocation requires disposal which we want to avoid.
+    ? wait for structs?
+
+## [x] 1-based index vs 0-based index -> use 0-based since time starts with 0
+
+* See ref https://www.reddit.com/r/ProgrammingLanguages/comments/t86ebp/thoughts_on_1based_indexing/
+. `a[1]` is first element (obvious), but not conventional
+. `1..n` is common math notation
+. `a[-1]` is considered the last element conventionally, like 1st from the end.
+. `a[len]` with 0-indexing is expected to be `a[0]`
+* From https://www.jsoftware.com/papers/indexorigin.htm there's clearer arguments pro-0:
+. We're born at 0 age, time starts with 0 seconds, year 2000 is 1st year of 2-nd millenium, so index indicates the starting _position_ in a sequence, whereas 1-based index indicates number of an element.
+
+## [ ] Allocate memory: `*[size]x = (1,2,3)` vs `[12]x = [1,2,3]`
+
+1. `*[size]x = (1,2,3)`
+
++ allows to skip arrays for at least first time
++ enables `x << 2` operator for shifting memory value
+  ~ although `x+1` can work ostensibly too
+- adds extra meaning to `*` from _stateful_ to _saved_.
+- there's no easy way to create in-place memory fragment: to pass memory, it needs `*[]x=(1,2,3,4)` which is weird
+  ? can we create in-place memory fragment as `[1,2,3,4]`
+    . but then we can't create `*[size]x = (1,2,3)` as easily, since just `*[12]x` doesn't allocate anything (it should).
+
+2. `[12]x = [1,2,3]`
+
++ more natural convention
+- no way to deallocate, unless we find something like `~x`.
+-> requires some GC mechanism
+
+## [x] Compiler: expressions return type -> use side-effects
+
+  1. expr must return string result;
+    + allows nested processing like `(parent.expr (nested.expr))`
+  2. modify current fn body, return none
+    + allows more flexible write to different targets
+  3. modify fn and return last element
