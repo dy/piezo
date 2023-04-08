@@ -26,6 +26,12 @@ true = 0b1, false = 0b0;      // hint: alias booleans
 1 / 3; 2 * 3.14;              // ints cast to floats otherwise
 3.14 | 0; ~~2.5;              // floats cast to ints in binary operations
 
+//////////////////////////// standard operators
++ - * / % **                  // arithmetical (** for pow)
+&& || !                       // logical
+& | ^ ~                       // int / binary ops
+== != >= <=                   // comparisons
+
 //////////////////////////// units
 1k = 1000; 1pi = 3.1415;      // define units
 1s = 44100; 1ms = 1s/1000;    // useful for sample indexes
@@ -43,6 +49,14 @@ true = 0b1, false = 0b0;      // hint: alias booleans
 1..2 + 2..3;                  // add ranges: 1..3
 1..3 - 2..;                   // subtract ranges: 1..2
 
+//////////////////////////// clamp operator
+x -< 0..10;                   // clamp(x, 0, 10)
+x -< ..10;                    // min(x, 10)
+x -< 0..;                     // max(0, x)
+x -<= 0..10;                  // x = clamp(x, 0, 10)
+4.. -< ..8;                   // clamp ranges: 4..8
+x -< (x,y,z);                 // return x if it's in group, null otherwise
+
 //////////////////////////// groups
 a, b, c;                      // groups are syntactic sugar
 (a, b, c)++;                  // apply operation to multiple elements: (a++, b++, c++)
@@ -57,20 +71,6 @@ a, b, c;                      // groups are syntactic sugar
 a = (b,c,d);                  // error: wrong number of assignment elements
 a = b, c = d;                 // note: assignment precedence is higher == (a = b), (c = d)
 (a,b,c) = fn();               // functions can return multiple values;
-
-//////////////////////////// standard operators
-+ - * / % **                  // arithmetical (** for pow)
-&& || !                       // logical
-& | ^ ~                       // int / binary ops
-== != >= <=                   // comparisons
-
-//////////////////////////// clamp operator
-x -< 0..10;                   // clamp(x, 0, 10)
-x -< ..10;                    // min(x, 10)
-x -< 0..;                     // max(0, x)
-x -<= 0..10;                  // x = clamp(x, 0, 10)
-4.. -< ..8;                   // clamp ranges: 4..8
-x -< (x,y,z);                 // return x if it's in group, null otherwise
 
 //////////////////////////// length operator
 [1,2,3][];                    // 3
