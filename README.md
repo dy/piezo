@@ -11,10 +11,10 @@ It has common syntax (inspired by C, JS, Swift, Python) and compiles to WASM byt
 
 ```fs
 //////////////////////////// naming convention
-fooBar123 != FooBar123;       // var names are case-sensitive
-Ab_C_F#, $0, Δx;              // permit alnum, unicodes, #, _, $
-foo=1, bar=2;                 // declare directly
-default=1; eval=fn; else=0;   // hint: common words allowed - lino has no reserved words
+foo=1, bar=2;                 // declare multiple vars
+Ab_C_F#, $0, Δx;              // names permit alnum, unicodes, #, _, $
+fooBar123 != FooBar123;       // names are case-sensitive
+default=1, eval=fn, else=0;   // hint: common words allowed - lino has no reserved words
 
 //////////////////////////// numbers
 16, 0x10, 0b0;                // int (dec, hex or binary form)
