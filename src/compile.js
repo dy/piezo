@@ -18,44 +18,34 @@ export default function compile(node) {
 
   // processess global statements, returns nothing, only modifies globals, inits, out, memory
   function expr(statement, param) {
-    if (!statement) ;
+    if (!statement) return ''
     // a; - just declare in proper scope
-    else if (typeof statement === 'string') {
-      let name = statement, v = scope[name]
-      define(name,v)
-      locals.push(`(${v.global?'global':'local'}.get $${name})`)
-    }
-    else if (statement[0] in expr) expr[statement[0]](statement, param)
-    else err('Unknown operation `' + statement[0] + '`',statement)
-  }
-  // define variable in proper scope
-  function define(name, v) {
-    if (!v.defined) {
-      let wtype = v.type === FLOAT ? 'f64' : 'i32'
-      if (v.global) globals.push(`(global $${name} (mut ${wtype}) (${wtype}.const 0))`);
-      else locals.unshift(`(local $${name} ${wtype})`)
-      v.defined = true
-    }
+    // FIXME: funcs may need returning something meaningful
+    if (typeof statement === 'string') return scope[statement].type === FUNC ? `` : `(${scope[statement].global?'global':'local'}.get $${statement})`
+    if (statement[0] in expr) return expr[statement[0]](statement, param) || ''
+    err('Unknown operation `' + statement[0] + '`',statement)
   }
 
   Object.assign(expr, {
     // a; b; c;
-    ';'([,...statements]){ for (let s of statements) expr(s) },
-    ','([,...statements]){ for (let s of statements) expr(s) },
+    ';'([,...statements]){ let list=[]; for (let s of statements) list.push(expr(s)); return list.join('\n') },
+    ','([,...statements]){ let list=[]; for (let s of statements) list.push(expr(s)); return list.join(' ') },
 
     // number primitives: 1.0, 2 etc.
     [FLOAT]([,a]) {
-      if (typeof a === 'number') locals.push(`(f64.const ${a})`)
-      else locals.push(`(f64.convert_i32_s ${expr(a), locals.pop()})`)
+      if (typeof a === 'number') return `(f64.const ${a})`;
+      return `(f64.convert_i32_s ${expr(a)})`;
     },
-    [INT]([,a]) { locals.push(`(i32.const ${a})`) },
+    [INT]([,a]) {
+      if (typeof a === 'number') return `(i32.const ${a})`
+      return `(i32.trunc_f64_s ${expr(a)})`
+    },
 
     '='([,name,init]) {
       // [size]x
       if (name[0] === '[') name = name[2]
-      define(name, scope[name])
-      expr(init, name)
-      if(desc(init,scope).type !== FUNC) locals.push(`(${scope[name].global?'global':'local'}.set $${name} ${locals.pop()})`)
+      let res = expr(init,name)
+      if (desc(init,scope).type !== FUNC) return `(${scope[name].global?'global':'local'}.set $${name} ${res})`
     },
 
     '->'(fn, name) {
@@ -70,12 +60,17 @@ export default function compile(node) {
       if (fn.result) dfn.push(`(result ${fn.result.type == FLOAT ? 'f64' : 'i32'})`)
 
       // declare locals
-      Object.getOwnPropertyNames(scope).filter(id=>!scope[id].arg).forEach(id=>define(id,scope[id]))
+      Object.getOwnPropertyNames(scope).filter(id=>!scope[id].arg).forEach(define)
+
+      const content = expr(prepare) + expr(body);
 
       // init body - expressions write themselves to body
-      expr(prepare), expr(body)
-      locals.push('(return)')
-      globals.push(`(func $${name} ${dfn.join(' ')}\n${locals.join('\n')})`)
+      globals.push(
+        `(func $${name} ${dfn.join(' ')}\n` +
+        locals.join('\n') +
+        content +
+        `\n(return))`
+      )
 
       scope = parent
       locals = prevLocals
@@ -84,27 +79,30 @@ export default function compile(node) {
     '('(statement){
       let parent = scope
       scope = statement.scope
-      expr(statement[1])
+      // declare locals
+      Object.getOwnPropertyNames(scope).forEach(define)
+      let res = expr(statement[1])
       scope = parent
+      return res
     },
 
     '-'([,a,b]) {
       // [-, [int, a]] -> (i32.const -a)
       if (!b) {
-        if (a[0] == INT || a[0] == FLOAT) expr([a[0], -a[1]])
-        else if (desc(a,scope).type == FLOAT) locals.push(`(f64.neg ${expr(a), locals.pop()})`)
-        else expr(['-',[INT,0],a[1]])
+        if (a[0] == INT || a[0] == FLOAT) return expr([a[0], -a[1]])
+        if (desc(a,scope).type == FLOAT) return `(f64.neg ${expr(a)})`
+        return expr(['-',[INT,0],a[1]])
       }
-      else if (desc(a,scope).type == INT && desc(b,scope).type == INT) locals.push(`(i32.sub ${expr(a)} ${expr(b)})`)
-      else locals.push(`(f64.sub ${expr(flt(a)), locals.pop()} ${expr(flt(b)), locals.pop()})`)
+      if (desc(a,scope).type == INT && desc(b,scope).type == INT) return `(i32.sub ${expr(a)} ${expr(b)})`
+      return `(f64.sub ${expr(flt(a))} ${expr(flt(b))})`
     },
     '+'([,a,b]) {
-      if (desc(a,scope).type == INT && desc(b,scope).type == INT) locals.push(`(i32.add ${expr(a)} ${expr(b)})`)
-      else locals.push(`(f64.add ${expr(flt(a)), locals.pop()} ${expr(flt(b)), locals.pop()})`)
+      if (desc(a,scope).type == INT && desc(b,scope).type == INT) return `(i32.add ${expr(a)} ${expr(b)})`
+      return `(f64.add ${expr(flt(a))} ${expr(flt(b))})`
     },
     '*'([,a,b]) {
-      if (desc(a,scope).type == INT && desc(b,scope).type == INT) locals.push(`(i32.mul ${expr(a)} ${expr(b)})`)
-      else locals.push(`(f64.mul ${expr(flt(a)), locals.pop()} ${expr(flt(b)), locals.pop()})`)
+      if (desc(a,scope).type == INT && desc(b,scope).type == INT) return `(i32.mul ${expr(a)} ${expr(b)})`
+      return `(f64.mul ${expr(flt(a))} ${expr(flt(b))})`
     },
 
     // a -< range - clamp a to indicated range
@@ -113,9 +111,9 @@ export default function compile(node) {
       let [,min,max] = b
       if (desc(a,scope).type == INT && desc(min,scope).type == INT && desc(max,scope).type == INT) {
         includes.push(['std','i32.smax'], ['std','i32.smin'])
-        locals.push(`(call $std/i32.smax (call $std/i32.smin ${expr(a),locals.pop()} ${expr(max),locals.pop()}) ${expr(min),locals.pop()})`)
+        return `(call $std/i32.smax (call $std/i32.smin ${expr(a)} ${expr(max)}) ${expr(min)})`
       }
-      else locals.push(`(f64.max (f64.min ${expr(flt(a)), locals.pop()} ${expr(flt(max)), locals.pop()}) ${expr(flt(min)), locals.pop()})`)
+      return `(f64.max (f64.min ${expr(flt(a))} ${expr(flt(max))}) ${expr(flt(min))})`
     },
 
     // [1,2,3]
@@ -123,11 +121,16 @@ export default function compile(node) {
       [,...members] = members
       let out = ``
       for (let i = 0; i < members.length; i++) {
-        out += `(f64.store (i32.const ${memcount + i*BYTES_PER_F64}) ${expr(flt(members[i])), locals.pop()}) `
+        out += `(f64.store (i32.const ${memcount + i*BYTES_PER_F64}) ${expr(flt(members[i]))}) `
       }
-      locals.push(out)
-      locals.push(`\n(i32.const ${memcount})`)
+      out += `\n(i32.const ${memcount})`
       memcount += members.length
+      return out
+    },
+    // a[b] or a[]
+    '[]'([,a,b]) {
+      if (!b) { console.log(a,b) }
+      else {}
     },
 
     // a | b
@@ -136,6 +139,17 @@ export default function compile(node) {
     }
   })
 
+  // define variable in proper scope
+  function define(name) {
+    let v = scope[name]
+    if (!v.defined && v.type !== FUNC) {
+      let wtype = v.type === FLOAT ? 'f64' : 'i32'
+      if (v.global) globals.push(`(global $${name} (mut ${wtype}) (${wtype}.const 0))`);
+      else locals.push(`(local $${name} ${wtype})`)
+      v.defined = true
+    }
+  }
+
   // wrap last expr with float
   function flt(node) {
     if (node[0] === FLOAT || desc(node, scope).type === FLOAT) return node
@@ -143,7 +157,7 @@ export default function compile(node) {
   }
 
 
-  // begin
+  // begin - pretend global to be a function init
   expr['->'](Object.assign(['->',,node],{scope:node.scope}), 'module/init')
   globals.push(`(start $module/init)`)
 

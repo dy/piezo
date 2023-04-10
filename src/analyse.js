@@ -52,12 +52,13 @@ export default function analyze(node) {
       if (right[0]==='(') right = right[1]
 
       // =a,b,c    =a|b|c    =expr
-      right = expr(right)
+      // right = expr(right)
 
       // a = b,  a,b=1,2, [x]a =
       // a = ...
       if (typeof left === 'string') {
         if (right[0] === ',') err('Assigning multiple values to a single value ' + left, right)
+        right = expr(right)
         let rDesc = desc(right, scope)
         if (!scope[left]) scope[left] = rDesc
         else {
@@ -74,7 +75,7 @@ export default function analyze(node) {
         let sizeDesc = desc(size, scope)
         if (sizeDesc.type !== INT) err('Array size is not integer', left)
         // FIXME: prohibit dynamic sizes (maybe non-local arrays?)
-        scope[name] = {type:PTR, size};
+        scope[name] = {type:PTR, size:size[1]};
         return ['=',name,expr(right)]
       }
       // *a = ..., *(a,b,c) = ...
