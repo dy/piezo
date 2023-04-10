@@ -1,7 +1,8 @@
 # lino
 
-**Lino** (*li*ne *no*ise) is simple sound processing micro-language with focus on ergonomics and accessibility.<br/>
-It has common syntax (inspired by C, JS, Swift, Python) and compiles to WASM bytecode, making it available for different environments, eg. [audio worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), workers, [node](https://github.com/audiojs/web-audio-api) etc. It's my humble attempt to fill the gap & fix JS.
+**Lino** (*li*ne *no*ise) is low-level micro-language with focus on simplicity, ergonomics and accessibility.<br/>
+The main purpose is sound fx design (floatbeat, bytebeat, zzfx etc.), sound processing (dsp, filters, generators, meters), sound utilities (decoders/encoders, audio operations etc.).<br/>
+It has common syntax (inspired by C, JS, Swift, Python), type inference and compiles to WASM bytecode, making it available for different environments/languages/platforms. Main targets are [audio worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), workers, [nodejs](https://github.com/audiojs/web-audio-api), but can be used in Rust, Python, Go.
 
 <!--[Motivation](./docs/motivation.md)  |  [Documentation](./docs/reference.md)  |  [Examples](./docs/examples.md).-->
 
@@ -28,8 +29,8 @@ true = 0b1, false = 0b0;      // hint: alias booleans
 
 //////////////////////////// standard operators
 + - * / % **                  // arithmetical (** for pow)
-&& || !                       // logical
-& | ^ ~                       // int / binary ops
+&& || ! ?:                    // logical
+& | ^ ~ >> <<                 // binary
 == != >= <=                   // comparisons
 
 //////////////////////////// units
@@ -41,13 +42,14 @@ true = 0b1, false = 0b0;      // hint: alias booleans
 //////////////////////////// ranges
 1..10;                        // basic range
 1.., ..10;                    // open ranges
-10..1;                        // reverse-direction range
+10..1;                        // reverse range
 1.08..108.0;                  // float range
 0>..10, 0..<10, 0>..<10;      // non-inclusive ranges
 (x-1)..(x+1);                 // calculated ranges
-(-10..10)[];                  // length: 20
 1..2 + 2..3;                  // add ranges: 1..3
 1..3 - 2..;                   // subtract ranges: 1..2
+(-10..10)[];                  // length: 20
+1..2[0]; 1..2[-1];            // min/max: 1; 2
 
 //////////////////////////// clamp operator
 x -< 0..10;                   // clamp(x, 0, 10)
@@ -55,7 +57,12 @@ x -< ..10;                    // min(x, 10)
 x -< 0..;                     // max(0, x)
 x -<= 0..10;                  // x = clamp(x, 0, 10)
 4.. -< ..8;                   // clamp ranges: 4..8
-x -< (x,y,z);                 // return x if it's in group, null otherwise
+x -< (x,y,z);                 // return x if it's in a group, null otherwise
+
+//////////////////////////// length operator
+[1,2,3][];                    // 3
+(1,2,3)[];                    // 3
+(-1..+2)[];                   // 3
 
 //////////////////////////// groups
 a, b, c;                      // groups are syntactic sugar
@@ -67,22 +74,16 @@ a, b, c;                      // groups are syntactic sugar
 (a,b).x;                      // (a.x, b.x);
 (a,b).x();                    // (a.x(), b.x());
 (a,b,c) = (d,e,f);            // (a=d, b=e, c=f);
-(a,b,c) = d;                  // error: wrong number of assignment elements
+(a,b,c) = d;                  // (a=d, b=d, c=d);
 a = (b,c,d);                  // error: wrong number of assignment elements
-a = b, c = d;                 // note: assignment precedence is higher == (a = b), (c = d)
+a = b, c = d;                 // note: assignment precedence is higher: (a = b), (c = d)
 (a,b,c) = fn();               // functions can return multiple values;
-
-//////////////////////////// length operator
-[1,2,3][];                    // 3
-(1,2,3)[];                    // 3
-"abc"[];                      // 3
-(-1..+2)[];                   // 3
 
 //////////////////////////// statements
 foo();                        // semi-colons at end of line are mandatory
 (c = a + b; c);               // parens define block, return last element
-(a=b+1; a,b,c);               // block can return group
-(a ? ^b; c);                  // return/break operator can preliminarily return value
+(a = b+1; a,b,c);             // block can return group
+(a && ^b; c);                 // return/break operator can preliminarily return value
 
 //////////////////////////// conditions
 sign = a < 0 ? -1 : +1;       // inline ternary
@@ -94,19 +95,8 @@ sign = a < 0 ? -1 : +1;       // inline ternary
   log("Get ready");           //
   log("Last chance")          //
 );                            //
-a > b ? b++;                  // if operator
-a > b ?: b++;                 // elvis operator (else if)
-
-//////////////////////////// loops
-s = "Hello";                  //
-s[] < 50 <| (s += ", hi");    // inline loop: `while (s.length < 50) do (s += ", hi)"`
-(i=0; i++ < 10 <| (           // multiline loop
-  i < 3 ? ^^;                 // `^^` to break loop (can return value as ^^x)
-  i < 5 ? ^;                  // `^` to continue loop (can return value as ^x)
-  log(i);                     //
-));                           //
-i=0; i++ < 3 <| i;            // list produces group 0, 1, 2
-[j++ < 10 <| j * 2];          // list comprehension via loop
+a > b && c;                   // if a > b then c
+a < b || c;                   // if a < b else c
 
 //////////////////////////// functions
 double = n -> n*2;            // inline function
@@ -122,45 +112,59 @@ copy(n: 10);                  // also 30
 clamp = (v -< 0..10) -> v;    // clamp argument
 x = () -> (1,2,3);            // return group (multiple values)
 (a,b,c) = x();                // assign to a group
-mul = ([]in, amp) -> in*amp;  // memory pointer argument
-mul = ([8]in, amp) -> in*amp; // fixed size mem pointer argument
-
-//////////////////////////// memory
-*[4]i = (1,2,3,4);            // allocate & init memory of 4 items
-i.0, i.1, i.2, i.3;           // access item by static index (0-based)
-i[0], i[1], i[-1];            // access by dynamic index, negative for last element
-i[];                          // get length
-i = (3,4,5,6);                // write multiple values
-i[1..3] = (7,8);              // write to a subrange
-i << 2; i >> 3;               // shift values in memory right or left
 
 //////////////////////////// stateful variables
 a = () -> ( *i=0; i++ );      // stateful variable - persist value between fn calls
 a(), a();                     // 0, 1
 b = () -> (                   //
-  *[4]i;                      // local memory of 4 items
-  i >> 1;                     // shift memory right by 1 every fn call
-  i.0 = i.1+1;                // write previous value i.1 to current value i.0, return i.0
+  *i = [..4];                 // local memory of 4 items
+  i >> 1;                     // shift memory right every fn call
+  i.0 = i.1+1;                // write previous value i.1 to current value i.0
+  i.0                         // return i.0
 );                            //
 b(), b(), b();                // 1, 2, 3
 
-///////////////////////////// map
-[a, b, c] | x -> a(x);        // maps list to new list
-(a, b, c) | a -> a.x * 2;     // maps group items (syntactically)
-10..1 | i -> (                // iteration over range (produces group)
+//////////////////////////// arrays
+m = [1,2,3,4];                // create array of 4 items
+m = [0..1000];                // create array of 1000 items
+m = [l:2, r:4, c:6];          // create with position aliases
+m = [0..8 | i -> i*2];        // create from array comprehension
+m.0, m.1, m.2, m.3;           // access item by static index (0-based)
+m[0], m[1], m[-1];            // access by dynamic index, negative for last element
+m[];                          // get length
+m[1..3] = (7,8);              // write multiple values
+m[0..] = (1,2,3,4);           // write all values from index 0
+m[-1..0] = m[0..];            // reverse order
+m << 2; m >> 3;               // shift values in array right or left
+n = [m[1..3, 5, 6..]];        // create copy from indicated subrange
+~m;                           // dispose (free) array
+
+//////////////////////////// loop
+i=0; i++ < 3 <| log(i);       // inline loop: while i++ < 3 do log(i)
+(i=0; i++ < 10 <| (           // multiline loop
+  i < 3 ? ^^;                 // `^^` to break loop (can return value as ^^x)
+  i < 5 ? ^;                  // `^` to continue loop (can return value as ^x)
+  log(i);                     //
+));                           //
+[ j++ < 10 <| j * 2 ];        // list comprehension via loop
+
+///////////////////////////// iterator
+(a, b, c) | a -> a.x * 2;     // map items (syntactically)
+[a, b, c] | x -> a(x);        // iterate over list
+10..1 | i -> (                // iterate over range
   i < 3 ? ^^;                 // `^^` breaks iteration
   i < 5 ? ^;                  // `^` continues iteration
-);                            // returns group
-[ 1..10 | x -> x * 2 ];       // list comprehension
+);                            //
+[ 1..10 | x -> x * 2 ];       // list comprehension via iterator
+items |= x -> x * 2;          // overwrite items in source array
 
 //////////////////////////// fold
-items |> (sum,x) -> sum+x;    // fold operator with reducer
-(a,b,c) |> (a,b) -> a + b;    // can be applied to groups (syntax sugar)
-[a,b,c] |> (a,b) -> a + b;    // can be applied to lists
+(a,b,c) |> (a,b) -> a + b;    // fold group (syntax sugar)
+[a,b,c] |> (a,b) -> a + b;    // fold list
 
 //////////////////////////// import
-x, y, z @ './path/to/module'; // any file can be imported directly
-pi, sin, max @ 'math';        // or defined via import-maps.json
+@'./path/to/module#x,y,z';    // any file can be imported directly
+@'math#pi,sin,max';           // or defined via import-maps.json
 
 //////////////////////////// export
 x, y, z.                      // last statement in the file ending with . exports all members
@@ -169,6 +173,7 @@ x, y, z.                      // last statement in the file ending with . export
 <!--
 
 //////////////////////////// strings
+// NOTE: can be not trivial to
 hi="hello";                   // strings
 string="{hi} world";          // interpolated string: "hello world"
 "\u0020", "\x20";             // unicode or ascii codes
@@ -185,24 +190,7 @@ string / string;              // split: "a b" / " " = ["a", "b"]
 string * list;                // join: " " * ["a", "b"] = "a b"
 string * 2;                   // repeat: "abc" * 2 = "abcabc"
 "l" ~< string;                // find position of substring in the string
-
-//////////////////////////// arrays
-list = [1, 2, 3];             // list from elements
-list = [l:2, r:4, c:6];       // list with aliases
-list = [0..10];               // list from range
-list = [0..8 | i -> i*2];     // list comprehension
-list = [list1, list2];        // list from multiple lists (always flat)
-[2]list = list1;              // (sub)list of fixed size
-list.0, list.1, list.2;       // short index access notation
-list.l = 2;                   // alias index access
-list[0];                      // positive indexing from first element [0]: 2
-list[-2]=5;                   // negative indexing from last element [-1]: list becomes [2,4,5,8]
-list[];                       // length
-list[1..3, 5]; list[5..];     // slice
-list[-1..0];                  // reverse
-list | x -> x * 2;            // iterate/map items
-2 ~< list;                    // find index of item in the list
-
+NOTE: indexOf can be done as `string | (x,i) -> (x == "l" ? i)`
 -->
 
 ## Examples
@@ -212,16 +200,16 @@ list | x -> x * 2;            // iterate/map items
 Provides k-rate amplification of input audio.
 
 ```fs
-gain = ( []in, volume -< 0..100 ) -> (
-  in | x -> x * volume
+gain = ( x, volume -< 0..100 ) -> (
+  x * volume;  // write to output array
 );
 
-out = gain([0, .1, .2, .3, .4, .5], 2); // gain
-// out == (0, .2, .4, .6, .8, 1);       // output contains result values
+[0, .1, .2, .3, .4, .5] | x -> gain(x, 2);
+// 0, .2, .4, .6, .8, 1
 ```
 
-* _functions_ − arrow `(foo, bar -< 0..10, baz=dflt) -> (expr1; expr2)` defines a function. Arguments may have range or default value indicators. Function returns last expression or sequence.
-* _block input/output_ − `[size]input` indicates fixed-size array argument (useful for <em title="Audio, or precise rate">a-rate*</em> input/param); direct argument has number type, can be used for <em title="Controlling (historical artifact from CSound), blocK-rate">k-rate*</em> params.
+* _functions_ − arrow `(a, b -< 0..10, c=10) -> (expr1; expr2)` defines a function. Arguments may have range or default value indicators. Function returns last expression or sequence.
+* _batch input/output_ − `[input]` batch argument indicates <em title="Audio, or precise rate">a-rate*</em> param; direct argument is <em title="Controlling (historical artifact from CSound), blocK-rate">k-rate*</em> param.
 * _validation_ − `a -< range` (_a ∈ range_) clamps argument to provided range, to avoid blowing up values.
 * _range_ − primitive with `from..to` signature, useful for clamping, slicing etc.
 
@@ -237,7 +225,7 @@ Biquad filter processor for single-channel input.
 1s = 44100;                   // define time units in samples
 1k = 10000;                   // basic si units
 
-lp = ([]x, []y, freq = 100 -< 1..10k, Q = 1.0 -< 0.001..3.0) -> (
+lpf = (x0, freq = 100 -< 1..10k, Q = 1.0 -< 0.001..3.0) -> (
   *x1=0, *x2=0, *y1=0, *y2=0;     // filter state (defined by callsite)
 
   // lpf formula
@@ -250,18 +238,16 @@ lp = ([]x, []y, freq = 100 -< 1..10k, Q = 1.0 -< 0.001..3.0) -> (
 
   (b0, b1, b2, a1, a2) *= 1.0 / a0;
 
-  // write to y
-  y = x | x0 -> (
-    y0 = b0*x0 + b1*x1 + b2*x2 - a1*y1 - a2*y2;
+  y0 = b0*x0 + b1*x1 + b2*x2 - a1*y1 - a2*y2;
 
-    (x1, x2) = (x0, x1);
-    (y1, y2) = (y0, y1);
+  (x1, x2) = (x0, x1);
+  (y1, y2) = (y0, y1);
 
-    y0
-  )
+  y0
 );
 
-lp, blockLen.              // export
+// export block processing
+Lpf = (x, freq, Q) -> ( *out=[..x[]]; out[0..] = x | x -> lpf(x, freq, Q); out).
 ```
 
 * _import_ − done via URI string as `@ 'path/to/lib#foo,bar'`. <!-- Built-in libs are: _math_, _std_. Additional libs: _sonr_, _latr_, _musi_ and [others](). --> _import-map.json_ can provide import aliases.
@@ -270,30 +256,28 @@ lp, blockLen.              // export
 * _scope_ − parens `()` besides precedence can indicate function body; returns last element or group.
 * _export_ – last statement with period operator indicates exported entries.
 
-[See all examples](/examples)
-
-<!--
 ### ZZFX
 
 Consider [coin sound](https://codepen.io/KilledByAPixel/full/BaowKzv):
 > `zzfx(...[,,1675,,.06,.24,1,1.82,,,837,.06])`
 
 ```fs
-@ 'math';
+@ 'math#pi,abs,sin,round';
 
 1pi = pi;
 1s = 44100;
+1ms = 1s / 1000;
 
 oscillator = [
-  saw: phase -> [1 - 4 * abs( round(phase/2pi) - phase/2pi )],
-  sine: phase -> [sin(phase)];
+  saw: phase -> 1 - 4 * abs( round(phase/2pi) - phase/2pi ),
+  sine: phase -> sin(phase);
 ];
 
 adsr = (x, a, d, (s, sv=1), r) -> (
   *i = 0;
   t = i++ / 1s;
 
-  a = a -< 0.0001..;             // prevent click
+  a -<= 1ms..;                // prevent click
   total = a + d + s + r;
 
   y = t >= total ? 0 : (
@@ -318,7 +302,7 @@ coin = (freq=1675, jump=freq/2, delay=0.06, shape=0) -> (
   t = i++ / 1s;
   phase += (freq + t > delay ? jump : 0) * 2pi / 1s;
 
-  [0..blockSize] | x -> oscillator[shape](phase) | x -> adsr(x, 0, 0, .06, .24) | x -> curve(x, 1.82)
+  oscillator[shape](phase) | adsr(0, 0, .06, .24) | curve(1.82)
 );
 ```
 
@@ -327,7 +311,10 @@ coin = (freq=1675, jump=freq/2, delay=0.06, shape=0) -> (
 * _pipes_ − `|` operator is overloaded for functions as `a | b` → `b(a)`.
 * _arrays_ − flat collection of same-type elements: numbers or functions. Unlike groups, arrays are primitives and stored in memory.
 * _named members_ − group or array members can get alias as `[foo: a, bar: b]`.
--->
+
+[See all examples](/examples)
+
+<!--
 
 <!--
 
