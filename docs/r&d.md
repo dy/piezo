@@ -82,14 +82,6 @@ Having wat files is more useful than direct compilation to binary form:
 
   * like glsl (data views to underlying block buffer), with [standard channel ids](https://en.wikipedia.org/wiki/Surround_sound#Standard_speaker_channels); swizzles as `a.l, a.r = a.r, a.l; a.fl, a.fr = a.fl`
 
-## [x] `import a,b,c from 'lib'`, `import sin from 'stdlib'` → `@ 'stdlib#sin`, `@'lib#a,b,c;`
-
-  * ? How do we redefine eg. sin from stdlib?
-    ? Just reassign to var or give another name? Every fn has unique name?
-    → import only subset, like `import sin from 'stdlib'`
-
-  → default is going to need a name to be importable directly
-
 ## [x] `f(x, y) = x + y` -> let's use `f = arg -> result`
   + standard classic way to define function in math
   + also as in F# or Elixir
@@ -1085,7 +1077,7 @@ Having wat files is more useful than direct compilation to binary form:
   + allows building chords as (C3, E3, G3) = Cmaj
     ~ would require # to be valid part of identifier
 
-## [x] ? Parts of identifier: $, #, @, _ → # is for length, @ is reserved for import
+## [x] ? Parts of identifier: $, #, @, _ → @ is reserved for import
   + allows private-ish variables
   + allows notes constants
   ~ mb non-standardish
@@ -1366,7 +1358,7 @@ Having wat files is more useful than direct compilation to binary form:
     + saves lots of manual code
     + saves namespace
 
-## [x] ? Should we provide param types or not? -> try explicit dims notation `[1024]in`
+## [x] ? Should we provide param types or not? -> try explicit dims notation `[1024]in` -> nah, can pass ptr directly
   * kParam type clause can save 1024 memory reads per block.
 
   1. hide implementation detail of kRate/aRate and generate both clauses depending on input type.
@@ -1661,7 +1653,7 @@ Having wat files is more useful than direct compilation to binary form:
       → better export global `reset` to enable instance rotation.
       → generally functions allocate own memory on first call, with assigned unique callsites within current instance.
 
-## [x] Batch function reads from memory; regular function takes arguments. How to differentiate them? → batch is indicated by ~.
+## [x] Batch function reads from memory; regular function takes arguments. How to differentiate them? → we don't have batch functions, loops are trivial
 
   1. `export` === processing
     - `import pow from 'math'` is not processing function
@@ -1841,7 +1833,7 @@ Having wat files is more useful than direct compilation to binary form:
   + JS keywords are ridiculous: they block many good names pushing user use marginal names.
   + keywords play role of comments anyways. It's better to put freeword explanation into comments rather than pollute language.
 
-## [x] Import no-keyword? @ 'math#floor';
+## [x] Import no-keyword? -> yep, @ 'math#floor' or like that
 
   * No need to define scope: imports full contents
   * #[math]; (Rusti)
@@ -1911,7 +1903,7 @@ Having wat files is more useful than direct compilation to binary form:
 
   ? is there a change we're going to need to include generic binary fragments?
 
-  * importing all or is not nice pattern: that causes implicit conflict.
+  * importing all is not nice pattern: that causes implicit conflict.
     * it's better to always assign to a variable to make importable parts explicit.
     - conflicts with notes. We need to import all of them.
 
@@ -1919,6 +1911,7 @@ Having wat files is more useful than direct compilation to binary form:
 
   1. `@ 'math': sin, cos`
     + defines global functions
+    + less problem scoping imports
 
   2. `@ 'math#sin,cos'`
     + [qwik](https://www.builder.io/blog/hydration-is-pure-overhead)-like
@@ -1938,6 +1931,15 @@ Having wat files is more useful than direct compilation to binary form:
 
   2.1 `@math#sin,cos`, `@./path/to/file.son#a,b,c`
     - messes up with native syntax - paths are not part of it.
+
+  3. `sin,cos @ math`
+    + sounds nicely
+    + obvious definition of global module variables, not some part of atom
+    + similar to assignment by order
+    - scoping problem, same as JS.
+
+  3.1 `math @ sin, cos`
+
 
 ### [x] Do we need to have `@` for imports? Can't we just indicate atom directly? -> keep atoms free
 
@@ -2450,7 +2452,6 @@ Having wat files is more useful than direct compilation to binary form:
 
 ## [x] Should var scope be defined by parens `(x=1;(y=2;);y)` or by function? -> we should use parens as scope, but create scope only if new vars are defined there
 
-
 1. By parens: `y==undefined`
 
 + see "scope or not to scope"
@@ -2595,10 +2596,79 @@ Having wat files is more useful than direct compilation to binary form:
 - no way to deallocate, unless we find something like `~x`.
 -> requires some GC mechanism
 
-## [x] Compiler: expressions return type -> use side-effects
+3. `x = [1,2,3]`, `(x)->{}`, `*x = [..3s]` - don't introduce memory prefix
+
++ compatible with language logic: no separate notation for types, including array
++ memory block can be statically analyzed by most of the cases via usage/call semantics
+  + eg. `a[1]`, `a.1` etc.
+    ~+ we prohibit `i = (1,2,3)` then in favor of `i[0..3] = (1,2,3)`
++ similar to JS
+- external API requires defining array block via function or something, can't just pass region of memory
+  ~ seems we're going to need dynamic allocation due to the following factors:
+    * external API must define mem length somehow
+    * length operator `a[]` should be meaningful dynamically
+    * list comprehension, loop or fold can produce any-length lists
+    * we're anyways exporting memory under some technical name
+  ~ gotta need to implement `free` function as well or even an operator for that. `~x`?
+    + reminds of markdown's ~~x~~.
+    + that's syntax for C++ destructors
+    + binary ops applied to arrays obtain new meaning -that's nice
+
+4. Via stdlib fully, `x = alloc(1,2,3)`,
+  - no syntax support
+  - no type checking
+  - hard to write values
+
+## [x] Compiler: expressions return type -> use side-effects?
 
   1. expr must return string result;
     + allows nested processing like `(parent.expr (nested.expr))`
   2. modify current fn body, return none
     + allows more flexible write to different targets
   3. modify fn and return last element
+
+## [x] Batch function as a syntax sugar -> nah, simplify functions as much as possible, use `|`, `<|`, `|>` operators to generate processings
+
+  * We often can find code like `gain = (in,vol) -> (*out=[..in[]];out[0..]=in|x->x*vol;out)`
+
+  1. Instead, we can write single-sample functions as `gain = (in[],vol)->in*vol`
+    + that's way more natural syntax for single-sample processing, as it was intended initially
+    + it allows natural piping as `[1,2,3] | process`
+      - passing params eg. `[1,2,3] | x -> process(x, vol)` breaks batching logic
+        ~ or at least requires sort of type inference case and 2 compile clauses
+      ? What's the way to produce it for generators? `x -> [()]`?
+        ~ kind of meaningful, no? The issue is persisting output array instead of recreating that
+          - nah, it will produce an array of one item.
+    a. `gain = ([]in, vol) -> in * vol`; `gen = (f) -> [](code)`
+    b. `gain = (in[], vol) -> in * vol`; `gen = (f)[] -> code`
+    c. `gain = ([in], vol) -> in * vol`; `gen = f -> [code]`
+    d. `gain = (|in, vol) -> in * vol; [1,2,3] | gain(vol)`;
+      ? do we ever need piped value to be not first argument?
+    e. `gain = (x,v)->x*v; [1,2,3] | x -> gain(vol)`, `gen=f->code; ..1024 | gen`
+      - if we unroll function code at every pipe usage, our pipes will get huge. Ideally we need functions itself taking iterable parameter, and in simple 1-sample case it's just one.
+
+  2. We can make function code either take single-sample or batch-input, depending on usage clauses
+    . so that `gain = (in,vol) -> in * vol` can work as `[1,2,3] | gain` or `[1,2,3] | x -> gain(x,vol)`
+    + no pointers mental load
+    + same way we handle any-arg ops, making auto-type coercion if needed
+    - from external API we can't detect if value is a pointer or a number
+      -> we open old pandora box of indicating type of argument, there's just no good way
+    - there's no way of passing full array as a pointer `a([1,2,3],1)` - it will convert to batcher
+
+  * We're looking for something like `[1,2,3] | gain(volume) | filter(f:440,gain:-1000)` which returns an array as a result.
+    * Therefore `gain`, `filter` functions should expect some hidden or first argument to be not an item but full array
+  * We're also looking at gain code looking like `gain = (x, volume) -> x * volume`
+
+## [x] Pipe - should it work more as single-sample processing, or can take whole argument? -> should apply on multiple values
+
+  1. `[1,2,3] | x -> x` - per sample
+  + enriches mapper meaning with iterator
+  + makes point as iterator operator
+  + expands meaning of `|` for ranges, lists, single values
+  + makes memory ops waaay less prevalent and needed
+  ~ one consequence is inability to pass array to fn directly `gain([1,2,3],x)` - runs multiple times
+    . we kind of prohibit passing arrays as fn arguments
+
+  2. `[1,2,3] | x -> x` - `x` is whole argument
+  - makes only limited meaning as glue code
+  - less meaning for `|` as iterator operator
