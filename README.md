@@ -65,8 +65,8 @@ x -< (x,y,z);                 // return x if it's in a group, null otherwise
 a, b, c;                      // groups are syntactic sugar
 (a, b, c)++;                  // apply operation to multiple elements: (a++, b++, c++)
 (a, (b, c));                  // groups are always flat == (a, b, c)
-(a,b,c) = d,e,f;              // assign: a=d, b=e, c=f
-(a,b) = b,a;                  // swap: temp=a; a=b; b=temp;
+(a,b,c) = (d,e,f);            // assign: a=d, b=e, c=f
+(a,b) = (b,a);                // swap: temp=a; a=b; b=temp;
 (a,b) + (c,d);                // operations: (a+c, b+d)
 (a,b).x;                      // (a.x, b.x);
 (a,b).x();                    // (a.x(), b.x());
@@ -322,9 +322,9 @@ coin = (freq=1675, jump=freq/2, delay=0.06, shape=0) -> (
 
 1s = 44100;
 
-(a1,a2,a3,a4) = 1116,1188,1277,1356;
-(b1,b2,b3,b4) = 1422,1491,1557,1617;
-(p1,p2,p3,p4) = 225,556,441,341;
+(a1,a2,a3,a4) = (1116,1188,1277,1356);
+(b1,b2,b3,b4) = (1422,1491,1557,1617);
+(p1,p2,p3,p4) = (225,556,441,341);
 
 // TODO: stretch
 
