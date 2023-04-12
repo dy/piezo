@@ -65,8 +65,8 @@ x -< (x,y,z);                 // return x if it's in a group, null otherwise
 a, b, c;                      // groups are syntactic sugar
 (a, b, c)++;                  // apply operation to multiple elements: (a++, b++, c++)
 (a, (b, c));                  // groups are always flat == (a, b, c)
-(a,b,c) = (d,e,f);            // assign: a=d, b=e, c=f
-(a,b) = (b,a);                // swap: temp=a; a=b; b=temp;
+(a,b,c) = d,e,f;              // assign: a=d, b=e, c=f
+(a,b) = b,a;                  // swap: temp=a; a=b; b=temp;
 (a,b) + (c,d);                // operations: (a+c, b+d)
 (a,b).x;                      // (a.x, b.x);
 (a,b).x();                    // (a.x(), b.x());
