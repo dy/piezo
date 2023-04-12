@@ -222,6 +222,7 @@ Biquad filter processor for single-channel input.
 1s = 44100;                   // define time units in samples
 1k = 10000;                   // basic si units
 
+// process single sample
 lpf = (x0, freq = 100 -< 1..10k, Q = 1.0 -< 0.001..3.0) -> (
   *x1=0, *x2=0, *y1=0, *y2=0;     // filter state (defined by callsite)
 
@@ -243,8 +244,8 @@ lpf = (x0, freq = 100 -< 1..10k, Q = 1.0 -< 0.001..3.0) -> (
   y0
 );
 
-// export block processing
-Lpf = (x, freq, Q) -> ( *out=[..x[]]; out[0..] = x | x -> lpf(x, freq, Q); out).
+// process block (mutable)
+lpf = (x, freq, Q) -> (x |= x -> lpf(x, freq, Q)).
 ```
 
 * _import_ − done via URI string as `@ 'path/to/lib#foo,bar'`. <!-- Built-in libs are: _math_, _std_. Additional libs: _sonr_, _latr_, _musi_ and [others](). --> _import-map.json_ can provide import aliases.
@@ -270,11 +271,11 @@ oscillator = [
   sine: phase -> sin(phase);
 ];
 
-adsr = (x, a, d, (s, sv=1), r) -> (
+adsr = (x, a, d, (s, sv=1), r) -> ( // optional group-argument
   *i = 0;
   t = i++ / 1s;
 
-  a -<= 1ms..;                // prevent click
+  a -<= 1ms..;                   // prevent click
   total = a + d + s + r;
 
   y = t >= total ? 0 : (
@@ -292,14 +293,17 @@ adsr = (x, a, d, (s, sv=1), r) -> (
 // curve effect
 curve = (x, amt=1.82 -< 0..10) -> (sign(x) * abs(x)) ** amt;
 
-// coin = triangle with pitch jump
+// coin = triangle with pitch jump, produces block
 coin = (freq=1675, jump=freq/2, delay=0.06, shape=0) -> (
-  *i, *phase = 0, 0;
+  *i, *phase = 0, 0;  // current state
+  *out=[..1024];      // output block of 1024 samples
 
   t = i++ / 1s;
   phase += (freq + t > delay ? jump : 0) * 2pi / 1s;
 
-  oscillator[shape](phase) | adsr(0, 0, .06, .24) | curve(1.82)
+  out |= oscillator[shape](phase) | x -> adsr(x, 0, 0, .06, .24) | x -> curve(x, 1.82);
+  
+  out
 );
 ```
 
@@ -309,31 +313,25 @@ coin = (freq=1675, jump=freq/2, delay=0.06, shape=0) -> (
 * _arrays_ − flat collection of same-type elements: numbers or functions. Unlike groups, arrays are primitives and stored in memory.
 * _named members_ − group or array members can get alias as `[foo: a, bar: b]`.
 
-[See all examples](/examples)
-
-<!--
-
-<!--
 
 ## [Freeverb](https://github.com/opendsp/freeverb/blob/master/index.js)
 
 ```fs
-@ './combfilter.son#comb';
-@ './allpass.son#allpass'
-@ 'math';
+@ './combfilter.li#comb';
+@ './allpass.li#allpass'
 
 1s = 44100;
 
-a1,a2,a3,a4 = 1116,1188,1277,1356;
-b1,b2,b3,b4 = 1422,1491,1557,1617;
-p1,p2,p3,p4 = 225,556,441,341;
+(a1,a2,a3,a4) = 1116,1188,1277,1356;
+(b1,b2,b3,b4) = 1422,1491,1557,1617;
+(p1,p2,p3,p4) = 225,556,441,341;
 
 // TODO: stretch
 
 reverb = ([]input, room=0.5, damp=0.5) -> (
-  *combs_a = a0,a1,a2,a3 | stretch,
-  *combs_b = b0,b1,b2,b3 | stretch,
-  *aps = p0,p1,p2,p3 | stretch;
+  *combs_a = a0,a1,a2,a3 | a -> stretch(a),
+  *combs_b = b0,b1,b2,b3 | b -> stretch(b),
+  *aps = p0,p1,p2,p3 | p -> stretch(p);
 
   combs = (
     (combs_a | x -> comb(x, input, room, damp) |> (a,b) -> a+b) +
@@ -348,15 +346,13 @@ Features:
 
 * _multiarg pipes_ − pipe can consume groups. Depending on arity of target it can act as convolver: `a,b,c | (a,b) -> a+b` becomes  `(a,b | (a,b)->a+b), (b,c | (a,b)->a+b)`.
 * _fold operator_ − `a,b,c |> fn` acts as `reduce(a,b,c, fn)`, provides efficient way to reduce a group or array to a single value.
--->
 
-<!--
 ### [Floatbeat](https://dollchan.net/bytebeat/index.html#v3b64fVNRS+QwEP4rQ0FMtnVNS9fz9E64F8E38blwZGvWDbaptCP2kP3vziTpumVPH0qZyXzfzHxf8p7U3aNJrhK0rYHfgHAOZZkrlVVu0+saKbd5dTXazolRwnvlKuwNvvYORjiB/LpyO6pt7XhYqTNYZ1DP64WGBYgczuhAQgpiTXEtIwP29pteBZXqwTrB30jwc7i/i0jX2cF8g2WIGKlhriTRcPjSvcVMBn5NxvgCOc3TmqZ7/IdmmEnAMkX2UPB3oMHdE9WcKqVK+i5Prz+PKa98uOl60RgE6zP0+wUr+qVpZNsDUjKhtyLkKvS+LID0FYVSrJql8KdSMptKKlx9eTIbcllvdf8HxabpaJrIXEiycV7WGPeEW9Y4v5CBS07WBbUitvRqVbg7UDtQRRG3dqtZv3C7bsBbFUVcALvwH86MfSDws62fD7CTb0eIghE/mDAPyw9O9+aoa9h63zxXl2SW/GKOFNRyxbyF3N+FA8bPyzFb5misC9+J/XCC14nVKfgRQ7RY5ivKeKmmjOJMaBJSbEZJoiZZMuj2pTEPGunZhqeatOEN3zadxrXRmOw+AA==)
 
 Transpiled floatbeat/bytebeat song:
 
 ```fs
-@'math';
+@'math#asin,sin,pi';
 
 sampleRate = 44100;
 
@@ -397,7 +393,8 @@ Features:
 * _loop operator_ − `cond <| expr` acts as _while_ loop, calling expression until condition holds true. Produces sequence as result.
 * _string literal_ − `"abc"` acts as array with ASCII codes.
 * _length operator_ − `items[]` returns total number of items of either an array, group, string or range.
--->
+
+[See all examples](/examples)
 
 
 ## Usage
