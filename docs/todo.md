@@ -15,7 +15,9 @@
 * [x] Parser
 
 * [x] Add proper scope mechanism (streamline compiler)
-* [ ] Test nested scopes variables ` `
+* [ ] Test nested scopes variables
+* [ ] Test optional arguments
+* [ ] Test pipe over different cases
 * [ ] Implement memory alloc
 * [ ] Simple loops
 * [ ] Audio gain example

@@ -2659,16 +2659,32 @@ Having wat files is more useful than direct compilation to binary form:
     * Therefore `gain`, `filter` functions should expect some hidden or first argument to be not an item but full array
   * We're also looking at gain code looking like `gain = (x, volume) -> x * volume`
 
-## [x] Pipe - should it work more as single-sample processing, or can take whole argument? -> should apply on multiple values
+## [x] Pipe - should it work more as single-sample processing, or can take whole argument? -> ok, use pipe as iterator, benefits outweight block-processing functions
+
 
   1. `[1,2,3] | x -> x` - per sample
   + enriches mapper meaning with iterator
-  + makes point as iterator operator
+  + makes point as iterator operator in `<|`, `|`, `|>` group
   + expands meaning of `|` for ranges, lists, single values
   + makes memory ops waaay less prevalent and needed
-  ~ one consequence is inability to pass array to fn directly `gain([1,2,3],x)` - runs multiple times
+  - inability to pass array to fn directly `gain([1,2,3],x)` - runs multiple times
     . we kind of prohibit passing arrays as fn arguments
+      ~ on export we can wrap functions into optional params checks as well as passed-memory checks?
+      ? also we can manually write exporter functions, targeted for our particular fx, eg. zzfx.lino
+  + produces single-loop code which is good
+    - doesn't expose function calls within that loop: fns are still called per-sample
+      + Binaryen has inlining, potentially reducing fn calls into inlined code
+  + it's just less cognitive load, keeps fn syntax natural
 
   2. `[1,2,3] | x -> x` - `x` is whole argument
   - makes only limited meaning as glue code
   - less meaning for `|` as iterator operator
+  - produced code `arr | x -> a(x) | x -> b(x)` turns into a sequence of internal in-memory arrays and writing/reading ops to glue pipes.
+    + that's faster within one processor, eg. `a(x)`
+    + that allows single processor take arrays from external API `a([1,2,3])`
+      ? can we work that around?
+  - harder for optimizers
+
+## [x] How to detect optional params -> enforce optional arguments always be f64
+
+  * If we enforce function arguments always be f64 we can detect it via NaN

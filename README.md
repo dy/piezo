@@ -1,9 +1,6 @@
 # lino
 
-**Lino** (*li*ne *no*ise) is low-level micro-language with focus on simplicity, ergonomics and accessibility.<br/>
-The main purpose is sound fx design (floatbeat, bytebeat, zzfx etc.), sound processing (dsp, filters, generators, meters), sound utilities (decoders/encoders, audio operations etc.).<br/>
-It has common syntax (inspired by C, JS, Swift, Python), type inference and compiles to WASM bytecode, making it available for different environments/languages/platforms. Main targets are [audio worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), workers, [nodejs](https://github.com/audiojs/web-audio-api), but can be used in Rust, Python, Go.
-
+**Lino** (*li*ne *no*ise) is micro-language for sound fx design, processing, and utilities. Lino features common syntax, type inference, and compiles to WASM bytecode, making it available to various environments and platforms - mainly targets [audio worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), workers, [nodejs](https://github.com/audiojs/web-audio-api), but can also be used in Rust, Python, and Go.
 <!--[Motivation](./docs/motivation.md)  |  [Documentation](./docs/reference.md)  |  [Examples](./docs/examples.md).-->
 
 > WIP: current stage is stabilized syntax and basic cases compilation; it requires full compiler implementation.
@@ -128,7 +125,7 @@ b(), b(), b();                // 1, 2, 3
 m = [1,2,3,4];                // create array of 4 items
 m = [0..1000];                // create array of 1000 items
 m = [l:2, r:4, c:6];          // create with position aliases
-m = [0..8 | i -> i*2];        // create from array comprehension
+m = [0..8 | i -> i*2];        // create from list comprehension
 m.0, m.1, m.2, m.3;           // access item by static index (0-based)
 m[0], m[1], m[-1];            // access by dynamic index, negative for last element
 m[];                          // get length
@@ -150,7 +147,7 @@ i=0; i++ < 3 <| log(i);       // inline loop: while i++ < 3 do log(i)
 
 ///////////////////////////// iterator
 (a, b, c) | a -> a.x * 2;     // map items (syntactically)
-[a, b, c] | x -> a(x);        // iterate over list
+[a, b, c] | x -> a(x);        // iterate over array
 10..1 | i -> (                // iterate over range
   i < 3 ? ^^;                 // `^^` breaks iteration
   i < 5 ? ^;                  // `^` continues iteration
