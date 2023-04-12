@@ -11,7 +11,7 @@
 //////////////////////////// naming convention
 foo=1, bar=2;                 // declare multiple vars
 Ab_C_F#, $0, Δx;              // names permit alnum, unicodes, #, _, $
-fooBar123 == FooBar123;       // names are case-insensitive
+fooBar123 == FooBar123;       // names are case-insensitive (lowcase encouraged!)
 default=1, eval=fn, else=0;   // hint: common words allowed - lino has no reserved words
 
 //////////////////////////// numbers
