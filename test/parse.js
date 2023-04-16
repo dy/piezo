@@ -102,8 +102,8 @@ t('parse: strings', t => {
   is(parse('string - string'),['-','string','string'], 'removes all occurences of the right string in the left string: ""')
   is(parse('string / string'),['/','string','string'], 'split: "a b" / " " = ["a", "b"]')
   is(parse('string * list'),['*','string','list'], 'join: " " * ["a", "b"] = "a b"')
-  is(parse('string ~> "l"'),['~>','string',['"','l']], 'indexOf: 2')
-  is(parse('string ~< "l"'),['~<','string',['"','l']], 'rightIndexOf: -2')
+  // is(parse('string ~> "l"'),['~>','string',['"','l']], 'indexOf: 2')
+  // is(parse('string ~< "l"'),['~<','string',['"','l']], 'rightIndexOf: -2')
 })
 
 t('parse: lists', t => {
@@ -121,23 +121,23 @@ t('parse: lists', t => {
   is(parse('list[5..]'), ['[]','list',['..',[INT,5],undefined]],'slice')
   is(parse('list[-1..0]'), ['[]','list',['..',['-',[INT,1]],[INT,0]]],'reverse')
   is(parse('list | x -> x * 2'), ['|','list',['->','x',['*','x',[INT,2]]]],'iterate/map items')
-  is(parse('list ~> item'), ['~>','list','item'],'find index of the item')
-  is(parse('list ~< item'), ['~<','list','item'],'rfind')
-  is(parse('list + 2'), ['+','list',[INT,2]],'math operators act on all members')
+  // is(parse('list ~> item'), ['~>','list','item'],'find index of the item')
+  // is(parse('list ~< item'), ['~<','list','item'],'rfind')
+  // is(parse('list + 2'), ['+','list',[INT,2]],'math operators act on all members')
 })
 
 t('parse: statements', t => {
   is(parse('foo()'), ['()','foo'], 'semi-colons at end of line are mandatory')
   is(parse('(c = a + b; c)'), ['(',[';',['=','c',['+','a','b']],'c']], 'parens define block, return last element')
   is(parse('(a=b+1; a,b,c)'), ['(',[';',['=','a',['+','b',[INT,1]]],[',','a','b','c']]], 'block can return group')
-  is(parse('(a ? ^b; c)'), ['(',[';',['?','a',['^','b']],'c']], 'return/break operator can preliminarily return value')
+  // is(parse('(a ? ^b; c)'), ['(',[';',['?','a',['^','b']],'c']], 'return/break operator can preliminarily return value')
   is(parse('(foo(); bar();)'), ['(',[';',['()','foo'],['()','bar']]], 'semi-colon after last statement returns void')
 })
 
 t('parse: conditions', t => {
   is(parse(`sign = a < 0 ? -1 : +1`), ['=','sign',['?',['<','a',[INT,0]], ['-',[INT,1]], ['+',[INT,1]]]], 'inline ternary')
-  is(parse('a > b ? ++b'), ['?',['>','a','b'],['++','b']], 'if operator')
-  is(parse('a > b ?: ++b'), ['?:', ['>','a','b'], ['++','b']], 'elvis operator (else if)')
+  // is(parse('a > b ? ++b'), ['?',['>','a','b'],['++','b']], 'if operator')
+  // is(parse('a > b ?: ++b'), ['?:', ['>','a','b'], ['++','b']], 'elvis operator (else if)')
   // FIXME: confusable with a > -b
   // is(parse('a,b,c >- x ? a : b : c'), ['?', ['>-', [',','a','b','c'], [':','a','b','c']]], 'switch operator')
   is(parse(`2+2 >= 4 ?        // multiline ternary
@@ -172,13 +172,13 @@ t('parse: loops', t => {
   is(parse('s[] < 50 <| (s += ", hi")'),['<|',['<',['[]','s'],[INT,50]],['(',['+=','s',['"',', hi']]]], 'inline loop: `while (s.length < 50) do (s += ", hi)"`')
   is(parse(`
   (i=0; ++i < 10 <| (             // multiline loop
-    i < 3 ? ^^;                   // \`^^\` to break loop (can return value as ^^x)
-    i < 5 ? ^;                    // \`^\` to continue loop (can return value as ^x)
+    i < 3 && ^^;                   // \`^^\` to break loop (can return value as ^^x)
+    i < 5 && ^;                    // \`^\` to continue loop (can return value as ^x)
   ))`), ['(',[';',
     ['=','i',[INT,0]],
     ['<|',
       ['<',['++','i'],[INT,10]],
-      ['(',[';',['?',['<','i',[INT,3]],['^^']],['?',['<','i',[INT,5]],['^']]]]
+      ['(',[';',['&&',['<','i',[INT,3]],['^^']],['&&',['<','i',[INT,5]],['^']]]]
     ]
   ]], 'multiline loop')
   is(parse('[++j < 10 <| j * 2]'),['[',['<|',['<',['++','j'],[INT,10]],['*','j',[INT,2]]]], 'list comprehension via loop')
@@ -191,9 +191,9 @@ t('parse: loops', t => {
 t('parse: functions', () => {
   is(parse('double = n -> n*2'), ['=','double', ['->', 'n', ['*','n',[INT,2]]]], 'inline function')
   is(parse(`triple = (n=1) -> (
-    n == 0 ? ^n;                // preliminarily return n
+    n == 0 && ^n;                // preliminarily return n
     n*3                         // returns last value
-  )`), ['=','triple',['->',['(',['=','n',[INT,1]]], ['(',[';',['?',['==','n',[INT,0]], ['^','n']],['*','n',[INT,3]]]]]], 'multiline')
+  )`), ['=','triple',['->',['(',['=','n',[INT,1]]], ['(',[';',['&&',['==','n',[INT,0]], ['^','n']],['*','n',[INT,3]]]]]], 'multiline')
   is(parse('triple()'), ['()','triple'],                     '3')
   is(parse('triple(5)'), ['()','triple',[INT,5]],                    '15')
   is(parse('triple(n: 10)'), ['()','triple',[':','n',[INT,10]]],                '30. named argument.')
@@ -235,12 +235,12 @@ t('parse: map', () => {
   is(parse('(a, b, c) | a -> a.x * 2'), ['|',['(',[',','a','b','c']],['->','a',['*',['.','a','x'],[INT,2]]]],   'maps group items (syntactically)')
   is(parse(`
   10..1 | i -> (                // iteration over range (produces group)
-    i < 3 ? ^^;                 // \`^^\` breaks iteration
-    i < 5 ? ^;                  // \`^\` continues iteration
+    i < 3 && ^^;                 // \`^^\` breaks iteration
+    i < 5 && ^;                  // \`^\` continues iteration
   );                            // returns group
   `), [';',['|',['..',[INT,10],[INT,1]],['->','i',['(',[';',
-    ['?',['<','i',[INT,3]], ['^^']],
-    ['?',['<','i',[INT,5]], ['^']]
+    ['&&',['<','i',[INT,3]], ['^^']],
+    ['&&',['<','i',[INT,5]], ['^']]
   ]]]]])
   is(parse('[ 1..10 | x -> x * 2 ]'), ['[',['|',['..',[INT,1],[INT,10]],
     ['->','x',['*','x',[INT,2]]]
@@ -298,12 +298,12 @@ t('parse: endings', t => {
   `), [';',['=', ['()', 'x'], ['(',[';',['+', [INT,1], [INT,2]]]]]], 'e')
 
   is(parse(`
-    x() = (a?^b;c)
-  `), ['=', ['()', 'x'], ['(',[';', ['?','a',['^','b']],'c']]], 'f')
+    x() = (a&&^b;c)
+  `), ['=', ['()', 'x'], ['(',[';', ['&&','a',['^','b']],'c']]], 'f')
 
   is(parse(`
-    x() = (a?b.c)
-  `), ['=', ['()', 'x'], ['(',['?','a',['.','b','c']]]], 'g')
+    x() = (a&&b.c)
+  `), ['=', ['()', 'x'], ['(',['&&','a',['.','b','c']]]], 'g')
 })
 
 t('parse: semicolon', t => {

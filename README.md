@@ -25,10 +25,17 @@ true = 0b1, false = 0b0;      // hint: alias booleans
 3.14 | 0; ~~2.5;              // floats cast to ints in binary operations
 
 //////////////////////////// standard operators
-+ - * / % **                  // arithmetical (** for pow)
++ - * / % ** -- ++            // arithmetical (** for pow)
 && || ! ?:                    // logical
 & | ^ ~ >> <<                 // binary
 == != >= <=                   // comparisons
+
+//////////////////////////// extra operators
+| <| |> |=                    // iterate, loop, fold, transform
+-< -<=                        // clamp
+[]                            // length
+^ ^^                          // continue/return, break/return
+@ .                           // import, export
 
 //////////////////////////// units
 1k = 1000; 1pi = 3.1415;      // define units
@@ -48,7 +55,7 @@ true = 0b1, false = 0b0;      // hint: alias booleans
 (-10..10)[];                  // length: 20
 1..2[0]; 1..2[-1];            // min/max: 1; 2
 
-//////////////////////////// clamp operator
+//////////////////////////// clamp
 x -< 0..10;                   // clamp(x, 0, 10)
 x -< ..10;                    // min(x, 10)
 x -< 0..;                     // max(0, x)
@@ -56,7 +63,7 @@ x -<= 0..10;                  // x = clamp(x, 0, 10)
 4.. -< ..8;                   // clamp ranges: 4..8
 x -< (x,y,z);                 // return x if it's in a group, null otherwise
 
-//////////////////////////// length operator
+//////////////////////////// length
 [1,2,3][];                    // 3
 (1,2,3)[];                    // 3
 (-1..+2)[];                   // 3
@@ -302,7 +309,7 @@ coin = (freq=1675, jump=freq/2, delay=0.06, shape=0) -> (
   phase += (freq + t > delay ? jump : 0) * 2pi / 1s;
 
   out |= oscillator[shape](phase) | x -> adsr(x, 0, 0, .06, .24) | x -> curve(x, 1.82);
-  
+
   out
 );
 ```

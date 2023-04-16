@@ -138,8 +138,9 @@ binary('<<', PREC_SHIFT)
 binary('->', PREC_FUNC) // a,b->b,a
 binary('-<', PREC_CLAMP) // a -< b
 
-binary('~>', PREC_FIND)
-binary('~<', PREC_FIND)
+// NOTE: can be done trivially manually
+// binary('~>', PREC_FIND)
+// binary('~<', PREC_FIND)
 
 // unaries
 unary('+', PREC_UNARY)
@@ -173,8 +174,9 @@ unary('*', PREC_UNARY)
 unary('@', PREC_TOKEN)
 
 // a?b, a?:b
-binary('?', PREC_TERNARY)
-binary('?:', PREC_TERNARY)
+// NOTE: duplicate of || &&
+// binary('?', PREC_TERNARY)
+// binary('?:', PREC_TERNARY)
 
 // a?b:c,   a ? b?c:d : e,   a ? b : c?d:e
 token('?', PREC_TERNARY, (a, b, c) => (
