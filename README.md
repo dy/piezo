@@ -63,11 +63,6 @@ x -<= 0..10;                  // x = clamp(x, 0, 10)
 4.. -< ..8;                   // clamp ranges: 4..8
 x -< (x,y,z);                 // return x if it's in a group, null otherwise
 
-//////////////////////////// length
-[1,2,3][];                    // 3
-(1,2,3)[];                    // 3
-(-1..+2)[];                   // 3
-
 //////////////////////////// groups
 a, b, c;                      // groups are syntactic sugar
 (a, b, c)++;                  // apply operation to multiple elements: (a++, b++, c++)
