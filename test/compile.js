@@ -18,7 +18,7 @@ function clean (str) {
 
 // convert wast code to binary
 let wabt = await Wabt()
-function compileWat (code, config) {
+function compileWat (code, importObj) {
   const wasmModule = wabt.parseWat('inline', code, {
     simd: true
   })
@@ -32,7 +32,7 @@ function compileWat (code, config) {
   wasmModule.destroy()
 
   const mod = new WebAssembly.Module(binary.buffer)
-  return new WebAssembly.Instance(mod)
+  return new WebAssembly.Instance(mod, importObj)
 }
 
 
@@ -124,6 +124,16 @@ t('compile: simple ranges', t => {
   //   )
   // `)
 
+  // let mod = compileWat(`
+  //   (func $log (import "imports" "log") (param i32))
+  //   (func $mult (export "mult") (param $a i32) (param $b i32) (result i32)
+  //     (call $log (local.get $b))
+  //     (i32.mul (local.get $a) (local.get $b))
+  //     (return)
+  //   )
+  // `, {imports: { log: (arg) => console.log(arg) }})
+  // console.log(mod.exports.mult(2))
+
   // global v128
   // let mod = compileWat(`
   //   (global (export "x") v128 (v128.const f64x2 2.0 3.0))
@@ -165,7 +175,7 @@ t('compile: simple arrays', t => {
   is(arr[ptr+2], 3)
 })
 
-t('compile: simple subarrays', t => {
+t.skip('compile: simple subarrays', t => {
   let wat = compile(`[2]x = [1,2,3].`)
   console.log(wat)
   let mod = compileWat(wat)
@@ -190,8 +200,20 @@ t('compile: variable type inference', t => {
   x = compileWat(compile(`x;x=[];x.`)).exports.x // late-arr type
 })
 
+t('compile: simple loops', t => {
+  let wat = compile(`x=[..3]; i=0; i<3 <| x[i]=i++; x.`)
+  let mod = compileWat(wat)
+  let {memory, x} = mod.exports
+
+  let arr = new Float64Array(memory.buffer, 0, 3), ptr = x.value
+  is(arr[ptr], 0)
+  is(arr[ptr+1], 1)
+  it(arr[ptr+2], 2)
+  not(arr[ptr+3], 3)
+})
+
 t('compile: simple pipe', t => {
-  let wat = compile(`[2]x = [1,2,3]; y = x | x -> x * 2.`)
+  let wat = compile(`x = [1,2,3]; y = x | x -> x * 2.`)
   console.log(wat)
   let mod = compileWat(wat)
   let {memory, y} = mod.exports

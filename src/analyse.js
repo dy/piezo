@@ -6,7 +6,7 @@ import {PTR, FLOAT, INT, RANGE, STR, FUNC} from './const.js';
 // detect variables & types, simplify tree for easier compilation
 export default function analyze(node) {
   if (typeof node === 'string') node = parse(node)
-
+  console.log(node)
 
   if (typeof node === 'string') return [null, node]
 
@@ -68,16 +68,7 @@ export default function analyze(node) {
         }
         return ['=',left,right]
       }
-      // [size]a = ...
-      if (left[0] === '[' && left.length > 1) {
-        let [,size,name]=left;
-        size = expr(size);
-        let sizeDesc = desc(size, scope)
-        if (sizeDesc.type !== INT) err('Array size is not integer', left)
-        // FIXME: prohibit dynamic sizes (maybe non-local arrays?)
-        scope[name] = {type:PTR, size:size[1]};
-        return ['=',name,expr(right)]
-      }
+
       // *a = ..., *(a,b,c) = ...
       if (left[0] === '*' && left.length < 3) return ['=',expr(left),expr(right)]
 
@@ -92,6 +83,12 @@ export default function analyze(node) {
         let temp = ls.map((id,i) => ['=',`tmp/${id}`, rs[i]])
         let untemp = ls.map((id,i) => ['=',expr(ls[i]),`tmp/${id}`]) // catch left ids into current scope
         return expr(['(',[';',...temp,[',',...untemp]]])
+      }
+
+      // x[i] = ...
+      if (left[0] === '[]') {
+        let [,obj,prop] = left
+        return ['=', ['[]',expr(obj),expr(prop)], expr(right)]
       }
 
       err('Invalid left-hand side assignment `' + left + '`', left)
@@ -271,22 +268,49 @@ export function desc(node, scope) {
   if (typeof node === 'string') return scope[node] || err('Cannote get descriptor of node', node)
 
   let [op, a, b] = node
-  if (op === INT) return {type:INT}
-  if (op === FLOAT) return {type:FLOAT}
-  if (op === '+' || op === '*' || op === '-') return !b ? desc(a, scope) : (desc(a, scope).type === FLOAT || desc(b, scope).type === FLOAT) ? {type:FLOAT}: {type:INT}
-  if (op === '/') return (desc(a, scope).type === INT && desc(b, scope).type === INT) ? {type:INT}: {type:FLOAT}
-  if (op === '-<') return desc(a, scope).type === INT && desc(b[1], scope).type === INT && desc(b[2], scope).type === INT ? {type:INT} : {type:FLOAT}
-  if (op === '[') return {type:PTR} // pointer is int
-  if (op === '->') return {type:FUNC}
-  if (op === '[]') return !b ? {type:INT} : {type:FLOAT} // FIXME: array can include other than float values
-  if (op === '|') {
-    let aDesc = desc(a, scope), bDesc = desc(b, scope)
-    if (aDesc.type === PTR) return aDesc
-    console.log('todo - detect type from |',a, b)
+
+  const opDesc = {
+    [INT]() {return {type:INT}},
+    [FLOAT]() {return {type:FLOAT}},
+    '*'() {
+      if (desc(a, scope).type === FLOAT || desc(b, scope).type === FLOAT()) return {type:FLOAT}
+      return {type:INT}
+    },
+    '+'() {
+      if (!b) return desc(a, scope)
+      return opDesc['*']()
+    },
+    '-'() { return opDesc['+']() },
+    '/'() {
+      // FIXME: detect possiblt int type result
+      // return (desc(a, scope).type === INT && desc(b, scope).type === INT) ? {type:INT} : {type:FLOAT}
+      return {type:FLOAT}
+    },
+    '-<'() {
+      // FIXME: detect range type better (range is separate type)
+      let bDesc = desc(b, scope)
+      if (bDesc.type === RANGE) {
+        return desc(a, scope).type === INT && (!bDesc.min || bDesc.min.type === INT) && (!bDesc.max || bDesc.max.type === INT) ? {type:INT} : {type:FLOAT}
+      }
+      err('Right part of clamp operator is not range', node)
+    },
+    '..'() { return {type: RANGE, min: a && desc(a,scope), max: b && desc(b,scope)}},
+    '['() { return {type:PTR} },
+    '->'() { return {type:FUNC} },
+    '[]'() {
+      return !b ? {type:INT} : {type:FLOAT} // FIXME: array can include other than float values
+    },
+    '|'() {
+      let aDesc = desc(a, scope), bDesc = desc(b, scope)
+      if (aDesc.type === PTR) return aDesc
+      console.log('todo - detect type from |',a, b)
+    },
+    ';'(node) { return desc(node[node.length - 1], scope) },
+    '<|'() {let rdesc = desc(b, scope); rdesc.multiple = true; return rdesc },
+    '('() { return desc(a, scope) },
   }
-  if (op === ';') return desc(node[node.length - 1], scope)
-  if (op === '<|') {let rdesc = desc(b, scope); rdesc.multiple = true; return rdesc }
-  if (op === '(') { return desc(a, scope) }
+
+  if (opDesc[op]) return opDesc[op]()
 
   err('Cannot define type', node)
 }

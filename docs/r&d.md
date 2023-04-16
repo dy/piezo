@@ -2688,3 +2688,31 @@ Having wat files is more useful than direct compilation to binary form:
 ## [x] How to detect optional params -> enforce optional arguments always be f64
 
   * If we enforce function arguments always be f64 we can detect it via NaN
+
+## [x] Precedence hurdle: |, (<|, |>), (=, +=) -> let's make `|` for now same-precedence as `|>`, `<|` and see if it breaks `=` too much
+
+* it seems loop/fold, assign and BOR must be right-assoc same-precedence operator
+* otherwise there are tradeoffs like `i<|x[i] = 1` or `a=b | c` or `a <| b|c |> d`
+* NOTE: assign has += *= etc, also it's right assoc whereas loops are not.
+
+* `a | b <| c`
+  * `a|b <| c` or `a | b <| c`
+* `a <| b | c`
+  * `a<|b | c` or `a <| b | c`: `|` <= `<|`, lassoc
+* `a | b = c`
+  ?
+* `a = b | c`
+  * `a = b|c`: `|` >= `=`, rassoc
+  * `a=b | c`
+    - can break existing common binary expressions, but other tradeoff is worse
+  * `a=b <| c`, since `|` == `<|`
+    + pretty meaningful too
+* `a <| b[i] = c`
+  * `a <| b[i]=c` : `=` >= `<|`, rassoc
+  * `a<|b[i] = c`
+    - left side is meaningless here
+* `a = b <| c`
+  ? `a=b <| c`
+
+* Ideal: `a <| b = c = d | e = f` -> `(a <| (b=c=d)) | (e=f)`
+  * `=` > `<|`, `<|` == `=`

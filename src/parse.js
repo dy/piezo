@@ -8,31 +8,34 @@ export default (src) => parse(src)
 const OPAREN=40, CPAREN=41, OBRACK=91, CBRACK=93, SPACE=32, QUOTE=39, DQUOTE=34, PERIOD=46, BSLASH=92, _0=48, _9=57, COLON=58, HASH=35, AT=64, _X = 120, _B = 98, PLUS = 43, MINUS = 45
 
 // precedences
-const PREC_SEMI=0.5,
-PREC_EXPORT=1,
-PREC_SEQUENCE=2, // a -> b,c;   a, b==c, d,   a, b>=c, d,   a | b,c | d,   a?b:c , d
-PREC_ASSIGN=3,  // a = b->c,  a=b, c=d,  a = b||c,  a=b | c,   a = b&c
-PREC_LOOP=4, // a?b:c <| d,   a , b<|c,   b<|c, d,   a->a+1 <| 2,   a <| b | c |> d
-PREC_BOR=4, // a|b , c|d,   a = b|c,    a->x | b
-PREC_FUNC=5, // a = b->c,  b, c->d, e,   (b,c)->(d,e)
-PREC_LABEL=6, // a:b = 2,  a:b, b:c,   a: b&c
-PREC_TERNARY=7,
-PREC_OR=8,
-PREC_AND=9,
-PREC_XOR=10,
-PREC_BAND=11,
-PREC_EQ=12,
-PREC_COMP=13,
-PREC_SHIFT=14,
-PREC_CLAMP=15, // pre-arithmetical: a+b*c -< 10; BUT a < b-<c, a << b-<c
-PREC_SUM=16,
-PREC_FIND=17, // a <~ b*2, a..b <~ c BUT a<~b + 2
-PREC_RANGE=18, // +a .. -b, a**2 .. b**3, a*2 .. b*3; BUT a + 2..b + 3
-PREC_MULT=19,
-PREC_POW=20,
-PREC_UNARY=21,
-PREC_CALL=22, // a(b), a.b, a[b], a[]
-PREC_TOKEN=23 // [a,b] etc
+const PREC_SEMI=1,
+PREC_EXPORT=2,
+PREC_SEQUENCE=3, // a -> b,c;   a, b==c, d,   a, b>=c, d,   a | b,c | d,   a?b:c , d
+// FIXME: it seems loop/fold, assign and BOR must be right-assoc same-precedence operator
+// otherwise there are tradeoffs like `i<|x[i] = 1` or `a=b | c` or `a <| b|c |> d`
+// NOTE: assign has += *= etc, also it's right assoc whereas loops are not.
+PREC_LOOP=4, // a?b:c <| d,   a , b<|c,   b<|c, d,   a->a+1 <| 2,   a <| b | c |> d,   x <| x[i] = 1
+PREC_ASSIGN=5,  // a = b->c,  a=b, c=d,  a = b||c,  a = b | c,   a = b&c
+PREC_BOR=5, // a|b , c|d,   a = b|c,    a->x | b
+PREC_FUNC=7, // a = b->c,  b, c->d, e,   (b,c)->(d,e)
+PREC_LABEL=8, // a:b = 2,  a:b, b:c,   a: b&c
+PREC_TERNARY=9,
+PREC_OR=10,
+PREC_AND=11,
+PREC_XOR=12,
+PREC_BAND=13,
+PREC_EQ=14,
+PREC_COMP=15,
+PREC_SHIFT=16,
+PREC_CLAMP=17, // pre-arithmetical: a+b*c -< 10; BUT a < b-<c, a << b-<c
+PREC_SUM=18,
+PREC_FIND=19, // a <~ b*2, a..b <~ c BUT a<~b + 2
+PREC_RANGE=20, // +a .. -b, a**2 .. b**3, a*2 .. b*3; BUT a + 2..b + 3
+PREC_MULT=21,
+PREC_POW=22,
+PREC_UNARY=23,
+PREC_CALL=24, // a(b), a.b, a[b], a[]
+PREC_TOKEN=25 // [a,b] etc
 
 // make id support #
 parse.id = n => skip(char => isId(char) || char === HASH)
@@ -103,6 +106,10 @@ nary(';', PREC_SEMI, true)
 nary('||', PREC_OR)
 nary('&&', PREC_AND)
 
+binary('<|', PREC_LOOP)
+binary('|>', PREC_LOOP)
+nary('|', PREC_LOOP)
+
 // binaries
 binary('**', PREC_POW, true)
 binary('=', PREC_ASSIGN, true)
@@ -115,8 +122,7 @@ binary('-', PREC_SUM)
 binary('*', PREC_MULT)
 binary('/', PREC_MULT)
 binary('%', PREC_MULT)
-binary('|', PREC_BOR)
-binary('&', PREC_BAND)
+nary('&', PREC_BAND)
 binary('^', PREC_XOR)
 binary('==', PREC_EQ)
 binary('!=', PREC_EQ)
@@ -134,9 +140,6 @@ binary('-<', PREC_CLAMP) // a -< b
 
 binary('~>', PREC_FIND)
 binary('~<', PREC_FIND)
-
-binary('<|', PREC_LOOP)
-binary('|>', PREC_LOOP)
 
 // unaries
 unary('+', PREC_UNARY)
@@ -167,7 +170,7 @@ token('.', PREC_CALL, (a,b) => a && (b=skip(isId)) && ['.', a, b])
 unary('*', PREC_UNARY)
 
 // @ 'ab'
-unary('@', PREC_ASSIGN)
+unary('@', PREC_TOKEN)
 
 // a?b, a?:b
 binary('?', PREC_TERNARY)
@@ -184,7 +187,8 @@ binary(':', PREC_LABEL, false)
 token('[', PREC_CALL,  (a,b) => a && (b=expr(0,CBRACK), b ? ['[]', a, b] : ['[]', a]))
 
 // [a,b,c], [], [1]a, [1,2,3]a
-token('[', PREC_TOKEN, (a,b,name) => !a && (b=expr(0,CBRACK), name = skip(isId), a = ['['], (b||name) && a.push(b||''), name && a.push(name), a ))
+// token('[', PREC_TOKEN, (a,b,name) => !a && (b=expr(0,CBRACK), name = skip(isId), a = ['['], (b||name) && a.push(b||''), name && a.push(name), a ))
+token('[', PREC_TOKEN, (a,b) => !a && (b = expr(0,CBRACK), b ? ['[', b] : ['[']))
 
 // (a,b,c), (a)
 token('(', PREC_CALL, (a,b) => !a && (b = expr(0,CPAREN), b ? ['(', b] : ['(']))

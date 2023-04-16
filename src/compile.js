@@ -136,6 +136,11 @@ export default function compile(node) {
     // a | b
     '|'([,a,b]) {
       console.log(a,b)
+    },
+
+    // a <| b
+    '<|'([,a,b]) {
+      console.log("TODO: loops", a, b)
     }
   })
 

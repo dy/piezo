@@ -111,7 +111,7 @@ t('parse: lists', t => {
   is(parse('list = [l:2, r:4]'), ['=','list',['[',[',',[':','l',[INT,2]], [':','r',[INT,4]]]]],'list with aliases')
   is(parse('[0..10]'), ['[',['..',[INT,0],[INT,10]]],'list from range')
   is(parse('[0..8 | i -> i*2]'), ['[',['|', ['..',[INT,0],[INT,8]], ['->', 'i', ['*', 'i', [INT, 2]]]]],'list comprehension')
-  is(parse('[2]list = list1'), ['=',['[',[INT,2],'list'],'list1'], '(sub)list of fixed size')
+  // is(parse('[2]list = list1'), ['=',['[',[INT,2],'list'],'list1'], '(sub)list of fixed size')
   is(parse('list.0, list.1'), [',',['.','list','0'],['.','list','1']],'short index access notation')
   is(parse('list.l = 2'), ['=',['.','list','l'], [INT, 2]],'alias index access')
   is(parse('list[0]'), ['[]','list',[INT,0]],'positive indexing from first element [0]: 2')
@@ -156,6 +156,19 @@ t('parse: conditions', t => {
 })
 
 t('parse: loops', t => {
+  is(parse('a = b = c'), ['=','a',['=','b','c']])
+  is(parse('a += b = c'), ['+=','a',['=','b','c']])
+  is(parse('a -= b += c'), ['-=','a',['+=','b','c']])
+  is(parse('a <| b = c'), ['<|','a',['=','b','c']])
+  is (parse('a?b:c <| d'), ['<|',['?','a','b','c'],'d'])
+  is(parse('a , b<|c'),[',','a',['<|','b','c']])
+  is(parse('b<|c, d'),[',',['<|','b','c'],'d'])
+  is(parse('a->b <| c'),['<|',['->','a','b'],'c'])
+  is(parse('a <| b | c |> d'),['|>',['|',['<|','a','b'],'c'],'d'], 'pipe seq')
+  is(parse('x <| x=y'),['<|','x',['=','x','y']])
+  is(parse('x <| x | y'),['|',['<|','x','x'],'y'], 'pipe seq2')
+  is(parse(`a <| b = c = d | e = f`), ['|', ['<|', 'a', ['=','b',['=','c','d']]], ['=', 'e', 'f']] )
+
   is(parse('s[] < 50 <| (s += ", hi")'),['<|',['<',['[]','s'],[INT,50]],['(',['+=','s',['"',', hi']]]], 'inline loop: `while (s.length < 50) do (s += ", hi)"`')
   is(parse(`
   (i=0; ++i < 10 <| (             // multiline loop
@@ -169,6 +182,10 @@ t('parse: loops', t => {
     ]
   ]], 'multiline loop')
   is(parse('[++j < 10 <| j * 2]'),['[',['<|',['<',['++','j'],[INT,10]],['*','j',[INT,2]]]], 'list comprehension via loop')
+
+  is(parse('i<3 <| x[i]=++i'), [
+    '<|', ['<','i',['int',3]], ['=',['[]','x','i'],['++','i']]
+  ], '<| precedence vs =')
 })
 
 t('parse: functions', () => {
@@ -184,8 +201,8 @@ t('parse: functions', () => {
   is(parse('copy(10)'), ['()','copy',[INT,10]],                     'also 30')
   is(parse('clamp = (v -< 0..10) -> v'), ['=','clamp',['->',['(',['-<','v',['..',[INT,0],[INT,10]]]],'v']],    'clamp argument')
   is(parse('x = () -> (1,2,3)'), ['=','x',['->',['('],['(',[',',[INT,1],[INT,2],[INT,3]]]]],              'return group (multiple values)')
-  is(parse('mul = ([]in, amp) -> in*amp'), ['=','mul',['->',['(',[',',['[','','in'],'amp']],['*','in','amp']]],  'list argument')
-  is(parse('mul = ([8]in, amp) -> in*amp'), ['=','mul',['->',['(',[',',['[',[INT,8],'in'],'amp']],['*','in','amp']]], 'sublist argument')
+  // is(parse('mul = ([]in, amp) -> in*amp'), ['=','mul',['->',['(',[',',['[','','in'],'amp']],['*','in','amp']]],  'list argument')
+  // is(parse('mul = ([8]in, amp) -> in*amp'), ['=','mul',['->',['(',[',',['[',[INT,8],'in'],'amp']],['*','in','amp']]], 'sublist argument')
 })
 t('parse: argument cases', t => {
   is(parse('(a,b) -> a'), ['->',['(', [',','a','b']], 'a'], 'inline function')
@@ -200,13 +217,13 @@ t('parse: stateful variables', t => {
     ['=','a',['->',['('],['(',[';',['=',['*','i'],[INT,0]],['++','i']]]]],
     [',',['()','a'],['()','a']]
   ])
-  is(parse('*[4]i'), ['*',['[',[INT,4],'i']], 'memory')
+  // is(parse('*[4]i'), ['*',['[',[INT,4],'i']], 'memory')
   is(parse(`b = () -> (                   //
-    *[4]i;                      // memory of 4 items
+    *i=[..4];                   // memory of 4 items
     i.0 = i.1+1;                // read previous value
     i.0                         // return currrent value
   );`),[';',['=','b',['->',['('], [ '(', [';',
-    ['*',['[',[INT,4],'i']],
+    ['=',['*','i'],['[',['..',undefined,['int',4]]]],
     ['=',['.','i','0'],['+',['.','i','1'],[INT,1]]],
     ['.','i','0']
   ]]]]])
