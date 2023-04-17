@@ -2716,3 +2716,15 @@ Having wat files is more useful than direct compilation to binary form:
 
 * Ideal: `a <| b = c = d | e = f` -> `(a <| (b=c=d)) | (e=f)`
   * `=` > `<|`, `<|` == `=`
+
+?! can we make pipe rassoc same level as =, and `<|`, `|>` - lassoc?
+  * seems it just needs special token parser
+-> we can reduce problem only to `a=b|c`, so that pipe operator requires explicit `(a=b)|c`,
+  but the rest works fine
+
+## [ ] how to include `a=b|c` expression? (a=b)|c doesn't make sense.
+
+? what's heuristic behind this?
+
+* assignment lhs?
+  - can be `a <| b = c | d`

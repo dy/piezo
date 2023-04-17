@@ -14,28 +14,30 @@ PREC_SEQUENCE=3, // a -> b,c;   a, b==c, d,   a, b>=c, d,   a | b,c | d,   a?b:c
 // FIXME: it seems loop/fold, assign and BOR must be right-assoc same-precedence operator
 // otherwise there are tradeoffs like `i<|x[i] = 1` or `a=b | c` or `a <| b|c |> d`
 // NOTE: assign has += *= etc, also it's right assoc whereas loops are not.
-PREC_LOOP=4, // a?b:c <| d,   a , b<|c,   b<|c, d,   a->a+1 <| 2,   a <| b | c |> d,   x <| x[i] = 1
-PREC_ASSIGN=5,  // a = b->c,  a=b, c=d,  a = b||c,  a = b | c,   a = b&c
-PREC_BOR=5, // a|b , c|d,   a = b|c,    a->x | b
-PREC_FUNC=7, // a = b->c,  b, c->d, e,   (b,c)->(d,e)
-PREC_LABEL=8, // a:b = 2,  a:b, b:c,   a: b&c
-PREC_TERNARY=9,
-PREC_OR=10,
-PREC_AND=11,
-PREC_XOR=12,
-PREC_BAND=13,
-PREC_EQ=14,
-PREC_COMP=15,
-PREC_SHIFT=16,
-PREC_CLAMP=17, // pre-arithmetical: a+b*c -< 10; BUT a < b-<c, a << b-<c
-PREC_SUM=18,
-PREC_FIND=19, // a <~ b*2, a..b <~ c BUT a<~b + 2
-PREC_RANGE=20, // +a .. -b, a**2 .. b**3, a*2 .. b*3; BUT a + 2..b + 3
-PREC_MULT=21,
-PREC_POW=22,
-PREC_UNARY=23,
-PREC_CALL=24, // a(b), a.b, a[b], a[]
-PREC_TOKEN=25 // [a,b] etc
+PREC_FOLD=4,
+PREC_LOOP=5, // a?b:c <| d,   a , b<|c,   b<|c, d,   a->a+1 <| 2,   a <| b | c |> d,   x <| x[i] = 1
+PREC_PIPE=6,
+PREC_ASSIGN=7,  // a = b->c,  a=b, c=d,  a = b||c,  a = b | c,   a = b&c
+PREC_BOR=8, // a|b , c|d,   a = b|c,    a->x | b
+PREC_FUNC=9, // a = b->c,  b, c->d, e,   (b,c)->(d,e)
+PREC_LABEL=10, // a:b = 2,  a:b, b:c,   a: b&c
+PREC_TERNARY=11,
+PREC_OR=12,
+PREC_AND=13,
+PREC_XOR=14,
+PREC_BAND=15,
+PREC_EQ=16,
+PREC_COMP=17,
+PREC_SHIFT=18,
+PREC_CLAMP=19, // pre-arithmetical: a+b*c -< 10; BUT a < b-<c, a << b-<c
+PREC_SUM=20,
+PREC_FIND=21, // a <~ b*2, a..b <~ c BUT a<~b + 2
+PREC_RANGE=22, // +a .. -b, a**2 .. b**3, a*2 .. b*3; BUT a + 2..b + 3
+PREC_MULT=23,
+PREC_POW=24,
+PREC_UNARY=25,
+PREC_CALL=26, // a(b), a.b, a[b], a[]
+PREC_TOKEN=27 // [a,b] etc
 
 // make id support #
 parse.id = n => skip(char => isId(char) || char === HASH)
@@ -106,16 +108,17 @@ nary(';', PREC_SEMI, true)
 nary('||', PREC_OR)
 nary('&&', PREC_AND)
 
-binary('<|', PREC_LOOP)
-binary('|>', PREC_LOOP)
-nary('|', PREC_LOOP)
+// pipes: note - this order is sensitive, better not touch
+binary('|>', PREC_ASSIGN-1)
+nary('|', PREC_ASSIGN-1)
+binary('<|', PREC_ASSIGN, true)
 
 // binaries
-binary('**', PREC_POW, true)
 binary('=', PREC_ASSIGN, true)
 binary('+=', PREC_ASSIGN, true)
 binary('-=', PREC_ASSIGN, true)
 binary('-<=', PREC_ASSIGN, true)
+binary('**', PREC_POW, true)
 
 binary('+', PREC_SUM)
 binary('-', PREC_SUM)
