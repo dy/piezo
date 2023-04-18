@@ -2722,9 +2722,10 @@ Having wat files is more useful than direct compilation to binary form:
 -> we can reduce problem only to `a=b|c`, so that pipe operator requires explicit `(a=b)|c`,
   but the rest works fine
 
-## [ ] how to include `a=b|c` expression? (a=b)|c doesn't make sense.
+## [x] how to include `a=b|c` expression? (a=b)|c doesn't make sense. -> let's guess standard | precedence, and expect pipes to be properly wrapped
 
 ? what's heuristic behind this?
 
 * assignment lhs?
   - can be `a <| b = c | d`
+

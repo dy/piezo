@@ -158,12 +158,12 @@ t('parse: conditions', t => {
 t('parse: loops', t => {
   // NOTE: loop is meaningful backwards, ie. (a<|(b=c=d<|e=f))
   // is(parse(`a <| b = c = d <| e = f`), ['<|', 'a', ['<|', ['=','b',['=','c','d']], ['=', 'e', 'f']]], 'equals' )
-  // FIXME: how to include this expression? (a=b)|c doesn't make sense
-  // what's heuristic behind this? assignment lhs?
-  // is(parse('a = b | c'), ['=','a',['|','b','c']], `a = b | c`)
-  is(parse('a <| b | c'),['|',['<|','a','b'],'c'], 'a <| b | c')
+  // NOTE: we make guess unscoped pipes are less frequent / important case than assign BOR
+  is(parse('a <| b = c | d'),['<|','a',['=','b',['|','c','d']]], 'a <| b | c')
+  is(parse('a = b | c'), ['=','a',['|','b','c']], `a = b | c`)
+  is(parse('a <| b | c'),['<|','a',['|','b','c']], 'a <| b | c')
   is(parse('a <| b = c'),['<|','a',['=','b','c']], `a <| b = c`)
-  is(parse('a <| b | c |> d'),['|>',['|',['<|','a','b'],'c'],'d'], 'pipe seq')
+  is(parse('a <| b | c |> d'),['|>',['<|','a',['|','b','c']],'d'], 'pipe seq')
   is(parse('c <| d <| e'),['<|','c',['<|','d','e']], 'c <| d <| e')
   is(parse('a -= b += c'), ['-=','a',['+=','b','c']])
   is(parse('a <| b = c'), ['<|','a',['=','b','c']])
@@ -171,10 +171,11 @@ t('parse: loops', t => {
   is(parse('a , b<|c'),[',','a',['<|','b','c']])
   is(parse('b<|c, d'),[',',['<|','b','c'],'d'])
   is(parse('a->b <| c'),['<|',['->','a','b'],'c'])
-  is(parse('a <| b | c | c |> d'),['|>',['|',['<|','a','b'],'c','c'],'d'], 'pipe seq')
-  is(parse('x <| x | y'),['|',['<|','x','x'],'y'], 'pipe seq2')
-  is(parse('c <| d <| e | f'),['|',['<|','c',['<|','d','e']],'f'], 'loop seq')
-  is(parse(`a <| b = c = d | e = f`), ['|', ['<|', 'a', ['=','b',['=','c','d']]], ['=', 'e', 'f']], 'equals' )
+  is(parse('a <| b | c | c |> d'),['|>',['<|','a',['|','b','c','c']],'d'], 'pipe seq')
+  is(parse('x <| x | y'),['<|','x',['|','x','y']], 'pipe seq2')
+  is(parse('c <| d <| e | f'),['<|','c',['<|','d',['|','e','f']]], 'loop seq')
+  is(parse(`a <| b = c = d | e = f`), ['<|','a',['=','b',['=','c',['=',['|','d','e'],'f']]]], 'equals' )
+
   is(parse('s[] < 50 <| (s += ", hi")'),['<|',['<',['[]','s'],[INT,50]],['(',['+=','s',['"',', hi']]]], 'inline loop: `while (s.length < 50) do (s += ", hi)"`')
   is(parse(`
   (i=0; ++i < 10 <| (             // multiline loop

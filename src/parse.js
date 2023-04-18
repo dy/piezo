@@ -110,7 +110,6 @@ nary('&&', PREC_AND)
 
 // pipes: note - this order is sensitive, better not touch
 binary('|>', PREC_ASSIGN-1)
-nary('|', PREC_ASSIGN-1)
 binary('<|', PREC_ASSIGN, true)
 
 // binaries
@@ -125,6 +124,7 @@ binary('-', PREC_SUM)
 binary('*', PREC_MULT)
 binary('/', PREC_MULT)
 binary('%', PREC_MULT)
+nary('|', PREC_ASSIGN)
 nary('&', PREC_BAND)
 binary('^', PREC_XOR)
 binary('==', PREC_EQ)
