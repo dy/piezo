@@ -35,6 +35,8 @@ true = 0b1, false = 0b0;      // hint: alias booleans
 && || ! ?:                    // logical
 & | ^ ~ >> <<                 // binary
 == != >= <=                   // comparisons
+
+//////////////////////////// extra operators
 | <| |> |=                    // iterate, loop, fold, transform
 -< -<=                        // clamp
 []                            // prop, length
