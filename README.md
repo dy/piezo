@@ -8,8 +8,8 @@
 ## Reference
 
 ```fs
-//////////////////////////// naming convention
-foo=1, bar=2;                 // declare multiple vars
+//////////////////////////// variables
+foo=1, bar=2;                 // declare vars
 Ab_C_F#, $0, Δx;              // names permit alnum, unicodes, #, _, $
 fooBar123 == FooBar123;       // names are case-insensitive (lowcase encouraged!)
 default=1, eval=fn, else=0;   // lino has no reserved words
@@ -24,6 +24,12 @@ true = 0b1, false = 0b0;      // hint: alias booleans
 1 / 3; 2 * 3.14;              // ints cast to floats otherwise
 3.14 | 0; ~~2.5;              // floats cast to ints in binary operations
 
+//////////////////////////// units
+1k = 1000; 1pi = 3.1415;      // define units
+1s = 44100; 1ms = 1s/1000;    // useful for sample indexes
+10.1k, 2pi;                   // units deconstruct to numbers: 10100, 6.283
+1h2m3.5s;                     // unit combinations
+
 //////////////////////////// standard operators
 + - * / % ** -- ++            // arithmetical (** for pow)
 && || ! ?:                    // logical
@@ -37,12 +43,6 @@ true = 0b1, false = 0b0;      // hint: alias booleans
 ^ ^^                          // continue/return, break/return
 @ .                           // import, export
 
-//////////////////////////// units
-1k = 1000; 1pi = 3.1415;      // define units
-1s = 44100; 1ms = 1s/1000;    // useful for sample indexes
-10.1k, 2pi;                   // units deconstruct to numbers: 10100, 6.283
-1h2m3.5s;                     // unit combinations
-
 //////////////////////////// ranges
 1..10;                        // basic range
 1.., ..10;                    // open ranges
@@ -54,8 +54,6 @@ true = 0b1, false = 0b0;      // hint: alias booleans
 1..3 - 2..;                   // subtract ranges: 1..2
 (-10..10)[];                  // length: 20
 1..2[0]; 1..2[-1];            // min/max: 1; 2
-
-//////////////////////////// clamp
 x -< 0..10;                   // clamp(x, 0, 10)
 x -< ..10;                    // min(x, 10)
 x -< 0..;                     // max(0, x)
@@ -147,7 +145,7 @@ i=0; i++ < 3 <| log(i);       // inline loop: while i++ < 3 do log(i)
 ));                           //
 [ j++ < 10 <| j * 2 ];        // list comprehension via loop
 
-///////////////////////////// iterator
+///////////////////////////// iterate
 (a, b, c) | a -> a.x * 2;     // map items (syntactically)
 [a, b, c] | x -> a(x);        // iterate over array
 10..1 | i -> (                // iterate over range
