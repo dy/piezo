@@ -159,11 +159,9 @@ items |= x -> x * 2;          // overwrite items in source array
 (a,b,c) |> (a,b) -> a + b;    // fold group (syntax sugar)
 [a,b,c] |> (a,b) -> a + b;    // fold list
 
-//////////////////////////// import
+//////////////////////////// import, export
 @'./path/to/module#x,y,z';    // any file can be imported directly
 @'math#pi,sin,max';           // or defined via import-maps.json
-
-//////////////////////////// export
 x, y, z.                      // last statement in the file ending with . exports all members
 ```
 
