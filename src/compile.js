@@ -4,7 +4,7 @@ import stdlib from "./stdlib.js"
 import {FLOAT,INT,RANGE,PTR,FUNC} from './const.js'
 
 const F64_PER_PAGE = 8192;
-const BYTES_PER_F64 = 8;
+const MEM_STRIDE = 8; // bytes per f64
 
 export default function compile(node) {
   if (typeof node === 'string' || Array.isArray(node)) node = analyse(node)
@@ -42,8 +42,6 @@ export default function compile(node) {
     },
 
     '='([,name,init]) {
-      // [size]x
-      if (name[0] === '[') name = name[2]
       let res = expr(init,name)
       if (desc(init,scope).type !== FUNC) return `(${scope[name].global?'global':'local'}.set $${name} ${res})`
     },
@@ -54,7 +52,7 @@ export default function compile(node) {
 
       // define init part - params, result
       if (fn.args) fn.args.forEach(id => {
-        scope[id].defined = true
+        scope[id]._defined = true
         dfn.push(`(param $${id} ${scope[id].type == PTR ? 'i32' : 'f64'})`)
       })
       if (fn.result) dfn.push(`(result ${fn.result.type == FLOAT ? 'f64' : 'i32'})`)
@@ -119,18 +117,26 @@ export default function compile(node) {
     // [1,2,3]
     '['([,members]) {
       [,...members] = members
-      let out = ``
+      let out = `(i32.store (i32.const ${memcount}) (i32.const ${members.length})) `
+      memcount += MEM_STRIDE // we unify memory stride to f64 steps to avoid js typed array buttheart
+      // NOTE: this way we can store some other useful info if needed
       for (let i = 0; i < members.length; i++) {
-        out += `(f64.store (i32.const ${memcount + i*BYTES_PER_F64}) ${expr(flt(members[i]))}) `
+        out += `(f64.store (i32.const ${memcount + i * MEM_STRIDE}) ${expr(flt(members[i]))}) `
       }
-      out += `\n(i32.const ${memcount})`
-      memcount += members.length
+      out += `(i32.const ${memcount})`
+      memcount += members.length * MEM_STRIDE
+
       return out
     },
     // a[b] or a[]
     '[]'([,a,b]) {
-      if (!b) { console.log(a,b) }
-      else {}
+      // a[]
+      if (!b) {
+        let aDesc = desc(a,scope);
+        if (aDesc.type !== PTR) err('Reading length of non-array', a);
+        return `(i32.load (i32.sub (${aDesc.global?'global':'local'}.get $${a}) (i32.const ${MEM_STRIDE})))`
+      }
+      else {  }
     },
 
     // a | b
@@ -147,11 +153,11 @@ export default function compile(node) {
   // define variable in proper scope
   function define(name) {
     let v = scope[name]
-    if (!v.defined && v.type !== FUNC) {
+    if (!v._defined && v.type !== FUNC) {
       let wtype = v.type === FLOAT ? 'f64' : 'i32'
       if (v.global) globals.push(`(global $${name} (mut ${wtype}) (${wtype}.const 0))`);
       else locals.push(`(local $${name} ${wtype})`)
-      v.defined = true
+      v._defined = true
     }
   }
 

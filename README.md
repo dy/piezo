@@ -123,7 +123,7 @@ b(), b(), b();                // 1, 2, 3
 
 //////////////////////////// arrays
 m = [1,2,3,4];                // create array of 4 items
-m = [0..1000];                // create array of 1000 items
+m = [..1000];                 // create array of 1000 items
 m = [l:2, r:4, c:6];          // create with position aliases
 m = [0..8 | i -> i*2];        // create from list comprehension
 m.0, m.1, m.2, m.3;           // access item by static index (0-based)
@@ -134,7 +134,6 @@ m[0..] = (1,2,3,4);           // write all values from index 0
 m[-1..0] = m[0..];            // reverse order
 m << 2; m >> 3;               // shift values in array right or left
 n = [m[1..3, 5, 6..]];        // create copy from indicated subrange
-~m;                           // dispose (free) array
 
 //////////////////////////// loop
 i=0; i++ < 3 <| log(i);       // inline loop: while i++ < 3 do log(i)

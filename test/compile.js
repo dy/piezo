@@ -165,14 +165,20 @@ t('compile: simple ranges', t => {
 })
 
 t('compile: simple arrays', t => {
-  let wat = compile(`x = [1, 2, 3].`)
-  console.log(wat)
+  let wat = compile(`x = [1, 2, 3], y = [4,5,6]; x,y,xl=x[],yl=y[].`)
+  // console.log(wat)
   let mod = compileWat(wat)
-  let {memory, x} = mod.exports
-  let arr = new Float64Array(memory.buffer, 0, 3), ptr = x.value
-  is(arr[ptr], 1)
-  is(arr[ptr+1], 2)
-  is(arr[ptr+2], 3)
+  let {memory, x, y, xl, yl} = mod.exports
+  let xarr = new Float64Array(memory.buffer, x.value, 3)
+  is(xarr[0], 1,'x0')
+  is(xarr[1], 2,'x1')
+  is(xarr[2], 3,'x2')
+  is(xl.value,3,'xlen')
+  let yarr = new Float64Array(memory.buffer, y.value, 3)
+  is(yarr[0], 4,'y0')
+  is(yarr[1], 5,'y1')
+  is(yarr[2], 6,'y2')
+  is(yl.value,3,'ylen')
 })
 
 t.skip('compile: simple subarrays', t => {
@@ -200,7 +206,7 @@ t('compile: variable type inference', t => {
   x = compileWat(compile(`x;x=[];x.`)).exports.x // late-arr type
 })
 
-t('compile: simple loops', t => {
+t.only('compile: simple loops', t => {
   let wat = compile(`x=[..3]; i=0; i<3 <| x[i]=i++; x.`)
   let mod = compileWat(wat)
   let {memory, x} = mod.exports
