@@ -105,26 +105,45 @@ export default function compile(node) {
 
     // a -< range - clamp a to indicated range
     '-<'([,a,b]) {
-      if (b[0] !== '..') err('Only primitive ranges are supported for now')
+      if (b[0] !== '..') err('Non-range passed as right side of clamp operator')
       let [,min,max] = b
       if (desc(a,scope).type == INT && desc(min,scope).type == INT && desc(max,scope).type == INT) {
-        includes.push(['std','i32.smax'], ['std','i32.smin'])
-        return `(call $std/i32.smax (call $std/i32.smin ${expr(a)} ${expr(max)}) ${expr(min)})`
+        includes.push(['util','i32.smax'], ['util','i32.smin'])
+        return `(call $util/i32.smax (call $util/i32.smin ${expr(a)} ${expr(max)}) ${expr(min)})`
       }
       return `(f64.max (f64.min ${expr(flt(a))} ${expr(flt(max))}) ${expr(flt(min))})`
     },
 
     // [1,2,3]
-    '['([,members]) {
-      [,...members] = members
-      let out = `(i32.store (i32.const ${memcount}) (i32.const ${members.length})) `
+    '['([,[,...inits]]) {
+      let out = ``, members = 0
       memcount += MEM_STRIDE // we unify memory stride to f64 steps to avoid js typed array buttheart
       // second i32 stores array rotation info like a << 1
-      for (let i = 0; i < members.length; i++) {
-        out += `(f64.store (i32.const ${memcount + i * MEM_STRIDE}) ${expr(flt(members[i]))}) `
+      // FIXME: wouldn't it be easier to init static arrays via data section?
+      for (let init of inits) {
+        let idesc = desc(init,scope)
+        if (idesc.type === INT || idesc.type === FLOAT)
+          out += `(f64.store (i32.const ${memcount + members++ * MEM_STRIDE}) ${expr(flt(init))}) `
+        else if (idesc.type === RANGE) {
+          let [,min,max] = init
+          // simple numeric crange like [0..1]
+          if (typeof max[1] === 'number') {
+            // [..1]
+            if (!min) for (let v = 1; v <= max[1]; v++)
+              out += `(f64.store (i32.const ${memcount + members++ * MEM_STRIDE}) (f64.const 0)) `
+            // FIXME: this range may need specifying, like -1.2..2
+            else if (typeof min[1] === 'number') for (let v = min[1]; v <= max[1]; v++)
+                out += `(f64.store (i32.const ${memcount + members++ * MEM_STRIDE}) (f64.const ${v})) `
+            else err('Unimplemented array initializer: computed range min value')
+          }
+          else err('Unimplemented array initializer: computed range', init)
+        }
+        else err('Unimplemented array initializer',init)
       }
+      // prepend initalizer
+      out = `(i32.store (i32.const ${memcount-MEM_STRIDE}) (i32.const ${members})) ` + out
       out += `(i32.const ${memcount})`
-      memcount += members.length * MEM_STRIDE
+      memcount += members * MEM_STRIDE
 
       return out
     },
@@ -136,7 +155,9 @@ export default function compile(node) {
         if (aDesc.type !== PTR) err('Reading length of non-array', a);
         return `(i32.load (i32.sub (${aDesc.global?'global':'local'}.get $${a}) (i32.const ${MEM_STRIDE})))`
       }
-      else {  }
+      else {
+        err('Unimplemented prop access')
+      }
     },
 
     // a | b

@@ -2338,7 +2338,7 @@ Having wat files is more useful than direct compilation to binary form:
 
 ## [x] `a <~ b` vs `a < ~b` -> use `a ~< b` instead
 
-## [x] Case-insensitive variable names? -> let's use case-sensitive, too many benefits
+## [ ] Case-insensitive variable names? ->
 
 0. Case-insensitive
 
@@ -2358,6 +2358,7 @@ Having wat files is more useful than direct compilation to binary form:
 + fixes problem of math/class capfirst difference (math `X1` vs `x1`, `Oscillator` vs `oscillator`)
 + fixes problem of despawnerer's `fullName` == `fullname`
 + capfirst is typographycally meaningful
++ can fix problem of units size
 - code is not robust to case-insensitive environments
 - import looks like `@math#Pi` still
 
@@ -2395,7 +2396,7 @@ Having wat files is more useful than direct compilation to binary form:
 - not clear if `'oscillator'`, `'Oscillator'`, `oscillator` and `Oscillator` resolve to the same
 - can cause conflicts with "bad" names, like `pipe/arg`
 
-## [ ] Ranges: how to organize in wasm level?
+## [~] Ranges: how to organize in wasm level? -> let's try syntactic ranges and wait if we need ranges math/vars
 
 1. v128 as f64x2
   + stores
@@ -2405,16 +2406,24 @@ Having wat files is more useful than direct compilation to binary form:
 
 2. 2 spots in memory
   - need to manage memory
-    - screws mem order
   - need to read from memory
+  ~+ exportable as pointer?
+  + easy from use-case point
 
 3. function returning 2 values
   + exportable
+  + best fit for the use-case
   - extra call
+  - can possibly be not the best fit for clamp/etc, will force creating temp variables or calling twice.
 
 4. immediate values
   - impossible to export
   + fastest & direct
+
+4.5 ranges as syntax sugar, not data type
+  ? do we ever need saved/exported ranges?.
+  + allows fast direct static ranges easily
+  + removes tacky problems: ranges combination, min/max reading (since they're immediately available)
 
 ## [x] Drop ints and use only f64? -> keep both for now, complexity is controllable
 
@@ -2578,7 +2587,7 @@ Having wat files is more useful than direct compilation to binary form:
 * From https://www.jsoftware.com/papers/indexorigin.htm there's clearer arguments pro-0:
 . We're born at 0 age, time starts with 0 seconds, year 2000 is 1st year of 2-nd millenium, so index indicates the starting _position_ in a sequence, whereas 1-based index indicates number of an element.
 
-## [ ] Allocate memory: `*[size]x = (1,2,3)` vs `[12]x = [1,2,3]`
+## [x] Allocate memory: `*[size]x = (1,2,3)` vs `[12]x = [1,2,3]` -> use arrays x = [1,2,3]
 
 1. `*[size]x = (1,2,3)`
 
@@ -2729,3 +2738,17 @@ Having wat files is more useful than direct compilation to binary form:
 * assignment lhs?
   - can be `a <| b = c | d`
 
+## [ ] Arrays: rotate or not rotate (x << 1)?
+
++ Allows explicit ring buffers
++ Allows explicit memory buffers
++ If we implement memory buffers somehow else, we still need to store offset, not shift actual memory
++ Offset param is possibly fastest way to implement it
++ It makes use of i32 spot
+- It's slower on access, since it must apply extra sum operator and possibly mod
+- If we export such array, the memory becomes useless to read
+- User can implement rotation manually, which would be more explicit
+- There's no way to read the shifted amount by user
+? Do we ever need rotating more than just 1 step?
+? Do we ever need rotating right, rather than left?
+? Do we ever need non-rotating memory in function body?

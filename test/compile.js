@@ -36,7 +36,7 @@ function compileWat (code, importObj) {
 }
 
 
-t('compile: simple globals', t => {
+t('compile: globals basic', t => {
   // TODO: single global
   // TODO: multiply wrong types
   // TODO: define globals via group (a,b,c).
@@ -56,7 +56,7 @@ t('compile: simple globals', t => {
   is(mod.exports.sampleRate.value, 44100)
 })
 
-t('compile: simple multiple globals', () => {
+t('compile: globals multiple', () => {
   // FIXME: must throw
   // let wat = compile(`pi, pi2, sampleRate = 3.14, 3.14*2, 44100.`)
   let wat = compile(`(pi, pi2, sampleRate) = (3.14, 3.14*2, 44100).`)
@@ -76,7 +76,7 @@ t('compile: simple multiple globals', () => {
   is(mod.exports.b.value, -1)
 })
 
-t('compile: simple neg numbers', t => {
+t('compile: numbers negatives', t => {
   let wat = compile(`x=-1.`)
   let mod = compileWat(wat)
   is(mod.exports.x.value, -1)
@@ -86,7 +86,7 @@ t('compile: simple neg numbers', t => {
   is(mod.exports.x.value, -1)
 })
 
-t('compile: simple function oneliners', t => {
+t('compile: function oneliners', t => {
   // default
   let wat = compile(`mult = (a, b) -> a * b.`)
   let mod = compileWat(wat);
@@ -109,7 +109,7 @@ t('compile: simple function oneliners', t => {
   is(mod.exports.mult(2,4), 8)
 })
 
-t('compile: simple ranges', t => {
+t('compile: ranges basic', t => {
   // let wat = compile(`x = 0..10; `),
   //     mod = compileWat(wat)
   // is(mod.exports.x)
@@ -164,8 +164,64 @@ t('compile: simple ranges', t => {
   is(mod.exports.clamp(-1), 0)
 })
 
-t('compile: simple arrays', t => {
-  let wat = compile(`x = [1, 2, 3], y = [4,5,6]; x,y,xl=x[],yl=y[].`)
+t.skip('debugs', t => {
+  let code = `
+  (func $log (import "imports" "log") (param i32))
+  (memory (export "memory") 1)
+  (global $x (mut i32) (i32.const 0))
+  (global $y (mut i32) (i32.const 0))
+  (global $xl (mut i32) (i32.const 0))
+  (global $yl (mut i32) (i32.const 0))
+  (func $module/init
+  (global.set $x (i32.store (i32.const 8) (i32.const 3)) (f64.store (i32.const 8) (f64.const 1)) (f64.store (i32.const 16) (f64.const 2)) (f64.store (i32.const 24) (f64.const 3)) (i32.const 8)) (global.set $y (i32.store (i32.const 40) (i32.const 4)) (f64.store (i32.const 40) (f64.const 4)) (f64.store (i32.const 48) (f64.const 5)) (f64.store (i32.const 56) (f64.const 6)) (f64.store (i32.const 64) (f64.const 7)) (i32.const 40))
+  (call $log (i32.load (i32.const 12))) (global.set $xl (i32.load (i32.sub (global.get $x) (i32.const 8)))) (global.set $yl (i32.load (i32.sub (global.get $y) (i32.const 8))))
+  (return))
+  (start $module/init)
+  (export "x" (global $x))(export "y" (global $y))(export "xl" (global $xl))(export "yl" (global $yl))`
+  let mod = compileWat(code, {imports:{log(v){console.log(v)}}})
+  let {x, y, xl, yl} = mod.exports
+  console.log(xl.value)
+})
+
+t('compile: arrays basic', t => {
+  let wat = compile(`x = [1, 2, 3], y = [4,5,6,7]; x,y,xl=x[],yl=y[].`)
+  // console.log(wat)
+  let mod = compileWat(wat)
+  let {memory, x, y, xl, yl} = mod.exports
+  let xarr = new Float64Array(memory.buffer, x.value, 3)
+  // let i32s = new Int32Array(memory.buffer, 0)
+  is(xarr[0], 1,'x0')
+  is(xarr[1], 2,'x1')
+  is(xarr[2], 3,'x2')
+  is(xl.value,3,'xlen')
+  let yarr = new Float64Array(memory.buffer, y.value, 4)
+  is(yarr[0], 4,'y0')
+  is(yarr[1], 5,'y1')
+  is(yarr[2], 6,'y2')
+  is(yarr[3], 7,'y3')
+  is(yl.value,4,'ylen')
+})
+
+t('compile: arrays from range', t => {
+  let wat = compile(`x = [..3], y = [0..3]; x,y,xl=x[],yl=y[].`)
+  // console.log(wat)
+  let mod = compileWat(wat)
+  let {memory, x, y, xl, yl} = mod.exports
+  let xarr = new Float64Array(memory.buffer, x.value, 3)
+  is(xarr[0], 0,'x0')
+  is(xarr[1], 0,'x1')
+  is(xarr[2], 0,'x2')
+  is(xl.value,3,'xlen')
+  let yarr = new Float64Array(memory.buffer, y.value, 4)
+  is(yarr[0], 0,'y0')
+  is(yarr[1], 1,'y1')
+  is(yarr[2], 2,'y2')
+  is(yarr[3], 3,'y3')
+  is(yl.value,4,'ylen')
+})
+
+t.todo('compile: arrays rotate', t => {
+  let wat = compile(`x = [1, 2, 3]. x << 1.`)
   // console.log(wat)
   let mod = compileWat(wat)
   let {memory, x, y, xl, yl} = mod.exports
@@ -181,8 +237,8 @@ t('compile: simple arrays', t => {
   is(yl.value,3,'ylen')
 })
 
-t.skip('compile: simple subarrays', t => {
-  let wat = compile(`[2]x = [1,2,3].`)
+t.todo('compile: arrays subarrays', t => {
+  let wat = compile(`x = [1,2,3], y = [x].`)
   console.log(wat)
   let mod = compileWat(wat)
   let {memory, x} = mod.exports

@@ -1,4 +1,6 @@
 // analyser converts AST into IR, able to be compiled after
+// it exposes normalized form with static info / scopes
+// independent of particular compiler/memory layout, so that can be compiled to any target after
 import parse from './parse.js';
 import stdlib from './stdlib.js';
 import {PTR, FLOAT, INT, RANGE, STR, FUNC} from './const.js';
@@ -6,8 +8,6 @@ import {PTR, FLOAT, INT, RANGE, STR, FUNC} from './const.js';
 // detect variables & types, simplify tree for easier compilation
 export default function analyze(node) {
   if (typeof node === 'string') node = parse(node)
-  console.log(node)
-
   if (typeof node === 'string') return [null, node]
 
   // scope defines current variables

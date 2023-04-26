@@ -53,13 +53,10 @@ true = 0b1, false = 0b0;      // hint: alias booleans
 1..2 + 2..3;                  // add ranges: 1..3
 1..3 - 2..;                   // subtract ranges: 1..2
 (-10..10)[];                  // length: 20
-1..2[0]; 1..2[-1];            // min/max: 1; 2
 x -< 0..10;                   // clamp(x, 0, 10)
 x -< ..10;                    // min(x, 10)
 x -< 0..;                     // max(0, x)
 x -<= 0..10;                  // x = clamp(x, 0, 10)
-4.. -< ..8;                   // clamp ranges: 4..8
-x -< (x,y,z);                 // return x if it's in a group, null otherwise
 
 //////////////////////////// groups
 a, b, c;                      // groups are syntactic sugar
@@ -126,14 +123,16 @@ m = [1,2,3,4];                // create array of 4 items
 m = [..1000];                 // create array of 1000 items
 m = [l:2, r:4, c:6];          // create with position aliases
 m = [0..8 | i -> i*2];        // create from list comprehension
-m.0, m.1, m.2, m.3;           // access item by static index (0-based)
-m[0], m[1], m[-1];            // access by dynamic index, negative for last element
+m = [n[1..3, 5, 6..]];        // create copy from indicated subrange
+m = [1, 2..4, ..10, n];       // create from mixed definition (array is always flat)
+m.0, m.1, m.2, m.3;           // read item by static index (0-based)
+m[0], m[1], m[-1];            // read by dynamic index, negative for last element
+m[1..2];                      // read multiple values
 m[];                          // get length
 m[1..3] = (7,8);              // write multiple values
 m[0..] = (1,2,3,4);           // write all values from index 0
 m[-1..0] = m[0..];            // reverse order
 m << 2; m >> 3;               // rotate array left or right
-n = [m[1..3, 5, 6..]];        // create copy from indicated subrange
 
 //////////////////////////// loop
 i=0; i++ < 3 <| log(i);       // inline loop: while i++ < 3 do log(i)
