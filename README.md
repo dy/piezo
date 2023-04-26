@@ -132,7 +132,7 @@ m[];                          // get length
 m[1..3] = (7,8);              // write multiple values
 m[0..] = (1,2,3,4);           // write all values from index 0
 m[-1..0] = m[0..];            // reverse order
-m << 2; m >> 3;               // shift values in array right or left
+m << 2; m >> 3;               // rotate array left or right
 n = [m[1..3, 5, 6..]];        // create copy from indicated subrange
 
 //////////////////////////// loop

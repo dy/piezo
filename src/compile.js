@@ -119,7 +119,7 @@ export default function compile(node) {
       [,...members] = members
       let out = `(i32.store (i32.const ${memcount}) (i32.const ${members.length})) `
       memcount += MEM_STRIDE // we unify memory stride to f64 steps to avoid js typed array buttheart
-      // NOTE: this way we can store some other useful info if needed
+      // second i32 stores array rotation info like a << 1
       for (let i = 0; i < members.length; i++) {
         out += `(f64.store (i32.const ${memcount + i * MEM_STRIDE}) ${expr(flt(members[i]))}) `
       }
