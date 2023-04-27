@@ -86,6 +86,22 @@ t('compile: numbers negatives', t => {
   is(mod.exports.x.value, -1)
 })
 
+t('compile: numbers inc/dec', t => {
+  let wat = compile(`x=0; y=x++; x,y.`)
+  let mod = compileWat(wat)
+  is(mod.exports.x.value, 1)
+  is(mod.exports.y.value, 0)
+
+  wat = compile(`x=0; y=++x; x,y.`)
+  mod = compileWat(wat)
+  is(mod.exports.x.value, 1)
+  is(mod.exports.y.value, 1)
+
+  wat = compile(`x=0; y=x--; x,y.`)
+  mod = compileWat(wat)
+  is(mod.exports.x.value, -1)
+})
+
 t('compile: function oneliners', t => {
   // default
   let wat = compile(`mult = (a, b) -> a * b.`)
@@ -278,11 +294,11 @@ t.only('compile: loops basic', t => {
   let mod = compileWat(wat)
   let {memory, x} = mod.exports
 
-  let arr = new Float64Array(memory.buffer, 0, 3), ptr = x.value
-  is(arr[ptr], 0)
-  is(arr[ptr+1], 1)
-  it(arr[ptr+2], 2)
-  not(arr[ptr+3], 3)
+  let arr = new Float64Array(memory.buffer, x.value, 3)
+  is(arr[0], 0)
+  is(arr[1], 1)
+  it(arr[2], 2)
+  not(arr[3], 3)
 })
 
 t('compile: simple pipe', t => {

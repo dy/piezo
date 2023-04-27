@@ -281,6 +281,7 @@ export function desc(node, scope) {
   if (!node) err('Bad node')
   if (typeof node === 'string') return scope[node] || err('Cannot get descriptor of node', node)
   if (typeof node === 'number') return
+
   if (node._desc) return node._desc // cached descriptor
 
   let [op, a, b] = node
@@ -298,12 +299,12 @@ export function desc(node, scope) {
       return {type:INT, static:s}
     },
     '+'() {
-      if (!b) return aDesc
-      return opDesc['*']()
+      if (!b) return {...aDesc}
+      return {...opDesc['*']()}
     },
-    '-'() { return opDesc['+']() },
-    '++'() { return opDesc['+']() },
-    '--'() { return opDesc['+']() },
+    '-'() { return {...opDesc['+']()} },
+    '++'() { return {...opDesc['+']()} },
+    '--'() { return {...opDesc['+']()} },
     '/'() {
       // FIXME: detect possiblt int type result
       // return (desc(a, scope).type === INT && desc(b, scope).type === INT) ? {type:INT} : {type:FLOAT}
@@ -325,12 +326,12 @@ export function desc(node, scope) {
       return !b ? {type:INT} : {type:FLOAT} // FIXME: array can include other than float values
     },
     '|'() {
-      if (aDesc.type === PTR) return aDesc
+      if (aDesc.type === PTR) return {...aDesc}
       console.log('todo - detect type from |',a, b)
     },
-    ';'() { return desc(node[node.length - 1], scope) },
-    ','() { let d = desc(node[node.length - 1], scope); d.multiple = true; return b; },
-    '<|'() { bDesc.multiple = true; return bDesc },
+    ';'() { return {...desc(node[node.length - 1], scope)} },
+    ','() { return {...desc(node[node.length - 1], scope), multiple:true} },
+    '<|'() { return {...bDesc, multiple: true}; },
     '('() { return aDesc },
   }
 

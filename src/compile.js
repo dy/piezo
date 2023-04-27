@@ -91,7 +91,10 @@ export default function compile(node) {
       if (desc(a,scope).type == INT && desc(b,scope).type == INT) return `(i32.mul ${expr(a)} ${expr(b)})`
       return `(f64.mul ${fexpr(a)} ${fexpr(b)})`
     },
-    '++'([,a]) { return expr['+'](['+',a,[INT,1]]) },
+    '++'([,a]) { return expr(['+=',a,[INT,1]]) },
+    '--'([,a]) { return expr(['-=',a,[INT,1]]) },
+    '+='([,a,b]) { return expr(['=',a,['+',a,b]]) },
+    '-='([,a,b]) { return expr(['=',a,['-',a,b]]) },
 
     // comparisons
     '<'([,a,b]) {
@@ -197,8 +200,12 @@ export default function compile(node) {
         return `(f64.store (i32.add ${expr(ptr)} (i32.shl (call $util/idx ${iexpr(prop)} ${expr(['[]',ptr])}) (i32.const ${Math.log2(MEM_STRIDE)}))) ${fexpr(init)})`
       }
       // x = y
-      if (desc(init,scope).type !== FUNC)
-        return `(${scope[name].global?'global':'local'}.set $${name} ${expr(init)})`
+      if (desc(init,scope).type !== FUNC) {
+        if (scope[name].global)
+          return `(global.set $${name} ${expr(init)})(global.get $${name})`
+        else
+          return `(local.tee $${name} ${expr(init)})`
+      }
 
       // x = a -> b
       // FIXME: likely we want to assign function pointers as ids and store functions in a table

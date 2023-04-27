@@ -2756,3 +2756,8 @@ Having wat files is more useful than direct compilation to binary form:
 ? Do we ever need rotating more than just 1 step?
 ? Do we ever need rotating right, rather than left?
 ? Do we ever need non-rotating memory in function body?
+
+## [ ] Arrays: neg-index access or no?
+
++ handy & complacent with slicing
+- suboptimal performance, since enforces (idx % len) operation = reading array length
