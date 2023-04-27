@@ -90,6 +90,12 @@ export default function analyze(node) {
         let [,obj,prop] = left
         return ['=', ['[]',expr(obj),expr(prop)], expr(right)]
       }
+      // x.1 = ...
+      if (left[0] === '.') {
+        let [,obj,idx] = left
+        // FIXME: recognize alias like x.first, x.last
+        return ['=', ['.',expr(obj),idx], expr(right)]
+      }
 
       err('Invalid left-hand side assignment `' + left + '`', left)
     },
@@ -106,7 +112,7 @@ export default function analyze(node) {
       scope = parent
       return body
     },
-    // args -> body
+    // (args) -> (body)
     '->'([,args,body]) {
       let parent = scope
       scope = Object.create(scope)
@@ -197,7 +203,7 @@ export default function analyze(node) {
       // we return nothing since member is marked as imported
     },
 
-    // a,b,c . x
+    // a,b,c . x?
     '.'([,a,b], skip=false) {
       // a.b
       if (b) err('prop access is unimplemented ' + a + b, a)
@@ -262,57 +268,80 @@ export default function analyze(node) {
   return node
 }
 
-// get descriptor of a node or variable: includes type and other info
+/**
+ * get descriptor of a node or variable: includes type and other info
+ * {
+ *   type,   - value type - INT, FLOAT, RANGE, PTR (Array)
+ *   static?, - if value can be statically precalculated (like prop values)
+ *   min?, max?, - range value limits (descriptors)
+ *   multiple? - if result of node is multiple items, like sequence or array.
+ * }
+**/
 export function desc(node, scope) {
   if (!node) err('Bad node')
-  if (typeof node === 'string') return scope[node] || err('Cannote get descriptor of node', node)
+  if (typeof node === 'string') return scope[node] || err('Cannot get descriptor of node', node)
+  if (typeof node === 'number') return
+  if (node._desc) return node._desc // cached descriptor
 
   let [op, a, b] = node
+  if (op === INT || op === FLOAT) return { type: op, static: true}
+
+  // use node scope
+  let prevScope = node.scope || scope
+  scope = node.scope || scope
+
+  let aDesc = a&&desc(a,scope), bDesc = b&&desc(b,scope), s = aDesc?.static && bDesc?.static
 
   const opDesc = {
-    [INT]() {return {type:INT}},
-    [FLOAT]() {return {type:FLOAT}},
     '*'() {
-      if (desc(a, scope).type === FLOAT || desc(b, scope).type === FLOAT()) return {type:FLOAT}
-      return {type:INT}
+      if (aDesc.type === FLOAT || bDesc.type === FLOAT) return {type:FLOAT, static:s}
+      return {type:INT, static:s}
     },
     '+'() {
-      if (!b) return desc(a, scope)
+      if (!b) return aDesc
       return opDesc['*']()
     },
     '-'() { return opDesc['+']() },
+    '++'() { return opDesc['+']() },
+    '--'() { return opDesc['+']() },
     '/'() {
       // FIXME: detect possiblt int type result
       // return (desc(a, scope).type === INT && desc(b, scope).type === INT) ? {type:INT} : {type:FLOAT}
-      return {type:FLOAT}
+      return {type:FLOAT, static:s}
     },
     '-<'() {
       // FIXME: detect range type better (range is separate type)
-      let bDesc = desc(b, scope)
       if (bDesc.type === RANGE) {
-        return desc(a, scope).type === INT && (!bDesc.min || bDesc.min.type === INT) && (!bDesc.max || bDesc.max.type === INT) ? {type:INT} : {type:FLOAT}
+        return aDesc.type === INT && (!bDesc.min || bDesc.min.type === INT) && (!bDesc.max || bDesc.max.type === INT) ? {static:s, type:INT} : {static:s, type:FLOAT}
       }
       err('Right part of clamp operator is not range', node)
     },
-    '..'() { return {type: RANGE, min: a && desc(a,scope), max: b && desc(b,scope)}},
+    '..'() {
+      return {type: RANGE, min: a && aDesc, max: b && bDesc, static:s }
+    },
     '['() { return {type:PTR} },
     '->'() { return {type:FUNC} },
     '[]'() {
       return !b ? {type:INT} : {type:FLOAT} // FIXME: array can include other than float values
     },
     '|'() {
-      let aDesc = desc(a, scope), bDesc = desc(b, scope)
       if (aDesc.type === PTR) return aDesc
       console.log('todo - detect type from |',a, b)
     },
-    ';'(node) { return desc(node[node.length - 1], scope) },
-    '<|'() {let rdesc = desc(b, scope); rdesc.multiple = true; return rdesc },
-    '('() { return desc(a, scope) },
+    ';'() { return desc(node[node.length - 1], scope) },
+    ','() { let d = desc(node[node.length - 1], scope); d.multiple = true; return b; },
+    '<|'() { bDesc.multiple = true; return bDesc },
+    '('() { return aDesc },
   }
 
-  if (opDesc[op]) return opDesc[op]()
+  if (opDesc[op]) {
+    if (node.length < 2) return {}; // artifacts like [,] or [;]
+    let desc = node._desc = opDesc[op]()
+    scope = prevScope // recover scope
+    return desc
+  }
 
-  err('Cannot define type', node)
+  err('Unknown descriptor of ' + op, node)
 }
 
 export function err(msg, node={}) {

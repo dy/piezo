@@ -8,7 +8,7 @@ const MEM_STRIDE = 8; // bytes per f64
 
 export default function compile(node) {
   if (typeof node === 'string' || Array.isArray(node)) node = analyse(node)
-  console.log('compile',node)
+  console.log('compile', node)
 
   let includes = [], // pieces to prepend
     globals = [], // global statements
@@ -17,12 +17,12 @@ export default function compile(node) {
     scope // current scope
 
   // processess global statements, returns nothing, only modifies globals, inits, out, memory
-  function expr(statement, param) {
+  function expr(statement, name) {
     if (!statement) return ''
     // a; - just declare in proper scope
     // FIXME: funcs may need returning something meaningful
     if (typeof statement === 'string') return scope[statement].type === FUNC ? `` : `(${scope[statement].global?'global':'local'}.get $${statement})`
-    if (statement[0] in expr) return expr[statement[0]](statement, param) || ''
+    if (statement[0] in expr) return expr[statement[0]](statement, name) || ''
     err('Unknown operation `' + statement[0] + '`',statement)
   }
 
@@ -32,19 +32,8 @@ export default function compile(node) {
     ','([,...statements]){ let list=[]; for (let s of statements) list.push(expr(s)); return list.join(' ') },
 
     // number primitives: 1.0, 2 etc.
-    [FLOAT]([,a]) {
-      if (typeof a === 'number') return `(f64.const ${a})`;
-      return `(f64.convert_i32_s ${expr(a)})`;
-    },
-    [INT]([,a]) {
-      if (typeof a === 'number') return `(i32.const ${a})`
-      return `(i32.trunc_f64_s ${expr(a)})`
-    },
-
-    '='([,name,init]) {
-      let res = expr(init,name)
-      if (desc(init,scope).type !== FUNC) return `(${scope[name].global?'global':'local'}.set $${name} ${res})`
-    },
+    [FLOAT]([,a]) { return `(f64.const ${a})`},
+    [INT]([,a]) { return `(i32.const ${a})`},
 
     '->'(fn, name) {
       let [,prepare,body] = fn, dfn = [], parent = scope, prevLocals = locals
@@ -92,15 +81,48 @@ export default function compile(node) {
         return expr(['-',[INT,0],a[1]])
       }
       if (desc(a,scope).type == INT && desc(b,scope).type == INT) return `(i32.sub ${expr(a)} ${expr(b)})`
-      return `(f64.sub ${expr(flt(a))} ${expr(flt(b))})`
+      return `(f64.sub ${fexpr(a)} ${fexpr(b)})`
     },
     '+'([,a,b]) {
       if (desc(a,scope).type == INT && desc(b,scope).type == INT) return `(i32.add ${expr(a)} ${expr(b)})`
-      return `(f64.add ${expr(flt(a))} ${expr(flt(b))})`
+      return `(f64.add ${fexpr(a)} ${fexpr(b)})`
     },
     '*'([,a,b]) {
       if (desc(a,scope).type == INT && desc(b,scope).type == INT) return `(i32.mul ${expr(a)} ${expr(b)})`
-      return `(f64.mul ${expr(flt(a))} ${expr(flt(b))})`
+      return `(f64.mul ${fexpr(a)} ${fexpr(b)})`
+    },
+    '++'([,a]) { return expr['+'](['+',a,[INT,1]]) },
+
+    // comparisons
+    '<'([,a,b]) {
+      let aDesc = desc(a, scope), bDesc = desc(b, scope)
+      if (aDesc.type === INT && bDesc.type === INT) return `(i32.lt_s ${expr(a)} ${expr(b)})`
+      return `(f64.lt ${fexpr(a)} ${fexpr(b)})`
+    },
+    '<='([,a,b]) {
+      let aDesc = desc(a, scope), bDesc = desc(b, scope)
+      if (aDesc.type === INT && bDesc.type === INT) return `(i32.le_s ${expr(a)} ${expr(b)})`
+      return `(f64.le ${fexpr(a)} ${fexpr(b)})`
+    },
+    '>'([,a,b]) {
+      let aDesc = desc(a, scope), bDesc = desc(b, scope)
+      if (aDesc.type === INT && bDesc.type === INT) return `(i32.gt_s ${expr(a)} ${expr(b)})`
+      return `(f64.gt ${fexpr(a)} ${fexpr(b)})`
+    },
+    '>='([,a,b]) {
+      let aDesc = desc(a, scope), bDesc = desc(b, scope)
+      if (aDesc.type === INT && bDesc.type === INT) return `(i32.ge_s ${expr(a)} ${expr(b)})`
+      return `(f64.ge ${fexpr(a)} ${fexpr(b)})`
+    },
+    '=='([,a,b]) {
+      let aDesc = desc(a, scope), bDesc = desc(b, scope)
+      if (aDesc.type === INT && bDesc.type === INT) return `(i32.eq_s ${expr(a)} ${expr(b)})`
+      return `(f64.eq ${fexpr(a)} ${fexpr(b)})`
+    },
+    '!='([,a,b]) {
+      let aDesc = desc(a, scope), bDesc = desc(b, scope)
+      if (aDesc.type === INT && bDesc.type === INT) return `(i32.ne_s ${expr(a)} ${expr(b)})`
+      return `(f64.ne ${fexpr(a)} ${fexpr(b)})`
     },
 
     // a -< range - clamp a to indicated range
@@ -108,10 +130,11 @@ export default function compile(node) {
       if (b[0] !== '..') err('Non-range passed as right side of clamp operator')
       let [,min,max] = b
       if (desc(a,scope).type == INT && desc(min,scope).type == INT && desc(max,scope).type == INT) {
-        includes.push(['util','i32.smax'], ['util','i32.smin'])
+        if (!includes.includes('util/i32.smax')) includes.push('util/i32.smax')
+        if (!includes.includes('util/i32.smin')) includes.push('util/i32.smin')
         return `(call $util/i32.smax (call $util/i32.smin ${expr(a)} ${expr(max)}) ${expr(min)})`
       }
-      return `(f64.max (f64.min ${expr(flt(a))} ${expr(flt(max))}) ${expr(flt(min))})`
+      return `(f64.max (f64.min ${fexpr(a)} ${fexpr(max)}) ${fexpr(min)})`
     },
 
     // [1,2,3]
@@ -123,14 +146,14 @@ export default function compile(node) {
       for (let init of inits) {
         let idesc = desc(init,scope)
         if (idesc.type === INT || idesc.type === FLOAT)
-          out += `(f64.store (i32.const ${memcount + members++ * MEM_STRIDE}) ${expr(flt(init))}) `
+          out += `(f64.store (i32.const ${memcount + members++ * MEM_STRIDE}) ${fexpr(init)}) `
         else if (idesc.type === RANGE) {
           let [,min,max] = init
-          // simple numeric crange like [0..1]
+          // simple numeric range like [0..1]
           if (typeof max[1] === 'number') {
-            // [..1]
-            if (!min) for (let v = 1; v <= max[1]; v++)
-              out += `(f64.store (i32.const ${memcount + members++ * MEM_STRIDE}) (f64.const 0)) `
+            // [..1] - no need for specific init
+            if (!min) members += max[1]
+            // [1..3]
             // FIXME: this range may need specifying, like -1.2..2
             else if (typeof min[1] === 'number') for (let v = min[1]; v <= max[1]; v++)
                 out += `(f64.store (i32.const ${memcount + members++ * MEM_STRIDE}) (f64.const ${v})) `
@@ -160,6 +183,30 @@ export default function compile(node) {
       }
     },
 
+    '='([,name,init]) {
+      // FIXME: accept functions
+      // x[y]=1, x.y=1
+      if (name[0] === '[]' || name[0] === '.') {
+        let [,ptr,prop] = name
+        if (name[0] === '.') prop = [INT, parseInt(prop)]
+
+        // FIXME: add static optimization here for property - to avoid calling util/idx if idx is known
+
+        // dynamic props - access as a[(idx + len) % len]
+        if (!includes.includes('util/idx')) includes.push('util/idx')
+        return `(f64.store (i32.add ${expr(ptr)} (i32.shl (call $util/idx ${iexpr(prop)} ${expr(['[]',ptr])}) (i32.const ${Math.log2(MEM_STRIDE)}))) ${fexpr(init)})`
+      }
+      // x = y
+      if (desc(init,scope).type !== FUNC)
+        return `(${scope[name].global?'global':'local'}.set $${name} ${expr(init)})`
+
+      // x = a -> b
+      // FIXME: likely we want to assign function pointers as ids and store functions in a table
+      if (desc(init,scope).type === FUNC) return expr(init, name)
+
+      err('Strange assignment', node)
+    },
+
     // a | b
     '|'([,a,b]) {
       console.log(a,b)
@@ -167,7 +214,7 @@ export default function compile(node) {
 
     // a <| b
     '<|'([,a,b]) {
-      console.log("TODO: loops", a, b)
+      // console.log("TODO: loops", a, b)
       return `(loop $name (if ${expr(a)} (then ${expr(b)}) (else br $name)))`
     }
   })
@@ -183,10 +230,15 @@ export default function compile(node) {
     }
   }
 
-  // wrap last expr with float
-  function flt(node) {
-    if (node[0] === FLOAT || desc(node, scope).type === FLOAT) return node
-    return [FLOAT, node[1]]
+  // render expression wrapped to float, if needed
+  function fexpr(node) {
+    if (desc(node, scope).type === FLOAT) return expr(node)
+    return `(f64.convert_i32_s ${expr(node)})`;
+  }
+  // cast last expr into int
+  function iexpr(node) {
+    if (desc(node, scope).type === INT) return expr(node)
+    return `(i32.trunc_f64_s ${expr(node)})`
   }
 
 
@@ -202,7 +254,10 @@ export default function compile(node) {
   if (exp) globals.push(exp)
 
   // Declare includes
-  for (let [lib,member] of includes) globals.unshift(stdlib[lib][member])
+  for (let include of includes) {
+    let [lib,member] = include.split('/')
+    globals.unshift(stdlib[lib][member])
+  }
 
   // Declare memories
   if (memcount) globals.unshift(`(memory (export "memory") ${Math.ceil(memcount / F64_PER_PAGE)})`)

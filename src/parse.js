@@ -152,8 +152,8 @@ unary('!', PREC_UNARY)
 unary('~',  PREC_UNARY)
 unary('++', PREC_UNARY)
 unary('--', PREC_UNARY)
-token('++', PREC_UNARY, a => a && ['-',['++',a],1])
-token('--', PREC_UNARY, a => a && ['+',['--',a],1])
+token('++', PREC_UNARY, a => a && ['-',['++',a],[INT,1]])
+token('--', PREC_UNARY, a => a && ['+',['--',a],[INT,1]])
 
 unary('^', PREC_TOKEN) // continue with value: ^ a
 token('^', PREC_TOKEN, a => !a && !expr(PREC_TOKEN) && ['^']) // continue: ^

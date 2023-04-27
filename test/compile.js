@@ -220,6 +220,17 @@ t('compile: arrays from range', t => {
   is(yl.value,4,'ylen')
 })
 
+t('compile: arrays write', t => {
+  let wat = compile(`x = [..3]; x[0]=1; x.1=2; x[-1]=x[]; x.`)
+  // console.log(wat)
+  let mod = compileWat(wat)
+  let {memory, x} = mod.exports
+  let xarr = new Float64Array(memory.buffer, x.value, 3)
+  is(xarr[0], 1,'x0')
+  is(xarr[1], 2,'x1')
+  is(xarr[2], 3,'x2')
+})
+
 t.todo('compile: arrays rotate', t => {
   let wat = compile(`x = [1, 2, 3]. x << 1.`)
   // console.log(wat)
@@ -262,7 +273,7 @@ t('compile: variable type inference', t => {
   x = compileWat(compile(`x;x=[];x.`)).exports.x // late-arr type
 })
 
-t.only('compile: simple loops', t => {
+t.only('compile: loops basic', t => {
   let wat = compile(`x=[..3]; i=0; i<3 <| x[i]=i++; x.`)
   let mod = compileWat(wat)
   let {memory, x} = mod.exports

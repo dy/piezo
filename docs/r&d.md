@@ -2345,13 +2345,16 @@ Having wat files is more useful than direct compilation to binary form:
 - `AbB` vs `ABb` can be different chords, but lino mixes them up together
 - `X1` and `x1` can be different things in math
 - `sampleRate` becomes `samplerate` - can be confusing
+  ~ doesn't have to lowcase
 - export naming requirement: `'AbB': AbB, 'sampleRate': sampleRate.`
   ~ can take exact name though
 - not much conventional, only MySQL and other oldies
-+ solves problem mentioned by despawnerer
++ solves problem mentioned by despawnerer (`dateRange` vs `daterange`)
 + lowcase is typographycally more expressive
 + code can be more robust in case-enforcing environments, eg. as url string
 - `1Ms` vs `1ms` is critical
+  ~ not sure it's good idea to designate such meaning to capitalization
+  ~ `1Ms` is super-unlikely, for bytes can use `1mb` - it's never millibyte
 
 0.5 Capfirst-sensitive, (`Abc` == `ABc`) != (`aBC` == `abc`)
 
@@ -2361,6 +2364,7 @@ Having wat files is more useful than direct compilation to binary form:
 + can fix problem of units size
 - code is not robust to case-insensitive environments
 - import looks like `@math#Pi` still
+- doesn't solve constants issue, `PI` vs `pi` - would be cool to have `pi`
 
 1. Case-sensitive
 
