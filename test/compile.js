@@ -18,7 +18,8 @@ function clean (str) {
 
 // convert wast code to binary
 let wabt = await Wabt()
-function compileWat (code, importObj) {
+function compileWat (code, importObj={}) {
+  code = '(func $log (import "imports" "log") (param i32))\n' + code
   const wasmModule = wabt.parseWat('inline', code, {
     simd: true
   })
@@ -32,7 +33,12 @@ function compileWat (code, importObj) {
   wasmModule.destroy()
 
   const mod = new WebAssembly.Module(binary.buffer)
-  return new WebAssembly.Instance(mod, importObj)
+  return new WebAssembly.Instance(mod, {
+    ...importObj,
+    imports: {
+      log(v){ console.log(v) }
+    }
+  })
 }
 
 
@@ -180,26 +186,6 @@ t('compile: ranges basic', t => {
   is(mod.exports.clamp(-1), 0)
 })
 
-t.skip('debugs', t => {
-  let code = `
-  (func $log (import "imports" "log") (param i32))
-  (memory (export "memory") 1)
-  (func $util/idx (param i32 i32) (result i32) (i32.rem_s (i32.add (local.get 0)(local.get 1)) (local.get 1)))
-  (global $x (mut i32) (i32.const 0))
-  (global $i (mut i32) (i32.const 0))
-  (func $module/init
-  (local $j i32)(global.set $x (i32.store (i32.const 0) (i32.const 3)) (i32.const 8))(global.get $x)
-  (global.set $i (i32.const 0))(global.get $i)
-  (loop (if (i32.lt_s (global.get $i) (i32.const 2)) (then (local.tee $j (i32.const 0))
-  (loop (if (i32.lt_s (local.get $j) (i32.const 2)) (then (f64.store (i32.add (global.get $x) (i32.shl (call $util/idx (i32.add (i32.mul (global.get $i) (i32.const 2)) (local.get $j)) (i32.load (i32.sub (global.get $x) (i32.const 8)))) (i32.const 3))) (f64.convert_i32_s (i32.add (global.get $i) (local.get $j)))) (br 2)))) (br 1))))
-  (global.get $x)
-  (return))
-  (start $module/init)
-  (export "x" (global $x))`
-  let mod = compileWat(code, {imports:{log(v){console.log(v)}}})
-  // let {x, y, xl, yl} = mod.exports
-})
-
 t('compile: arrays basic', t => {
   let wat = compile(`x = [1, 2, 3], y = [4,5,6,7]; x,y,xl=x[],yl=y[].`)
   // console.log(wat)
@@ -303,8 +289,19 @@ t('compile: loops basic', t => {
   not(arr[3], 3)
 })
 
-t.todo('compile: loop in loop', t => {
-  let wat = compile(`x=[..3]; i=0; i<2 <| (j=0; j<2 <| x[i*2+j]=i+j); x.`)
+t('compile: loop in loop', t => {
+  let wat = compile(`
+    x=[..4];
+    i=0;
+    i<2 <| (
+      j=0;
+      j<2 <| (
+        x[i*2+j]=i*2+j;
+        j++
+      );
+      i++;
+    );
+  x.`)
   let mod = compileWat(wat)
   let {memory, x} = mod.exports
 
@@ -313,7 +310,7 @@ t.todo('compile: loop in loop', t => {
   is(arr[0], 0)
   is(arr[1], 1)
   is(arr[2], 2)
-  is(arr[3], 4)
+  is(arr[3], 3)
 })
 
 t('compile: simple pipe', t => {

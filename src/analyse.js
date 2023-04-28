@@ -252,6 +252,12 @@ export default function analyze(node) {
         m[0] === '[' ? members.push(...m[1].slice(1)) : members.push(m)
       }
       return ['[',members]
+    },
+
+    // a(), a(x,y)
+    '()'([,name,args]) {
+      args = !args ? [','] : args[0]===',' ? args : [',',args]
+      return ['()',name,args]
     }
   })
 

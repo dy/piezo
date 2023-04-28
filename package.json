@@ -3,11 +3,11 @@
     "cln": "^1.1.0",
     "ts-dedent": "^2.2.0",
     "tst": "^7.1.1",
-    "wabt": "^1.0.27"
+    "wabt": "^1.0.27",
+    "watr": "^1.2.0"
   },
   "dependencies": {
-    "subscript": "^7.4.3",
-    "watr": "^1.2.0"
+    "subscript": "^7.4.3"
   },
   "name": "sonscript",
   "description": "> Sound language",

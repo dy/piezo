@@ -2,6 +2,7 @@
 import analyse, { err, desc } from "./analyse.js"
 import stdlib from "./stdlib.js"
 import {FLOAT,INT,RANGE,PTR,FUNC} from './const.js'
+import { parse as parseWat } from "watr";
 
 const F64_PER_PAGE = 8192;
 const MEM_STRIDE = 8; // bytes per f64
@@ -72,6 +73,10 @@ export default function compile(node) {
       let res = expr(statement[1])
       scope = parent
       return res
+    },
+
+    '()'([,name,[,...args]]){
+      return `(call $${name} ${args.map(arg=>expr(arg)).join(' ')})`
     },
 
     '-'([,a,b]) {
@@ -224,7 +229,7 @@ export default function compile(node) {
     '<|'([,a,b]) {
       // console.log("TODO: loops", a, b)
       loop++
-      let res = `(loop $${loop} (if ${expr(a)} (then ${expr(b)} (br $${loop}))))`
+      let res = `(loop $loop${loop} (if ${expr(a)} (then ${expr(b)} (br $loop${loop}))))`
       loop--
       return res
     }
@@ -274,6 +279,7 @@ export default function compile(node) {
   if (memcount) globals.unshift(`(memory (export "memory") ${Math.ceil(memcount / F64_PER_PAGE)})`)
 
   console.log(globals.join('\n'))
+  console.log(...parseWat(globals.join('\n')))
 
   return globals.join('\n')
 }
