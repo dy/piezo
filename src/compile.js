@@ -14,7 +14,8 @@ export default function compile(node) {
     globals = [], // global statements
     locals, // current local fn body
     memcount = 0, // current used memory pointer (number of f64s)
-    scope // current scope
+    scope, // current scope
+    loop = 0 // current loop
 
   // processess global statements, returns nothing, only modifies globals, inits, out, memory
   function expr(statement, name) {
@@ -222,7 +223,10 @@ export default function compile(node) {
     // a <| b
     '<|'([,a,b]) {
       // console.log("TODO: loops", a, b)
-      return `(loop $name (if ${expr(a)} (then ${expr(b)}) (else br $name)))`
+      loop++
+      let res = `(loop $${loop} (if ${expr(a)} (then ${expr(b)} (br $${loop}))))`
+      loop--
+      return res
     }
   })
 

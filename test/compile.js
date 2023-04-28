@@ -184,19 +184,20 @@ t.skip('debugs', t => {
   let code = `
   (func $log (import "imports" "log") (param i32))
   (memory (export "memory") 1)
+  (func $util/idx (param i32 i32) (result i32) (i32.rem_s (i32.add (local.get 0)(local.get 1)) (local.get 1)))
   (global $x (mut i32) (i32.const 0))
-  (global $y (mut i32) (i32.const 0))
-  (global $xl (mut i32) (i32.const 0))
-  (global $yl (mut i32) (i32.const 0))
+  (global $i (mut i32) (i32.const 0))
   (func $module/init
-  (global.set $x (i32.store (i32.const 8) (i32.const 3)) (f64.store (i32.const 8) (f64.const 1)) (f64.store (i32.const 16) (f64.const 2)) (f64.store (i32.const 24) (f64.const 3)) (i32.const 8)) (global.set $y (i32.store (i32.const 40) (i32.const 4)) (f64.store (i32.const 40) (f64.const 4)) (f64.store (i32.const 48) (f64.const 5)) (f64.store (i32.const 56) (f64.const 6)) (f64.store (i32.const 64) (f64.const 7)) (i32.const 40))
-  (call $log (i32.load (i32.const 12))) (global.set $xl (i32.load (i32.sub (global.get $x) (i32.const 8)))) (global.set $yl (i32.load (i32.sub (global.get $y) (i32.const 8))))
+  (local $j i32)(global.set $x (i32.store (i32.const 0) (i32.const 3)) (i32.const 8))(global.get $x)
+  (global.set $i (i32.const 0))(global.get $i)
+  (loop (if (i32.lt_s (global.get $i) (i32.const 2)) (then (local.tee $j (i32.const 0))
+  (loop (if (i32.lt_s (local.get $j) (i32.const 2)) (then (f64.store (i32.add (global.get $x) (i32.shl (call $util/idx (i32.add (i32.mul (global.get $i) (i32.const 2)) (local.get $j)) (i32.load (i32.sub (global.get $x) (i32.const 8)))) (i32.const 3))) (f64.convert_i32_s (i32.add (global.get $i) (local.get $j)))) (br 2)))) (br 1))))
+  (global.get $x)
   (return))
   (start $module/init)
-  (export "x" (global $x))(export "y" (global $y))(export "xl" (global $xl))(export "yl" (global $yl))`
+  (export "x" (global $x))`
   let mod = compileWat(code, {imports:{log(v){console.log(v)}}})
-  let {x, y, xl, yl} = mod.exports
-  console.log(xl.value)
+  // let {x, y, xl, yl} = mod.exports
 })
 
 t('compile: arrays basic', t => {
@@ -289,16 +290,30 @@ t('compile: variable type inference', t => {
   x = compileWat(compile(`x;x=[];x.`)).exports.x // late-arr type
 })
 
-t.only('compile: loops basic', t => {
+t('compile: loops basic', t => {
   let wat = compile(`x=[..3]; i=0; i<3 <| x[i]=i++; x.`)
   let mod = compileWat(wat)
   let {memory, x} = mod.exports
 
   let arr = new Float64Array(memory.buffer, x.value, 3)
+
   is(arr[0], 0)
   is(arr[1], 1)
-  it(arr[2], 2)
+  is(arr[2], 2)
   not(arr[3], 3)
+})
+
+t.todo('compile: loop in loop', t => {
+  let wat = compile(`x=[..3]; i=0; i<2 <| (j=0; j<2 <| x[i*2+j]=i+j); x.`)
+  let mod = compileWat(wat)
+  let {memory, x} = mod.exports
+
+  let arr = new Float64Array(memory.buffer, x.value, 4)
+
+  is(arr[0], 0)
+  is(arr[1], 1)
+  is(arr[2], 2)
+  is(arr[3], 4)
 })
 
 t('compile: simple pipe', t => {
