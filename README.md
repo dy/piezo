@@ -93,8 +93,8 @@ a > b && c;                   // if a > b then c
 a < b || c;                   // if a < b else c
 
 //////////////////////////// functions
-double = n -> n*2;            // inline function
-triple = (n=1) -> (           // optional args
+double(n) = n*2;              // inline function
+triple(n=1) = (               // optional args
   n == 0 ? ^n;                // preliminarily return n
   n*3                         // returns last value
 );
@@ -103,14 +103,14 @@ triple(5);                    // 15
 triple(n: 10);                // 30. named argument.
 copy = triple;                // capture function
 copy(n: 10);                  // also 30
-clamp = (v -< 0..10) -> v;    // clamp argument
-x = () -> (1,2,3);            // return group (multiple values)
+clamp(v -< 0..10) = v;        // clamp argument
+x() = (1,2,3);                // return group (multiple values)
 (a,b,c) = x();                // assign to a group
 
 //////////////////////////// stateful variables
-a = () -> ( *i=0; i++ );      // stateful variable - persist value between fn calls
+a() = ( *i=0; i++ );          // stateful variable - persist value between fn calls
 a(), a();                     // 0, 1
-b = () -> (                   //
+b() = (                       //
   *i = [..4];                 // local memory of 4 items
   i >> 1;                     // shift memory right every fn call
   i.0 = i.1+1;                // write previous value i.1 to current value i.0
@@ -154,8 +154,8 @@ i=0; i++ < 3 <| log(i);       // inline loop: while i++ < 3 do log(i)
 items |= x -> x * 2;          // overwrite items in source array
 
 //////////////////////////// fold
-(a,b,c) |> (a,b) -> a + b;    // fold group (syntax sugar)
-[a,b,c] |> (a,b) -> a + b;    // fold list
+(a,b,c) |> a,b -> a + b;      // fold group (syntax sugar)
+[a,b,c] |> a,b -> a + b;      // fold list
 
 //////////////////////////// import, export
 @'./path/to/module#x,y,z';    // any file can be imported directly
@@ -193,7 +193,7 @@ NOTE: indexOf can be done as `string | (x,i) -> (x == "l" ? i)`
 Provides k-rate amplification of input audio.
 
 ```fs
-gain = ( x, volume -< 0..100 ) -> (
+gain( x, volume -< 0..100 ) = (
   x * volume;  // write to output array
 );
 
@@ -219,7 +219,7 @@ Biquad filter processor for single-channel input.
 1k = 10000;                   // basic si units
 
 // process single sample
-lpf = (x0, freq = 100 -< 1..10k, Q = 1.0 -< 0.001..3.0) -> (
+lpf(x0, freq = 100 -< 1..10k, Q = 1.0 -< 0.001..3.0) = (
   *x1=0, *x2=0, *y1=0, *y2=0;     // filter state (defined by callsite)
 
   // lpf formula
@@ -241,7 +241,7 @@ lpf = (x0, freq = 100 -< 1..10k, Q = 1.0 -< 0.001..3.0) -> (
 );
 
 // process block (mutable)
-lpf = (x, freq, Q) -> (x |= x -> lpf(x, freq, Q)).
+lpf(x, freq, Q) = (x |= x -> lpf(x, freq, Q)).
 ```
 
 * _import_ − done via URI string as `@ 'path/to/lib#foo,bar'`. <!-- Built-in libs are: _math_, _std_. Additional libs: _sonr_, _latr_, _musi_ and [others](). --> _import-map.json_ can provide import aliases.
@@ -262,12 +262,13 @@ Consider [coin sound](https://codepen.io/KilledByAPixel/full/BaowKzv):
 1s = 44100;
 1ms = 1s / 1000;
 
+
 oscillator = [
-  saw: phase -> 1 - 4 * abs( round(phase/2pi) - phase/2pi ),
-  sine: phase -> sin(phase);
+  saw(phase) = (1 - 4 * abs( round(phase/2pi) - phase/2pi )),
+  sine(phase) = sin(phase)
 ];
 
-adsr = (x, a, d, (s, sv=1), r) -> ( // optional group-argument
+adsr(x, a, d, (s, sv=1), r) = ( // optional group-argument
   *i = 0;
   t = i++ / 1s;
 
@@ -287,10 +288,10 @@ adsr = (x, a, d, (s, sv=1), r) -> ( // optional group-argument
 );
 
 // curve effect
-curve = (x, amt=1.82 -< 0..10) -> (sign(x) * abs(x)) ** amt;
+curve(x, amt=1.82 -< 0..10) = (sign(x) * abs(x)) ** amt;
 
 // coin = triangle with pitch jump, produces block
-coin = (freq=1675, jump=freq/2, delay=0.06, shape=0) -> (
+coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
   *i, *phase = 0, 0;  // current state
   *out=[..1024];      // output block of 1024 samples
 
@@ -324,7 +325,7 @@ coin = (freq=1675, jump=freq/2, delay=0.06, shape=0) -> (
 
 // TODO: stretch
 
-reverb = ([]input, room=0.5, damp=0.5) -> (
+reverb([]input, room=0.5, damp=0.5) = (
   *combs_a = a0,a1,a2,a3 | a -> stretch(a),
   *combs_b = b0,b1,b2,b3 | b -> stretch(b),
   *aps = p0,p1,p2,p3 | p -> stretch(p);
@@ -352,11 +353,11 @@ Transpiled floatbeat/bytebeat song:
 
 sampleRate = 44100;
 
-fract = (x) -> x % 1;
-mix = (a, b, c) -> (a * (1 - c)) + (b * c);
-tri = (x) -> 2 * asin(sin(x)) / pi;
-noise = (x) -> sin((x + 10) * sin((x + 10) ** (fract(x) + 10)));
-melodytest = (time) -> (
+fract(x) = x % 1;
+mix(a, b, c) = (a * (1 - c)) + (b * c);
+tri(x) = 2 * asin(sin(x)) / pi;
+noise(x) = sin((x + 10) * sin((x + 10) ** (fract(x) + 10)));
+melodytest(time) = (
   melodyString = "00040008",
   melody = 0;
   i = 0;
@@ -373,12 +374,12 @@ melodytest = (time) -> (
 
   melody
 )
-hihat = (time) -> noise(time) * (1 - fract(time * 4)) ** 10;
-kick = (time) -> sin((1 - fract(time * 2)) ** 17 * 100);
-snare = (time) -> noise(floor((time) * 108000)) * (1 - fract(time + 0.5)) ** 12;
-melody = (time) -> melodytest(time) * fract(time * 2) ** 6 * 1;
+hihat(time) = noise(time) * (1 - fract(time * 4)) ** 10;
+kick(time) = sin((1 - fract(time * 2)) ** 17 * 100);
+snare(time) = noise(floor((time) * 108000)) * (1 - fract(time + 0.5)) ** 12;
+melody(time) = melodytest(time) * fract(time * 2) ** 6 * 1;
 
-song = () -> (
+song() = (
   *t=0; time = t++ / sampleRate;
   (kick(time) + snare(time)*.15 + hihat(time)*.05 + melody(time)) / 4
 ).
@@ -403,7 +404,7 @@ Lino is available as JS package.
 import * as lino from 'lino'
 
 // create wasm arrayBuffer
-const buffer = lino.compile(`mult = (x,y) -> x*y; mult.`)
+const buffer = lino.compile(`mult(x,y) = x*y; mult.`)
 
 // create wasm instance
 const module = new WebAssembly.Module(buffer)

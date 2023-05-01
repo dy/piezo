@@ -15,11 +15,13 @@
 * [x] Parser
 
 * [x] Add proper scope mechanism (streamline compiler)
+* [ ] Don't use globals: shorter code & space; hoist & merge locals instead
+* [ ] Implement better array index
 * [ ] Test nested scopes variables
 * [ ] Test optional arguments
 * [ ] Test pipe over different cases
 * [ ] Implement memory alloc
-* [ ] Simple loops
+* [x] Simple loops
 * [ ] Audio gain example
 * [ ] Sine gen example
 * [ ] All reference cases

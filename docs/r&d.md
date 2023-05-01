@@ -2063,7 +2063,7 @@ Having wat files is more useful than direct compilation to binary form:
   4) a way to export certain parameters into UI elements arbitrarily and with minimal effort. Right now in mono i've introduced a . prefix operator in the arguments so f(a, b, c) if i do f(a, .b, c) then i immediately get a knob for 'b' with that simple addition of the . prefix. That helps me a lot as a producer to not have to go elsewhere to define these and to try new things. The '.b' also becomes hoverable and can change with the wheel, but there's also a UI knob and they're associated, when you hover one, both light up. The idea is that once you export the controls like that, you can hide the editor and that can be a standalone effect/instrument with those controls it pulls from the code. You want another thing to tweak? Simply jump into the code and add a . next to the parameter and save. When there will be dozens of instruments and effects in the screen playing you need to be able to quickly do these things so you don't kill the flow. The flow must never be killed. That's the most important feature. You should be dancing all your way through from start to end while making a track without any gap of having to stop and take closer look at code or something isn't playing right or there are audible glitches etc. So first and foremost it is a party tool. You need to be able to party with it or it's worth nothing.
 
 
-## [x] Tape machines -> try providing length of variable `*[100]a`, `*[]a`, `[]in`, `[100]in` for subarray/list argument
+## [x] Tape machines -> try using array with shift, no need for explicit tape machines
 
   * They're like buffers/arrays, but every batch call they shift index.
   * In a way similar to state variables, but in fact state arrays (variables with memory of prev values)
@@ -2762,5 +2762,35 @@ Having wat files is more useful than direct compilation to binary form:
 + handy & complacent with slicing
 - suboptimal performance, since enforces (idx % len) operation = reading array length
   - especially tacky to call included `util/idx` function
-- rotation is not exactly right: out-of-limit write must not rotate to the beginning
+- mod is not exactly right: out-of-limit write must not rotate to the beginning
   * the only meaningful range is -len..len, everything else must return null or NaN or alike
++ we kind-of need idx checker function if we're going to implement ring buffer
+
+## [x] Scope resolution -> functions have no nested scopes and declared at the top level
+
+* Would be nice to make all variables local
+  + less noise in code, + local.tee available
+* Same time functions need to have nested scopes, so common scope is global
+  + allows storing tmp variables in local scope
+* Dynamic anonymous functions may need to have applied scope & access to global
+  ~ Ideally we'd need dynamic vars creation, like `global $fnX/varX`
+* Alternatively, we can just inline any functions defined within functions
+  - not always possible, like in recursion case, which is main use-case
+    ~- maybe possible - via block or loop?
+
+## [x] Make functions `f(x)=x` separate from mappers `f=x->x`? -> yes, let's separate
+
++ We don't support anonymous functions anyways `x -> y -> z`
+  * with `x(a,b) = (a * b)` it's impossible to create anonymous function
++ We make it explicit that mapper is just syntactic sugar for iterator/fold, whereas function is runtime (exportable) construct
++ We solve compiler code inconsistency of passing `name` param to `->` expr.
++ `double(n) = n*2;` is shorter than `double = n -> n*2`
++ it's classic math notation for functions
++ it's compatible with mono
++ limits clamping more meaningfully
++ make more sense returning multiple values rather than mapper
++ mapper doesn't need to look fn-like `list | x,i -> i` (no need for scopes)
++ mapper visually belongs to synax better, than designating it with function meaning
+?- some conflict/issue with storing functions in a table, eg `osc=[sin:x->x,tri:x->x]`
+  * likely can be `osc=[sin(x)=...x,tri(x)=...x]`
++ resolves the issue of scope (above): no need to make all vars global since no scope recursion

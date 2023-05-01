@@ -22,3 +22,4 @@
 * [ ] https://github.com/madskjeldgaard/Drums.quark
 * [ ] https://github.com/austintheriot/hand-crafted-wasm
 * [ ] https://github.com/ClickHouse/NoiSQL
+* [ ] https://github.com/LinusU/pokemon-synthesizer

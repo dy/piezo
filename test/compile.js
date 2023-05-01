@@ -261,6 +261,20 @@ t.todo('compile: arrays subarrays', t => {
   is(arr[ptr+1], 2)
 })
 
+t.only('debugs', t => {
+  const memory = new WebAssembly.Memory({ initial: 1 });
+  const importObject = { env: { memory } };
+  let module = compileWat(`
+  (func (param $ptr (ref $mytype)) (result (ref $mytype)))
+  `, importObject)
+
+  const stringRef = module.exports.get_string();
+    const stringPtr = module.exports.__indirect_function_table.get(stringRef);
+    const utf8Decoder = new TextDecoder('utf-8');
+    const string = utf8Decoder.decode(new Uint8Array(memory.buffer, stringPtr));
+    console.log(string);
+})
+
 t('compile: variable type inference', t => {
   let wat,x;
   x = compileWat(compile(`x;x.`)).exports.x // unknown type falls to f64
