@@ -973,11 +973,13 @@ Having wat files is more useful than direct compilation to binary form:
 
 ## [x] comments: //, /* vs ;; and (; ;) → use familiar `//`
 
+  1. `;;`
   + ;; make more sense, since ; is separator, and everything behind it doesnt matter
   + (; makes more sense as "group with comments", since we use only ( for groups.
   + ;; is less noisy than //
   + ;; is associated with assembler or lisp/clojure
   + even simpler - everything after ; can be considered a comment?
+  + doesn't introduce any new syntax space
   - pretty unusually associates with autohotkey, which is the opposite of fast
   - too innovative
   - single-comment breaks inline structures like a(x)=b;c;d.
@@ -992,12 +994,28 @@ Having wat files is more useful than direct compilation to binary form:
   ```
   - // is super-familiar and js/c-y
   - // is used in python for floor division, very handy: (a / b | 0) -> a//b
+    - that is especially not just floor division but autoconverting to int, which is super handy!!
   ? ALT: use \
     + mono-compatible
     + \ is almost never used in langs & that's unique
     + it's very close
     + it's short
-    - it can be used for length
+    + association with "escape" sequence in strings
+    + really no other alternative
+    + looks fresh directionally, shadow effect \\\\\\\\\\\\\\\\\\\\\\\\\
+    - possible conflict with string escapes
+      + can be resolved with `\\`
+        + reminds `//`
+        + creates clear separation of "comments" area
+    - syntax highlighters don't know that
+      ~ neither `;;`
+  ? ALT: `/* */`
+    + most popular
+    - unwanted association with mult/div
+  ? ALT: anything after ; on the line is comment
+    - can't break lines easily
+    - can't join lines via `(a;b;c)`
+  
 
 ## [x] ! Variables case should not matter.
 
@@ -2756,6 +2774,8 @@ Having wat files is more useful than direct compilation to binary form:
 ? Do we ever need rotating more than just 1 step?
 ? Do we ever need rotating right, rather than left?
 ? Do we ever need non-rotating memory in function body?
+- Rotate can be done as `a = a[1..,0]`
+  ~ very costly
 
 ## [ ] Arrays: neg-index access or no?
 
