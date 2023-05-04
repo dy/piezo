@@ -1,6 +1,6 @@
 # lino
 
-**Lino** (*li*ne *no*ise) is micro-language for sound fx design, processing, and utilities. Lino features common syntax, type inference, and compiles to WASM bytecode, making it available to various environments and platforms - mainly targets [audio worklets](https:\developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), workers, [nodejs](https:\github.com/audiojs/web-audio-api), but can also be used in Rust, Python, and Go.
+**Lino** (*li*ne *no*ise) is micro-language for sound design, processing, and utilities. It has common syntax, type inference, and compiles to WASM bytecode, which enables it for various environments - from [audio worklets](https:\developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), workers, [nodejs](https:\github.com/audiojs/web-audio-api), to Rust, Python, Go, etc.
 <!--[Motivation](./docs/motivation.md)  |  [Documentation](./docs/reference.md)  |  [Examples](./docs/examples.md).-->
 
 > WIP: current stage is stabilized syntax and basic cases compilation; it requires full compiler implementation.
