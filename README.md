@@ -132,7 +132,7 @@ m[1..2];                       \\ read multiple values
 m[];                           \\ get length
 m[0] = 1;                      \\ write single value
 m[1..] = (7,8);                \\ write multiple values from specified index
-m[0..] = m[1..,0];             \\ rearrange items
+m[1,2] = m[2,1];               \\ rearrange items
 m[0..] = m[-1..0];             \\ reverse order
 m << 2; m >> 3;                \\ rotate array left or right
 
