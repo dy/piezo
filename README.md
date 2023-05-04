@@ -31,12 +31,13 @@ true = 0b1, false = 0b0;       \\ hint: alias booleans
 1h2m3.5s;                      \\ unit combinations
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ standard operators
-+ - * / % -- ++ ** //          \\ arithmetical, ** for pow, // for int division
++ - * / % -- ++                \\ arithmetical
 && || ! ?:                     \\ logical
 & | ^ ~ >> <<                  \\ binary
 == != >= <=                    \\ comparisons
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ extra operators
+** // %%                       \\ pow, int (floor) division, unsigned mod (wraps negatives)
 | <| |> |=                     \\ iterate, loop, fold, transform
 -< -<=                         \\ clamp
 []                             \\ prop, length
@@ -129,9 +130,10 @@ m.0, m.1, m.2, m.3;            \\ read item by static index (0-based)
 m[0], m[1], m[-1];             \\ read by dynamic index, negative for last element
 m[1..2];                       \\ read multiple values
 m[];                           \\ get length
-m[1..3] = (7,8);               \\ write multiple values
-m[0..] = (1,2,3,4);            \\ write all values from index 0
-m[-1..0] = m[0..];             \\ reverse order
+m[0] = 1;                      \\ write single value
+m[1..] = (7,8);                \\ write multiple values from specified index
+m[0..] = m[1..,0];             \\ rearrange items
+m[0..] = m[-1..0];             \\ reverse order
 m << 2; m >> 3;                \\ rotate array left or right
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ loops
