@@ -2785,6 +2785,7 @@ Having wat files is more useful than direct compilation to binary form:
 - mod is not exactly right: out-of-limit write must not rotate to the beginning
   * the only meaningful range is -len..len, everything else must return null or NaN or alike
 + we kind-of need idx checker function if we're going to implement ring buffer
++ modwrap operator is for that purpose...
 
 ## [x] Scope resolution -> functions have no nested scopes and declared at the top level
 

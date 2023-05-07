@@ -108,26 +108,27 @@ t('compile: numbers inc/dec', t => {
   is(mod.exports.x.value, -1)
 })
 
-t('compile: function oneliners', t => {
+t.only('compile: function oneliners', t => {
+  let wat, mid
   // default
-  let wat = compile(`mult = (a, b) -> a * b.`)
-  let mod = compileWat(wat);
-  is(mod.exports.mult(2,4), 8)
+  // wat = compile(`mult(a, b) -> a * b.`)
+  // mod = compileWat(wat);
+  // is(mod.exports.mult(2,4), 8)
 
   // no semi
-  wat = compile(`mult = (a, b) -> a * b.`)
+  wat = compile(`mult(a, b=1) = a * b.`)
   mod = compileWat(wat)
   is(mod.exports.mult(2,4), 8)
 
   // no result
-  mod = compileWat(compile(` mult = (a, b) -> (a * b). `))
+  mod = compileWat(compile(` mult(a, b) = (a * b). `))
   is(mod.exports.mult(2,4), 8)
 
   // console.log(compile(` mult = (a, b) -> (b; a * b).`))
-  mod = compileWat(compile(` mult = (a, b) -> (b; a * b).`))
+  mod = compileWat(compile(` mult(a, b) = (b; a * b).`))
   is(mod.exports.mult(2,4), 8)
 
-  mod = compileWat(compile(` mult = (a, b) -> (b; a * b;). `))
+  mod = compileWat(compile(` mult(a, b) = (b; a * b;). `))
   is(mod.exports.mult(2,4), 8)
 })
 

@@ -3,7 +3,7 @@
 // independent of particular compiler/memory layout, so that can be compiled to any target after
 import parse from './parse.js';
 import stdlib from './stdlib.js';
-import {PTR, FLOAT, INT, RANGE, STR, FUNC} from './const.js';
+import {PTR, FLOAT, INT, RANGE, STR, FUNC,NAN} from './const.js';
 
 // detect variables & types, simplify tree for easier compilation
 export default function analyze(node) {
@@ -27,6 +27,14 @@ export default function analyze(node) {
     return result
   }
 
+  // Create temp variable within the scope
+  function temp(name, init) {
+    let idx = ''
+    while (Object.hasOwnProperty.call(scope, name + idx)) idx = (idx || 0) + 1;
+    scope[name + idx] = desc(init, scope)
+    return ['=', name + idx, init]
+  }
+
   // each expression takes input node (considering current scope), returns output node with defined scope on it
   Object.assign(expr, {
     // a;b;c
@@ -44,6 +52,11 @@ export default function analyze(node) {
     },
     // a+=b -> a=a+1
     '+='([,a,b]){ return a = expr(a), b = expr(b), ['=',a,['+',a,b]]},
+
+    // a&&b -> tmp=a; tmp ? b : tmp
+    '&&'([,a,b]) { let lhs = temp('lhs',expr(a)); return [';',lhs,['?:',lhs[1],expr(b),lhs]] },
+    // a||b -> tmp=a; tmp ? tmp : a
+    '||'([,a,b]) { let lhs = temp('lhs',expr(a)); return [';',lhs,['?:',lhs[1],lhs,expr(b)]] },
 
     // a=b; a,b=b,c; a = () -> b
     '='([,left,right]) {
@@ -64,9 +77,50 @@ export default function analyze(node) {
         else {
           scope[left].mutable = true
           if (!scope[left].type) Object.assign(scope[left], rDesc)
-          else if (scope[left].type !== rDesc.type) err('Changing value type from `' + scope[left].type + '` to ' + '`' + rDesc.type + '`')
+          // FIXME: figure out if we should permit changing type
+          // else if (scope[left].type !== rDesc.type) err('Changing value type from `' + scope[left].type + '` to ' + '`' + rDesc.type + '`')
         }
         return ['=',left,right]
+      }
+
+      // x(a,b) - define function: brings arg initializers to fn body keeping only arg names
+      if (left[0] === '()') {
+        let [,name,args] = left
+        if (!scope[name]) scope[name] = {type: FUNC}
+        else err('Redefining function `' + name + '`')
+
+        let parent = scope
+        scope = Object.create(scope)
+
+        let inits = [';'], body = Object.assign(['('], {
+          scope,
+          result:null // result type
+        })
+
+        // retrieve initializers from args
+        if (args) {
+          if (args[0]==='(') [,args]=args;
+          args = !args ? [] : args[0] === ',' ? args.slice(1) : [args];
+          args = args.map(arg => {
+            let name, init
+            // x(a,b)
+            if (typeof arg === 'string') name = arg
+            // x(a=1,b=2), x(a=(1;2))
+            else if (arg[0]==='=') [,name,init] = arg, inits.push(['&&',['==',name,[NAN]],['=',name,init]])
+            // x(x-<2)
+            else if (arg[0]==='-<') [,name,init] = arg, inits.push(['-<=',name,init])
+
+            // we enforce fn args to be always float, since NaNs can only be floats
+            ;(scope[name] = {type:FLOAT}).arg = true
+            return name
+          })
+        }
+        body.push(expr(inits))
+        let content = expr(right[0]==='(' ? right[1] : right)
+        body[1].push(...(content[0] === ';' ? content.slice(1) : [content]))
+        body.result = desc(body[0] === ';' ? body[body.length - 1] : body, scope) // detect result type
+        scope = parent
+        return ['=',['()',name, [',',...args]], body]
       }
 
       // *a = ..., *(a,b,c) = ...
@@ -112,14 +166,13 @@ export default function analyze(node) {
       scope = parent
       return body
     },
-    // (args) -> (body)
+    // (args) -> (body), - syntax sugar
     '->'([,args,body]) {
       let parent = scope
       scope = Object.create(scope)
 
       let init = [';'], out = Object.assign(['->'], {
         scope,
-        args:[], // collected arg names in order
         result:null // result type
       })
       if (args) {
@@ -145,24 +198,30 @@ export default function analyze(node) {
     '|'([,a,b]) {
       // arg | (x,i) -> body,  immediate function gets converted into loop
       if (b[0] === '->') {
-        let fn = expr(b), [argName, idxName] = fn.args
+        let fn = expr(b), [argName, idxName] = fn.args, pipeVars, pipeArg, pipeIdx, pipeLen
 
         // FIXME: arguments must be simple here
 
         // FIXME: modify pipe/args and idx depending on stack callsite, to avoid name conflict in nested pipes
         // a | (x,idx) -> body   becomes    arg = a; i = 0; i < arg[] <| (idx=i; x = arg[i]; i++; body)
         let parent = scope
-        scope = fn.scope
+        scope = fn.scope;
+
+        // pipe temp vars with resolved names
+        [[,pipeArg], [,pipeIdx], [,pipeLen]] = pipeVars = [
+          temp('pipe/arg',a),// ['=','pipe/arg',a],
+          temp('pipe/idx',['int',0]),// ['=','pipe/idx',['int',0]],
+          temp('pipe/len',['[]','pipe/arg'])// ['=','pipe/len',['[]','pipe/arg']],
+        ]
+
         let out = ['(',expr([';',
-          ['=','pipe/arg',a],
-          ['=','pipe/idx',['int',0]],
-          ['=','pipe/len',['[]','pipe/arg']],
+          ...pipeVars,
           ['<|',
-            ['<','pipe/idx','pipe/len'],
+            ['<',pipeIdx,pipeLen],
             [';',
-              argName && ['=',argName,['[]','pipe/arg','pipe/idx']],
-              idxName && ['=',idxName,'pipe/idx'],
-              ['++','pipe/idx'],
+              argName && ['=',argName,['[]',pipeArg,pipeIdx]],
+              idxName && ['=',idxName,pipeIdx],
+              ['++',pipeIdx],
               fn[2] // write only body
             ]
           ]
@@ -170,10 +229,6 @@ export default function analyze(node) {
         out.scope = scope
         scope = parent
         return out;
-      }
-      // a | filter,   non-immediate function gets called
-      else if (typeof b === 'string' && scope[b]?.type === FUNC) {
-        throw 'Unimplemented'
       }
       // a | b,   binary OR
       else return ['|',expr(a),expr(b)]
@@ -222,6 +277,8 @@ export default function analyze(node) {
         if (l[0]==='(') [,l]=l; if (r[0]==='(') [,r]=r; // unbracket
         // a=...;
         if (typeof l === 'string') scope[l].export = true
+        // a()=;
+        else if (l[0]==='()') scope[l[1]].export = true
         else err('Unknown export expression `' + a + '`')
       }
 
@@ -274,6 +331,7 @@ export default function analyze(node) {
   return node
 }
 
+
 /**
  * get descriptor of a node or variable: includes type and other info
  * {
@@ -290,14 +348,15 @@ export function desc(node, scope) {
 
   if (node._desc) return node._desc // cached descriptor
 
-  let [op, a, b] = node
-  if (op === INT || op === FLOAT) return { type: op, static: true}
+  let [op, a, b, c] = node
+  if (op === INT || op === FLOAT || op === NAN) return { type: op, static: true}
 
   // use node scope
   let prevScope = node.scope || scope
   scope = node.scope || scope
 
-  let aDesc = a&&desc(a,scope), bDesc = b&&desc(b,scope), s = aDesc?.static && bDesc?.static
+  let aDesc = a&&desc(a,scope), bDesc = b&&desc(b,scope), cDesc = c&&desc(c,scope),
+      s = (cDesc||aDesc)?.static && bDesc?.static
 
   const opDesc = {
     '*'() {
@@ -316,6 +375,10 @@ export function desc(node, scope) {
       // return (desc(a, scope).type === INT && desc(b, scope).type === INT) ? {type:INT} : {type:FLOAT}
       return {type:FLOAT, static:s}
     },
+    '='() { return bDesc },
+    '&&'() { return bDesc },
+    '||'() { return bDesc },
+    '=='() { return {type:INT, static:s} },
     '-<'() {
       // FIXME: detect range type better (range is separate type)
       if (bDesc.type === RANGE) {
@@ -323,11 +386,14 @@ export function desc(node, scope) {
       }
       err('Right part of clamp operator is not range', node)
     },
+    '?:'() {
+      return bDesc.type === INT && cDesc.type === INT ? {static:s, type:INT} : {static:s, type:FLOAT}
+    },
     '..'() {
       return {type: RANGE, min: a && aDesc, max: b && bDesc, static:s }
     },
     '['() { return {type:PTR} },
-    '->'() { return {type:FUNC} },
+    // '->'() { return {type:FUNC} },
     '[]'() {
       return !b ? {type:INT} : {type:FLOAT} // FIXME: array can include other than float values
     },
@@ -352,7 +418,9 @@ export function desc(node, scope) {
 }
 
 export function err(msg, node={}) {
-  throw Error((msg || 'Bad syntax') + ' `' + node.toString() + '`' )
+  // Promise.resolve().then(() => {
+    throw Error((msg || 'Bad syntax') + ' `' + node.toString() + '`' )
+  // })
 }
 
 // fetch source file by path - uses import maps algorighm

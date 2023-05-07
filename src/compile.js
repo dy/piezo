@@ -1,7 +1,7 @@
 // compile source/ast/ir to WAST
 import analyse, { err, desc } from "./analyse.js"
 import stdlib from "./stdlib.js"
-import {FLOAT,INT,RANGE,PTR,FUNC} from './const.js'
+import {FLOAT,INT,RANGE,PTR,FUNC,NAN} from './const.js'
 import { parse as parseWat } from "watr";
 
 const F64_PER_PAGE = 8192;
@@ -36,34 +36,6 @@ export default function compile(node) {
     // number primitives: 1.0, 2 etc.
     [FLOAT]([,a]) { return `(f64.const ${a})`},
     [INT]([,a]) { return `(i32.const ${a})`},
-
-    '->'(fn, name) {
-      let [,prepare,body] = fn, dfn = [], parent = scope, prevLocals = locals
-      scope = fn.scope, locals = []
-
-      // define init part - params, result
-      if (fn.args) fn.args.forEach(id => {
-        scope[id]._defined = true
-        dfn.push(`(param $${id} ${scope[id].type == PTR ? 'i32' : 'f64'})`)
-      })
-      if (fn.result) dfn.push(`(result ${fn.result.type == FLOAT ? 'f64' : 'i32'})`)
-
-      // declare locals
-      Object.getOwnPropertyNames(scope).filter(id=>!scope[id].arg).forEach(define)
-
-      const content = expr(prepare) + expr(body);
-
-      // init body - expressions write themselves to body
-      globals.push(
-        `(func $${name} ${dfn.join(' ')}\n` +
-        locals.join('\n') +
-        content +
-        `\n(return))`
-      )
-
-      scope = parent
-      locals = prevLocals
-    },
 
     '('(statement){
       let parent = scope
@@ -126,6 +98,10 @@ export default function compile(node) {
     '=='([,a,b]) {
       let aDesc = desc(a, scope), bDesc = desc(b, scope)
       if (aDesc.type === INT && bDesc.type === INT) return `(i32.eq_s ${expr(a)} ${expr(b)})`
+      if (b[0]===NAN || a[0]===NAN) {
+        if (!includes.includes('util/f64.isnan')) includes.push('util/f64.isnan')
+        if (b[0]===NAN) return `(call $util/f64.isnan ${fexpr(b[0]===NAN ? a : b)})`
+      }
       return `(f64.eq ${fexpr(a)} ${fexpr(b)})`
     },
     '!='([,a,b]) {
@@ -133,6 +109,9 @@ export default function compile(node) {
       if (aDesc.type === INT && bDesc.type === INT) return `(i32.ne_s ${expr(a)} ${expr(b)})`
       return `(f64.ne ${fexpr(a)} ${fexpr(b)})`
     },
+
+    // conditions
+    '?:'([,a,b,c]){ return `(if ${iexpr(a)} (then ${expr(b)}) (else ${expr(c)}))`},
 
     // a -< range - clamp a to indicated range
     '-<'([,a,b]) {
@@ -192,30 +171,57 @@ export default function compile(node) {
       }
     },
 
-    '='([,name,init]) {
+    '='([,a,b]) {
       // FIXME: accept functions
       // x[y]=1, x.y=1
-      if (name[0] === '[]' || name[0] === '.') {
-        let [,ptr,prop] = name
-        if (name[0] === '.') prop = [INT, parseInt(prop)]
+      if (a[0] === '[]' || a[0] === '.') {
+        let [,ptr,prop] = a
+        if (a[0] === '.') prop = [INT, parseInt(prop)]
 
         // FIXME: add static optimization here for property - to avoid calling util/idx if idx is known
 
         // dynamic props - access as a[(idx + len) % len]
         if (!includes.includes('util/idx')) includes.push('util/idx')
-        return `(f64.store (i32.add ${expr(ptr)} (i32.shl (call $util/idx ${iexpr(prop)} ${expr(['[]',ptr])}) (i32.const ${Math.log2(MEM_STRIDE)}))) ${fexpr(init)})`
-      }
-      // x = y
-      if (desc(init,scope).type !== FUNC) {
-        if (scope[name].global)
-          return `(global.set $${name} ${expr(init)})(global.get $${name})`
-        else
-          return `(local.tee $${name} ${expr(init)})`
+        return `(f64.store (i32.add ${expr(ptr)} (i32.shl (call $util/idx ${iexpr(prop)} ${expr(['[]',ptr])}) (i32.const ${Math.log2(MEM_STRIDE)}))) ${fexpr(b)})`
       }
 
-      // x = a -> b
-      // FIXME: likely we want to assign function pointers as ids and store functions in a table
-      if (desc(init,scope).type === FUNC) return expr(init, name)
+      // x(a,b) = y
+      // if (desc(a,scope).type === FUNC) {
+      if (a[0]==='()') {
+        let [,name,[,...args]] = a, body = b;
+        let dfn = [], parent = scope, prevLocals = locals
+        scope = body.scope, locals = []
+
+        // define init part - params, result
+        args?.forEach(id => {
+          scope[id]._defined = true
+          dfn.push(`(param $${id} ${scope[id].type == PTR ? 'i32' : 'f64'})`)
+        })
+        if (body.result) dfn.push(`(result ${body.result.type == FLOAT ? 'f64' : 'i32'})`)
+
+        // declare locals
+        Object.getOwnPropertyNames(scope).filter(id=>!scope[id].arg).forEach(define)
+
+        // init body - expressions write themselves to body
+        globals.push(
+          `(func $${name} ${dfn.join(' ')}\n` +
+          locals.join('\n') +
+          expr(body) +
+          // `(return)` +
+          // (body.result ? `\n(return)` : ``) +
+          `)`
+        )
+
+        scope = parent
+        locals = prevLocals
+        return
+      }
+
+      // a = b
+      if (scope[a].global)
+        return `(global.set $${a} ${expr(b)})(global.get $${a})`
+      else
+        return `(local.tee $${a} ${expr(b)})`
 
       err('Strange assignment', node)
     },
@@ -259,7 +265,7 @@ export default function compile(node) {
 
 
   // begin - pretend global to be a function init
-  expr['->'](Object.assign(['->',,node],{scope:node.scope}), 'module/init')
+  expr(['=',['()','module/init',[]],Object.assign(node,{scope:node.scope})])
   globals.push(`(start $module/init)`)
 
   // Provide exports

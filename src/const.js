@@ -6,4 +6,5 @@ PTR = 'ptr',
 INT = 'int',
 FLOAT = 'float',
 RANGE = 'range',
-STR = 'str'
+STR = 'str',
+NAN = 'nan'
