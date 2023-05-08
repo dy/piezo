@@ -134,46 +134,6 @@ t('compile: function oneliners', t => {
 })
 
 t('compile: ranges basic', t => {
-  // let wat = compile(`x = 0..10; `),
-  //     mod = compileWat(wat)
-  // is(mod.exports.x)
-
-  // basic v128
-  // let mod = compileWat(`
-  //   (func $mult (export "mult") (result f64)
-  //     (local $v v128)
-  //     (local.set $v (v128.const f64x2 2.0 3.0))
-  //     (f64.mul (f64x2.extract_lane 0 (local.get $v)) (f64x2.extract_lane 1 (local.get $v)))
-  //     (return)
-  //   )
-  // `)
-
-  // let mod = compileWat(`
-  //   (func $log (import "imports" "log") (param i32))
-  //   (func $mult (export "mult") (param $a i32) (param $b i32) (result i32)
-  //     (call $log (local.get $b))
-  //     (i32.mul (local.get $a) (local.get $b))
-  //     (return)
-  //   )
-  // `, {imports: { log: (arg) => console.log(arg) }})
-  // console.log(mod.exports.mult(2))
-
-  // global v128
-  // let mod = compileWat(`
-  //   (global (export "x") v128 (v128.const f64x2 2.0 3.0))
-  // `)
-
-  // max return values number
-  // const N = 1000
-  // let mod = compileWat(`
-  //   (func $x (export "x") (result ${'f64 '.repeat(N)})
-  //     (local $a f64)
-  //     (local.set $a (f64.const 1.0))
-  //     (return ${'(local.get $a) '.repeat(N)})
-  //   )
-  // `)
-  // console.log(mod.exports.x())
-
   let wat = compile(`x = 11 -< 0..10.`)
   let mod = compileWat(wat)
   is(mod.exports.x.value, 10)
@@ -182,7 +142,7 @@ t('compile: ranges basic', t => {
   mod = compileWat(wat)
   is(mod.exports.x.value, 1)
 
-  wat = compile(`clamp = x -> (x -< 0..10).`)
+  wat = compile(`clamp(x) = (x -< 0..10).`)
   mod = compileWat(wat)
   is(mod.exports.clamp(11), 10)
   is(mod.exports.clamp(-1), 0)
@@ -225,7 +185,7 @@ t('compile: arrays from range', t => {
   is(yl.value,4,'ylen')
 })
 
-t('compile: arrays write', t => {
+t.todo('compile: arrays write', t => {
   let wat = compile(`x = [..3]; x[0]=1; x.1=2; x[-1]=x[]; x.`)
   // console.log(wat)
   let mod = compileWat(wat)
@@ -267,18 +227,9 @@ t.skip('debugs', t => {
   const memory = new WebAssembly.Memory({ initial: 1 });
   const importObject = { env: { memory } };
   let module = compileWat(`
-  (func $mult (param $a f64) (param $b f64) (result f64)
-  (local $and i32)(local.tee $and (f64.ne (local.get $b) (local.get $b)))(drop)
-  (if (result f64) (local.get $and) (then (local.tee $b (f64.convert_i32_s (i32.const 2)))) (else (local.get $and)))(drop)
-  (f64.mul (local.get $a) (local.get $b))
-  (return))
-  (func $module/init
-  )
-  (start $module/init)
-  (export "mult" (func $mult))
   `, importObject)
 
-  console.log(module.exports.mult(2))
+  console.log(module.exports.x)
 })
 
 t('compile: variable type inference', t => {

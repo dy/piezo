@@ -15,7 +15,7 @@
 * [x] Parser
 
 * [x] Add proper scope mechanism (streamline compiler)
-* [ ] Don't use globals: shorter code & space; hoist & merge locals instead
+* [ ] merge scopes, rename internal variables
 * [ ] Implement better array index
 * [ ] Test nested scopes variables
 * [ ] Test optional arguments

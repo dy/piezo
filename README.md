@@ -79,6 +79,7 @@ foo();                         \\ semi-colons at end of line are mandatory
 (c = a + b; c);                \\ parens define block, return last element
 (a = b+1; a,b,c);              \\ block can return group
 (a && ^b; c);                  \\ return/break operator can preliminarily return value
+(a;b;);                        \\ note: returns null, if semicolon is last within block
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ conditions
 sign = a < 0 ? -1 : +1;        \\ inline ternary

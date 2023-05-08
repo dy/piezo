@@ -124,9 +124,9 @@ export default function compile(node) {
       if (b[0] !== '..') err('Non-range passed as right side of clamp operator')
       let [,min,max] = b
       if (desc(a,scope).type == INT && desc(min,scope).type == INT && desc(max,scope).type == INT) {
-        if (!includes.includes('util/i32.smax')) includes.push('util/i32.smax')
-        if (!includes.includes('util/i32.smin')) includes.push('util/i32.smin')
-        return `(call $util/i32.smax (call $util/i32.smin ${expr(a)} ${expr(max)}) ${expr(min)})`
+        if (!includes.includes('wat/i32.smax')) includes.push('wat/i32.smax')
+        if (!includes.includes('wat/i32.smin')) includes.push('wat/i32.smin')
+        return `(call $wat/i32.smax (call $wat/i32.smin ${expr(a)} ${expr(max)}) ${expr(min)})`
       }
       return `(f64.max (f64.min ${fexpr(a)} ${fexpr(max)}) ${fexpr(min)})`
     },
@@ -184,11 +184,11 @@ export default function compile(node) {
         let [,ptr,prop] = a
         if (a[0] === '.') prop = [INT, parseInt(prop)]
 
-        // FIXME: add static optimization here for property - to avoid calling util/idx if idx is known
+        // FIXME: add static optimization here for property - to avoid calling i32.modwrap if idx is known
 
-        // dynamic props - access as a[(idx + len) % len]
-        if (!includes.includes('util/idx')) includes.push('util/idx')
-        return `(f64.store (i32.add ${expr(ptr)} (i32.shl (call $util/idx ${iexpr(prop)} ${expr(['[]',ptr])}) (i32.const ${Math.log2(MEM_STRIDE)}))) ${fexpr(b)})`
+        // dynamic props - access as a[modwrap(idx, len)]
+        if (!includes.includes('wat/i32.modwrap')) includes.push('wat/i32.modwrap')
+        return `(f64.store (i32.add ${expr(ptr)} (i32.shl (call $wat/i32.modwrap ${iexpr(prop)} ${expr(['[]',ptr])}) (i32.const ${Math.log2(MEM_STRIDE)}))) ${fexpr(b)})`
       }
 
       // x(a,b) = y

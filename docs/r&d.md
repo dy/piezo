@@ -1015,7 +1015,7 @@ Having wat files is more useful than direct compilation to binary form:
   ? ALT: anything after ; on the line is comment
     - can't break lines easily
     - can't join lines via `(a;b;c)`
-  
+
 
 ## [x] ! Variables case should not matter.
 
@@ -2781,7 +2781,7 @@ Having wat files is more useful than direct compilation to binary form:
 
 + handy & complacent with slicing
 - suboptimal performance, since enforces (idx % len) operation = reading array length
-  - especially tacky to call included `util/idx` function
+  - especially tacky to call included `wat/i32.modwrap` function
 - mod is not exactly right: out-of-limit write must not rotate to the beginning
   * the only meaningful range is -len..len, everything else must return null or NaN or alike
 + we kind-of need idx checker function if we're going to implement ring buffer

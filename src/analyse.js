@@ -139,10 +139,19 @@ export default function analyze(node) {
         return expr(['(',[';',...stash,[',',...unstash]]])
       }
 
-      // x[i] = ...
-      if (left[0] === '[]') {
-        let [,obj,prop] = left
-        return ['=', ['[]',expr(obj),expr(prop)], expr(right)]
+      // x[i] = ...,  x.1 = ...
+      if (left[0] === '[]' || left[0] === '.') {
+        let parent = scope
+        scope = Object.create(scope)
+        let [,obj,prop] = left,
+            init = temp('val', expr(right)),
+            name = init[1],
+            idx = left[0] === '.' ? prop : expr(prop)
+        // x[i] = y  ->  (val = y; x[i] = val; val)
+        let block = ['(',[';', init, ['=',[left[0],expr(obj),idx], name], name]]
+        block.scope = scope
+        scope = parent
+        return block
       }
       // x.1 = ...
       if (left[0] === '.') {
@@ -166,6 +175,7 @@ export default function analyze(node) {
       scope = parent
       return body
     },
+
     // (args) -> (body), - syntax sugar
     '->'([,args,body]) {
       let parent = scope
