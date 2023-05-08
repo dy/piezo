@@ -213,8 +213,8 @@ export default function compile(node) {
           `(func $${name} ${dfn.join(' ')}\n` +
           locals.join('\n') +
           expr(body) +
-          // `(return)` +
-          (body.result ? `\n(return)` : ``) +
+          `(return)` +
+          // (body.result ? `\n(return)` : ``) +
           `)`
         )
 

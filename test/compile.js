@@ -42,7 +42,7 @@ function compileWat (code, importObj={}) {
 }
 
 
-t.only('compile: globals basic', t => {
+t('compile: globals basic', t => {
   // TODO: single global
   // TODO: multiply wrong types
   // TODO: define globals via group (a,b,c).

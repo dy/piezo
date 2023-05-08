@@ -129,14 +129,14 @@ export default function analyze(node) {
       // (a,b) = ...
       if (left[0] === ',') {
         // desugar here
+        // (a,b) = (c,d) -> set/a = c; set/b = d; a = set/a; b = set/b;
         if (left.length !== right.length) err('Unequal number of members in right/left sides of assignment', left)
         let [,...ls]=left, [,...rs]=right;
         // FIXME: narrow down that complexity assignments: not always `tmp/` is necessary
-        // FIXME: add callsite id to that tmp variable
         // FIXME: make sure left side contains only names or props
-        let temp = ls.map((id,i) => ['=',`tmp/${id}`, rs[i]])
-        let untemp = ls.map((id,i) => ['=',expr(ls[i]),`tmp/${id}`]) // catch left ids into current scope
-        return expr(['(',[';',...temp,[',',...untemp]]])
+        let stash = ls.map((id,i) => temp(`set/${id}`, expr(rs[i])))
+        let unstash = ls.map((id,i) => ['=',expr(ls[i]),stash[i][1]]) // catch left ids into current scope
+        return expr(['(',[';',...stash,[',',...unstash]]])
       }
 
       // x[i] = ...
