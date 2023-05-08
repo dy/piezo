@@ -106,7 +106,7 @@ export default function analyze(node) {
             // x(a,b)
             if (typeof arg === 'string') name = arg
             // x(a=1,b=2), x(a=(1;2))
-            else if (arg[0]==='=') [,name,init] = arg, inits.push(['&&',['==',name,[NAN]],['=',name,init]])
+            else if (arg[0]==='=') [,name,init] = arg, inits.push(['&&',['==',name,[NAN]],['=',name,['*',init,[FLOAT,1]]]])
             // x(x-<2)
             else if (arg[0]==='-<') [,name,init] = arg, inits.push(['-<=',name,init])
 
@@ -230,8 +230,9 @@ export default function analyze(node) {
         scope = parent
         return out;
       }
+
       // a | b,   binary OR
-      else return ['|',expr(a),expr(b)]
+      return ['|',expr(a),expr(b)]
     },
     // cond <| body
     '<|'([,cond,body]) {
@@ -399,7 +400,8 @@ export function desc(node, scope) {
     },
     '|'() {
       if (aDesc.type === PTR) return {...aDesc}
-      console.log('todo - detect type from |',a, b)
+      // FIXME: detect pipe type
+      return {type:INT}
     },
     ';'() { return {...desc(node[node.length - 1], scope)} },
     ','() { return {...desc(node[node.length - 1], scope), multiple:true} },

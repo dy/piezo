@@ -67,6 +67,13 @@ export default function compile(node) {
     },
     '*'([,a,b]) {
       if (desc(a,scope).type == INT && desc(b,scope).type == INT) return `(i32.mul ${expr(a)} ${expr(b)})`
+      // 1.0 * a -> a * 1.0
+      if (a[0]===FLOAT && a[1]===1) [a,b] = [b,a]
+      // a * 1.0 -> convert to float that's it
+      if (b[0]===FLOAT && b[1]===1) {
+        if (desc(a,scope).type == INT) return `(f64.convert_i32_s ${expr(a)})`
+        return expr(a)
+      }
       return `(f64.mul ${fexpr(a)} ${fexpr(b)})`
     },
     '++'([,a]) { return expr(['+=',a,[INT,1]]) },
@@ -208,7 +215,7 @@ export default function compile(node) {
           locals.join('\n') +
           expr(body) +
           // `(return)` +
-          // (body.result ? `\n(return)` : ``) +
+          (body.result ? `\n(return)` : ``) +
           `)`
         )
 
@@ -221,14 +228,22 @@ export default function compile(node) {
       if (scope[a].global)
         return `(global.set $${a} ${expr(b)})(global.get $${a})`
       else
-        return `(local.tee $${a} ${expr(b)})`
+        return `(local.set $${a} ${expr(b)})`
 
       err('Strange assignment', node)
     },
 
     // a | b
     '|'([,a,b]) {
-      console.log(a,b)
+      // console.log('|',a,b)
+      // 0 | b -> b | 0
+      if (a[0] === INT && a[1] === 0) [a,b]=[b,a]
+      // a | 0
+      if (a[0] === INT && a[1] === 0) {
+        if (desc(a,scope).type === FLOAT) return `(i32.trunc_f64_s ${expr(a)})`
+        return expr(a)
+      }
+      return `(i32.or ${iexpr(a)} ${iexpr(b)})`
     },
 
     // a <| b

@@ -108,8 +108,8 @@ t('compile: numbers inc/dec', t => {
   is(mod.exports.x.value, -1)
 })
 
-t.only('compile: function oneliners', t => {
-  let wat, mid
+t('compile: function oneliners', t => {
+  let wat, mod
   // default
   // wat = compile(`mult(a, b) -> a * b.`)
   // mod = compileWat(wat);
@@ -262,7 +262,7 @@ t.todo('compile: arrays subarrays', t => {
   is(arr[ptr+1], 2)
 })
 
-t.only('debugs', t => {
+t.skip('debugs', t => {
   const memory = new WebAssembly.Memory({ initial: 1 });
   const importObject = { env: { memory } };
   let module = compileWat(`
