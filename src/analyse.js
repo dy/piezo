@@ -3,7 +3,7 @@
 // independent of particular compiler/memory layout, so that can be compiled to any target after
 import parse from './parse.js';
 import stdlib from './stdlib.js';
-import {PTR, FLOAT, INT, RANGE, STR, FUNC,NAN} from './const.js';
+import {PTR, FLOAT, INT, RANGE, STR, FUNC} from './const.js';
 
 // detect variables & types, simplify tree for easier compilation
 export default function analyze(node) {
@@ -54,9 +54,9 @@ export default function analyze(node) {
     '+='([,a,b]){ return a = expr(a), b = expr(b), ['=',a,['+',a,b]]},
 
     // a&&b -> tmp=a; tmp ? b : tmp
-    '&&'([,a,b]) { let lhs = temp('lhs',expr(a)); return [';',lhs,['?:',lhs[1],expr(b),lhs]] },
+    '&&'([,a,b]) { let lhs = temp('and',expr(a)); return [';',lhs,['?:',lhs[1],expr(b),lhs[1]]] },
     // a||b -> tmp=a; tmp ? tmp : a
-    '||'([,a,b]) { let lhs = temp('lhs',expr(a)); return [';',lhs,['?:',lhs[1],lhs,expr(b)]] },
+    '||'([,a,b]) { let lhs = temp('or',expr(a)); return [';',lhs,['?:',lhs[1],lhs[1],expr(b)]] },
 
     // a=b; a,b=b,c; a = () -> b
     '='([,left,right]) {
@@ -106,7 +106,7 @@ export default function analyze(node) {
             // x(a,b)
             if (typeof arg === 'string') name = arg
             // x(a=1,b=2), x(a=(1;2))
-            else if (arg[0]==='=') [,name,init] = arg, inits.push(['&&',['==',name,[NAN]],['=',name,['*',init,[FLOAT,1]]]])
+            else if (arg[0]==='=') [,name,init] = arg, inits.push(['&&',['!=',name,name],['=',name,['*',init,[FLOAT,1]]]])
             // x(x-<2)
             else if (arg[0]==='-<') [,name,init] = arg, inits.push(['-<=',name,init])
 
@@ -350,7 +350,7 @@ export function desc(node, scope) {
   if (node._desc) return node._desc // cached descriptor
 
   let [op, a, b, c] = node
-  if (op === INT || op === FLOAT || op === NAN) return { type: op, static: true}
+  if (op === INT || op === FLOAT) return { type: op, static: true}
 
   // use node scope
   let prevScope = node.scope || scope
@@ -380,6 +380,7 @@ export function desc(node, scope) {
     '&&'() { return bDesc },
     '||'() { return bDesc },
     '=='() { return {type:INT, static:s} },
+    '!='() { return {type:INT, static:s} },
     '-<'() {
       // FIXME: detect range type better (range is separate type)
       if (bDesc.type === RANGE) {

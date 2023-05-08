@@ -19,7 +19,7 @@ function clean (str) {
 // convert wast code to binary
 let wabt = await Wabt()
 function compileWat (code, importObj={}) {
-  code = '(func $log (import "imports" "log") (param i32))\n' + code
+  code = '(func $log (import "imports" "log") (param i32))\n(func $logf (import "imports" "log") (param f64))\n' + code
   const wasmModule = wabt.parseWat('inline', code, {
     simd: true
   })
@@ -36,13 +36,13 @@ function compileWat (code, importObj={}) {
   return new WebAssembly.Instance(mod, {
     ...importObj,
     imports: {
-      log(v){ console.log(v) }
+      log(a){ console.log(a) }
     }
   })
 }
 
 
-t('compile: globals basic', t => {
+t.only('compile: globals basic', t => {
   // TODO: single global
   // TODO: multiply wrong types
   // TODO: define globals via group (a,b,c).
@@ -116,9 +116,10 @@ t('compile: function oneliners', t => {
   // is(mod.exports.mult(2,4), 8)
 
   // no semi
-  wat = compile(`mult(a, b=1) = a * b.`)
+  wat = compile(`mult(a, b=2) = a * b.`)
   mod = compileWat(wat)
   is(mod.exports.mult(2,4), 8)
+  is(mod.exports.mult(2), 4)
 
   // no result
   mod = compileWat(compile(` mult(a, b) = (a * b). `))
@@ -266,14 +267,18 @@ t.skip('debugs', t => {
   const memory = new WebAssembly.Memory({ initial: 1 });
   const importObject = { env: { memory } };
   let module = compileWat(`
-  (func (param $ptr (ref $mytype)) (result (ref $mytype)))
+  (func $mult (param $a f64) (param $b f64) (result f64)
+  (local $and i32)(local.tee $and (f64.ne (local.get $b) (local.get $b)))(drop)
+  (if (result f64) (local.get $and) (then (local.tee $b (f64.convert_i32_s (i32.const 2)))) (else (local.get $and)))(drop)
+  (f64.mul (local.get $a) (local.get $b))
+  (return))
+  (func $module/init
+  )
+  (start $module/init)
+  (export "mult" (func $mult))
   `, importObject)
 
-  const stringRef = module.exports.get_string();
-    const stringPtr = module.exports.__indirect_function_table.get(stringRef);
-    const utf8Decoder = new TextDecoder('utf-8');
-    const string = utf8Decoder.decode(new Uint8Array(memory.buffer, stringPtr));
-    console.log(string);
+  console.log(module.exports.mult(2))
 })
 
 t('compile: variable type inference', t => {

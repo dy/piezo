@@ -1,7 +1,7 @@
 // compile source/ast/ir to WAST
 import analyse, { err, desc } from "./analyse.js"
 import stdlib from "./stdlib.js"
-import {FLOAT,INT,RANGE,PTR,FUNC,NAN} from './const.js'
+import {FLOAT,INT,RANGE,PTR,FUNC} from './const.js'
 import { parse as parseWat } from "watr";
 
 const F64_PER_PAGE = 8192;
@@ -30,7 +30,7 @@ export default function compile(node) {
 
   Object.assign(expr, {
     // a; b; c;
-    ';'([,...statements]){ let list=[]; for (let s of statements) list.push(expr(s)); return list.join('\n') },
+    ';'([,...statements]){ let list=[]; for (let s of statements) list.push(expr(s)); return list.join('(drop)\n') },
     ','([,...statements]){ let list=[]; for (let s of statements) list.push(expr(s)); return list.join(' ') },
 
     // number primitives: 1.0, 2 etc.
@@ -69,11 +69,8 @@ export default function compile(node) {
       if (desc(a,scope).type == INT && desc(b,scope).type == INT) return `(i32.mul ${expr(a)} ${expr(b)})`
       // 1.0 * a -> a * 1.0
       if (a[0]===FLOAT && a[1]===1) [a,b] = [b,a]
-      // a * 1.0 -> convert to float that's it
-      if (b[0]===FLOAT && b[1]===1) {
-        if (desc(a,scope).type == INT) return `(f64.convert_i32_s ${expr(a)})`
-        return expr(a)
-      }
+      // a * 1.0 -> convert to float
+      if (b[0]===FLOAT && b[1]===1) return fexpr(a)
       return `(f64.mul ${fexpr(a)} ${fexpr(b)})`
     },
     '++'([,a]) { return expr(['+=',a,[INT,1]]) },
@@ -105,10 +102,6 @@ export default function compile(node) {
     '=='([,a,b]) {
       let aDesc = desc(a, scope), bDesc = desc(b, scope)
       if (aDesc.type === INT && bDesc.type === INT) return `(i32.eq_s ${expr(a)} ${expr(b)})`
-      if (b[0]===NAN || a[0]===NAN) {
-        if (!includes.includes('util/f64.isnan')) includes.push('util/f64.isnan')
-        if (b[0]===NAN) return `(call $util/f64.isnan ${fexpr(b[0]===NAN ? a : b)})`
-      }
       return `(f64.eq ${fexpr(a)} ${fexpr(b)})`
     },
     '!='([,a,b]) {
@@ -118,7 +111,13 @@ export default function compile(node) {
     },
 
     // conditions
-    '?:'([,a,b,c]){ return `(if ${iexpr(a)} (then ${expr(b)}) (else ${expr(c)}))`},
+    '?:'([,a,b,c]){
+      let bDesc = desc(b,scope), cDesc = desc(c,scope);
+      // upgrade result to float if any of operands is float
+      if (bDesc.type==FLOAT || cDesc.type == FLOAT)
+        return `(if (result f64) ${iexpr(a)} (then ${fexpr(b)}) (else ${fexpr(c)}))`
+      return `(if (result i32) ${iexpr(a)} (then ${expr(b)}) (else ${expr(c)}))`
+    },
 
     // a -< range - clamp a to indicated range
     '-<'([,a,b]) {
@@ -228,7 +227,7 @@ export default function compile(node) {
       if (scope[a].global)
         return `(global.set $${a} ${expr(b)})(global.get $${a})`
       else
-        return `(local.set $${a} ${expr(b)})`
+        return `(local.tee $${a} ${expr(b)})`
 
       err('Strange assignment', node)
     },
@@ -239,10 +238,8 @@ export default function compile(node) {
       // 0 | b -> b | 0
       if (a[0] === INT && a[1] === 0) [a,b]=[b,a]
       // a | 0
-      if (a[0] === INT && a[1] === 0) {
-        if (desc(a,scope).type === FLOAT) return `(i32.trunc_f64_s ${expr(a)})`
-        return expr(a)
-      }
+      if (a[0] === INT && a[1] === 0) if (desc(a,scope).type === FLOAT) return iexpr(a)
+
       return `(i32.or ${iexpr(a)} ${iexpr(b)})`
     },
 
