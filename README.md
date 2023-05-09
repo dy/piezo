@@ -138,27 +138,19 @@ m[0..] = m[-1..0];             \\ reverse order
 m << 2; m >> 3;                \\ rotate array left or right
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ loops
-i=0; i++ < 3 <| log(i);        \\ inline loop: while i++ < 3 do log(i)
-(i=0; i++ < 10 <| (            \\ multiline loop
+i=0; i++ < 3 :: log(i);        \\ inline loop: while i++ < 3 do log(i)
+(i=0; i++ < 10 :: (            \\ multiline loop
   i < 3 ? ^^;                  \\ `^^` to break loop (can return value as ^^x)
   i < 5 ? ^;                   \\ `^` to continue loop (can return value as ^x)
   log(i);                      \\
 ));                            \\
-[ j++ < 10 <| j * 2 ];         \\ list comprehension via loop
-
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ iteration
-(a, b, c) | a -> a.x * 2;      \\ map items (syntactically)
-[a, b, c] | x -> a(x);         \\ iterate over array
-10..1 | i -> (                 \\ iterate over range
+[ j++ < 10 :: j * 2 ];         \\ list comprehension
+[a, b, c] ~ x :: a(x);         \\ iterate over array
+10..1 ~ i :: (                 \\ iterate over range
   i < 3 ? ^^;                  \\ `^^` breaks iteration
   i < 5 ? ^;                   \\ `^` continues iteration
 );                             \\
-[ items | x -> x * 2 ];        \\ list comprehension via iterator
-items |= x -> x * 2;           \\ overwrite items in source array
-
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ fold
-(a,b,c) |> a,b -> a + b;       \\ fold group (syntax sugar)
-[a,b,c] |> a,b -> a + b;       \\ fold list
+s = 0; [a,b,c] ~ i :: s += i;  \\ fold/reduce list
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ import, export
 @'./path/to/module#x,y,z';     \\ any file can be imported directly
@@ -244,7 +236,7 @@ lpf(x0, freq = 100 -< 1..10k, Q = 1.0 -< 0.001..3.0) = (
 );
 
 \ process block (mutable)
-lpf(x, freq, Q) = (x |= x -> lpf(x, freq, Q)).
+lpf(x, freq, Q) = (x ~ xi,i :: x[i] = lpf(xi, freq, Q)).
 ```
 
 * _import_ − done via URI string as `@ 'path/to/lib#foo,bar'`. <!-- Built-in libs are: _math_, _std_. Additional libs: _sonr_, _latr_, _musi_ and [others](). --> _import-map.json_ can provide import aliases.

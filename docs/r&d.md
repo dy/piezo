@@ -2815,3 +2815,42 @@ Having wat files is more useful than direct compilation to binary form:
 ?- some conflict/issue with storing functions in a table, eg `osc=[sin:x->x,tri:x->x]`
   * likely can be `osc=[sin(x)=...x,tri(x)=...x]`
 + resolves the issue of scope (above): no need to make all vars global since no scope recursion
+
+## [ ] Replace `<|`, `|`, `|>` with just `<>` ?
+
++ Less problems with overloading `|`
++ Fold operator is likely not as useful
++ `|` and `|>` require fake function, which is whole mental concept
++ These things can be solved via single simple loop
+? how to do "in" operator, ie. `item <- list <> operator`?
+  ? `list -> item <> (item * 2)`
+  ? `list -> item :: (item * 2)`
+    - that operator `list -> item` has no meaning by itself
+  ? `list :: x -> x*2`
+    - confusion with function mappers, which is not
+  ? `item -< list :: (item * 2)`
+    - wrong meaning to clamp operator
+  ? `list ~ item :: (item * 2)`
+  ? `item ~ list :: (item * 2)`
+    - `lpf(x, freq, Q) = (x ~ xi,i :: x[i] = lpf(xi, freq, Q)).` looks unwieldy, compared to
+      `lpf(x, freq, Q) = (x |= x -> lpf(x, freq, Q)).`
+  ? `list ~> item :: (item * 2)`
+  ? `list :item: (item * 2)`
+    - `list : item : (item * 2)`
+  ? `list :: (@ * 2)` - special character for item
+  ? `list :: (& * 2)`
+    + almost like pipe by meaning
+  ? `list#item :: item * 2`
+    + very similar to `@path#item`
+    - makes `#` an operator
+    - `list # item :: item * 2` is not as obvious
+? what's the character?
+  * `<>`? `(while i<500 i++)` -> `(i < 500 <> i++)`
+    + diamond is used in flowchart and condition
+  * `::`? `(while i<500 i++)` -> `(i < 500 :: i++)`
+    + ruby-like iteration
+    + better for list comprehensions (classical-ish)
+    + lightweight
+  * `~>`? `(while i<500 i++)` -> `(i < 500 ~> i++)`
+    + meaning iteration
+? how to implement in-place modifyer, like `x |= x -> abc`
