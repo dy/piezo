@@ -194,7 +194,7 @@ Having wat files is more useful than direct compilation to binary form:
 ## [x] Numbers: float64 by default, unless it's statically inferrable as int32, like ++, +-1 etc ops only
   * Boolean operators turn float64 into int64
 
-## [x] Pipes: → | with anon functions
+## [x] ~~Pipes: → | with anon functions~~ too complex
 
   1. Placeholder as `x | #*0.6 + reverb() * 0.4`, `source | lp($, frq, Q)`?
     ? can there be multiple args to pipe operator? `a,b |` runs 2 pipes, not multiarg.
@@ -349,7 +349,7 @@ Having wat files is more useful than direct compilation to binary form:
       + plays well with implicit arguments #t, #i etc.
     - same as 5 - let's avoid implicit stuff
 
-## [x] Lambda -> we can use only lambdas everywhere
+## [x] ~~Lambda -> we can use only lambdas everywhere~~ wasm doesn't have dynamic func references, creating memory for calls is costly
 
   * should there be lambda? `value | x -> x*.6 + reverb(x) * .4`
     - lambda function has diverging notation from regular fn definition.
@@ -367,7 +367,7 @@ Having wat files is more useful than direct compilation to binary form:
   ! → operator must uniquely identify type and be macros
   ?! Try x(..args) -> operation for regular functions?
 
-## [x] Reduce/fold operator: let's use |> with lambdas
+## [x] ~~Reduce/fold operator: let's use |> with lambdas~~ easier to use just loops `sum=0; list :: sum+=@`
 
   * ? Reduce operator? It can be eg. `:>` (2 become 1), or `=>`.
     * ? `a,b,c :> reducer`, like `signals :> #0 + #1`
@@ -739,14 +739,14 @@ Having wat files is more useful than direct compilation to binary form:
 ## [x] Elvis operator: `a ?: b` instead of jsy `a ?? b`
   * ~ equivalent to a ? #0 : b
 
-## [x] Init operator: too monstrous, no
+## [x] ~~Init operator:~~ too monstrous, no
   - pointless: `a = a && b` is a bit meaningless construct, isn't it, we need `a = a ? a : b`, `a = a ?: b`, or `a ?:= b`
 
 ## [x] Short ternary operators as ` a > b ? a = 1;` → use elvis `?:` or direct JS `a && b`
   + it not only eliminates else, but also augments null-path operator `a.b?.c`, which is for no-prop just `a.b?c` case.
   - weirdly confusing, as if very important part is lost. Maybe just introduce elvis `a>b ? a=1` → `a<=b ?: a=1`
 
-## [x] Loops: `i <- 0..10 <| a + i`, `i <- list <| a`, `[x <- 1,2,3 <| x*2]`
+## [x] Loops: ~~`i <- 0..10 <| a + i`, `i <- list <| a`, `[x <- 1,2,3 <| x*2]`~~ `0..10 :: a + @`
   * `for i in 0..10 (a,b,c)`, `for i in src a;`
   * alternatively as elixir does: `item <- 0..10 a,b,c`
     + also erlang list comprehension is similar: `[x*2 || x <- [1,2,3]]`
@@ -902,7 +902,7 @@ Having wat files is more useful than direct compilation to binary form:
 ### [x] loops can return a value: `(isActive(it): action(it))` - the last result of action is returned
   + useful for many loop cases where we need internal variable result.
 
-## [x] ? Is there a way to multi-export without apparent `export` keyword for every function? -> export last items in a file.
+## [x] ? Is there a way to multi-export without apparent `export` keyword for every function? -> `x,y,z.`
 
   * ? maybe it's good there's apparent `export` indicator - easy to scan and in-place, compared to accumulated export at the end.
   → C++ exports implicitly function clauses.
@@ -917,7 +917,7 @@ Having wat files is more useful than direct compilation to binary form:
   * Export area solves the issue: `gain()=...; export gain`
   -> Same as `(a;b,c)` returns b and c - return last items as `gain=()->{}; gain, gain1, gain2`.
 
-## [x] Arrays: to be or not to be? → for complex / arbitrary-length / nested structures?
+## [x] Arrays: to be or not to be? → persistent fixed-size flat structures
   * ? what if we don't deal with arbitrary-length arrays?
     + it guarantees memory limitation, "embeds" into syntax
     + it removes much need in syntax around arrays like map, filer: it can be as `(a,b,c) | map`
@@ -936,7 +936,7 @@ Having wat files is more useful than direct compilation to binary form:
     - nah, just do `(a,b,c) = d`
     ? Alternatively: do we need nested structures at all? Maybe just flat all the time?
 
-## [x] -< operator purpose? `<-` for iterator, and `-<` for range
+## [x] -< operator purpose? `-<` for range
 
   * ? splits list by some sorter: `a,b,c -< v -> v`
   * ? or in fact multiplexor? selects input by condition? like a,b,c -< x -> x > 2 ? 1 : 0
@@ -954,7 +954,7 @@ Having wat files is more useful than direct compilation to binary form:
     + can iterate simple number `x <- 10`
     + it's mainly `for (x of list)` operator
 
-## [x] what's the meaning of `>-`? switch
+## [x] ~~what's the meaning of `>-`?~~ confusable with `a > -x`
 
   * must be the opposite-ish to `for of`.
   * for of takes each element from the list. this operator must take one element. Switch?
@@ -971,7 +971,7 @@ Having wat files is more useful than direct compilation to binary form:
   + `x -<= 0..10` is just a nice construct
   -  `x <- y` vs `x < -y`
 
-## [x] comments: //, /* vs ;; and (; ;) → use familiar `//`
+## [x] comments: //, /* vs ;; and (; ;) → try `\`
 
   1. `;;`
   + ;; make more sense, since ; is separator, and everything behind it doesnt matter
@@ -1017,12 +1017,7 @@ Having wat files is more useful than direct compilation to binary form:
     - can't join lines via `(a;b;c)`
 
 
-## [x] ! Variables case should not matter.
-
-  * https://twitter.com/bloomofthehours/status/1491797450595528713?s=20&t=1aJpwIDrbNhIjwIohsvxiw
-  * Besides listed issues, it also reduces use of camelcase convention
-
-## [x] Groups: basic operations
+## [x] Groups: basic operations -> syntax sugar
 
   * `a,b = b,a`
   * `a,b,c + d,e,f → (a+d, b+e, c+f)`
@@ -2360,6 +2355,8 @@ Having wat files is more useful than direct compilation to binary form:
 
 0. Case-insensitive
 
++ https://twitter.com/bloomofthehours/status/1491797450595528713?s=20&t=1aJpwIDrbNhIjwIohsvxiw
++ reduces use of camelcase convention
 - `AbB` vs `ABb` can be different chords, but lino mixes them up together
 - `X1` and `x1` can be different things in math
 - `sampleRate` becomes `samplerate` - can be confusing
@@ -2776,6 +2773,9 @@ Having wat files is more useful than direct compilation to binary form:
 ? Do we ever need non-rotating memory in function body?
 - Rotate can be done as `a = a[1..,0]`
   ~ very costly
+- It can be implemented relatively safely by user, without perf penality
+  . `a[offset + 1]; offset++`
+  + since we already rotate index access via modwrap
 
 ## [ ] Arrays: neg-index access or no?
 
@@ -2816,13 +2816,15 @@ Having wat files is more useful than direct compilation to binary form:
   * likely can be `osc=[sin(x)=...x,tri(x)=...x]`
 + resolves the issue of scope (above): no need to make all vars global since no scope recursion
 
-## [ ] Replace `<|`, `|`, `|>` with just `<>` ?
+## [ ] Replace `<|`, `|`, `|>` with `:: &` / `:: #` ? -> Let's try `|>` for loop and `| item ->` for extended loop
 
 + Less problems with overloading `|`
 + Fold operator is likely not as useful
 + `|` and `|>` require fake function, which is whole mental concept
 + These things can be solved via single simple loop
-? how to do "in" operator, ie. `item <- list <> operator`?
++ One loop operator is way less cognitive load, than the plaiade of `<|`, `|`, `|>`, `->`
+
+? how to do "in" operator, ie. `item <- list <> operator`? -> `list :: it * 2`
   ? `list -> item <> (item * 2)`
   ? `list -> item :: (item * 2)`
     - that operator `list -> item` has no meaning by itself
@@ -2840,17 +2842,61 @@ Having wat files is more useful than direct compilation to binary form:
   ? `list :: (@ * 2)` - special character for item
   ? `list :: (& * 2)`
     + almost like pipe by meaning
+  ? `list :: # * 2`
+    + it's the shortest possible notation
+    * `list :: ^^ # & #`
   ? `list#item :: item * 2`
     + very similar to `@path#item`
     - makes `#` an operator
     - `list # item :: item * 2` is not as obvious
-? what's the character?
+
+? what's the operator character? -> `::`
   * `<>`? `(while i<500 i++)` -> `(i < 500 <> i++)`
     + diamond is used in flowchart and condition
+    - `<>` associates with not-equal from other languages
   * `::`? `(while i<500 i++)` -> `(i < 500 :: i++)`
     + ruby-like iteration
     + better for list comprehensions (classical-ish)
-    + lightweight
+    + lightweight feeling
+    - doesn't associate with producing/mapping, more just iteration
+      +? maybe we don't need production meaning as much, since we rarely produce new arrays
+        + list comprehension can be non-trivial to implement, since requires dynamic memory allocation and prone to memory overflow errors
+    + allows `::=` operator, modifying list in-place, eg. `[1..100] ::= # * 2` or `[1..100] ::= & * 2`
+    - it's not really pipe-able `out ::= gen() :: filter(#) :: amplify(#)`
+      . with pipe that's `out = out |> gen() |> filter(#) |> amplify(#)`
+        - doesn't look nice as self-assign `out |>= gen() |> filter(#) |> amp(#)`
   * `~>`? `(while i<500 i++)` -> `(i < 500 ~> i++)`
     + meaning iteration
-? how to implement in-place modifyer, like `x |= x -> abc`
+    + associates with producing more
+
+? how to implement in-place modifier, like `x |= x -> abc` -> `a ::= & * 2`
+
+? what's the best character for placeholder?
+  * `list :: #*2`
+    + `#` is almost perfect for topic/reference, associates with `#`th item
+      - needs prohibiting variables starting from # though
+        - which is problematic for mono buffers `#tri = [..1s] ::= tri(@ * 2)`
+  * `list :: &*2`
+    + & is almost-character, feels more like an id
+    - has weird connotation as binary
+    - makes `list :: ^^&&&` a valid construct, ugh
+    - there's too much meaning for `&` character as `&`, `&&` already
+  * `list :: @ * 2`
+    + relatively safe
+    + associates with id / character quite a bit
+    + is not overused by other meanings, except for import
+    - conflicts with import
+  * `list :: ~ * 2`
+    + hints at "iteratee"
+  * `list :: () * 2`
+  * `list :: . * 2`
+
+? ALT: `|>` for loop, like `list |> x`, `a < 10 |> i++`, as well as pipe as `list | i -> i * 2`?
+  + keeps the notion of "producing"
+  + less mental load, `|>` and `| i ->` are similar
+  + turns `a | b -> c` into a ternary (that's it)
+  + keeps notion of diamond (flow loops) and vertical bar (pipe)
+  + makes nice meaning to pipes `gen() | i -> filter(i) | i -> amp(i)`
+  + makes meaning for `|=` as `out |= i -> i`
+  + no topic operator problem
+  + resolves `|` precedence problem

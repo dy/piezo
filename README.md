@@ -78,7 +78,7 @@ a = b, c = d;                  \\ note: assignment precedence is higher: (a = b)
 foo();                         \\ semi-colons at end of line are mandatory
 (c = a + b; c);                \\ parens define block, return last element
 (a = b+1; a,b,c);              \\ block can return group
-(a && ^b; c);                  \\ return/break operator can preliminarily return value
+(a ? ^b; c);                   \\ return/break operator can preliminarily return value
 (a;b;);                        \\ note: returns null, if semicolon is last within block
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ conditions
@@ -92,7 +92,7 @@ sign = a < 0 ? -1 : +1;        \\ inline ternary
   log("Last chance")           \\
 );                             \\
 a > b && c;                    \\ if a > b then c
-a < b || c;                    \\ if a < b else c
+a < b || c;                    \\ if not a < b then c
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ functions
 double(n) = n*2;               \\ inline function
@@ -124,7 +124,7 @@ b(), b(), b();                 \\ 1, 2, 3
 m = [1,2,3,4];                 \\ create array of 4 items
 m = [..1000];                  \\ create array of 1000 items
 m = [l:2, r:4, c:6];           \\ create with position aliases
-m = [0..8 | i -> i*2];         \\ create from list comprehension
+m = [0..8 |> # * 2];           \\ create from list comprehension
 m = [n[1..3, 5, 6..]];         \\ create copy from indicated subrange
 m = [1, 2..4, ..10, n];        \\ create from mixed definition (array is always flat)
 m.0, m.1, m.2, m.3;            \\ read item by static index (0-based)
@@ -135,26 +135,28 @@ m[0] = 1;                      \\ write single value
 m[1..] = (7,8);                \\ write multiple values from specified index
 m[1,2] = m[2,1];               \\ rearrange items
 m[0..] = m[-1..0];             \\ reverse order
-m << 2; m >> 3;                \\ rotate array left or right
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ loops
-i=0; i++ < 3 :: log(i);        \\ inline loop: while i++ < 3 do log(i)
-(i=0; i++ < 10 :: (            \\ multiline loop
-  i < 3 ? ^^;                  \\ `^^` to break loop (can return value as ^^x)
-  i < 5 ? ^;                   \\ `^` to continue loop (can return value as ^x)
+i=0; i++ < 3 |> log(i);        \\ inline loop: while i++ < 3 do log(i)
+(i=0; i++ < 10 |> (            \\ multiline loop
+  i < 3 ? ^^;                  \\ `^^` to break loop (return value as ^^x)
+  i < 5 ? ^;                   \\ `^` to continue loop (return value as ^x)
   log(i);                      \\
 ));                            \\
-[ j++ < 10 :: j * 2 ];         \\ list comprehension
-[a, b, c] ~ x :: a(x);         \\ iterate over array
-10..1 ~ i :: (                 \\ iterate over range
+
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ iterators
+[a, b, c] | item -> x(item);   \\ iterate over array
+10..1 | i -> (                 \\ iterate over range
   i < 3 ? ^^;                  \\ `^^` breaks iteration
   i < 5 ? ^;                   \\ `^` continues iteration
 );                             \\
-s = 0; [a,b,c] ~ i :: s += i;  \\ fold/reduce list
+s = 0; [a,b,c] | i -> s += i;  \\ fold/reduce list
+[1..10] |= i -> i * 2;         \\ mutate list
+[1..10 | i -> i * 2];          \\ list comprehension
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ import, export
-@'./path/to/module#x,y,z';     \\ any file can be imported directly
-@'math#pi,sin,max';            \\ or defined via import-maps.json
+@'./path/to/module#x,y,z';      \\ any file can be imported directly
+@'math#pi,sin,max';             \\ or defined via import-maps.json
 x, y, z.                       \\ last statement ending with . exports members
 ```
 
@@ -192,7 +194,7 @@ gain( x, volume -< 0..100 ) = (
   x * volume;  \\ write to output array
 );
 
-[0, .1, .2, .3, .4, .5] | x -> gain(x, 2);
+[0, .1, .2, .3, .4, .5] :: gain(@, 2);
 \\ 0, .2, .4, .6, .8, 1
 ```
 
@@ -207,17 +209,17 @@ gain( x, volume -< 0..100 ) = (
 Biquad filter processor for single-channel input.
 
 ```fs
-@ 'math#pi,cos,sin';          \ import pi, sin, cos from math
+'math#pi,cos,sin';          \\ import pi, sin, cos from math
 
-1pi = pi;                     \ define pi units
-1s = 44100;                   \ define time units in samples
-1k = 10000;                   \ basic si units
+1pi = pi;                     \\ define pi units
+1s = 44100;                   \\ define time units in samples
+1k = 10000;                   \\ basic si units
 
-\ process single sample
+\\ process single sample
 lpf(x0, freq = 100 -< 1..10k, Q = 1.0 -< 0.001..3.0) = (
-  *x1=0, *x2=0, *y1=0, *y2=0;     \ filter state (defined by callsite)
+  *x1=0, *x2=0, *y1=0, *y2=0;     \\ filter state (defined by callsite)
 
-  \ lpf formula
+  \\ lpf formula
   w = 2pi * freq / 1s;
   (sin_w, cos_w) = (sin(w), cos(w));
   a = sin_w / (2.0 * Q);
@@ -235,7 +237,7 @@ lpf(x0, freq = 100 -< 1..10k, Q = 1.0 -< 0.001..3.0) = (
   y0
 );
 
-\ process block (mutable)
+\\ process block (mutable)
 lpf(x, freq, Q) = (x ~ xi,i :: x[i] = lpf(xi, freq, Q)).
 ```
 
@@ -247,11 +249,11 @@ lpf(x, freq, Q) = (x ~ xi,i :: x[i] = lpf(xi, freq, Q)).
 
 ### ZZFX
 
-Consider [coin sound](https:\codepen.io/KilledByAPixel/full/BaowKzv):
+Consider [coin sound](https://codepen.io/KilledByAPixel/full/BaowKzv):
 > `zzfx(...[,,1675,,.06,.24,1,1.82,,,837,.06])`
 
 ```fs
-@ 'math#pi,abs,sin,round';
+'math#pi,abs,sin,round';
 
 1pi = pi;
 1s = 44100;
@@ -263,37 +265,37 @@ oscillator = [
   sine(phase) = sin(phase)
 ];
 
-adsr(x, a, d, (s, sv=1), r) = ( \ optional group-argument
+adsr(x, a, d, (s, sv=1), r) = ( \\ optional group-argument
   *i = 0;
   t = i++ / 1s;
 
-  a -<= 1ms..;                   \ prevent click
+  a -<= 1ms..;                   \\ prevent click
   total = a + d + s + r;
 
   y = t >= total ? 0 : (
-    t < a ? t/a :                \ attack
-    t < a + d ?                  \ decay
-    1-((t-a)/d)*(1-sv) :         \ decay falloff
-    t < a  + d + s ?             \ sustain
-    sv :                         \ sustain volume
+    t < a ? t/a :                \\ attack
+    t < a + d ?                  \\ decay
+    1-((t-a)/d)*(1-sv) :         \\ decay falloff
+    t < a  + d + s ?             \\ sustain
+    sv :                         \\ sustain volume
     (total - t)/r * sv
   ) * x;
 
   y
 );
 
-\ curve effect
+\\ curve effect
 curve(x, amt=1.82 -< 0..10) = (sign(x) * abs(x)) ** amt;
 
-\ coin = triangle with pitch jump, produces block
+\\ coin = triangle with pitch jump, produces block
 coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
-  *i, *phase = 0, 0;  \ current state
-  *out=[..1024];      \ output block of 1024 samples
+  *i, *phase = 0, 0;  \\ current state
+  *out=[..1024];      \\ output block of 1024 samples
 
   t = i++ / 1s;
   phase += (freq + t > delay ? jump : 0) * 2pi / 1s;
 
-  out |= oscillator[shape](phase) | x -> adsr(x, 0, 0, .06, .24) | x -> curve(x, 1.82);
+  out ::= oscillator[shape](phase) :: adsr(#, 0, 0, .06, .24) :: curve(#, 1.82);
 
   out
 );
@@ -309,8 +311,8 @@ coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
 ## [Freeverb](https:\github.com/opendsp/freeverb/blob/master/index.js)
 
 ```fs
-@ './combfilter.li#comb';
-@ './allpass.li#allpass'
+'./combfilter.li#comb';
+'./allpass.li#allpass';
 
 1s = 44100;
 
@@ -318,7 +320,7 @@ coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
 (b1,b2,b3,b4) = (1422,1491,1557,1617);
 (p1,p2,p3,p4) = (225,556,441,341);
 
-\ TODO: stretch
+\\ TODO: stretch
 
 reverb([]input, room=0.5, damp=0.5) = (
   *combs_a = a0,a1,a2,a3 | a -> stretch(a),
