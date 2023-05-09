@@ -30,8 +30,8 @@ export default function compile(node) {
 
   Object.assign(expr, {
     // a; b; c;
-    ';'([,...statements]){ let list=[]; for (let s of statements) list.push(expr(s)); return list.join('(drop)\n') },
-    ','([,...statements]){ let list=[]; for (let s of statements) list.push(expr(s)); return list.join(' ') },
+    ';'([,...statements]){ let list=[]; for (let s of statements) list.push(expr(s)); return list.filter(Boolean).join('(drop)\n') },
+    ','([,...statements]){ let list=[]; for (let s of statements) list.push(expr(s)); return list.filter(Boolean).join(' ') },
 
     // number primitives: 1.0, 2 etc.
     [FLOAT]([,a]) { return `(f64.const ${a})`},

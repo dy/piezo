@@ -86,7 +86,7 @@ export default function analyze(node) {
       // x(a,b) - define function: brings arg initializers to fn body keeping only arg names
       if (left[0] === '()') {
         let [,name,args] = left
-        if (!scope[name]) scope[name] = {type: FUNC}
+        if (!scope[name]?.type) (scope[name]||={}).type = FUNC;
         else err('Redefining function `' + name + '`')
 
         let parent = scope
@@ -120,7 +120,7 @@ export default function analyze(node) {
         body[1].push(...(content[0] === ';' ? content.slice(1) : [content]))
         body.result = desc(body[0] === ';' ? body[body.length - 1] : body, scope) // detect result type
         scope = parent
-        return ['=',['()',name, [',',...args]], body]
+        return ['=',['()',name, args ? [',',...args] : []], body]
       }
 
       // *a = ..., *(a,b,c) = ...

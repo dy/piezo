@@ -237,12 +237,12 @@ t('compile: variable type inference', t => {
   x = compileWat(compile(`x;x.`)).exports.x // unknown type falls to f64
   x = compileWat(compile(`x=1;x.`)).exports.x // int type
   x = compileWat(compile(`x=1.0;x.`)).exports.x // float type
-  x = compileWat(compile(`x=()->1;x.`)).exports.x // func type
+  x = compileWat(compile(`x()=1;x.`)).exports.x // func type
   // x = compileWat(compile(`x=0..10;x.`)).exports.x // range type
   x = compileWat(compile(`x=[];x.`)).exports.x // arr type
   x = compileWat(compile(`x;x=1;x.`)).exports.x // late-int type
   x = compileWat(compile(`x;x=1.0;x.`)).exports.x // late-float type
-  x = compileWat(compile(`x;x=()->1;x.`)).exports.x // late-func type
+  x = compileWat(compile(`x;x()=1;x.`)).exports.x // late-func type
   // x = compileWat(compile(`x;x=0..10;x.`)).exports.x // late-range type
   x = compileWat(compile(`x;x=[];x.`)).exports.x // late-arr type
 })
