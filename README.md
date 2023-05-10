@@ -1,16 +1,14 @@
 # lino
 
-**Lino** (*li*ne *no*ise) is micro-language for sound design, processing, and utilities. It has common syntax, type inference, and compiles to WASM bytecode, which enables it for various environments - from [audio worklets](https:\developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), workers, [nodejs](https:\github.com/audiojs/web-audio-api), to Rust, Python, Go, etc.
+**Lino** (*li*ne *no*ise) is micro-language prototype for sound design, processing, and utilities. It has extended common syntax, smart type inference and integrated best practices. It has static memory and compiles to WASM bytecode, available for various environments, from [audio worklets](https:\developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process) and workers to [nodejs](https:\github.com/audiojs/web-audio-api), Rust, Python, Go, etc.
 <!--[Motivation](./docs/motivation.md)  |  [Documentation](./docs/reference.md)  |  [Examples](./docs/examples.md).-->
-
-> WIP: current stage is stabilized syntax and basic cases compilation; it requires full compiler implementation.
 
 ## Reference
 
 ```
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ variables
 foo=1, bar=2;                   \\ declare vars
-Ab_C_F#, $0, Δx, _, $, #, a@b;  \\ names permit alnum, unicodes, #, _, $, @
+Ab_C_F#, $0, Δx, _, $, #;       \\ names permit alnum, unicodes, #, _, $
 fooBar123 == FooBar123;         \\ names are case-insensitive (lowcase encouraged!)
 default=1, eval=fn, else=0;     \\ lino has no reserved words
 
@@ -134,8 +132,9 @@ m[0] = 1;                       \\ write single value
 m[1..] = (7,8);                 \\ write multiple values from specified index
 m[1,2] = m[2,1];                \\ rearrange items
 m[0..] = m[-1..0];              \\ reverse order
+m = m[1..,0];                   \\ rotate memory left (uses memcopy - efficient)
 
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ loops
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ loop (generator)
 i=0; i++ < 3 |> log(i);         \\ inline loop: while i++ < 3 do log(i)
 (i=0; i++ < 10 |> (             \\ multiline loop
   i < 3 ? ^^;                   \\ `^^` to break loop (return value as ^^x)
@@ -143,7 +142,7 @@ i=0; i++ < 3 |> log(i);         \\ inline loop: while i++ < 3 do log(i)
   log(i);                       \\
 ));                             \\
 
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ \\ iterators
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ \\ iterate (transform)
 [a, b, c] | item -> x(item);    \\ iterate over array
 10..1 | i -> (                  \\ iterate over range
   i < 3 ? ^^;                   \\ `^^` breaks iteration
@@ -155,7 +154,7 @@ items |= x -> x * 2;            \\ overwrite items in array
 list | x -> a(x) | x -> b(x);   \\ pipe
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ import, export
-'./path/to/module#x,y,z';       \\ any file can be imported directly
+@'./path/to/module#x,y,z';       \\ any file can be imported directly
 'math#pi,sin,max';              \\ or defined via import-maps.json
 x, y, z.                        \\ last statement ending with . exports members
 ```
@@ -259,15 +258,14 @@ Consider [coin sound](https://codepen.io/KilledByAPixel/full/BaowKzv):
 1s = 44100;
 1ms = 1s / 1000;
 
-
 oscillator = [
   saw(phase) = (1 - 4 * abs( round(phase/2pi) - phase/2pi )),
   sine(phase) = sin(phase)
 ];
 
 adsr(x, a, d, (s, sv=1), r) = ( \\ optional group-argument
-  *i = 0;
-  t = i++ / 1s;
+  *i = 0; @i++;
+  t = i / 1s;
 
   a -<= 1ms..;                   \\ prevent click
   total = a + d + s + r;
@@ -289,10 +287,10 @@ curve(x, amt=1.82 -< 0..10) = (sign(x) * abs(x)) ** amt;
 
 \\ coin = triangle with pitch jump, produces block
 coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
-  *i, *phase = 0, 0;  \\ current state
+  *i=0, @i++, *phase = 0;   \\ current state
   *out=[..1024];      \\ output block of 1024 samples
 
-  t = i++ / 1s;
+  t = i / 1s;
   phase += (freq + t > delay ? jump : 0) * 2pi / 1s;
 
   out |= oscillator[shape](phase) | x -> adsr(x, 0, 0, .06, .24) | x -> curve(x, 1.82);
@@ -348,7 +346,7 @@ Transpiled floatbeat/bytebeat song:
 ```fs
 @'math#asin,sin,pi';
 
-sampleRate = 44100;
+1s = 44100;
 
 fract(x) = x % 1;
 mix(a, b, c) = (a * (1 - c)) + (b * c);
@@ -359,7 +357,7 @@ melodytest(time) = (
   melody = 0;
   i = 0;
 
-  i++ < 5 <| (
+  i++ < 5 |> (
     melody += tri(
       time * mix(
         200 + (i * 900),
@@ -377,7 +375,7 @@ snare(time) = noise(floor((time) * 108000)) * (1 - fract(time + 0.5)) ** 12;
 melody(time) = melodytest(time) * fract(time * 2) ** 6 * 1;
 
 song() = (
-  *t=0; time = t++ / sampleRate;
+  *t=0; @t++; time = t / 1s;
   (kick(time) + snare(time)*.15 + hihat(time)*.05 + melody(time)) / 4
 ).
 ```

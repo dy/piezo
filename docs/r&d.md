@@ -77,12 +77,42 @@ Having wat files is more useful than direct compilation to binary form:
 - wat files are still a bit hard
 - modifying wat files creates divergence from son files..
 
+### [x] ? Should it compile to wat or to wasm? → wat for now
+
+  - wasm is faster
+  - wasm allows web compilation: doesn't require heavy wabt dependency
+  - wasm is "true" direct way
+  - wasm is something new to learn
+  + wat allows wat2wasm compiler optimizations
+    ~ can be done via wasm too
+  + wat allows debugging, bytecode can be hardstone
+    ~- wasm2wat also allows debugging
+      ~+ still reverse compilation can lose variable/function names
+  + wat can be done via wat-compiler and other better fit for that mappers
+    - wat-compiler is stale and unlikely to improve
+
+  * ? Can be both I suppose, but needs researching wasm format - mb we can utilize fn tables in better way
+
+### [x] Compile targets: → WAT
+
+  * WASM
+  * WAT
+    + replaceable with wabt, wat-compiler
+    + generates wat file as alternative to wasm
+    + easier debugging
+    + natural and easier code than array structs
+  * JS
+    + can be useful in debugging
+    + can useful in direct (simple) JS processing
+    + can be useful for benchmarking
+  * Native bytecode
+  * others?
 
 ## [x] frames as vectors
 
   * like glsl (data views to underlying block buffer), with [standard channel ids](https://en.wikipedia.org/wiki/Surround_sound#Standard_speaker_channels); swizzles as `a.l, a.r = a.r, a.l; a.fl, a.fr = a.fl`
 
-## [x] `f(x, y) = x + y` -> let's use `f = arg -> result`
+## [x] `f(x, y) = x + y` -> yes
   + standard classic way to define function in math
   + also as in F# or Elixir
   - conflicts with anonymous fn notation
@@ -93,8 +123,10 @@ Having wat files is more useful than direct compilation to binary form:
   + natural extension of lambda functions
   + unifies lambda functions look
   + organically permits lambda functions
+  - conflicts with mapper/transform
+  - lambdas require dynamic fn context allocation, which is not worth it
 
-### [x] Alt: `f = (x,y) -> x + y`
+### ~~[x] Alt: `f = (x,y) -> x + y`~~
   + all pros of prev
   + JS-familiar notation
   + less fancy syntax extensions
@@ -177,7 +209,7 @@ Having wat files is more useful than direct compilation to binary form:
 
 ## [x] !? erlang strings: "hello" === [104,101,108,108,111]
 
-## [ ] !? erlang atoms: 'hello' (not string)
+## [ ] !? atoms: 'hello' (not string)
   * Atoms are useful for referencing:
     + function instances
       ~ we have funcref type, not necessary
@@ -195,7 +227,7 @@ Having wat files is more useful than direct compilation to binary form:
 ## [x] Numbers: float64 by default, unless it's statically inferrable as int32, like ++, +-1 etc ops only
   * Boolean operators turn float64 into int64
 
-## [x] ~~Pipes: → | with anon functions~~ too complex
+## [x] ~~Pipes: → | with anon functions~~ transform ternary `list | x -> a(x) | x -> b(x)` 
 
   1. Placeholder as `x | #*0.6 + reverb() * 0.4`, `source | lp($, frq, Q)`?
     ? can there be multiple args to pipe operator? `a,b |` runs 2 pipes, not multiarg.
@@ -368,7 +400,7 @@ Having wat files is more useful than direct compilation to binary form:
   ! → operator must uniquely identify type and be macros
   ?! Try x(..args) -> operation for regular functions?
 
-## [x] ~~Reduce/fold operator: let's use |> with lambdas~~ easier to use just loops `sum=0; list :: sum+=@`
+## [x] ~~Reduce/fold operator: let's use |> with lambdas~~ easier to use just loops `sum=0; list | i-> sum+=i`
 
   * ? Reduce operator? It can be eg. `:>` (2 become 1), or `=>`.
     * ? `a,b,c :> reducer`, like `signals :> #0 + #1`
@@ -737,17 +769,16 @@ Having wat files is more useful than direct compilation to binary form:
   - conflicting convention: we don't really use labels anywhere (we use variables instead)
   - it kind-of enforces lambdas, which we want to avoid also.
 
-## [x] Elvis operator: `a ?: b` instead of jsy `a ?? b`
+## [ ] If `a ? b`, elvis: `a ?: b`?
   * ~ equivalent to a ? #0 : b
-
-## [x] ~~Init operator:~~ too monstrous, no
-  - pointless: `a = a && b` is a bit meaningless construct, isn't it, we need `a = a ? a : b`, `a = a ?: b`, or `a ?:= b`
-
-## [x] Short ternary operators as ` a > b ? a = 1;` → use elvis `?:` or direct JS `a && b`
-  + it not only eliminates else, but also augments null-path operator `a.b?.c`, which is for no-prop just `a.b?c` case.
+  + organic extension of ternary `a ? b`, `a ?: b`.
   - weirdly confusing, as if very important part is lost. Maybe just introduce elvis `a>b ? a=1` → `a<=b ?: a=1`
+  - it has no definite returning type. What's the result of `(a ? b)`?
+    ~+ `b` or `0`?
+  * return type is `0` or `typeof b`
+  - burdens `?` with semantic load, impeding other proposals like `try..catch`
 
-## [x] Loops: ~~`i <- 0..10 <| a + i`, `i <- list <| a`, `[x <- 1,2,3 <| x*2]`~~ `0..10 :: a + @`
+## [x] Loops: ~~`i <- 0..10 <| a + i`, `i <- list <| a`, `[x <- 1,2,3 <| x*2]`~~ `0..10 | i -> a + i`
   * `for i in 0..10 (a,b,c)`, `for i in src a;`
   * alternatively as elixir does: `item <- 0..10 a,b,c`
     + also erlang list comprehension is similar: `[x*2 || x <- [1,2,3]]`
@@ -972,7 +1003,7 @@ Having wat files is more useful than direct compilation to binary form:
   + `x -<= 0..10` is just a nice construct
   -  `x <- y` vs `x < -y`
 
-## [x] comments: //, /* vs ;; and (; ;) → try `\`
+## [x] comments: //, /* vs ;; and (; ;) → try `\\`
 
   1. `;;`
   + ;; make more sense, since ; is separator, and everything behind it doesnt matter
@@ -996,7 +1027,7 @@ Having wat files is more useful than direct compilation to binary form:
   - // is super-familiar and js/c-y
   - // is used in python for floor division, very handy: (a / b | 0) -> a//b
     - that is especially not just floor division but autoconverting to int, which is super handy!!
-  ? ALT: use \
+  ? ALT: use \ or \\
     + mono-compatible
     + \ is almost never used in langs & that's unique
     + it's very close
@@ -1013,6 +1044,7 @@ Having wat files is more useful than direct compilation to binary form:
   ? ALT: `/* */`
     + most popular
     - unwanted association with mult/div
+    - pair-operators are heavy
   ? ALT: anything after ; on the line is comment
     - can't break lines easily
     - can't join lines via `(a;b;c)`
@@ -1095,37 +1127,6 @@ Having wat files is more useful than direct compilation to binary form:
   + allows private-ish variables
   + allows notes constants
   ~ mb non-standardish
-
-## [x] ? Should it compile to wat or to wasm? → wat for now
-
-  - wasm is faster
-  - wasm allows web compilation: doesn't require heavy wabt dependency
-  - wasm is "true" direct way
-  - wasm is something new to learn
-  + wat allows wat2wasm compiler optimizations
-    ~ can be done via wasm too
-  + wat allows debugging, bytecode can be hardstone
-    ~- wasm2wat also allows debugging
-      ~+ still reverse compilation can lose variable/function names
-  + wat can be done via wat-compiler and other better fit for that mappers
-    - wat-compiler is stale and unlikely to improve
-
-  * ? Can be both I suppose, but needs researching wasm format - mb we can utilize fn tables in better way
-
-## [x] Compile targets: → WAT
-
-  * WASM
-  * WAT
-    + replaceable with wabt, wat-compiler
-    + generates wat file as alternative to wasm
-    + easier debugging
-    + natural and easier code than array structs
-  * JS
-    + can be useful in debugging
-    + can useful in direct (simple) JS processing
-    + can be useful for benchmarking
-  * Native bytecode
-  * others?
 
 ## [x] Scope or not to scope? → make () a block if new variables are defined there
 
@@ -1387,7 +1388,7 @@ Having wat files is more useful than direct compilation to binary form:
     + saves lots of manual code
     + saves namespace
 
-## [x] ? Should we provide param types or not? -> try explicit dims notation `[1024]in` -> nah, can pass ptr directly
+## [x] ? Should we provide param types or not? -> ~~try explicit dims notation `[1024]in`~~ -> nah, can pass ptr directly
   * kParam type clause can save 1024 memory reads per block.
 
   1. hide implementation detail of kRate/aRate and generate both clauses depending on input type.
@@ -1734,7 +1735,7 @@ Having wat files is more useful than direct compilation to binary form:
 
 ## [x] Latr: alloc, array etc.
   * latr can provide alloc and other common helpers
-  - not latr nut std. Latr is generic synthesis
+  - not latr but std. Latr is generic synthesis/science
 
 ## [x] Array/string length → `arr[]` for length is the most natural
   * Ref https://en.wikipedia.org/wiki/Comparison_of_programming_languages_(array)
@@ -1816,7 +1817,7 @@ Having wat files is more useful than direct compilation to binary form:
     + "bullshit" noise
       ~ well it's line noise
 
-## [x] Flowy operators -> <- >- -<
+## [x] Flowy operators -> ~~<-~~ ~~>-~~ -<
 
   Draft is ready, needs polishing corners and reaching the planned feeling.
   Taking r&d issues and aligning them.
@@ -1862,7 +1863,7 @@ Having wat files is more useful than direct compilation to binary form:
   + JS keywords are ridiculous: they block many good names pushing user use marginal names.
   + keywords play role of comments anyways. It's better to put freeword explanation into comments rather than pollute language.
 
-## [x] Import no-keyword? -> yep, @ 'math#floor' or like that
+## [x] Import no-keyword? -> @ 'math#floor' or like that
 
   * No need to define scope: imports full contents
   * #[math]; (Rusti)
@@ -1969,15 +1970,15 @@ Having wat files is more useful than direct compilation to binary form:
 
   3.1 `math @ sin, cos`
 
+## [ ] Do we need to have `@` for imports? Can't we just indicate atom directly?
 
-### [ ] Do we need to have `@` for imports? Can't we just indicate atom directly?
-
-  * `'math#sin,cos'
+  ? Can we do directly `'math#sin,cos'`?
   + saves from `@'@brain/pkg'` case
-  + frees `@` for variable names
+  + frees `@`
+    - maybe we don't need too much diversity in var names, `#` for arrays, `_` for privates and `$` for specials is enough
   + less cognitive load, very simple
   + less characters
-  - reserves atoms for single-purpose, better keep them free?
+  - reserves atoms for single-purpose use, better keep them for generic escaping non-codes?
     + case-insensitive code doesn't make point for quoted values
       * so qotes only act as separators from regular syntax, not literal strings
 
@@ -2314,16 +2315,32 @@ Having wat files is more useful than direct compilation to binary form:
   Top Back Center - TBC
   Top Back Right - TBR
 
-## [ ] !Defer
+## [ ] !Defer -> `x(a) = (@log(a); @a+=1; a)`
 
   + like golang defer execution runs item after function return
+  + allows separating return value from increments needed after function 
+  * can be done via `x() = (a,b,c) @ (d)` (`@` for `after`)
+  * or better, as `x()=(@(a);b,c;@(d))` - schedules `@`s at the end of function
 
-## [ ] !Try-catch
+## [ ] !Try-catch -> `x() ?= (a, b, c)` makes fn definition wrapped with try-catch
 
-  ! Golang-like `result ! err = fn()`
+  ! Golang-like `result, err = fn()`
     + matches reverse-ternary op
     + also see trytm https://github.com/bdsqqq/try
-  * Or `result = ?fn()`
+    + returning group is nice, since the convention is always as last-element=error
+    - can be an overkill to wrap every function in try-catch
+  ? what if we define `throws` for the time of fn definition as `x() ?= (a,b,c)`?
+    + better matches `try-catch block`
+  * A symbol can be one of `!`, `@`, `?`
+    ? `result, err = ?fn()`
+      - conflicts with `a ? b`, `a ?: b`, `a ? b : c`
+        - like `a = ?a() ? ?b() ? c() : ?d() ?: e()` - holy...
+    ? what if `res, err = fn?()`
+      - `a = a?() ? b?() ? c() : d()`
+        - if we introduce plain conditionals `a ? b`, `a ?: b` then `a?(arg)` is indistinguishable from `a ? (arg)`
+    ? `res = fn() : err`
+      - same as above: `res = a ? fn() : err : fn2() : err`
+    
 
 ## [x] Pipe: replace with `|:` operator? -> let's use lowered-precedence `|` for now and see for side-effects
 
@@ -2342,7 +2359,7 @@ Having wat files is more useful than direct compilation to binary form:
 
 ## [x] `a <~ b` vs `a < ~b` -> use `a ~< b` instead
 
-## [x] Case-insensitive variable names? -> let's try case-insensitive
+## [ ] Case-insensitive variable names? -> let's try case-insensitive
 
 0. Case-insensitive
 
@@ -2364,6 +2381,8 @@ Having wat files is more useful than direct compilation to binary form:
   ~ not sure it's good idea to designate such meaning to capitalization
   ~ `1Ms` is super-unlikely, for bytes can use `1mb` - it's never millibyte
 + `#@$_` alleviate case-insensitivity
+- Strings don't allow code to be case-change robust.
+  * we either discard strings or make it (half) case-sensitive
 
 0.5 Capfirst-sensitive, (`Abc` == `ABc`) != (`aBC` == `abc`)
 
@@ -2751,25 +2770,33 @@ Having wat files is more useful than direct compilation to binary form:
 * assignment lhs?
   - can be `a <| b = c | d`
 
-## [x] Arrays: rotate or not rotate (x << 1)? -> let's try to not rotate
+## [ ] Arrays: rotate or not rotate?
 
-+ Allows explicit ring buffers
-+ Allows explicit memory buffers
-+ If we implement memory buffers somehow else, we still need to store offset, not shift actual memory
-+ Offset param is possibly fastest way to implement it
-+ It makes use of i32 spot
-- It's slower on access, since it must apply extra sum operator and possibly mod
-- If we export such array, the memory becomes useless to read
-- User can implement rotation manually, which would be more explicit
-- There's no way to read the shifted amount by user
-? Do we ever need rotating more than just 1 step?
-? Do we ever need rotating right, rather than left?
-? Do we ever need non-rotating memory in function body?
-- Rotate can be done as `a = a[1..,0]`
-  ~ very costly
-- It can be implemented relatively safely by user, without perf penality
-  . `a[offset + 1]; offset++`
-  + since we already rotate index access via modwrap
+* Rotate: `list << 1`, `list >> 2`
+  + Allows explicit ring buffers
+  + Allows explicit memory buffers
+  + If we implement memory buffers somehow else, we still need to store offset, not shift actual memory
+  + Offset param is possibly fastest way to implement it
+  + It makes use of i32 spot
+  - It's slower on access, since it must apply extra memory read / sum operator
+  - If we export such array, the memory becomes useless to read
+    ? We may not need to care about exact rotation, array can have meaning as a chunk
+  - There's no way to read the shifted amount by user
+  ? Do we ever need rotating more than just 1 step?
+  ? Do we ever need rotating right, rather than left?
+  ? Do we ever need non-rotating memory in function body?
+  - Rotate can be done as `a = a[1..,0]`
+    ~ very costly
+  - It can be implemented relatively safely by user, without perf penality and more explicitly
+    . `a[offset + 1]; offset++`
+    + since we already rotate index access via modwrap
+    - prohibits static indexes like `x.0`, `x.1`
+
+  ?! note: we can use `@i++, @p++` directives to indicate that phase is incremented after the fn call
+
+* Rotate as `@ a = [1..,0];` via memory copy ops
+  ? how efficient is that?
+
 
 ## [x] Arrays: neg-index access or no? -> let's try modwrap
 
@@ -2810,7 +2837,7 @@ Having wat files is more useful than direct compilation to binary form:
   * likely can be `osc=[sin(x)=...x,tri(x)=...x]`
 + resolves the issue of scope (above): no need to make all vars global since no scope recursion
 
-## [x] Replace `<|`, `|`, `|>` with `:: &` / `:: #` ? -> Let's try `|>` for loop and `| item ->` for extended loop
+## [x] Replace `<|`, `|`, `|>` with `:: &` / `:: #` ? -> Let's try `|>` for loop/generator and `| item ->` for extended loop/tranformer
 
 + Less problems with overloading `|`
 + Fold operator is likely not as useful
@@ -2896,3 +2923,8 @@ Having wat files is more useful than direct compilation to binary form:
   + resolves `|` precedence problem
   ~- `|>` is confusable with pipe - it has little to do with pipe...
     ~+ it acts more as generator producing items (no need for intermediary `i`)
+
+## [ ] List comprehension: how?
+
+  * The size of final list is unknown in advance. It requires dynamic-size mem allocation.
+  ? Can we detect size in advance somehow?
