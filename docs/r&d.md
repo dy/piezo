@@ -2338,7 +2338,7 @@ Having wat files is more useful than direct compilation to binary form:
 
 ## [x] `a <~ b` vs `a < ~b` -> use `a ~< b` instead
 
-## [ ] Case-insensitive variable names? ->
+## [x] Case-insensitive variable names? -> let's try case-insensitive
 
 0. Case-insensitive
 
@@ -2349,12 +2349,13 @@ Having wat files is more useful than direct compilation to binary form:
   ~ can be solved as eg. `x1` and `_x1` or `@x1`
 - `sampleRate` becomes `samplerate` - can be confusing
   ~ doesn't have to lowcase
-- export naming requirement: `'AbB': AbB, 'sampleRate': sampleRate.`
+- export naming requirement: `'AbB': AbB, 'sampleRate': sampleRate.`?
   ~ can take exact name though
+  + lowcase-enforced export is kind of cool, `exports.samplerate`
 - not much conventional, only MySQL and other oldies
 + solves problem mentioned by despawnerer (`dateRange` vs `daterange`)
 + lowcase is typographycally more expressive
-+ code can be more robust in case-enforcing environments, eg. as url string
++ code is robust to changing case, eg. as url string
 - `1Ms` vs `1ms` is critical
   ~ not sure it's good idea to designate such meaning to capitalization
   ~ `1Ms` is super-unlikely, for bytes can use `1mb` - it's never millibyte
