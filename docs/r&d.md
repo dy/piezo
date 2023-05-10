@@ -2346,6 +2346,7 @@ Having wat files is more useful than direct compilation to binary form:
 + reduces use of camelcase convention
 - `AbB` vs `ABb` can be different chords, but lino mixes them up together
 - `X1` and `x1` can be different things in math
+  ~ can be solved as eg. `x1` and `_x1` or `@x1`
 - `sampleRate` becomes `samplerate` - can be confusing
   ~ doesn't have to lowcase
 - export naming requirement: `'AbB': AbB, 'sampleRate': sampleRate.`
@@ -2357,6 +2358,7 @@ Having wat files is more useful than direct compilation to binary form:
 - `1Ms` vs `1ms` is critical
   ~ not sure it's good idea to designate such meaning to capitalization
   ~ `1Ms` is super-unlikely, for bytes can use `1mb` - it's never millibyte
++ `#@$_` alleviate case-insensitivity
 
 0.5 Capfirst-sensitive, (`Abc` == `ABc`) != (`aBC` == `abc`)
 
