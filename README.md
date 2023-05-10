@@ -153,6 +153,7 @@ i=0; i++ < 3 |> log(i);         \\ inline loop: while i++ < 3 do log(i)
 s = 0; [a,b,c] | i -> s += i;   \\ fold/reduce list
 [1..10 | x -> x * 2];           \\ list comprehension
 items |= x -> x * 2;            \\ overwrite items in array
+list | x -> a(x) | x -> b(x);   \\ pipe
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ import, export
 './path/to/module#x,y,z';       \\ any file can be imported directly

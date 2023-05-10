@@ -1978,6 +1978,8 @@ Having wat files is more useful than direct compilation to binary form:
   + less cognitive load, very simple
   + less characters
   - reserves atoms for single-purpose, better keep them free?
+    + case-insensitive code doesn't make point for quoted values
+      * so qotes only act as separators from regular syntax, not literal strings
 
 ## [x] Wasmtree instead of IR would be simpler -> nope, it's less flexible and less supported
 
@@ -2892,3 +2894,5 @@ Having wat files is more useful than direct compilation to binary form:
   + makes meaning for `|=` as `out |= i -> i`
   + no topic operator problem
   + resolves `|` precedence problem
+  ~- `|>` is confusable with pipe - it has little to do with pipe...
+    ~+ it acts more as generator producing items (no need for intermediary `i`)
