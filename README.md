@@ -114,7 +114,6 @@ a() = ( *i=0; i++ );            \\ stateful variable - persist value between fn 
 a(), a();                       \\ 0, 1
 b() = (                         \\
   *i = [..4];                   \\ local memory of 4 items
-  i >> 1;                       \\ shift memory right every fn call
   i.0 = i.1+1;                  \\ write previous value i.1 to current value i.0
   i.0                           \\ return i.0
 );                              \\
