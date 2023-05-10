@@ -91,8 +91,8 @@ sign = a < 0 ? -1 : +1;         \\ inline ternary
   log("Get ready");             \\
   log("Last chance")            \\
 );                              \\
-a > b && c;                     \\ if a > b then c
-a < b || c;                     \\ if not a < b then c
+a > b ? c;                      \\ if a > b then c
+a < b ?: c;                     \\ if not a < b then c
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ functions
 double(n) = n*2;                \\ inline function
