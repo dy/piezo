@@ -189,6 +189,7 @@ Having wat files is more useful than direct compilation to binary form:
   + ok, can be useful for special syntax with non-string meaning, like paths, dates and other atoms.
   + also can be used for special name variables maybe? like `'x-1' = 2; x0; x1;`
     ? or use `x\-1 = 2` instead?
+    - nah, very confusing
   ! We can reserve atoms for import directives.
 
 ## [x] Numbers: float64 by default, unless it's statically inferrable as int32, like ++, +-1 etc ops only
@@ -1974,8 +1975,9 @@ Having wat files is more useful than direct compilation to binary form:
   * `'math#sin,cos'
   + saves from `@'@brain/pkg'` case
   + frees `@` for variable names
-  + less load
-  - reserves atoms for single-purpose, better keep them free.
+  + less cognitive load, very simple
+  + less characters
+  - reserves atoms for single-purpose, better keep them free?
 
 ## [x] Wasmtree instead of IR would be simpler -> nope, it's less flexible and less supported
 

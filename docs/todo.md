@@ -15,6 +15,8 @@
 * [x] Parser
 
 * [x] Add proper scope mechanism (streamline compiler)
+* [ ] case-insensitive
+* [ ] loops parsing rule
 * [ ] merge scopes, rename internal variables
 * [ ] Implement better array index
 * [ ] Test nested scopes variables
