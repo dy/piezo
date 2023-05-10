@@ -1111,6 +1111,21 @@ Having wat files is more useful than direct compilation to binary form:
 
   * ? Can be both I suppose, but needs researching wasm format - mb we can utilize fn tables in better way
 
+## [x] Compile targets: → WAT
+
+  * WASM
+  * WAT
+    + replaceable with wabt, wat-compiler
+    + generates wat file as alternative to wasm
+    + easier debugging
+    + natural and easier code than array structs
+  * JS
+    + can be useful in debugging
+    + can useful in direct (simple) JS processing
+    + can be useful for benchmarking
+  * Native bytecode
+  * others?
+
 ## [x] Scope or not to scope? → make () a block if new variables are defined there
 
   + maybe we need `{}` as indicator of scope: outside of it variables are not visible.
@@ -1133,7 +1148,7 @@ Having wat files is more useful than direct compilation to binary form:
     * what if we detect next expression as next unrelated operand, regardless of separator?
     - nah, too much noise.
 
-## [x] Compiler: How do we map various clauses to wat/wasm? → `allocBlock` function, untyped (f64 by default), see audio-gain
+## [x] Compiler: How do we map various clauses to wat/wasm? → ~~`allocBlock` function, untyped (f64 by default), see audio-gain~~ we don't use clauses
 
   1. fixed pointers and `fn(aCh, bCh, ..., x, y, z)`
     - harder to manage variable number of inputs
@@ -1344,7 +1359,7 @@ Having wat files is more useful than direct compilation to binary form:
     ~ single runs are not expected to be very regular externally, since for batch runs there's clause cases.
     ? we detect from apparent channels idicator: gain(v, amp) is direct clause, gain((..ch), amp) is all-channels clause
 
-## [x] Autogenerate mono/stereo clauses fn code or define fn clauses manually in syntax -> autogenerate
+## [x] Autogenerate mono/stereo clauses fn code or define fn clauses manually in syntax -> ~~autogenerate~~ manual
 
   * See [gain node](https://github.com/mohayonao/web-audio-engine/blob/master/src/impl/dsp/GainNode.js) for clause examples.
 
@@ -1815,7 +1830,7 @@ Having wat files is more useful than direct compilation to binary form:
 
   * Don't extend conditionals, elvis `?:` is enough, the rest is &&, ||
 
-## [x] Make channeled input an array: `gain([left, right], amp)` instead of group destructuring `gain((left, right), amp)`? -> nah, avoid unnecessary meaning for destruction, just use `~` operator.
+## [x] Make channeled input an array: `gain([left, right], amp)` instead of group destructuring `gain((left, right), amp)`? -> nah, avoid unnecessary meaning for destruction
 
   + array better refers to memory send to input, not some internal grouping - so it's a "frame"
   + it allows more clearly indicate output signal, opposed to just grouped value:
@@ -1920,7 +1935,7 @@ Having wat files is more useful than direct compilation to binary form:
     * it's better to always assign to a variable to make importable parts explicit.
     - conflicts with notes. We need to import all of them.
 
-### [x] Import subparts → try `@ 'math#floor,cos,sin'` -> nah, try `floor, sin, cos @ 'math'`
+## [x] Import subparts → try `@ 'math#floor,cos,sin'`
 
   1. `@ 'math': sin, cos`
     + defines global functions
@@ -1954,7 +1969,7 @@ Having wat files is more useful than direct compilation to binary form:
   3.1 `math @ sin, cos`
 
 
-### [x] Do we need to have `@` for imports? Can't we just indicate atom directly? -> keep atoms free
+### [ ] Do we need to have `@` for imports? Can't we just indicate atom directly?
 
   * `'math#sin,cos'
   + saves from `@'@brain/pkg'` case
@@ -1975,7 +1990,7 @@ Having wat files is more useful than direct compilation to binary form:
   * maybe we may need generalizing transformers
 
 
-## [x] How to differentiate a-param from k-param argument: no fn overloading, ~ indicator
+## [x] How to differentiate a-param from k-param argument -> no fn overloading
 
   * There's no way to differentiate gain(channels, aParam) and gain(channels, kParam).
 
@@ -2039,34 +2054,6 @@ Having wat files is more useful than direct compilation to binary form:
       + looks similar to old patterns
       + has nothing to do with arrow functions
       + arrow functions are macro-helpers, not runtime constructs
-
-## [x] Passing array/ref value: `a(v) = b(v); b([v]) = [v+1].`
-
-  * Seems to be solvable via passing v as reference to array, must not be a big deal.
-  * Have to track ref type of v though: it must prohibit operations on that.
-
-## [x] Simplify mapper: use list | & * 2
-
-  * as `items -> fn(^)` instead of `items | x -> fn(x)`?
-
-  - leaves mapper notation for folding only, which is not nice
-  + pipe notation is bulky with current proposal
-  + pipe notation is a bit meaningless, since the only argument is always x
-
-## [x] Compile targets: → WAT
-
-  * WASM
-  * WAT
-    + replaceable with wabt, wat-compiler
-    + generates wat file as alternative to wasm
-    + easier debugging
-    + natural and easier code than array structs
-  * JS
-    + can be useful in debugging
-    + can useful in direct (simple) JS processing
-    + can be useful for benchmarking
-  * Native bytecode
-  * others?
 
 ## [ ] Live env requirements
 
@@ -2200,7 +2187,7 @@ Having wat files is more useful than direct compilation to binary form:
     + `*[]x` has more meaning than `*x[]` - this way we indicate size of memory, not size of `x` in memory.
     + `[]x` is golang array notation
 
-### [x] Should we instead of batch variable indicate arg layout? -> yes, meaningful for all input var, array var and state var.
+### [x] Should we instead of batch variable indicate arg layout? -> ~~yes, meaningful for all input var, array var and state var.~~ no, just array pointer
 
   Before:
   ```
@@ -2237,7 +2224,7 @@ Having wat files is more useful than direct compilation to binary form:
   + very natural notation, as if groups are created for expressing strides
   !+ arrays can be always flat, but layout defines how they should be read
 
-### [x] Tape machine: layout/access logic? -> let's do a.0, a.1 for past values
+### [x] Tape machine: layout/access logic? -> ~~let's do a.0, a.1 for past values~~ let's not do past logic due to access tax
 
   1. a[0] current, a[-1] prev
     + very natural
@@ -2301,7 +2288,7 @@ Having wat files is more useful than direct compilation to binary form:
   + makes loops less frequent and more meaningful
   + `<-` as clamp replaces min, max as well
 
-## [ ] Channel aliases / ordering note
+## [x] Channel aliases / ordering note -> can be defined manually or via musi
 
   from https://learn.microsoft.com/en-us/previous-versions/windows/hardware/design/dn653308(v=vs.85):
   Front Left - FL
@@ -2499,7 +2486,7 @@ Having wat files is more useful than direct compilation to binary form:
 + unifies returning structure
 + differentiates scopes with same interface
 
-## [x] How to solve problem of array `length` in scope definitino - it can't be used as variable name? -> use .scope
+## [x] How to solve problem of array `length` in scope definition - it can't be used as variable name? -> use .scope
 
 * it's not just .length - it's any array methods
 
@@ -2655,7 +2642,7 @@ Having wat files is more useful than direct compilation to binary form:
     + allows more flexible write to different targets
   3. modify fn and return last element
 
-## [x] Batch function as a syntax sugar -> nah, simplify functions as much as possible, use `|`, `<|`, `|>` operators to generate processings
+## [x] Batch function as a syntax sugar -> nah, simplify functions as much as possible, use `|`, `|>` operators to generate processings
 
   * We often can find code like `gain = (in,vol) -> (*out=[..in[]];out[0..]=in|x->x*vol;out)`
 
@@ -2687,8 +2674,8 @@ Having wat files is more useful than direct compilation to binary form:
     * Therefore `gain`, `filter` functions should expect some hidden or first argument to be not an item but full array
   * We're also looking at gain code looking like `gain = (x, volume) -> x * volume`
 
-## [x] Pipe - should it work more as single-sample processing, or can take whole argument? -> ok, use pipe as iterator, benefits outweight block-processing functions
 
+## [x] Pipe - should it work more as single-sample processing, or can take whole argument? -> ok, use pipe as iterator, benefits outweight block-processing functions
 
   1. `[1,2,3] | x -> x` - per sample
   + enriches mapper meaning with iterator
@@ -2717,7 +2704,7 @@ Having wat files is more useful than direct compilation to binary form:
 
   * If we enforce function arguments always be f64 we can detect it via NaN
 
-## [x] Precedence hurdle: |, (<|, |>), (=, +=) -> let's make `|` for now same-precedence as `|>`, `<|` and see if it breaks `=` too much
+## [x] Precedence hurdle: |, (<|, |>), (=, +=) -> let's make `| ->` a ternary and keep `|` precedence as is
 
 * it seems loop/fold, assign and BOR must be right-assoc same-precedence operator
 * otherwise there are tradeoffs like `i<|x[i] = 1` or `a=b | c` or `a <| b|c |> d`
@@ -2750,14 +2737,14 @@ Having wat files is more useful than direct compilation to binary form:
 -> we can reduce problem only to `a=b|c`, so that pipe operator requires explicit `(a=b)|c`,
   but the rest works fine
 
-## [x] how to include `a=b|c` expression? (a=b)|c doesn't make sense. -> let's guess standard | precedence, and expect pipes to be properly wrapped
+## [x] how to include `a=b|c` expression? (a=b)|c doesn't make sense. -> ~~let's guess standard | precedence, and expect pipes to be properly wrapped~~ let's make `| ->` a ternary operator and keep `|` precedence
 
 ? what's heuristic behind this?
 
 * assignment lhs?
   - can be `a <| b = c | d`
 
-## [ ] Arrays: rotate or not rotate (x << 1)?
+## [x] Arrays: rotate or not rotate (x << 1)? -> let's try to not rotate
 
 + Allows explicit ring buffers
 + Allows explicit memory buffers
@@ -2777,7 +2764,7 @@ Having wat files is more useful than direct compilation to binary form:
   . `a[offset + 1]; offset++`
   + since we already rotate index access via modwrap
 
-## [ ] Arrays: neg-index access or no?
+## [x] Arrays: neg-index access or no? -> let's try modwrap
 
 + handy & complacent with slicing
 - suboptimal performance, since enforces (idx % len) operation = reading array length
@@ -2816,7 +2803,7 @@ Having wat files is more useful than direct compilation to binary form:
   * likely can be `osc=[sin(x)=...x,tri(x)=...x]`
 + resolves the issue of scope (above): no need to make all vars global since no scope recursion
 
-## [ ] Replace `<|`, `|`, `|>` with `:: &` / `:: #` ? -> Let's try `|>` for loop and `| item ->` for extended loop
+## [x] Replace `<|`, `|`, `|>` with `:: &` / `:: #` ? -> Let's try `|>` for loop and `| item ->` for extended loop
 
 + Less problems with overloading `|`
 + Fold operator is likely not as useful
