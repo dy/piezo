@@ -227,7 +227,7 @@ Having wat files is more useful than direct compilation to binary form:
 ## [x] Numbers: float64 by default, unless it's statically inferrable as int32, like ++, +-1 etc ops only
   * Boolean operators turn float64 into int64
 
-## [x] ~~Pipes: → | with anon functions~~ transform ternary `list | x -> a(x) | x -> b(x)` 
+## [x] ~~Pipes: → | with anon functions~~ transform ternary `list | x -> a(x) | x -> b(x)`
 
   1. Placeholder as `x | #*0.6 + reverb() * 0.4`, `source | lp($, frq, Q)`?
     ? can there be multiple args to pipe operator? `a,b |` runs 2 pipes, not multiarg.
@@ -2318,7 +2318,7 @@ Having wat files is more useful than direct compilation to binary form:
 ## [ ] !Defer -> `x(a) = (@log(a); @a+=1; a)`
 
   + like golang defer execution runs item after function return
-  + allows separating return value from increments needed after function 
+  + allows separating return value from increments needed after function
   * can be done via `x() = (a,b,c) @ (d)` (`@` for `after`)
   * or better, as `x()=(@(a);b,c;@(d))` - schedules `@`s at the end of function
 
@@ -2340,7 +2340,11 @@ Having wat files is more useful than direct compilation to binary form:
         - if we introduce plain conditionals `a ? b`, `a ?: b` then `a?(arg)` is indistinguishable from `a ? (arg)`
     ? `res = fn() : err`
       - same as above: `res = a ? fn() : err : fn2() : err`
-    
+  * Possible syntax: `fn(a) ?= (!a ? 'Bad arg'!; 1/a);`
+
+### [ ] How do we define throw?
+  * `!'Error message'`
+  + makes use of atoms
 
 ## [x] Pipe: replace with `|:` operator? -> let's use lowered-precedence `|` for now and see for side-effects
 

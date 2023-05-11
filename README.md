@@ -142,7 +142,7 @@ i=0; i++ < 3 |> log(i);         \\ inline loop: while i++ < 3 do log(i)
   log(i);                       \\
 ));                             \\
 
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ \\ iterate (transform)
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ iterate (transform)
 [a, b, c] | item -> x(item);    \\ iterate over array
 10..1 | i -> (                  \\ iterate over range
   i < 3 ? ^^;                   \\ `^^` breaks iteration
@@ -154,7 +154,7 @@ items |= x -> x * 2;            \\ overwrite items in array
 list | x -> a(x) | x -> b(x);   \\ pipe
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ import, export
-@'./path/to/module#x,y,z';       \\ any file can be imported directly
+@'./path/to/module#x,y,z';      \\ any file can be imported directly
 'math#pi,sin,max';              \\ or defined via import-maps.json
 x, y, z.                        \\ last statement ending with . exports members
 ```
