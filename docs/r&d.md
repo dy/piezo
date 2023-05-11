@@ -223,6 +223,7 @@ Having wat files is more useful than direct compilation to binary form:
     ? or use `x\-1 = 2` instead?
     - nah, very confusing
   ! We can reserve atoms for import directives.
+  + can be useful for throwing expressions
 
 ## [x] Numbers: float64 by default, unless it's statically inferrable as int32, like ++, +-1 etc ops only
   * Boolean operators turn float64 into int64
@@ -587,7 +588,7 @@ Having wat files is more useful than direct compilation to binary form:
     + that solves problem of instancing
     + identified by callstack
 
-## [x] Load state syntax → `*` seems to match "save value" pointers intuition
+## [x] Stateful variable syntax → `*` seems to match "save value" pointers intuition
 
   * There's disagreement on `...` is best candidate for loading prev state. Let's consider alternatives.
   1. `...x1,y1,x2,y2`
@@ -624,7 +625,7 @@ Having wat files is more useful than direct compilation to binary form:
     + topical reference enjoining with the last value
     - too many meanings to topical operator
   → 3. `*x1, *x2, *y1, *y2`
-    + existing convention
+    + existing convention of `*` as save
     . C / Rust / Go pointers are the same.
       > It (* - dereference operator) can be used to access or manipulate the data stored at the memory location, which is pointed by the pointer.
       > Any operation applied to the dereferenced pointer will directly affect the value of the variable that it points to.
@@ -720,6 +721,7 @@ Having wat files is more useful than direct compilation to binary form:
   11. ~~`@x1, @x2, @y1, @y2`~~
     + 'at' means current scope, 'at this'
     + more wordy - less operator-y, as if part of id
+    + matches import directive by meaning
     ```
     lp([x0], freq = 100 in 1..10000, Q = 1.0 in 0.001..3.0) = (
       @x1, @x2, @y1, @y2 = 0;    // internal state
@@ -741,6 +743,7 @@ Having wat files is more useful than direct compilation to binary form:
       [y0]
     )
     ```
+    - feels a bit heavy for internals
   12. `:> x1, x2, y1, y2`
     ~ `song()=(:>t=0;)`
   13. `:: x1, x2, y1, y2`
@@ -1003,19 +1006,25 @@ Having wat files is more useful than direct compilation to binary form:
   + `x -<= 0..10` is just a nice construct
   -  `x <- y` vs `x < -y`
 
-## [x] comments: //, /* vs ;; and (; ;) → try `\\`
+## [ ] Comments: //, /* vs ;; and (; ;) → try `\\` or `;;`
 
   1. `;;`
-  + ;; make more sense, since ; is separator, and everything behind it doesnt matter
+  + ;; make more sense, since ; is separator, and everything behind it doesn't matter
   + (; makes more sense as "group with comments", since we use only ( for groups.
   + ;; is less noisy than //
   + ;; is associated with assembler or lisp/clojure
+    + wasm
   + even simpler - everything after ; can be considered a comment?
   + doesn't introduce any new syntax space
-  - pretty unusually associates with autohotkey, which is the opposite of fast
-  - too innovative
+  + it has "safe" or "light" semantic expectation, like, noone would guess it does something heavy
+    + unlike `a \ b` or `a \\ b`
+  - associates with autohotkey, which is the opposite of fast
   - single-comment breaks inline structures like a(x)=b;c;d.
-  - // associates besides C+/Java/JS with F#, which is pipy
+  - not as "cool" as `\\`
+  - `a + b;  ;; some comment` - not nice noise
+
+  2. `//`
+  + // associates besides C+/Java/JS with F#, which is pipy
   - // is noisy conflict with / and occupies operator space, eg.:
   ```
     tri(freq in 10..10000) = (
@@ -1024,30 +1033,29 @@ Having wat files is more useful than direct compilation to binary form:
       (1 - 4 * abs( round(phase/pi2) - phase/pi2 ))
     )
   ```
-  - // is super-familiar and js/c-y
+  + // is super-familiar and js/c-y
   - // is used in python for floor division, very handy: (a / b | 0) -> a//b
     - that is especially not just floor division but autoconverting to int, which is super handy!!
-  ? ALT: use \ or \\
+
+  3. `\` or `\\`
     + mono-compatible
     + \ is almost never used in langs & that's unique
-    + it's very close
+    + reminds `//`
     + it's short
     + association with "escape" sequence in strings
-    + really no other alternative
+    + cooler than `;;`
     + looks fresh directionally, shadow effect \\\\\\\\\\\\\\\\\\\\\\\\\
     - possible conflict with string escapes
       + can be resolved with `\\`
-        + reminds `//`
         + creates clear separation of "comments" area
+      + `;;` can as well have conflict with strings, that's not a feature of this comment
     - syntax highlighters don't know that
       ~ neither `;;`
-  ? ALT: `/* */`
+    - takes primary semantic meaning, rather than "safe" secondary meaning
+  4. `/* */`
     + most popular
     - unwanted association with mult/div
     - pair-operators are heavy
-  ? ALT: anything after ; on the line is comment
-    - can't break lines easily
-    - can't join lines via `(a;b;c)`
 
 
 ## [x] Groups: basic operations -> syntax sugar
@@ -2315,14 +2323,39 @@ Having wat files is more useful than direct compilation to binary form:
   Top Back Center - TBC
   Top Back Right - TBR
 
-## [ ] !Defer -> `x(a) = (@log(a); @a+=1; a)`
+## [ ] Defer -> `x(a) = (/log(a); /a+=1; a)`
 
   + like golang defer execution runs item after function return
   + allows separating return value from increments needed after function
-  * can be done via `x() = (a,b,c) @ (d)` (`@` for `after`)
-  * or better, as `x()=(@(a);b,c;@(d))` - schedules `@`s at the end of function
+  * can be done as `x()=(@(a);b,c;@(d))` - schedules `@`s at the end of function
+  * other symbols: `>>, ||, ~>, //, \\, >-, >>|, <|, <!`,
+    * `x() = (//a; b,c; //d;)`
+    * `x() = (/a; b,c; /d;)`
+      + one-symbol
+      + associates with reddit tags
+      + associates with HTML close-elements
+      + generally "close" meaning is `/`
+      + comes together with `*a=0; /a++;`
+      + doesn't feel like part of identifier
+      - too many slashes `/a/b\\divide a by b`
+    * `x() = (&a; b,c; &d)`
+      + meaning of "and also this"
+      + also "counterpart" of `*` from C-lang
+        + it was even an alternative to `*` in the beginning
+      - has "wrong" meaning as "part" of identifier, not operator (higher precedence)
+        - ie. `&i++` raises confusion, it's not `&(i++)`, it's `(&i)++`
+    * `x() = (~a; b,c; ~d)`
+      + meaning of "destructor"
+    * `x() = (a.; b,c; d.)`
+      + meaning "at the end"
+      + same operator is used for export
+      - not immediately obvious that it's deferring `*phase=init; phase+=(iterating,phase).;`
+      - not nice with `*i=0,i++.;`
+        - not clear if the whole phrase is at the end or just i++
+    * `x() = (.a; b,c; .d)`
+      - has wrong associatino with property access
 
-## [ ] !Try-catch -> `x() ?= (a, b, c)` makes fn definition wrapped with try-catch
+## [ ] Try-catch -> `x() ?= (a, b, c)` makes fn definition wrapped with try-catch
 
   ! Golang-like `result, err = fn()`
     + matches reverse-ternary op
@@ -2344,7 +2377,12 @@ Having wat files is more useful than direct compilation to binary form:
 
 ### [ ] How do we define throw?
   * `!'Error message'`
-  + makes use of atoms
+    + makes use of atoms
+  * `?'Error'`
+  * `^'Error'`
+    + similar by meaning to return
+    + returning an atom indicates error
+    ~- we can do that via just returns
 
 ## [x] Pipe: replace with `|:` operator? -> let's use lowered-precedence `|` for now and see for side-effects
 
@@ -2774,7 +2812,7 @@ Having wat files is more useful than direct compilation to binary form:
 * assignment lhs?
   - can be `a <| b = c | d`
 
-## [ ] Arrays: rotate or not rotate?
+## [x] Arrays: rotate or not rotate? -> rotate via memcpy ops
 
 * Rotate: `list << 1`, `list >> 2`
   + Allows explicit ring buffers
@@ -2798,7 +2836,7 @@ Having wat files is more useful than direct compilation to binary form:
 
   ?! note: we can use `@i++, @p++` directives to indicate that phase is incremented after the fn call
 
-* Rotate as `@ a = [1..,0];` via memory copy ops
+* Rotate as `/ a = [1..,0];` via memory copy ops
   ? how efficient is that?
 
 
@@ -2841,7 +2879,7 @@ Having wat files is more useful than direct compilation to binary form:
   * likely can be `osc=[sin(x)=...x,tri(x)=...x]`
 + resolves the issue of scope (above): no need to make all vars global since no scope recursion
 
-## [x] Replace `<|`, `|`, `|>` with `:: &` / `:: #` ? -> Let's try `|>` for loop/generator and `| item ->` for extended loop/tranformer
+## [x] Replace `<|`, `|`, `|>` with `:: &` / `:: #` ? -> Let's try `::` for loop/generator and `list -> item ::` for extended loop/tranformer
 
 + Less problems with overloading `|`
 + Fold operator is likely not as useful
@@ -2855,6 +2893,12 @@ Having wat files is more useful than direct compilation to binary form:
     - that operator `list -> item` has no meaning by itself
   ? `list :: x -> x*2`
     - confusion with function mappers, which is not
+    + c-like pattern `list::item -> item*2`, meaning for each item
+    * loop as `a < 3 -> a++`
+  ? `list -> item :: item * 2`
+    + also c-like pattern
+    + loop as `a < 3 :: a++`
+    + list comprehension thing, reversed
   ? `item -< list :: (item * 2)`
     - wrong meaning to clamp operator
   ? `list ~ item :: (item * 2)`
@@ -2874,6 +2918,8 @@ Having wat files is more useful than direct compilation to binary form:
     + very similar to `@path#item`
     - makes `#` an operator
     - `list # item :: item * 2` is not as obvious
+  ? `item @ list :: item * 2`
+    ?+ maybe combine with `pi,sin @ 'math'`
 
 ? what's the operator character? -> `::`
   * `<>`? `(while i<500 i++)` -> `(i < 500 <> i++)`
@@ -2927,8 +2973,27 @@ Having wat files is more useful than direct compilation to binary form:
   + resolves `|` precedence problem
   ~- `|>` is confusable with pipe - it has little to do with pipe...
     ~+ it acts more as generator producing items (no need for intermediary `i`)
+  - overwrite-generating `out = out |> sin(phase) | x -> adsr(x,a,d,s,r) |...` converts into
+    `out |>= sin(phase) | x -> adsr()`, which is too heavy operator `|>=`
+    ~ would be easier to have `out ::= sin(phase)`?
+
+? ALT: `list -> item :: item*2`, `a < 2 :: a++`
+  + combines nicely list comprehension, for..in and while
+  + known pattern, avoids association with functors / lambdas
+  + frees `|`
+  ? modify list in place `list ::= item -> item * 2` doesn't make sense
+    ?+ `list -> item ::= item * 2`
+    + allows generating naturally as `list ::= a*b`, so that no `item` is needed
+  ? pipes `list -> item :: filter(item) -> filteredItem :: gain(item)`
+    + always returns a list
 
 ## [ ] List comprehension: how?
 
   * The size of final list is unknown in advance. It requires dynamic-size mem allocation.
   ? Can we detect size in advance somehow?
+  * We can reserve memory
+
+## [ ] Import into function scope?
+
+  * `saw() = (@math#pi; pi*2+...)`
+  + allows avoiding conflicts

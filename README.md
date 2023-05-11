@@ -1,6 +1,6 @@
 # lino
 
-**Lino** (*li*ne *no*ise) is micro-language prototype for sound design, processing, and utilities. It has extended common syntax, smart type inference and integrated best practices. It has static memory and compiles to WASM bytecode, available for various environments, from [audio worklets](https:\developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process) and workers to [nodejs](https:\github.com/audiojs/web-audio-api), Rust, Python, Go, etc.
+**Lino** (*li*ne *no*ise) is micro-language prototype for sound design, processing, and utilities. It has extended common syntax, smart type inference and integrated best practices. It has static memory and compiles to WASM bytecode, available for various environments, from [audio worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process) and workers to [nodejs](https://github.com/audiojs/web-audio-api), Rust, Python, Go, etc.
 <!--[Motivation](./docs/motivation.md)  |  [Documentation](./docs/reference.md)  |  [Examples](./docs/examples.md).-->
 
 ## Reference
@@ -36,11 +36,11 @@ true = 0b1, false = 0b0;        \\ hint: alias booleans
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ extra operators
 ** // %%                        \\ pow, int (floor) division, unsigned mod (wraps negatives)
-|> |-> |=                       \\ loop, itarate, transform
+-> :: ::=                       \\ each, loop, map
 -< -<=                          \\ clamp
 []                              \\ prop, length
 ^ ^^                            \\ continue/return, break/return
-'' .                            \\ import, export
+@ .                             \\ import, export
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ ranges
 1..10;                          \\ basic range
@@ -82,15 +82,15 @@ foo();                          \\ semi-colons at end of line are mandatory
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ conditions
 sign = a < 0 ? -1 : +1;         \\ inline ternary
 (2+2 >= 4) ?                    \\ multiline ternary
-  log("Math works!")            \\
+  log("Math works!")
 : "a" < "b" ?                   \\ else if
-  log("Sort strings")           \\
+  log("Sort strings")
 : (                             \\ else
-  log("Get ready");             \\
-  log("Last chance")            \\
-);                              \\
+  log("Get ready");
+  log("Last chance")
+);
 a > b ? c;                      \\ if a > b then c
-a < b ?: c;                     \\ if not a < b then c
+a > b ?: c;                     \\ if not a > b then c
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ functions
 double(n) = n*2;                \\ inline function
@@ -110,11 +110,12 @@ x() = (1,2,3);                  \\ return group (multiple values)
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ stateful variables
 a() = ( *i=0; i++ );            \\ stateful variable - persist value between fn calls
 a(), a();                       \\ 0, 1
-b() = (                         \\
+b() = (
   *i = [..4];                   \\ local memory of 4 items
+  |i = i[-1,1..];               \\ defer array shift (called after fn body)
   i.0 = i.1+1;                  \\ write previous value i.1 to current value i.0
   i.0                           \\ return i.0
-);                              \\
+);
 b(), b(), b();                  \\ 1, 2, 3
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ arrays
@@ -134,24 +135,18 @@ m[1,2] = m[2,1];                \\ rearrange items
 m[0..] = m[-1..0];              \\ reverse order
 m = m[1..,0];                   \\ rotate memory left (uses memcopy - efficient)
 
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ loop (generator)
-i=0; i++ < 3 |> log(i);         \\ inline loop: while i++ < 3 do log(i)
-(i=0; i++ < 10 |> (             \\ multiline loop
-  i < 3 ? ^^;                   \\ `^^` to break loop (return value as ^^x)
-  i < 5 ? ^;                    \\ `^` to continue loop (return value as ^x)
-  log(i);                       \\
-));                             \\
-
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ iterate (transform)
-[a, b, c] | item -> x(item);    \\ iterate over array
-10..1 | i -> (                  \\ iterate over range
-  i < 3 ? ^^;                   \\ `^^` breaks iteration
-  i < 5 ? ^;                    \\ `^` continues iteration
-);                              \\
-s = 0; [a,b,c] | i -> s += i;   \\ fold/reduce list
-[1..10 | x -> x * 2];           \\ list comprehension
-items |= x -> x * 2;            \\ overwrite items in array
-list | x -> a(x) | x -> b(x);   \\ pipe
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ loops
+i=0; i++ < 3 :: log(i);         \\ inline loop: while i++ < 3 do log(i)
+[a, b, c] -> item :: x(item);   \\ for each
+10..1 -> i :: (                 \\ iterate over range
+  i < 3 ? ^^;                   \\ `^^` breaks loop
+  i < 5 ? ^;                    \\ `^` continues loop
+);
+s = 0; [a,b,c] -> i :: s += i;  \\ fold/reduce
+[1..10 -> x :: x * 2];          \\ list comprehension
+items -> x ::= x * 2;           \\ map items (mutable)
+items -> x :: a(x)
+      -> x :: b(x);             \\ pipe
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ import, export
 @'./path/to/module#x,y,z';      \\ any file can be imported directly
@@ -161,7 +156,7 @@ x, y, z.                        \\ last statement ending with . exports members
 
 <!--
 
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ strings
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ strings
 \\ NOTE: can be not trivial to
 hi="hello";                     \\ strings
 string="{hi} world";            \\ interpolated string: "hello world"
@@ -178,7 +173,6 @@ string - string;                \\ removes all occurences of the right string in
 string / string;                \\ split: "a b" / " " = ["a", "b"]
 string * list;                  \\ join: " " * ["a", "b"] = "a b"
 string * 2;                     \\ repeat: "abc" * 2 = "abcabc"
-"l" ~< string;                  \\ find position of substring in the string
 NOTE: indexOf can be done as `string | (x,i) -> (x == "l" ? i)`
 -->
 
@@ -188,12 +182,12 @@ NOTE: indexOf can be done as `string | (x,i) -> (x == "l" ? i)`
 
 Provides k-rate amplification of input audio.
 
-```fs
+```
 gain( x, volume -< 0..100 ) = (
   x * volume;  \\ write to output array
 );
 
-[0, .1, .2, .3, .4, .5] | x -> gain(x, 2);
+[0, .1, .2, .3, .4, .5] -> x :: gain(x, 2);
 \\ 0, .2, .4, .6, .8, 1
 ```
 
@@ -207,8 +201,8 @@ gain( x, volume -< 0..100 ) = (
 
 Biquad filter processor for single-channel input.
 
-```fs
-'math#pi,cos,sin';            \\ import pi, sin, cos from math
+```
+@'math#pi,cos,sin';            \\ import pi, sin, cos from math
 
 1pi = pi;                     \\ define pi units
 1s = 44100;                   \\ define time units in samples
@@ -216,7 +210,9 @@ Biquad filter processor for single-channel input.
 
 \\ process single sample
 lpf(x0, freq = 100 -< 1..10k, Q = 1.0 -< 0.001..3.0) = (
-  *x1=0, *x2=0, *y1=0, *y2=0;     \\ filter state (defined by callsite)
+  * (x1, y1, x2, y2) = 0;         \\ filter state (defined by callsite)
+  | (x1, x2) = (x0, x1);          \\ shift x after iteration
+  | (y1, y2) = (y0, y1);          \\ shift y after iteration
 
   \\ lpf formula
   w = 2pi * freq / 1s;
@@ -230,14 +226,11 @@ lpf(x0, freq = 100 -< 1..10k, Q = 1.0 -< 0.001..3.0) = (
 
   y0 = b0*x0 + b1*x1 + b2*x2 - a1*y1 - a2*y2;
 
-  (x1, x2) = (x0, x1);
-  (y1, y2) = (y0, y1);
-
   y0
 );
 
 \\ process block (mutable)
-lpf(x, freq, Q) = (x |= x -> lpf(x, freq, Q)).
+lpf(x, freq, Q) = (x -> xi ::= lpf(xi, freq, Q)).
 ```
 
 * _import_ − done via URI string as `@ 'path/to/lib#foo,bar'`. <!-- Built-in libs are: _math_, _std_. Additional libs: _sonr_, _latr_, _musi_ and [others](). --> _import-map.json_ can provide import aliases.
@@ -252,7 +245,7 @@ Consider [coin sound](https://codepen.io/KilledByAPixel/full/BaowKzv):
 > `zzfx(...[,,1675,,.06,.24,1,1.82,,,837,.06])`
 
 ```fs
-'math#pi,abs,sin,round';
+@'math#pi,abs,sin,round';
 
 1pi = pi;
 1s = 44100;
@@ -263,8 +256,8 @@ oscillator = [
   sine(phase) = sin(phase)
 ];
 
-adsr(x, a, d, (s, sv=1), r) = ( \\ optional group-argument
-  *i = 0; @i++;
+adsr(x, a, d, (s, sv=1), r) = (  \\ optional group-argument
+  *i = 0; | i++;
   t = i / 1s;
 
   a -<= 1ms..;                   \\ prevent click
@@ -287,13 +280,16 @@ curve(x, amt=1.82 -< 0..10) = (sign(x) * abs(x)) ** amt;
 
 \\ coin = triangle with pitch jump, produces block
 coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
-  *i=0, @i++, *phase = 0;   \\ current state
-  *out=[..1024];      \\ output block of 1024 samples
+  *out=[..1024];  \\ output block of 1024 samples
+  *i=0, | i++;
+  * phase = 0;     \\ current phase
+  | phase += (freq + (t > delay ? jump : 0)) * 2pi / 1s;
 
   t = i / 1s;
-  phase += (freq + t > delay ? jump : 0) * 2pi / 1s;
 
-  out |= oscillator[shape](phase) | x -> adsr(x, 0, 0, .06, .24) | x -> curve(x, 1.82);
+  out ::= oscillator[shape](phase)
+      -> x :: adsr(x, 0, 0, .06, .24)
+      -> x :: curve(x, 1.82);
 
   out
 );
@@ -306,11 +302,11 @@ coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
 * _named members_ − group or array members can get alias as `[foo: a, bar: b]`.
 
 
-## [Freeverb](https:\github.com/opendsp/freeverb/blob/master/index.js)
+## [Freeverb](https://github.com/opendsp/freeverb/blob/master/index.js)
 
 ```fs
-'./combfilter.li#comb';
-'./allpass.li#allpass';
+@'./combfilter.li#comb';
+@'./allpass.li#allpass';
 
 1s = 44100;
 
@@ -339,7 +335,7 @@ Features:
 * _multiarg pipes_ − pipe can consume groups. Depending on arity of target it can act as convolver: `a,b,c | (a,b) -> a+b` becomes  `(a,b | (a,b)->a+b), (b,c | (a,b)->a+b)`.
 * _fold operator_ − `a,b,c |> fn` acts as `reduce(a,b,c, fn)`, provides efficient way to reduce a group or array to a single value.
 
-### [Floatbeat](https:\dollchan.net/bytebeat/index.html#v3b64fVNRS+QwEP4rQ0FMtnVNS9fz9E64F8E38blwZGvWDbaptCP2kP3vziTpumVPH0qZyXzfzHxf8p7U3aNJrhK0rYHfgHAOZZkrlVVu0+saKbd5dTXazolRwnvlKuwNvvYORjiB/LpyO6pt7XhYqTNYZ1DP64WGBYgczuhAQgpiTXEtIwP29pteBZXqwTrB30jwc7i/i0jX2cF8g2WIGKlhriTRcPjSvcVMBn5NxvgCOc3TmqZ7/IdmmEnAMkX2UPB3oMHdE9WcKqVK+i5Prz+PKa98uOl60RgE6zP0+wUr+qVpZNsDUjKhtyLkKvS+LID0FYVSrJql8KdSMptKKlx9eTIbcllvdf8HxabpaJrIXEiycV7WGPeEW9Y4v5CBS07WBbUitvRqVbg7UDtQRRG3dqtZv3C7bsBbFUVcALvwH86MfSDws62fD7CTb0eIghE/mDAPyw9O9+aoa9h63zxXl2SW/GKOFNRyxbyF3N+FA8bPyzFb5misC9+J/XCC14nVKfgRQ7RY5ivKeKmmjOJMaBJSbEZJoiZZMuj2pTEPGunZhqeatOEN3zadxrXRmOw+AA==)
+### [Floatbeat](https://dollchan.net/bytebeat/index.html#v3b64fVNRS+QwEP4rQ0FMtnVNS9fz9E64F8E38blwZGvWDbaptCP2kP3vziTpumVPH0qZyXzfzHxf8p7U3aNJrhK0rYHfgHAOZZkrlVVu0+saKbd5dTXazolRwnvlKuwNvvYORjiB/LpyO6pt7XhYqTNYZ1DP64WGBYgczuhAQgpiTXEtIwP29pteBZXqwTrB30jwc7i/i0jX2cF8g2WIGKlhriTRcPjSvcVMBn5NxvgCOc3TmqZ7/IdmmEnAMkX2UPB3oMHdE9WcKqVK+i5Prz+PKa98uOl60RgE6zP0+wUr+qVpZNsDUjKhtyLkKvS+LID0FYVSrJql8KdSMptKKlx9eTIbcllvdf8HxabpaJrIXEiycV7WGPeEW9Y4v5CBS07WBbUitvRqVbg7UDtQRRG3dqtZv3C7bsBbFUVcALvwH86MfSDws62fD7CTb0eIghE/mDAPyw9O9+aoa9h63zxXl2SW/GKOFNRyxbyF3N+FA8bPyzFb5misC9+J/XCC14nVKfgRQ7RY5ivKeKmmjOJMaBJSbEZJoiZZMuj2pTEPGunZhqeatOEN3zadxrXRmOw+AA==)
 
 Transpiled floatbeat/bytebeat song:
 
@@ -407,13 +403,13 @@ const instance = new WebAssembly.Instance(module)
 
 // use API
 const {mult} = instance.exports
-mult(108,2) \ 216
+mult(108,2) // 216
 ```
 
 
 ## Inspiration
 
-* [mono](https:\github.com/stagas/mono) – spiritual brother at cowbell.lol, functionally equivalent.
-* [min](https:\github.com/r-lyeh/min) – syntax / style inspiration.
+* [mono](https://github.com/stagas/mono) – spiritual brother at cowbell.lol, functionally equivalent.
+* [min](https://github.com/r-lyeh/min) – syntax / style inspiration.
 
-<p align=center><a href="https:\github.com/krsnzd/license/">🕉</a></p>
+<p align=center><a href="https://github.com/krsnzd/license/">🕉</a></p>
