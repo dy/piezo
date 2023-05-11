@@ -112,7 +112,7 @@ a() = ( *i=0; i++ );            \\ stateful variable - persist value between fn 
 a(), a();                       \\ 0, 1
 b() = (
   *i = [..4];                   \\ local memory of 4 items
-  |i = i[-1,1..];               \\ defer array shift (called after fn body)
+  ~i = i[-1,1..];               \\ defer array shift (called after fn body)
   i.0 = i.1+1;                  \\ write previous value i.1 to current value i.0
   i.0                           \\ return i.0
 );
@@ -122,7 +122,6 @@ b(), b(), b();                  \\ 1, 2, 3
 m = [1,2,3,4];                  \\ create array of 4 items
 m = [..1000];                   \\ create array of 1000 items
 m = [l:2, r:4, c:6];            \\ create with position aliases
-m = [0..8 |> # * 2];            \\ create from list comprehension
 m = [n[1..3, 5, 6..]];          \\ create copy from indicated subrange
 m = [1, 2..4, ..10, n];         \\ create from mixed definition (array is always flat)
 m.0, m.1, m.2, m.3;             \\ read item by static index (0-based)
@@ -142,7 +141,6 @@ i=0; i++ < 3 :: log(i);         \\ inline loop: while i++ < 3 do log(i)
   i < 3 ? ^^;                   \\ `^^` breaks loop
   i < 5 ? ^;                    \\ `^` continues loop
 );
-s = 0; [a,b,c] -> i :: s += i;  \\ fold/reduce
 [1..10 -> x :: x * 2];          \\ list comprehension
 items -> x ::= x * 2;           \\ map items (mutable)
 items -> x :: a(x)
@@ -150,7 +148,7 @@ items -> x :: a(x)
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ import, export
 @'./path/to/module#x,y,z';      \\ any file can be imported directly
-'math#pi,sin,max';              \\ or defined via import-maps.json
+@'math#pi,sin,max';              \\ or defined via import-maps.json
 x, y, z.                        \\ last statement ending with . exports members
 ```
 

@@ -2991,7 +2991,8 @@ Having wat files is more useful than direct compilation to binary form:
 
   * The size of final list is unknown in advance. It requires dynamic-size mem allocation.
   ? Can we detect size in advance somehow?
-  * We can reserve memory
+  ? We can reserve memory slot for dynamic ops and perform various stuff there
+    * we may need it anyways for memory swiggling ops
 
 ## [ ] Import into function scope?
 
