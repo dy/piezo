@@ -2986,6 +2986,9 @@ Having wat files is more useful than direct compilation to binary form:
     + allows generating naturally as `list ::= a*b`, so that no `item` is needed
   ? pipes `list -> item :: filter(item) -> filteredItem :: gain(item)`
     + always returns a list
+  - a bit haskelly feeling, somewhat chunky
+
+? ALT: `list | & * 2 | filter(&)`, `a < 2 <| a++`
 
 ## [ ] List comprehension: how?
 
