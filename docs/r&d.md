@@ -2962,7 +2962,7 @@ Having wat files is more useful than direct compilation to binary form:
   * `list :: () * 2`
   * `list :: . * 2`
 
-? ALT: `|>` for loop, like `list |> x`, `a < 10 |> i++`, as well as pipe as `list | i -> i * 2`?
+? ALT: `a < 10 |> i++`, `list | item -> item*2`, pipe as `list |= i -> i * 2 | i -> filter(i)`?
   + keeps the notion of "producing"
   + less mental load, `|>` and `| i ->` are similar
   + turns `a | b -> c` into a ternary (that's it)
@@ -2974,10 +2974,18 @@ Having wat files is more useful than direct compilation to binary form:
   ~- `|>` is confusable with pipe - it has little to do with pipe...
     ~+ it acts more as generator producing items (no need for intermediary `i`)
   - overwrite-generating `out = out |> sin(phase) | x -> adsr(x,a,d,s,r) |...` converts into
-    `out |>= sin(phase) | x -> adsr()`, which is too heavy operator `|>=`
+    `out |>= sin(phase) | x -> adsr()`, which is heavy operator `|>=`
     ~ would be easier to have `out ::= sin(phase)`?
+    ~ likely relatively rare
+  -~ overloading `|`
+  ? `list |> x` - how do we make difference with this and `a < 10 |> i++`? List is always truthy
+    ? should we just make `|>` always for condition as the left part, ie. only `while` loop?
+      + that would solve `|>=` operator problem
+      - generators would become transforms `out |= _ -> sin()`
+  ? should we make `a < 2 -> a++`
+    - nah, non-argument meaning for `->` is not nice
 
-? ALT: `list -> item :: item*2`, `a < 2 :: a++`
+? ALT: `list -> item :: item*2`, `a < 2 :: a++`, `list -> item ::= item*2 -> item :: filter(item)`
   + combines nicely list comprehension, for..in and while
   + known pattern, avoids association with functors / lambdas
   + frees `|`
@@ -2986,9 +2994,20 @@ Having wat files is more useful than direct compilation to binary form:
     + allows generating naturally as `list ::= a*b`, so that no `item` is needed
   ? pipes `list -> item :: filter(item) -> filteredItem :: gain(item)`
     + always returns a list
+    - a bit lengthy and unpredictable
   - a bit haskelly feeling, somewhat chunky
+  - `list -> item, i ::= item * 2` is not the most meaningful, unlike `list |= item, i -> item * 2`
 
-? ALT: `list | & * 2 | filter(&)`, `a < 2 <| a++`
+? ALT: `list | & * 2 | filter(&)`, `a < 2 | a++`, `list |= & * 2`
+  + the most minimal syntax
+  + classical look
+  - too short syntax for item iterators, it's more about pipes
+  - overloading `|` is not very wanted effect
+  - having rhs as code is not very wanted effect, it looks more like function body
+  - placeholder doesn't allow `idx` as second variable
+
+? ALT: `a < 2 ~> a++`, `list::item ~> item * 2`, `list::item ~> item * 2 :: item ~> filter(item)`
+  - unconventional characters
 
 ## [ ] List comprehension: how?
 
