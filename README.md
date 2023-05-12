@@ -41,6 +41,7 @@ true = 0b1, false = 0b0;        \\ hint: alias booleans
 []                              \\ prop, length
 ^ ^^                            \\ continue/return, break/return
 @ .                             \\ import, export
+* >>                            \\ (unary) declare state, defer
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ ranges
 1..10;                          \\ basic range
@@ -112,7 +113,7 @@ a() = ( *i=0; i++ );            \\ stateful variable - persist value between fn 
 a(), a();                       \\ 0, 1
 b() = (
   *i = [..4];                   \\ local memory of 4 items
-  ~i = i[-1,1..];               \\ defer array shift (called after fn body)
+  >> i = i[-1,1..];             \\ defer array shift (called after fn body)
   i.0 = i.1+1;                  \\ write previous value i.1 to current value i.0
   i.0                           \\ return i.0
 );
@@ -209,6 +210,8 @@ Biquad filter processor for single-channel input.
 \\ process single sample
 lpf(x0, freq = 100 -< 1..10k, Q = 1.0 -< 0.001..3.0) = (
   *(x1, y1, x2, y2) = 0;         \\ filter state (defined by callsite)
+  >>(x1, x2) = (x0, x1);         \\ shift x after iteration
+  >>(y1, y2) = (y0, y1);         \\ shift y after iteration
 
   \\ lpf formula
   w = 2pi * freq / 1s;
@@ -221,9 +224,6 @@ lpf(x0, freq = 100 -< 1..10k, Q = 1.0 -< 0.001..3.0) = (
   (b0, b1, b2, a1, a2) *= 1.0 / a0;
 
   y0 = b0*x0 + b1*x1 + b2*x2 - a1*y1 - a2*y2;
-
-  (x1, x2) = (x0, x1);          \\ shift x after iteration
-  (y1, y2) = (y0, y1);          \\ shift y after iteration
 
   y0
 );
@@ -256,7 +256,7 @@ oscillator = [
 ];
 
 adsr(x, a, d, (s, sv=1), r) = (  \\ optional group-argument
-  *i = 0; \ i++;
+  *i = 0; >>i++;
   t = i / 1s;
 
   a -<= 1ms..;                   \\ prevent click
@@ -279,18 +279,16 @@ curve(x, amt=1.82 -< 0..10) = (sign(x) * abs(x)) ** amt;
 
 \\ coin = triangle with pitch jump, produces block
 coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
-  *out=[..1024];  \\ output block of 1024 samples
-  *i=0;
-  * phase = 0;     \\ current phase
+  out=[..1024];  \\ output block of 1024 samples
+  *i=0; >>i++;
+  *phase = 0;     \\ current phase
+  >>phase += (freq + (t > delay ? jump : 0)) * 2pi / 1s;
 
   t = i / 1s;
 
   out |= x -> oscillator[shape](phase)
       | x -> adsr(x, 0, 0, .06, .24)
       | x -> curve(x, 1.82);
-
-  i++
-  phase += (freq + (t > delay ? jump : 0)) * 2pi / 1s;
 
   out
 );

@@ -2323,7 +2323,7 @@ Having wat files is more useful than direct compilation to binary form:
   Top Back Center - TBC
   Top Back Right - TBR
 
-## [ ] Defer -> `x(a) = (/log(a); /a+=1; a)`
+## [x] Defer -> `x(a) = (>>log(a); >>a+=1; a)`
 
   + like golang defer execution runs item after function return
   + allows separating return value from increments needed after function
@@ -2338,6 +2338,7 @@ Having wat files is more useful than direct compilation to binary form:
       + comes together with `*a=0; /a++;`
       + doesn't feel like part of identifier
       - too many slashes `/a/b\\divide a by b`
+      - too strong association with something not-end, like `/imagine` or etc.
     * `x() = (&a; b,c; &d)`
       + meaning of "and also this"
       + also "counterpart" of `*` from C-lang
@@ -2346,6 +2347,7 @@ Having wat files is more useful than direct compilation to binary form:
         - ie. `&i++` raises confusion, it's not `&(i++)`, it's `(&i)++`
     * `x() = (~a; b,c; ~d)`
       + meaning of "destructor"
+      - subtle dissonance with `*`: `x()=(*i=0;~i++;)`
     * `x() = (a.; b,c; d.)`
       + meaning "at the end"
       + same operator is used for export
@@ -2354,6 +2356,17 @@ Having wat files is more useful than direct compilation to binary form:
         - not clear if the whole phrase is at the end or just i++
     * `x() = (.a; b,c; .d)`
       - has wrong associatino with property access
+    * `x() = (@i=0;*i++)`
+      - takes away "save" meaning
+      - no understanding
+    * `x() = (*i=0;>>i++;)`, `x()=(>>a; b,c,; >>d;)`
+      + clear meaning of "shift"
+      + Sercy sneezed
+      + related to playback's `>>` as fast-forward
+    * `x() = (*i=0;>>|i++)`
+      + `skip forward`
+      - too many symbols
+      - somehow related to pipes
 
 ## [ ] Try-catch -> `x() ?= (a, b, c)` makes fn definition wrapped with try-catch
 
@@ -2425,6 +2438,7 @@ Having wat files is more useful than direct compilation to binary form:
 + `#@$_` alleviate case-insensitivity
 - Strings don't allow code to be case-change robust.
   * we either discard strings or make it (half) case-sensitive
+- Atoms may require case-sensitivity, eg. for error messages
 
 0.5 Capfirst-sensitive, (`Abc` == `ABc`) != (`aBC` == `abc`)
 
