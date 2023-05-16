@@ -1989,6 +1989,8 @@ Having wat files is more useful than direct compilation to binary form:
   - reserves atoms for single-purpose use, better keep them for generic escaping non-codes?
     + case-insensitive code doesn't make point for quoted values
       * so qotes only act as separators from regular syntax, not literal strings
+  - some imports can be without quotes, like `@math#pi;`
+    + less separation from code
 
 ## [x] Wasmtree instead of IR would be simpler -> nope, it's less flexible and less supported
 
@@ -2395,7 +2397,8 @@ Having wat files is more useful than direct compilation to binary form:
   * `^'Error'`
     + similar by meaning to return
     + returning an atom indicates error
-    ~- we can do that via just returns
+  ~- we can do that via just returns
+  - Errors make program syntax case-sensitive
 
 ## [x] Pipe: replace with `|:` operator? -> let's use lowered-precedence `|` for now and see for side-effects
 
@@ -2980,6 +2983,7 @@ Having wat files is more useful than direct compilation to binary form:
   + keeps the notion of "producing"
   + less mental load, `|>` and `| i ->` are similar
   + turns `a | b -> c` into a ternary (that's it)
+    - somewhat parsing problem, it's problematic to have `|` of different precedence
   + keeps notion of diamond (flow loops) and vertical bar (pipe)
   + makes nice meaning to pipes `gen() | i -> filter(i) | i -> amp(i)`
   + makes meaning for `|=` as `out |= i -> i`
@@ -3029,6 +3033,7 @@ Having wat files is more useful than direct compilation to binary form:
   ? Can we detect size in advance somehow?
   ? We can reserve memory slot for dynamic ops and perform various stuff there
     * we may need it anyways for memory swiggling ops
+  ? Alternatively we can create large-dynamic slot for the time of creation, then dispose unused after init
 
 ## [ ] Import into function scope?
 

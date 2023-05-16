@@ -43,7 +43,7 @@ inc(x)=(*p;s=p;p=p+x;s);
 #tri=[..1s | tri];
 #saw=[..1s | saw];
 #ramp=[..1s | ramp];
-#sqr=[..1s | sqr]; 
+#sqr=[..1s | sqr];
 #noise=[..1s | rand];
 #sine=[..1s | sine];
 #exp=[..10s | x -> exp(-inc(1)/1s)];
@@ -766,7 +766,7 @@ distort(#x,#y,#k,bias=0f,post=0f,x)=(
 
   x -<= (xmin-0.001)..(xmax+0.001);
 
-  i=1; (#x(i)<x <| i++);
+  i=1; (#x(i)<x |> i++);
 
   z = (x - #x(i-1)) / (#x(i) - #x(i-1));
 

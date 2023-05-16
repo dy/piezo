@@ -243,8 +243,8 @@ export default function compile(node) {
       return `(i32.or ${iexpr(a)} ${iexpr(b)})`
     },
 
-    // a <| b
-    '<|'([,a,b]) {
+    // a |> b
+    '|>'([,a,b]) {
       // console.log("TODO: loops", a, b)
       loop++
       let res = `(loop $loop${loop} (if ${expr(a)} (then ${expr(b)} (br $loop${loop}))))`

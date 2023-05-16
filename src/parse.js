@@ -5,21 +5,17 @@ import { FLOAT, INT } from './const.js'
 export default (src) => parse(src)
 
 // char codes
-const OPAREN=40, CPAREN=41, OBRACK=91, CBRACK=93, SPACE=32, QUOTE=39, DQUOTE=34, PERIOD=46, BSLASH=92, _0=48, _9=57, COLON=58, HASH=35, AT=64, _X = 120, _B = 98, PLUS = 43, MINUS = 45
+const OPAREN=40, CPAREN=41, OBRACK=91, CBRACK=93, SPACE=32, QUOTE=39, DQUOTE=34, PERIOD=46, BSLASH=92, _0=48, _9=57, COLON=58, HASH=35, AT=64, PLUS = 43, MINUS = 45, GT = 62
 
 // precedences
 const PREC_SEMI=1,
 PREC_EXPORT=2,
-PREC_SEQUENCE=3, // a -> b,c;   a, b==c, d,   a, b>=c, d,   a | b,c | d,   a?b:c , d
-// FIXME: it seems loop/fold, assign and BOR must be right-assoc same-precedence operator
-// otherwise there are tradeoffs like `i<|x[i] = 1` or `a=b | c` or `a <| b|c |> d`
-// NOTE: assign has += *= etc, also it's right assoc whereas loops are not.
-PREC_FOLD=4,
-PREC_LOOP=5, // a?b:c <| d,   a , b<|c,   b<|c, d,   a->a+1 <| 2,   a <| b | c |> d,   x <| x[i] = 1
-PREC_PIPE=6,
-PREC_ASSIGN=7,  // a = b->c,  a=b, c=d,  a = b||c,  a = b | c,   a = b&c
-PREC_BOR=8, // a|b , c|d,   a = b|c,    a->x | b
-PREC_FUNC=9, // a = b->c,  b, c->d, e,   (b,c)->(d,e)
+PREC_SEQUENCE=3, //  a, b==c, d,   a, b>=c, d,   a | b,c | d,   a?b:c , d
+PREC_LOOP=4, // |>
+PREC_PIPE=5, // |->
+PREC_MAP=6, // ->
+PREC_ASSIGN=7,  // a=b, c=d,  a = b||c,  a = b | c,   a = b&c
+PREC_BOR=8, // a|b , c|d,   a = b|c
 PREC_LABEL=10, // a:b = 2,  a:b, b:c,   a: b&c
 PREC_TERNARY=11,
 PREC_OR=12,
@@ -31,7 +27,6 @@ PREC_COMP=17,
 PREC_SHIFT=18,
 PREC_CLAMP=19, // pre-arithmetical: a+b*c -< 10; BUT a < b-<c, a << b-<c
 PREC_SUM=20,
-PREC_FIND=21, // a <~ b*2, a..b <~ c BUT a<~b + 2
 PREC_RANGE=22, // +a .. -b, a**2 .. b**3, a*2 .. b*3; BUT a + 2..b + 3
 PREC_MULT=23,
 PREC_POW=24,
@@ -108,10 +103,6 @@ nary(';', PREC_SEMI, true)
 nary('||', PREC_OR)
 nary('&&', PREC_AND)
 
-// pipes: note - this order is sensitive, better not touch
-binary('|>', PREC_ASSIGN-1)
-binary('<|', PREC_ASSIGN, true)
-
 // binaries
 binary('=', PREC_ASSIGN, true)
 binary('+=', PREC_ASSIGN, true)
@@ -124,7 +115,7 @@ binary('-', PREC_SUM)
 binary('*', PREC_MULT)
 binary('/', PREC_MULT)
 binary('%', PREC_MULT)
-nary('|', PREC_ASSIGN)
+// binary('|', PREC_BOR)
 nary('&', PREC_BAND)
 binary('^', PREC_XOR)
 binary('==', PREC_EQ)
@@ -137,13 +128,18 @@ binary('>>', PREC_SHIFT)
 binary('>>>', PREC_SHIFT)
 binary('<<', PREC_SHIFT)
 
-// binary('<-', PREC_COMP ) // a <- b
-binary('->', PREC_FUNC) // a,b->b,a
 binary('-<', PREC_CLAMP) // a -< b
 
-// NOTE: can be done trivially manually
-// binary('~>', PREC_FIND)
-// binary('~<', PREC_FIND)
+binary('|>', PREC_LOOP)
+binary('|', PREC_PIPE)
+token('|', PREC_BOR, (a,b)=> (
+  // return BOR precedence only if rhs is not `->`, otherwise lower precedence
+  // NOTE: there is a case with rhs higher than map:  a|b=c
+  // it's parsed as a | b=c, which is better than "logical"  a|b  = c
+  a && (b=expr(PREC_ASSIGN-1)) && (b[0]!=='->') && ['|',a,b]
+))
+// NOTE: we take functions same precedence as assign to be able `a = x -> y`
+binary('->', PREC_ASSIGN, true)
 
 // unaries
 unary('+', PREC_UNARY)

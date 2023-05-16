@@ -213,7 +213,7 @@ export default function analyze(node) {
         // FIXME: arguments must be simple here
 
         // FIXME: modify pipe/args and idx depending on stack callsite, to avoid name conflict in nested pipes
-        // a | (x,idx) -> body   becomes    arg = a; i = 0; i < arg[] <| (idx=i; x = arg[i]; i++; body)
+        // a | (x,idx) -> body   becomes    arg = a; i = 0; i < arg[] |> (idx=i; x = arg[i]; i++; body)
         let parent = scope
         scope = fn.scope;
 
@@ -226,7 +226,7 @@ export default function analyze(node) {
 
         let out = ['(',expr([';',
           ...pipeVars,
-          ['<|',
+          ['|>',
             ['<',pipeIdx,pipeLen],
             [';',
               argName && ['=',argName,['[]',pipeArg,pipeIdx]],
@@ -244,9 +244,9 @@ export default function analyze(node) {
       // a | b,   binary OR
       return ['|',expr(a),expr(b)]
     },
-    // cond <| body
-    '<|'([,cond,body]) {
-      return ['<|', expr(cond), expr(body[0]!='('?['(',body]:body)]
+    // cond |> body
+    '|>'([,cond,body]) {
+      return ['|>', expr(cond), expr(body[0]!='('?['(',body]:body)]
     },
 
     // @ 'math#sin', @ 'path/to/lib'
@@ -416,7 +416,7 @@ export function desc(node, scope) {
     },
     ';'() { return {...desc(node[node.length - 1], scope)} },
     ','() { return {...desc(node[node.length - 1], scope), multiple:true} },
-    '<|'() { return {...bDesc, multiple: true}; },
+    '|>'() { return {...bDesc, multiple: true}; },
     '('() { return aDesc },
   }
 

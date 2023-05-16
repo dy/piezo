@@ -156,43 +156,51 @@ t('parse: conditions', t => {
 })
 
 t('parse: loops', t => {
-  // NOTE: loop is meaningful backwards, ie. (a<|(b=c=d<|e=f))
-  // is(parse(`a <| b = c = d <| e = f`), ['<|', 'a', ['<|', ['=','b',['=','c','d']], ['=', 'e', 'f']]], 'equals' )
-  // NOTE: we make guess unscoped pipes are less frequent / important case than assign BOR
-  is(parse('a <| b = c | d'),['<|','a',['=','b',['|','c','d']]], 'a <| b | c')
-  is(parse('a = b | c'), ['=','a',['|','b','c']], `a = b | c`)
-  is(parse('a <| b | c'),['<|','a',['|','b','c']], 'a <| b | c')
-  is(parse('a <| b = c'),['<|','a',['=','b','c']], `a <| b = c`)
-  is(parse('a <| b | c |> d'),['|>',['<|','a',['|','b','c']],'d'], 'pipe seq')
-  is(parse('c <| d <| e'),['<|','c',['<|','d','e']], 'c <| d <| e')
-  is(parse('a -= b += c'), ['-=','a',['+=','b','c']])
-  is(parse('a <| b = c'), ['<|','a',['=','b','c']])
-  is(parse('a?b:c <| d'), ['<|',['?','a','b','c'],'d'])
-  is(parse('a , b<|c'),[',','a',['<|','b','c']])
-  is(parse('b<|c, d'),[',',['<|','b','c'],'d'])
-  is(parse('a->b <| c'),['<|',['->','a','b'],'c'])
-  is(parse('a <| b | c | c |> d'),['|>',['<|','a',['|','b','c','c']],'d'], 'pipe seq')
-  is(parse('x <| x | y'),['<|','x',['|','x','y']], 'pipe seq2')
-  is(parse('c <| d <| e | f'),['<|','c',['<|','d',['|','e','f']]], 'loop seq')
-  is(parse(`a <| b = c = d | e = f`), ['<|','a',['=','b',['=','c',['=',['|','d','e'],'f']]]], 'equals' )
+  is(parse('a|(b,c)->d'),['|', 'a', ['->',['(',[',','b','c']],'d']], 'a|b->c|d->e')
+  is(parse('a|b->c|d->e'),['|',['|', 'a', ['->','b','c']],['->','d','e']], 'a|b->c|d->e')
+  is(parse('a=x|b->c=y|d->e=z'),['|',['|',['=','a','x'],['->','b',['=','c','y']]],['->','d',['=','e','z']]], 'a|b->c|d->e')
+  is(parse('a|>b|c->d|e->f'),['|>','a',['|',['|','b',['->','c','d']],['->','e','f']]], 'a|>b|c->d|e->f')
 
-  is(parse('s[] < 50 <| (s += ", hi")'),['<|',['<',['[]','s'],[INT,50]],['(',['+=','s',['"',', hi']]]], 'inline loop: `while (s.length < 50) do (s += ", hi)"`')
+  is(parse('a=b|c'),['=','a',['|','b','c']])
+  is(parse('a|b=c'),['|','a',['=','b','c']])
+
+  // NOTE: loop is meaningful backwards, ie. (a|>(b=c=d|>e=f))
+  // is(parse(`a |> b = c = d |> e = f`), ['|>', 'a', ['|>', ['=','b',['=','c','d']], ['=', 'e', 'f']]], 'equals' )
+  // NOTE: we make guess unscoped pipes are less frequent / important case than assign BOR
+  is(parse('a |> b = c | d'),['|>','a',['=','b',['|','c','d']]], 'a |> b | c')
+  is(parse('a = b | c'), ['=','a',['|','b','c']], `a = b | c`)
+  is(parse('a |> b | c'),['|>','a',['|','b','c']], 'a |> b | c')
+  is(parse('a |> b = c'),['|>','a',['=','b','c']], `a |> b = c`)
+  is(parse('a |> b | c |> d'),['|>',['|>','a',['|','b','c']],'d'], 'a |> b | c |> d')
+  is(parse('c |> d |> e'),['|>',['|>','c','d'],'e'], 'c |> d |> e')
+  is(parse('a -= b += c'), ['-=','a',['+=','b','c']])
+  is(parse('a |> b = c'), ['|>','a',['=','b','c']])
+  is(parse('a?b:c |> d'), ['|>',['?','a','b','c'],'d'])
+  is(parse('a , b|>c'),[',','a',['|>','b','c']])
+  is(parse('b|>c, d'),[',',['|>','b','c'],'d'])
+  is(parse('a->b |> c'),['|>',['->','a','b'],'c'])
+  is(parse('a |> b | c | c |> d'),['|>',['|>','a',['|','b',['|','c','c']]],'d'], 'a |> b | c | c |> d')
+  is(parse('x |> x | y'),['|>','x',['|','x','y']], 'pipe seq2')
+  is(parse('c |> d |> e | f'),['|>',['|>','c','d'],['|','e','f']], 'loop seq')
+  is(parse(`a |> b = c = d | e = f`), ['|>','a',['=','b',['=','c',['|','d',['=','e','f']]]]], 'equals' )
+
+  is(parse('s[] < 50 |> (s += ", hi")'),['|>',['<',['[]','s'],[INT,50]],['(',['+=','s',['"',', hi']]]], 'inline loop: `while (s.length < 50) do (s += ", hi)"`')
   is(parse(`
-  (i=0; ++i < 10 <| (             // multiline loop
+  (i=0; ++i < 10 |> (             // multiline loop
     i < 3 && ^^;                   // \`^^\` to break loop (can return value as ^^x)
     i < 5 && ^;                    // \`^\` to continue loop (can return value as ^x)
   ))`), ['(',[';',
     ['=','i',[INT,0]],
-    ['<|',
+    ['|>',
       ['<',['++','i'],[INT,10]],
       ['(',[';',['&&',['<','i',[INT,3]],['^^']],['&&',['<','i',[INT,5]],['^']]]]
     ]
   ]], 'multiline loop')
-  is(parse('[++j < 10 <| j * 2]'),['[',['<|',['<',['++','j'],[INT,10]],['*','j',[INT,2]]]], 'list comprehension via loop')
+  is(parse('[++j < 10 |> j * 2]'),['[',['|>',['<',['++','j'],[INT,10]],['*','j',[INT,2]]]], 'list comprehension via loop')
 
-  is(parse('i<3 <| x[i]=++i'), [
-    '<|', ['<','i',['int',3]], ['=',['[]','x','i'],['++','i']]
-  ], '<| precedence vs =')
+  is(parse('i<3 |> x[i]=++i'), [
+    '|>', ['<','i',['int',3]], ['=',['[]','x','i'],['++','i']]
+  ], '|> precedence vs =')
 })
 
 t('parse: functions', () => {

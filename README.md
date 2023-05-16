@@ -38,7 +38,7 @@ true = 0b1, false = 0b0;        \\ hint: alias booleans
 ** // %%                        \\ pow, int (floor) division, unsigned mod (wraps negatives)
 |> |-> |=                       \\ loop, iterate, map
 -< -<=                          \\ clamp
-[]                              \\ prop, length
+[] []=                          \\ prop/length, subarray
 ^ ^^                            \\ continue/return, break/return
 @ .                             \\ import, export
 * >>                            \\ (unary) declare state, defer
@@ -113,7 +113,7 @@ a() = ( *i=0; i++ );            \\ stateful variable - persist value between fn 
 a(), a();                       \\ 0, 1
 b() = (
   *i = [..4];                   \\ local memory of 4 items
-  >> i = i[-1,1..];             \\ defer array shift (called after fn body)
+  >> i = i[-1,1..];             \\ defer (called after fn body)
   i.0 = i.1+1;                  \\ write previous value i.1 to current value i.0
   i.0                           \\ return i.0
 );
@@ -148,8 +148,8 @@ items | x -> a(x)
       | x -> b(x);              \\ pipe
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ import, export
-@'./path/to/module#x,y,z';      \\ any file can be imported directly
-@'math#pi,sin,max';              \\ or defined via import-maps.json
+@./path/to/module # x,y,z;      \\ any file can be imported directly
+@math # pi,sin,max;              \\ or defined via import-maps.json
 x, y, z.                        \\ last statement ending with . exports members
 ```
 
@@ -229,7 +229,7 @@ lpf(x0, freq = 100 -< 1..10k, Q = 1.0 -< 0.001..3.0) = (
 );
 
 \\ process block (mutable)
-lpf(x, freq, Q) = (x -> xi ::= lpf(xi, freq, Q)).
+lpf(x, freq, Q) = (x | xi -> lpf(xi, freq, Q)).
 ```
 
 * _import_ − done via URI string as `@ 'path/to/lib#foo,bar'`. <!-- Built-in libs are: _math_, _std_. Additional libs: _sonr_, _latr_, _musi_ and [others](). --> _import-map.json_ can provide import aliases.
@@ -256,7 +256,7 @@ oscillator = [
 ];
 
 adsr(x, a, d, (s, sv=1), r) = (  \\ optional group-argument
-  *i = 0; >>i++;
+  *i = 0; >> i++;
   t = i / 1s;
 
   a -<= 1ms..;                   \\ prevent click

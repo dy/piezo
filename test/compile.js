@@ -247,8 +247,8 @@ t('compile: variable type inference', t => {
   x = compileWat(compile(`x;x=[];x.`)).exports.x // late-arr type
 })
 
-t('compile: loops basic', t => {
-  let wat = compile(`x=[..3]; i=0; i<3 <| x[i]=i++; x.`)
+t.only('compile: loops basic', t => {
+  let wat = compile(`x=[..3]; i=0; i<3 |> x[i]=i++; x.`)
   let mod = compileWat(wat)
   let {memory, x} = mod.exports
 
@@ -264,9 +264,9 @@ t('compile: loop in loop', t => {
   let wat = compile(`
     x=[..4];
     i=0;
-    i<2 <| (
+    i<2 |> (
       j=0;
-      j<2 <| (
+      j<2 |> (
         x[i*2+j]=i*2+j;
         j++
       );
