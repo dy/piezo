@@ -2330,6 +2330,10 @@ Having wat files is more useful than direct compilation to binary form:
   + like golang defer execution runs item after function return
   + allows separating return value from increments needed after function
   * can be done as `x()=(@(a);b,c;@(d))` - schedules `@`s at the end of function
+  ? no deferring?
+    + obvious code sequence
+    - no nice definition of variable state and its change
+    - noisy code of creating result holder var, performing state update, returning result
   * other symbols: `>>, ||, ~>, //, \\, >-, >>|, <|, <!`,
     * `x() = (//a; b,c; //d;)`
     * `x() = (/a; b,c; /d;)`
@@ -2365,10 +2369,13 @@ Having wat files is more useful than direct compilation to binary form:
       + clear meaning of "shift"
       + Sercy sneezed
       + related to playback's `>>` as fast-forward
+      - association with C++ pipe (cout)
     * `x() = (*i=0;>>|i++)`
       + `skip forward`
       - too many symbols
       - somehow related to pipes
+    * `x()=(*i=0;=>i++;)`
+      - equals noise
 
 ## [ ] Try-catch -> `x() ?= (a, b, c)` makes fn definition wrapped with try-catch
 

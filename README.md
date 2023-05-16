@@ -133,23 +133,23 @@ m[0] = 1;                       \\ write single value
 m[1..] = (7,8);                 \\ write multiple values from specified index
 m[1,2] = m[2,1];                \\ rearrange items
 m[0..] = m[-1..0];              \\ reverse order
-m = m[1..,0];                   \\ rotate memory left (uses memcopy - efficient)
+m = m[1..,0];                   \\ rotate memory left
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ loops
 i=0; i++ < 3 |> log(i);         \\ inline loop: while i++ < 3 do log(i)
-[a, b, c] | item -> x(item);    \\ for each
+[a, b, c] | item -> x(item);    \\ for each item in a list
 10..1 | i -> (                  \\ iterate over range
   i < 3 ? ^^;                   \\ `^^` breaks loop
   i < 5 ? ^;                    \\ `^` continues loop
 );
 [1..10 | x -> x * 2];           \\ list comprehension
-items |= x -> x * 2;            \\ map items (mutable)
+items |= x -> x * 2;            \\ map items (mutates array)
 items | x -> a(x)
       | x -> b(x);              \\ pipe
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ import, export
-@./path/to/module # x,y,z;      \\ any file can be imported directly
-@math # pi,sin,max;              \\ or defined via import-maps.json
+@./path/to/module#x,y,z;        \\ any file can be imported directly
+@math#pi,sin,max;               \\ or defined via import-maps.json
 x, y, z.                        \\ last statement ending with . exports members
 ```
 
@@ -282,9 +282,8 @@ coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
   out=[..1024];  \\ output block of 1024 samples
   *i=0; >>i++;
   *phase = 0;     \\ current phase
-  >>phase += (freq + (t > delay ? jump : 0)) * 2pi / 1s;
-
   t = i / 1s;
+  >>phase += (freq + (t > delay ? jump : 0)) * 2pi / 1s;
 
   out |= x -> oscillator[shape](phase)
       | x -> adsr(x, 0, 0, .06, .24)
