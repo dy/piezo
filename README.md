@@ -1,6 +1,6 @@
 # lino
 
-**Lino** (*li*ne *no*ise) is micro-language for sound design, processing and utilities. It has augmented common syntax<span title="Common base from C, JS, Java, Python, Swift, Kotlin, Rust. No-keywords allows better minification and internationalization; Case-agnostic makes it URL-safe and typo-proof.">\*</span>, subtle type inference<span title="Types are inferred from code hints like 0.0 vs 0 or by operations.">\*</span> and refined language patterns<span title="Pipes, deferring, stateful variables, ranges, units, tuples">\*</span>. It maintains static or linear memory and compiles to WASM bytecode, which makes it compact, increases reliability<span title="No Garbage Collection or high-level glitches">*</span> and enables wide range of environments: browsers, [audio worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, VST, Rust, Python, Go, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) etc.
+**Lino** (*li*ne *no*ise) is micro-language for sound design, processing and utilities. It has augmented common syntax<span title="Common base from C, JS, Java, Python, Swift, Kotlin, Rust. No-keywords allows better minification and internationalization; Case-agnostic makes it URL-safe and typo-proof.">\*</span>, subtle type inference<span title="Types are inferred from code hints like 0.0 vs 0 or by operations.">\*</span> and refined language patterns<span title="Pipes, deferring, stateful variables, ranges, units, tuples">\*</span>. It maintains static or linear memory and compiles to WASM bytecode, which makes it compact, increases reliability and enables for wide range of environments: browsers, [audio worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, VST, Rust, Python, Go, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) etc.
 
 <!--[Motivation](./docs/motivation.md)  |  [Documentation](./docs/reference.md)  |  [Examples](./docs/examples.md).-->
 
@@ -16,7 +16,7 @@
 
 ### Gain Processor
 
-Provides k-rate amplification of block of samples.
+Provides k-rate amplification for block of samples.
 
 ```
 gain(                               \\ defines a function with block, volume arguments.
