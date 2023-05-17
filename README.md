@@ -443,6 +443,7 @@ By that it aspires to standardize sound expressions and make sound more accessib
 
 ### Principles
 
+* _Common syntax_: copy-paste compatible floatbeats.
 * _No-keywords_: safe var names, maximal minification, i18l code.
 * _Case-agnostic_: URL-safe, typo-proof.
 * _Subtle type inference_: type hints instead of heavy syntax.
@@ -450,7 +451,7 @@ By that it aspires to standardize sound expressions and make sound more accessib
 * _Groups_: multiple returns, multiple operands.
 * _No implicit globals_: wysiwyg.
 * _Ranges_: prevent out-of-range arguments.
-* _Pipes_: optimized for buffers processing.
+* _Pipes_: loops on steroids.
 * _Low-level_: no fancy features beyond math and buffers.
 * _Linear memory_: no garbage collectable constructs.
 * _0 runtime_: statically analyzable.
