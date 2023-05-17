@@ -1,6 +1,6 @@
 # lino
 
-**Lino** (*li*ne *no*ise) is micro-language for sound design, processing and utilities. It has augmented common syntax<span title="Common base from C, JS, Java, Python, Swift, Kotlin, Rust. No-keywords allows better minification and internationalization; Case-agnostic makes it URL-safe and typo-proof.">\*</span>, subtle type inference<span title="Types are inferred from code hints like 0.0 vs 0 or by operations.">\*</span> and refined language patterns<span title="Pipes, deferring, stateful variables, ranges, units, tuples">\*</span>. It maintains static or linear memory and compiles to WASM bytecode, which makes it compact, increases reliability and enables for wide range of environments: browsers, [audio worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, VST, Rust, Python, Go, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) etc.
+**Lino** (*li*ne *no*ise) is micro-language for sound design, processing and utilities. It has augmented common syntax<span title="Common base from C, JS, Java, Python, Swift, Kotlin, Rust. No-keywords allows better minification and internationalization; Case-agnostic makes it URL-safe and typo-proof.">\*</span>, subtle type inference<span title="Types are inferred from code hints like 0.0 vs 0 or by operations.">\*</span> and refined language patterns<span title="Pipes, deferring, stateful variables, ranges, units, tuples">\*</span>. It maintains static or linear memory and compiles to 0-runtime WASM bytecode, which makes it compact, increases reliability and enables for wide range of environments: browsers, [audio worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, VST, Rust, Python, Go, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) etc.
 
 <!--[Motivation](./docs/motivation.md)  |  [Documentation](./docs/reference.md)  |  [Examples](./docs/examples.md).-->
 
@@ -12,7 +12,7 @@
 * [sonr](https://github.com/sonr/)
 -->
 
-## Some examples
+## Examples
 
 ### Gain Processor
 
@@ -216,14 +216,22 @@ Features:
 * [Freeverb](/examples/freeverb.li)
 * [Floatbeat](/examples/floatbeat.li)
 * [Complete ZZFX](/examples/zzfx.li)
-* [All examples](/examples)
+
+See [all examples](/examples)
 
 
 ## Usage
 
-Lino available as JS package.
+Lino is available as JS package.
 
 `npm i lino`
+
+<!--
+CLI:
+```sh
+lino source.li > compiled.wasm
+```
+-->
 
 From JS:
 
@@ -420,5 +428,30 @@ NOTE: indexOf can be done as `string | (x,i) -> (x == "l" ? i)`
 
 * [mono](https://github.com/stagas/mono) – spiritual brother at cowbell.lol, functionally equivalent.
 * [min](https://github.com/r-lyeh/min) – syntax / style inspiration.
+
+## Motivation
+
+JavaScript and _Web Audio API_ is not suitable for sound purposes due to its unstable nature, it proves to have unpredictable pauses, glitches and so on.
+Ideally its usage for sound should be reduced to minimum – a single audio processing worklet, output, and the rest is handled by WASM code.
+That's motivation for some languages or tools like _mono_, _zzfx_, _bytebeat_, _[hxos](https://github.com/stagas/hxos)_ etc.
+_Lino_ is alternative implementation to _mono_, incorporating its ideas and vision, with focus on ergonomics and portability.
+It aims to express sound formulas in a very compact and robust form, overcoming common languages legacy and limitations. , "tweak and tweet"
+It attempts to have intuitive syntax and feeling of "flow", to be fit for live coding sessions. 
+It also focuses on accessibility, so that produced code can be plugged into various environments, not necessarily including sound capabilities, like servers etc.
+By that it aspires to standardize sound expressions and make sound more accessible.
+
+### Principles
+
+* No-keywords.
+* No implicit globals.
+* Subtle type inference.
+* Case-agnostic.
+* Stateful variables instead of OOP.
+* Groups: multiple returns, multiple operands.
+* Ranges.
+* Pipes.
+* No fancy features beyond math and buffers.
+* Static/linear memory, no GC.
+* Statically analyzable.
 
 <p align=center><a href="https://github.com/krsnzd/license/">🕉</a></p>
