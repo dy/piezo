@@ -442,12 +442,12 @@ By that it aspires to standardize sound expressions and make sound more accessib
 
 ### Principles
 
-* No-keywords.
-* No implicit globals.
-* Subtle type inference.
-* Case-agnostic.
-* Stateful variables instead of OOP.
+* No-keywords: max minification, i18l code, safe var names.
+* Case-agnostic: URL-safe, typo-proof.
+* Subtle type inference: no reserved.
+* No OOP: stateful functions.
 * Groups: multiple returns, multiple operands.
+* No implicit globals.
 * Ranges.
 * Pipes.
 * No fancy features beyond math and buffers.
