@@ -20,7 +20,7 @@ Provides k-rate amplification for block of samples.
 
 ```
 gain(                               \\ defines a function with block, volume arguments.
-  block,                            \\ block type is inferred as array from pipe operation |=
+  block,                            \\ block type is inferred as buffer from pipe operation |=
   volume -< 0..100.0                \\ volume is clamped to 0..100, type is inferred as float
 ) = (   
   block |= x -> x * volume          \\ maps samples via pipe: block = block | x -> x * volume
@@ -286,7 +286,7 @@ true = 0b1, false = 0b0;        \\ hint: alias booleans
 ** // %%                        \\ pow, int (floor) division, unsigned mod (wraps negatives)
 |> |-> |=                       \\ loop, iterate, map
 -< -<=                          \\ clamp
-[] []=                          \\ prop/length, subarray
+[]                              \\ prop, length
 ^ ^^                            \\ continue/return, break/return
 @ .                             \\ import, export
 * >>                            \\ (unary) declare state, defer
@@ -367,12 +367,12 @@ b() = (
 );
 b(), b(), b();                  \\ 1, 2, 3
 
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ arrays
-m = [1,2,3,4];                  \\ create array of 4 items
-m = [..1000];                   \\ create array of 1000 items
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ buffers
+m = [1,2,3,4];                  \\ create buffer of 4 items
+m = [..1000];                   \\ create buffer of 1000 items
 m = [l:2, r:4, c:6];            \\ create with position aliases
 m = [n[1..3, 5, 6..]];          \\ create copy from indicated subrange
-m = [1, 2..4, ..10, n];         \\ create from mixed definition (array is always flat)
+m = [1, 2..4, ..10, n];         \\ create from mixed definition (buffer is always flat)
 m.0, m.1, m.2, m.3;             \\ read item by static index (0-based)
 m[0], m[1], m[-1];              \\ read by dynamic index, negative for last element
 m[1..2];                        \\ read multiple values
@@ -391,7 +391,7 @@ i=0; i++ < 3 |> log(i);         \\ inline loop: while i++ < 3 do log(i)
   i < 5 ? ^;                    \\ `^` continues loop
 );
 [1..10 | x -> x * 2];           \\ list comprehension
-items |= x -> x * 2;            \\ map items (mutates array)
+items |= x -> x * 2;            \\ map items (mutates buffer)
 items | x -> a(x)
       | x -> b(x);              \\ pipe
 
@@ -431,27 +431,28 @@ NOTE: indexOf can be done as `string | (x,i) -> (x == "l" ? i)`
 
 ## Motivation
 
-JavaScript and _Web Audio API_ is not suitable for sound purposes due to its unstable nature, it proves to have unpredictable pauses, glitches and so on.<br/>
-Ideally its usage for sound should be reduced to minimum – a single audio processing worklet, output, and the rest is handled by WASM code.<br/>
-That's motivation for some languages or tools like _mono_, _zzfx_, _bytebeat_, _[hxos](https://github.com/stagas/hxos)_ etc.<br/>
-_Lino_ is alternative implementation to _mono_, incorporating its ideas and vision, with focus on ergonomics and portability.<br/>
-It aims to express sound formulas in a very compact and robust form, overcoming common languages legacy and limitations, "tweak and tweet".
-It attempts to have intuitive syntax and feeling of "flow", to be fit for live coding sessions. <br/>
-It also focuses on accessibility, so that produced code can be plugged into various environments, not necessarily including sound capabilities, like servers etc.<br/>
-By that it aspires to standardize sound expressions and make sound more accessible.<br/>
+JavaScript and _Web Audio API_ is not suitable for sound purposes due to its unstable nature, it proves to have unpredictable pauses, glitches and so on.
+Ideally its usage for sound should be reduced to minimum – a single audio processing worklet, output, and the rest is handled by WASM code.
+That's motivation for some languages or tools like _mono_, _zzfx_, _bytebeat_, _[hxos](https://github.com/stagas/hxos)_ etc.
+
+_Lino_ is alternative implementation to _mono_, incorporating its ideas and vision, with focus on ergonomics and portability.
+It aims to express sound formulas in a very compact and robust form, overcoming common languages legacy and limitations, easy to "tweak and tweet".
+It attempts to have intuitive syntax and feeling of "flow", fit for live coding sessions.
+It also focuses on accessibility, so that produced code can be plugged into various environments, not necessarily with sound capabilities, like servers etc.
+By that it aspires to standardize sound expressions and make sound more accessible.
 
 ### Principles
 
-* No-keywords: max minification, i18l code, safe var names.
-* Case-agnostic: URL-safe, typo-proof.
-* Subtle type inference: no reserved.
-* No OOP: stateful functions.
-* Groups: multiple returns, multiple operands.
-* No implicit globals.
-* Ranges.
-* Pipes.
-* No fancy features beyond math and buffers.
-* Static/linear memory, no GC.
-* Statically analyzable.
+* _No-keywords_: safe var names, maximal minification, i18l code.
+* _Case-agnostic_: URL-safe, typo-proof.
+* _Subtle type inference_: type hints instead of heavy syntax.
+* _No OOP_: functional, stateful vars.
+* _Groups_: multiple returns, multiple operands.
+* _No implicit globals_: wysiwyg.
+* _Ranges_: prevent out-of-range arguments.
+* _Pipes_: optimized for buffers processing.
+* _Low-level_: no fancy features beyond math and buffers.
+* _Linear memory_: no garbage collectable constructs.
+* _0 runtime_: statically analyzable.
 
 <p align=center><a href="https://github.com/krsnzd/license/">🕉</a></p>
