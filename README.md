@@ -431,14 +431,14 @@ NOTE: indexOf can be done as `string | (x,i) -> (x == "l" ? i)`
 
 ## Motivation
 
-JavaScript and _Web Audio API_ is not suitable for sound purposes due to its unstable nature, it proves to have unpredictable pauses, glitches and so on.
-Ideally its usage for sound should be reduced to minimum – a single audio processing worklet, output, and the rest is handled by WASM code.
-That's motivation for some languages or tools like _mono_, _zzfx_, _bytebeat_, _[hxos](https://github.com/stagas/hxos)_ etc.
-_Lino_ is alternative implementation to _mono_, incorporating its ideas and vision, with focus on ergonomics and portability.
-It aims to express sound formulas in a very compact and robust form, overcoming common languages legacy and limitations. , "tweak and tweet"
-It attempts to have intuitive syntax and feeling of "flow", to be fit for live coding sessions. 
-It also focuses on accessibility, so that produced code can be plugged into various environments, not necessarily including sound capabilities, like servers etc.
-By that it aspires to standardize sound expressions and make sound more accessible.
+JavaScript and _Web Audio API_ is not suitable for sound purposes due to its unstable nature, it proves to have unpredictable pauses, glitches and so on.<br/>
+Ideally its usage for sound should be reduced to minimum – a single audio processing worklet, output, and the rest is handled by WASM code.<br/>
+That's motivation for some languages or tools like _mono_, _zzfx_, _bytebeat_, _[hxos](https://github.com/stagas/hxos)_ etc.<br/>
+_Lino_ is alternative implementation to _mono_, incorporating its ideas and vision, with focus on ergonomics and portability.<br/>
+It aims to express sound formulas in a very compact and robust form, overcoming common languages legacy and limitations, "tweak and tweet".
+It attempts to have intuitive syntax and feeling of "flow", to be fit for live coding sessions. <br/>
+It also focuses on accessibility, so that produced code can be plugged into various environments, not necessarily including sound capabilities, like servers etc.<br/>
+By that it aspires to standardize sound expressions and make sound more accessible.<br/>
 
 ### Principles
 
