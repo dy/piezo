@@ -1,7 +1,247 @@
 # lino
 
-**Lino** (*li*ne *no*ise) is micro-language prototype for sound design, processing, and utilities. It has extended common syntax, smart type inference and integrated best practices. It has static memory and compiles to WASM bytecode, available for various environments, from [audio worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process) and workers to [nodejs](https://github.com/audiojs/web-audio-api), Rust, Python, Go, etc.
+**Lino** (*li*ne *no*ise) is micro-language for sound design, processing and utilities. It has augmented common syntax<span title="Common base from C, JS, Java, Python, Swift, Kotlin, Rust. No-keywords allows better minification and internationalization; Case-agnostic makes it URL-safe and typo-proof.">\*</span>, subtle type inference<span title="Types are inferred from code hints like 0.0 vs 0 or by operations.">\*</span> and refined language patterns<span title="Pipes, deferring, stateful variables, ranges, units, tuples">\*</span>. It maintains static or linear memory and compiles to WASM bytecode, which makes it compact, increases reliability<span title="No Garbage Collection or high-level glitches">*</span> and enables wide range of environments: browsers, [audio worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, VST, Rust, Python, Go, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) etc.
+
 <!--[Motivation](./docs/motivation.md)  |  [Documentation](./docs/reference.md)  |  [Examples](./docs/examples.md).-->
+
+<!--
+## Projects using lino
+
+* [web-audio-api](https://github.com/audiojs/web-audio-api)
+* [audiojs](https://github.com/audiojs/)
+* [sonr](https://github.com/sonr/)
+-->
+
+## Some examples
+
+### Gain Processor
+
+Provides k-rate amplification of block of samples.
+
+```
+gain(                               \\ defines a function with block, volume arguments.
+  block,                            \\ block type is inferred as array from pipe operation |=
+  volume -< 0..100.0                \\ volume is clamped to 0..100, type is inferred as float
+) = (   
+  block |= x -> x * volume          \\ maps samples via pipe: block = block | x -> x * volume
+);
+
+gain([0, .1, .2, .3, .4, .5], 2);   \\ [0, .2, .4, .6, .8, 1]
+
+gain.                               \\ export gain function
+```
+
+<!--Minifies as `gain(b,v)=b|=x->x*v.`-->
+
+### Biquad Filter
+
+A-rate (per-sample) biquad filter processor.
+
+```
+@math#pi,cos,sin;                   \\ import pi, sin, cos from math
+
+1pi = pi;                           \\ define pi units
+1s = 44100;                         \\ define time units in samples
+1k = 10000;                         \\ basic si units
+
+lpf(                                \\ per-sample processing function
+  x0,                               \\ input sample value
+  freq = 100 -< 1..10k,             \\ filter frequency, float
+  Q = 1.0 -< 0.001..3.0             \\ quality factor, float
+) = (
+  * (x1, y1, x2, y2) = 0;           \\ define filter state
+  >> (x1, x2) = (x0, x1);           \\ defer shifting x state
+  >> (y1, y2) = (y0, y1);           \\ defer shifting y state
+
+  \\ lpf formula
+  w = 2pi * freq / 1s;
+  (sin_w, cos_w) = (sin(w), cos(w));
+  a = sin_w / (2.0 * Q);
+
+  (b0, b1, b2) = ((1.0 - cos_w) / 2.0, 1.0 - cos_w, b0);
+  (a0, a1, a2) = (1.0 + a, -2.0 * cos_w, 1.0 - a);
+
+  (b0, b1, b2, a1, a2) *= 1.0 / a0;
+
+  y0 = b0*x0 + b1*x1 + b2*x2 - a1*y1 - a2*y2;
+  y0                                \\ return y0
+);
+
+\\ use via pipe
+\\ [0, .1, ...] | x -> lpf(x, 108, 5)
+
+lpf.                                \\ export lpf function
+```
+
+### ZZFX
+
+Generates ZZFX's [coin sound](https://codepen.io/KilledByAPixel/full/BaowKzv) `zzfx(...[,,1675,,.06,.24,1,1.82,,,837,.06])`.
+
+```fs
+@math#pi,abs,sin,round;
+
+1pi = pi;
+1s = 44100;
+1ms = 1s / 1000;
+
+// define waveform generators table
+oscillator = [
+  saw(phase) = (1 - 4 * abs( round(phase/2pi) - phase/2pi )),
+  sine(phase) = sin(phase)
+];
+
+// applies adsr curve to sequence of samples
+adsr(x, a, d, (s, sv=1), r) = (   \\ optional group-argument
+  *i = 0; >> i++;                 \\ internal counter
+  t = i / 1s;
+
+  a -<= 1ms..;                    \\ prevent click
+  total = a + d + s + r;
+
+  y = t >= total ? 0 : (
+    t < a ? t/a :                 \\ attack
+    t < a + d ?                   \\ decay
+    1-((t-a)/d)*(1-sv) :          \\ decay falloff
+    t < a  + d + s ?              \\ sustain
+    sv :                          \\ sustain volume
+    (total - t)/r * sv
+  ) * x;
+
+  y
+);
+
+\\ curve effect
+curve(x, amt=1.82 -< 0..10) = (sign(x) * abs(x)) ** amt;
+
+\\ coin = triangle with pitch jump, produces block
+coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
+  out=[..1024];                   \\ output block of 1024 samples
+  *i=0; >>i++;
+  *phase = 0;                     \\ current phase
+  t = i / 1s;
+  >>phase += (freq + (t > delay ? jump : 0)) * 2pi / 1s;
+
+  out |= x -> oscillator[shape](phase)
+      | x -> adsr(x, 0, 0, .06, .24)
+      | x -> curve(x, 1.82);
+
+  out
+);
+```
+
+<!--
+## [Freeverb](https://github.com/opendsp/freeverb/blob/master/index.js)
+
+```fs
+@'./combfilter.li#comb';
+@'./allpass.li#allpass';
+
+1s = 44100;
+
+(a1,a2,a3,a4) = (1116,1188,1277,1356);
+(b1,b2,b3,b4) = (1422,1491,1557,1617);
+(p1,p2,p3,p4) = (225,556,441,341);
+
+\\ TODO: stretch
+
+reverb(input, room=0.5, damp=0.5) = (
+  *combs_a = a0,a1,a2,a3 | a -> stretch(a),
+  *combs_b = b0,b1,b2,b3 | b -> stretch(b),
+  *aps = p0,p1,p2,p3 | p -> stretch(p);
+
+  combs = (
+    (combs_a | x -> comb(x, input, room, damp) |> (a,b) -> a+b) +
+    (combs_b | x -> comb(x, input, room, damp) |> (a,b) -> a+b)
+  );
+
+  (combs, aps) | (input, coef) -> p + allpass(p, coef, room, damp)
+);
+```
+
+Features:
+
+* _multiarg pipes_ − pipe can consume groups. Depending on arity of target it can act as convolver: `a,b,c | (a,b) -> a+b` becomes  `(a,b | (a,b)->a+b), (b,c | (a,b)->a+b)`.
+* _fold operator_ − `a,b,c |> fn` acts as `reduce(a,b,c, fn)`, provides efficient way to reduce a group or array to a single value.
+
+### [Floatbeat](https://dollchan.net/bytebeat/index.html#v3b64fVNRS+QwEP4rQ0FMtnVNS9fz9E64F8E38blwZGvWDbaptCP2kP3vziTpumVPH0qZyXzfzHxf8p7U3aNJrhK0rYHfgHAOZZkrlVVu0+saKbd5dTXazolRwnvlKuwNvvYORjiB/LpyO6pt7XhYqTNYZ1DP64WGBYgczuhAQgpiTXEtIwP29pteBZXqwTrB30jwc7i/i0jX2cF8g2WIGKlhriTRcPjSvcVMBn5NxvgCOc3TmqZ7/IdmmEnAMkX2UPB3oMHdE9WcKqVK+i5Prz+PKa98uOl60RgE6zP0+wUr+qVpZNsDUjKhtyLkKvS+LID0FYVSrJql8KdSMptKKlx9eTIbcllvdf8HxabpaJrIXEiycV7WGPeEW9Y4v5CBS07WBbUitvRqVbg7UDtQRRG3dqtZv3C7bsBbFUVcALvwH86MfSDws62fD7CTb0eIghE/mDAPyw9O9+aoa9h63zxXl2SW/GKOFNRyxbyF3N+FA8bPyzFb5misC9+J/XCC14nVKfgRQ7RY5ivKeKmmjOJMaBJSbEZJoiZZMuj2pTEPGunZhqeatOEN3zadxrXRmOw+AA==)
+
+Transpiled floatbeat/bytebeat song:
+
+```fs
+@'math#asin,sin,pi';
+
+1s = 44100;
+
+fract(x) = x % 1;
+mix(a, b, c) = (a * (1 - c)) + (b * c);
+tri(x) = 2 * asin(sin(x)) / pi;
+noise(x) = sin((x + 10) * sin((x + 10) ** (fract(x) + 10)));
+melodytest(time) = (
+  melodyString = "00040008",
+  melody = 0;
+  i = 0;
+
+  i++ < 5 |> (
+    melody += tri(
+      time * mix(
+        200 + (i * 900),
+        500 + (i * 900),
+        melodyString[floor(time * 2) % melodyString[]] / 16
+      )
+    ) * (1 - fract(time * 4))
+  );
+
+  melody
+)
+hihat(time) = noise(time) * (1 - fract(time * 4)) ** 10;
+kick(time) = sin((1 - fract(time * 2)) ** 17 * 100);
+snare(time) = noise(floor((time) * 108000)) * (1 - fract(time + 0.5)) ** 12;
+melody(time) = melodytest(time) * fract(time * 2) ** 6 * 1;
+
+song() = (
+  *t=0; @t++; time = t / 1s;
+  (kick(time) + snare(time)*.15 + hihat(time)*.05 + melody(time)) / 4
+).
+```
+
+Features:
+
+* _loop operator_ − `cond <| expr` acts as _while_ loop, calling expression until condition holds true. Produces sequence as result.
+* _string literal_ − `"abc"` acts as array with ASCII codes.
+* _length operator_ − `items[]` returns total number of items of either an array, group, string or range.
+-->
+
+## Other examples
+
+* [Freeverb](/examples/freeverb.li)
+* [Floatbeat](/examples/floatbeat.li)
+* [Complete ZZFX](/examples/zzfx.li)
+* [All examples](/examples)
+
+
+## Usage
+
+Lino available as JS package.
+
+`npm i lino`
+
+From JS:
+
+```js
+import * as lino from 'lino'
+
+// create wasm arrayBuffer
+const buffer = lino.compile(`mult(x,y) = x*y; mult.`)
+
+// create wasm instance
+const module = new WebAssembly.Module(buffer)
+const instance = new WebAssembly.Instance(module)
+
+// use API
+const {mult} = instance.exports
+mult(108,2) // 216
+```
+
 
 ## Reference
 
@@ -174,235 +414,6 @@ string * list;                  \\ join: " " * ["a", "b"] = "a b"
 string * 2;                     \\ repeat: "abc" * 2 = "abcabc"
 NOTE: indexOf can be done as `string | (x,i) -> (x == "l" ? i)`
 -->
-
-## Examples
-
-### Gain Processor
-
-Provides k-rate amplification of input audio.
-
-```
-gain( x, volume -< 0..100 ) = (
-  x * volume;  \\ write to output array
-);
-
-[0, .1, .2, .3, .4, .5] | x -> gain(x, 2);
-\\ 0, .2, .4, .6, .8, 1
-```
-
-* _functions_ − arrow `(a, b -< 0..10, c=10) -> (expr1; expr2)` defines a function. Arguments may have range or default value indicators. Function returns last expression or sequence.
-* _batch input/output_ − `[input]` batch argument indicates <em title="Audio, or precise rate">a-rate*</em> param; direct argument is <em title="Controlling (historical artifact from CSound), blocK-rate">k-rate*</em> param.
-* _validation_ − `a -< range` (_a ∈ range_) clamps argument to provided range, to avoid blowing up values.
-* _range_ − primitive with `from..to` signature, useful for clamping, slicing etc.
-
-
-### Biquad Filter
-
-Biquad filter processor for single-channel input.
-
-```
-@'math#pi,cos,sin';            \\ import pi, sin, cos from math
-
-1pi = pi;                     \\ define pi units
-1s = 44100;                   \\ define time units in samples
-1k = 10000;                   \\ basic si units
-
-\\ process single sample
-lpf(x0, freq = 100 -< 1..10k, Q = 1.0 -< 0.001..3.0) = (
-  *(x1, y1, x2, y2) = 0;         \\ filter state (defined by callsite)
-  >>(x1, x2) = (x0, x1);         \\ shift x after iteration
-  >>(y1, y2) = (y0, y1);         \\ shift y after iteration
-
-  \\ lpf formula
-  w = 2pi * freq / 1s;
-  (sin_w, cos_w) = (sin(w), cos(w));
-  a = sin_w / (2.0 * Q);
-
-  (b0, b1, b2) = ((1.0 - cos_w) / 2.0, 1.0 - cos_w, b0);
-  (a0, a1, a2) = (1.0 + a, -2.0 * cos_w, 1.0 - a);
-
-  (b0, b1, b2, a1, a2) *= 1.0 / a0;
-
-  y0 = b0*x0 + b1*x1 + b2*x2 - a1*y1 - a2*y2;
-
-  y0
-);
-
-\\ process block (mutable)
-lpf(x, freq, Q) = (x | xi -> lpf(xi, freq, Q)).
-```
-
-* _import_ − done via URI string as `@ 'path/to/lib#foo,bar'`. <!-- Built-in libs are: _math_, _std_. Additional libs: _sonr_, _latr_, _musi_ and [others](). --> _import-map.json_ can provide import aliases.
-* _state variables_ − `*state=init` persists value between <span title="Detected by callsite">function calls*</span>.
-* _groups_ − group operations provide syntax sugar for easier and shorter notation.
-* _scope_ − parens `()` besides precedence can indicate function body; returns last element or group.
-* _export_ – last statement with period operator indicates exported entries.
-
-### ZZFX
-
-Consider [coin sound](https://codepen.io/KilledByAPixel/full/BaowKzv):
-> `zzfx(...[,,1675,,.06,.24,1,1.82,,,837,.06])`
-
-```fs
-@'math#pi,abs,sin,round';
-
-1pi = pi;
-1s = 44100;
-1ms = 1s / 1000;
-
-oscillator = [
-  saw(phase) = (1 - 4 * abs( round(phase/2pi) - phase/2pi )),
-  sine(phase) = sin(phase)
-];
-
-adsr(x, a, d, (s, sv=1), r) = (  \\ optional group-argument
-  *i = 0; >> i++;
-  t = i / 1s;
-
-  a -<= 1ms..;                   \\ prevent click
-  total = a + d + s + r;
-
-  y = t >= total ? 0 : (
-    t < a ? t/a :                \\ attack
-    t < a + d ?                  \\ decay
-    1-((t-a)/d)*(1-sv) :         \\ decay falloff
-    t < a  + d + s ?             \\ sustain
-    sv :                         \\ sustain volume
-    (total - t)/r * sv
-  ) * x;
-
-  y
-);
-
-\\ curve effect
-curve(x, amt=1.82 -< 0..10) = (sign(x) * abs(x)) ** amt;
-
-\\ coin = triangle with pitch jump, produces block
-coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
-  out=[..1024];  \\ output block of 1024 samples
-  *i=0; >>i++;
-  *phase = 0;     \\ current phase
-  t = i / 1s;
-  >>phase += (freq + (t > delay ? jump : 0)) * 2pi / 1s;
-
-  out |= x -> oscillator[shape](phase)
-      | x -> adsr(x, 0, 0, .06, .24)
-      | x -> curve(x, 1.82);
-
-  out
-);
-```
-
-* _groups_ − groups are just syntax sugar and are always flat, ie. `a, d, (s, sv), r` == `a, d, s, sv, r`. They're desugared on compilation stage.
-* _units_ – define number multipliers as `1<unit> = <number>`. Units decompose to numbers on compiling stage.
-* _pipes_ − `|` operator is overloaded for functions as `a | b` → `b(a)`.
-* _arrays_ − flat collection of same-type elements: numbers or functions. Unlike groups, arrays are primitives and stored in memory.
-* _named members_ − group or array members can get alias as `[foo: a, bar: b]`.
-
-
-## [Freeverb](https://github.com/opendsp/freeverb/blob/master/index.js)
-
-```fs
-@'./combfilter.li#comb';
-@'./allpass.li#allpass';
-
-1s = 44100;
-
-(a1,a2,a3,a4) = (1116,1188,1277,1356);
-(b1,b2,b3,b4) = (1422,1491,1557,1617);
-(p1,p2,p3,p4) = (225,556,441,341);
-
-\\ TODO: stretch
-
-reverb(input, room=0.5, damp=0.5) = (
-  *combs_a = a0,a1,a2,a3 | a -> stretch(a),
-  *combs_b = b0,b1,b2,b3 | b -> stretch(b),
-  *aps = p0,p1,p2,p3 | p -> stretch(p);
-
-  combs = (
-    (combs_a | x -> comb(x, input, room, damp) |> (a,b) -> a+b) +
-    (combs_b | x -> comb(x, input, room, damp) |> (a,b) -> a+b)
-  );
-
-  (combs, aps) | (input, coef) -> p + allpass(p, coef, room, damp)
-);
-```
-
-Features:
-
-* _multiarg pipes_ − pipe can consume groups. Depending on arity of target it can act as convolver: `a,b,c | (a,b) -> a+b` becomes  `(a,b | (a,b)->a+b), (b,c | (a,b)->a+b)`.
-* _fold operator_ − `a,b,c |> fn` acts as `reduce(a,b,c, fn)`, provides efficient way to reduce a group or array to a single value.
-
-### [Floatbeat](https://dollchan.net/bytebeat/index.html#v3b64fVNRS+QwEP4rQ0FMtnVNS9fz9E64F8E38blwZGvWDbaptCP2kP3vziTpumVPH0qZyXzfzHxf8p7U3aNJrhK0rYHfgHAOZZkrlVVu0+saKbd5dTXazolRwnvlKuwNvvYORjiB/LpyO6pt7XhYqTNYZ1DP64WGBYgczuhAQgpiTXEtIwP29pteBZXqwTrB30jwc7i/i0jX2cF8g2WIGKlhriTRcPjSvcVMBn5NxvgCOc3TmqZ7/IdmmEnAMkX2UPB3oMHdE9WcKqVK+i5Prz+PKa98uOl60RgE6zP0+wUr+qVpZNsDUjKhtyLkKvS+LID0FYVSrJql8KdSMptKKlx9eTIbcllvdf8HxabpaJrIXEiycV7WGPeEW9Y4v5CBS07WBbUitvRqVbg7UDtQRRG3dqtZv3C7bsBbFUVcALvwH86MfSDws62fD7CTb0eIghE/mDAPyw9O9+aoa9h63zxXl2SW/GKOFNRyxbyF3N+FA8bPyzFb5misC9+J/XCC14nVKfgRQ7RY5ivKeKmmjOJMaBJSbEZJoiZZMuj2pTEPGunZhqeatOEN3zadxrXRmOw+AA==)
-
-Transpiled floatbeat/bytebeat song:
-
-```fs
-@'math#asin,sin,pi';
-
-1s = 44100;
-
-fract(x) = x % 1;
-mix(a, b, c) = (a * (1 - c)) + (b * c);
-tri(x) = 2 * asin(sin(x)) / pi;
-noise(x) = sin((x + 10) * sin((x + 10) ** (fract(x) + 10)));
-melodytest(time) = (
-  melodyString = "00040008",
-  melody = 0;
-  i = 0;
-
-  i++ < 5 |> (
-    melody += tri(
-      time * mix(
-        200 + (i * 900),
-        500 + (i * 900),
-        melodyString[floor(time * 2) % melodyString[]] / 16
-      )
-    ) * (1 - fract(time * 4))
-  );
-
-  melody
-)
-hihat(time) = noise(time) * (1 - fract(time * 4)) ** 10;
-kick(time) = sin((1 - fract(time * 2)) ** 17 * 100);
-snare(time) = noise(floor((time) * 108000)) * (1 - fract(time + 0.5)) ** 12;
-melody(time) = melodytest(time) * fract(time * 2) ** 6 * 1;
-
-song() = (
-  *t=0; @t++; time = t / 1s;
-  (kick(time) + snare(time)*.15 + hihat(time)*.05 + melody(time)) / 4
-).
-```
-
-Features:
-
-* _loop operator_ − `cond <| expr` acts as _while_ loop, calling expression until condition holds true. Produces sequence as result.
-* _string literal_ − `"abc"` acts as array with ASCII codes.
-* _length operator_ − `items[]` returns total number of items of either an array, group, string or range.
-
-[See all examples](/examples)
-
-
-## Usage
-
-Lino is available as JS package.
-
-`npm i lino`
-
-```js
-import * as lino from 'lino'
-
-// create wasm arrayBuffer
-const buffer = lino.compile(`mult(x,y) = x*y; mult.`)
-
-// create wasm instance
-const module = new WebAssembly.Module(buffer)
-const instance = new WebAssembly.Instance(module)
-
-// use API
-const {mult} = instance.exports
-mult(108,2) // 216
-```
 
 
 ## Inspiration
