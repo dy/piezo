@@ -638,7 +638,7 @@ Having wat files is more useful than direct compilation to binary form:
       ~+ group can be defined as `*(a=0,b=1)`
     ~ `song()=(*t=0;)`
     + used in JS for generators and other "additional" stuff
-    - a bit hard to "find all"
+    - a bit hard to "find all" since * is not part of id
     ```
     lp([x0], freq = 100 in 1..10000, Q = 1.0 in 0.001..3.0) = (
       *(x1, x2, y1, y2) = 0;    // internal state
@@ -678,7 +678,7 @@ Having wat files is more useful than direct compilation to binary form:
     - `#` is reserved for too many things: count, import, comment.
   6. ~~`#(x1, x2, y1, y2)`~~
   7. `<x1, x2, y1, y2>`
-  8. Introduce keywords? Not having if (a) b can be too cryptic.
+  8. ~~Introduce keywords? Not having if (a) b can be too cryptic.~~
 
   9. `$x1, $x2, $y1, $y2`
     + $ means "save"
@@ -717,6 +717,7 @@ Having wat files is more useful than direct compilation to binary form:
     )
     ```
     ~ `song()=(&t=0;)`
+    + complementary with `*` as defer operator
 
   11. ~~`@x1, @x2, @y1, @y2`~~
     + 'at' means current scope, 'at this'
@@ -1978,7 +1979,7 @@ Having wat files is more useful than direct compilation to binary form:
 
   3.1 `math @ sin, cos`
 
-## [ ] Do we need to have `@` for imports? Can't we just indicate atom directly?
+## [x] Do we need to have `@` for imports? Can't we just indicate atom directly? -> we can import without atoms
 
   ? Can we do directly `'math#sin,cos'`?
   + saves from `@'@brain/pkg'` case
@@ -2325,35 +2326,47 @@ Having wat files is more useful than direct compilation to binary form:
   Top Back Center - TBC
   Top Back Right - TBR
 
-## [x] Defer -> `x(a) = (>>log(a); >>a+=1; a)`
+## [x] Defer -> `x(a) = (>log(a); >a+=1; a)`
 
   + like golang defer execution runs item after function return
   + allows separating return value from increments needed after function
-  * can be done as `x()=(@(a);b,c;@(d))` - schedules `@`s at the end of function
   ? no deferring?
     + obvious code sequence
+    + no conceptual/syntax/mental layer over operator
     - no nice definition of variable state and its change
     - noisy code of creating result holder var, performing state update, returning result
-  * other symbols: `>>, ||, ~>, //, \\, >-, >>|, <|, <!`,
+  * symbols: `>>, ||, ~>, //, \\, >-, >>|, <|, <!`,
+    * `x()=(@(a);b,c;@(d))`
+      - brings `@` into local scope
+      - not straight meaning
     * `x() = (//a; b,c; //d;)`
-    * `x() = (/a; b,c; /d;)`
+      - strong association with comment
+    * `x() = (/a; b,c; /d;)`, `x()=(*i=0;/i++;*phase=0;/phase+=t;)`, `x()=(/log(a))`
       + one-symbol
       + associates with reddit tags
       + associates with HTML close-elements
       + generally "close" meaning is `/`
-      + comes together with `*a=0; /a++;`
+      + complementary with `*` as `*a=0; /a++;`
+        - reinforces meaning of opposites `*/`, which is not the case here
       + doesn't feel like part of identifier
       - too many slashes `/a/b\\divide a by b`
       - too strong association with something not-end, like `/imagine` or etc.
+      - doesn't feel right typing `/` as meaning for defer.
     * `x() = (&a; b,c; &d)`
       + meaning of "and also this"
       + also "counterpart" of `*` from C-lang
         + it was even an alternative to `*` in the beginning
-      - has "wrong" meaning as "part" of identifier, not operator (higher precedence)
+      - has meaning as "part" of identifier, not operator (higher precedence)
         - ie. `&i++` raises confusion, it's not `&(i++)`, it's `(&i)++`
     * `x() = (~a; b,c; ~d)`
       + meaning of "destructor"
+      + relatively safe within other options: `/i++, \i++, &i++, 'i++, #i++, @i++, >>i++, .i++`
+      + follows spirit of C in terms of "common" operators choice `*, ~`
+      + `~` means "after all that is here"
+      + `~` also means "delete" or "erase" in markdown
+      + minimal noise
       - subtle dissonance with `*`: `x()=(*i=0;~i++;)`
+      - reserved for unary "binary inversion", already married
     * `x() = (a.; b,c; d.)`
       + meaning "at the end"
       + same operator is used for export
@@ -2362,20 +2375,42 @@ Having wat files is more useful than direct compilation to binary form:
         - not clear if the whole phrase is at the end or just i++
     * `x() = (.a; b,c; .d)`
       - has wrong associatino with property access
-    * `x() = (@i=0;*i++)`
+    * `x() = (&i=0;*i++)`
       - takes away "save" meaning
-      - no understanding
-    * `x() = (*i=0;>>i++;)`, `x()=(>>a; b,c,; >>d;)`
+      + star means "footnote", like "afterword" in typographics
+      + `&` means "with" for variables, it was main alternative to `*`
+      - `*` has too strong association with "save"
+    * `x() = (*i=0;>>i++;)`, `x()=(>>a; b,c,; >>d;)`, `x(a) = (>>log(a); >>a+=1; a)`
       + clear meaning of "shift"
       + Sercy sneezed
       + related to playback's `>>` as fast-forward
       - association with C++ pipe (cout)
+      - 2 chars, opposed to 1 char in `*i=0;`
+      - a bit too much visual noise, defer doesn't have primary meaning
+    * `x() = (*i=0;>i++;*phase=0;>phase+=t;)`, `x()=(>log(a);>a+=1;)`
+      + refers to `>>`
+      + obvious that there's something fishy going on
+      + refers to "quote" from markdown
+      + minimal
+      + adds to the feeling of flow
+      + association with terminal's command "output"
     * `x() = (*i=0;>>|i++)`
       + `skip forward`
       - too many symbols
       - somehow related to pipes
     * `x()=(*i=0;=>i++;)`
       - equals noise
+    * `x()=(*i=0;'i++)`
+      + refers to footnote
+      - quotes usually come in pairs
+    * `x()=(*i=0;#i++)`
+      + also refers to footnote
+      + like hashtags, comes afterwards
+      - a bit too heavy to reserve such prominent operator for just deferring
+      - reserves # as operator
+      + includes notion of "double", like double hash `//` in it
+        ? is that why python uses # instead of // for comment?
+      + associates with comment, something that comes "after"
 
 ## [ ] Try-catch -> `x() ?= (a, b, c)` makes fn definition wrapped with try-catch
 

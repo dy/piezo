@@ -116,7 +116,7 @@ binary('*', PREC_MULT)
 binary('/', PREC_MULT)
 binary('%', PREC_MULT)
 // binary('|', PREC_BOR)
-nary('&', PREC_BAND)
+binary('&', PREC_BAND)
 binary('^', PREC_XOR)
 binary('==', PREC_EQ)
 binary('!=', PREC_EQ)
@@ -131,7 +131,7 @@ binary('<<', PREC_SHIFT)
 binary('-<', PREC_CLAMP) // a -< b
 
 binary('|>', PREC_LOOP)
-binary('|', PREC_PIPE)
+nary('|', PREC_PIPE)
 token('|', PREC_BOR, (a,b)=> (
   // return BOR precedence only if rhs is not `->`, otherwise lower precedence
   // NOTE: there is a case with rhs higher than map:  a|b=c
@@ -168,6 +168,9 @@ token('.', PREC_CALL, (a,b) => a && (b=skip(isId)) && ['.', a, b])
 
 // *a
 unary('*', PREC_UNARY)
+
+// >a
+unary('>', PREC_UNARY)
 
 // @ 'ab'
 unary('@', PREC_TOKEN)

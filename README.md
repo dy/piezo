@@ -22,7 +22,7 @@ Provides k-rate amplification for block of samples.
 gain(                               \\ defines a function with block, volume arguments.
   block,                            \\ block type is inferred as buffer from pipe operation |=
   volume -< 0..100.0                \\ volume is clamped to 0..100, type is inferred as float
-) = (   
+) = (
   block |= x -> x * volume          \\ maps samples via pipe: block = block | x -> x * volume
 );
 
@@ -49,9 +49,9 @@ lpf(                                \\ per-sample processing function
   freq = 100 -< 1..10k,             \\ filter frequency, float
   Q = 1.0 -< 0.001..3.0             \\ quality factor, float
 ) = (
-  * (x1, y1, x2, y2) = 0;           \\ define filter state
-  >> (x1, x2) = (x0, x1);           \\ defer shifting x state
-  >> (y1, y2) = (y0, y1);           \\ defer shifting y state
+  *(x1, y1, x2, y2) = 0;            \\ define filter state
+  >(x1, x2) = (x0, x1);             \\ defer shifting state
+  >(y1, y2) = (y0, y1);
 
   \\ lpf formula
   w = 2pi * freq / 1s;
@@ -77,7 +77,7 @@ lpf.                                \\ export lpf function
 
 Generates ZZFX's [coin sound](https://codepen.io/KilledByAPixel/full/BaowKzv) `zzfx(...[,,1675,,.06,.24,1,1.82,,,837,.06])`.
 
-```fs
+```
 @math#pi,abs,sin,round;
 
 1pi = pi;
@@ -92,7 +92,7 @@ oscillator = [
 
 // applies adsr curve to sequence of samples
 adsr(x, a, d, (s, sv=1), r) = (   \\ optional group-argument
-  *i = 0; >> i++;                 \\ internal counter
+  *i = 0; >i++;                   \\ internal counter, increments after fn body
   t = i / 1s;
 
   a -<= 1ms..;                    \\ prevent click
@@ -116,10 +116,10 @@ curve(x, amt=1.82 -< 0..10) = (sign(x) * abs(x)) ** amt;
 \\ coin = triangle with pitch jump, produces block
 coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
   out=[..1024];                   \\ output block of 1024 samples
-  *i=0; >>i++;
+  *i=0; /i++;
   *phase = 0;                     \\ current phase
   t = i / 1s;
-  >>phase += (freq + (t > delay ? jump : 0)) * 2pi / 1s;
+  /phase += (freq + (t > delay ? jump : 0)) * 2pi / 1s;
 
   out |= x -> oscillator[shape](phase)
       | x -> adsr(x, 0, 0, .06, .24)
@@ -211,7 +211,7 @@ Features:
 * _length operator_ − `items[]` returns total number of items of either an array, group, string or range.
 -->
 
-## Other examples
+### Other examples
 
 * [Freeverb](/examples/freeverb.li)
 * [Floatbeat](/examples/floatbeat.li)
@@ -289,7 +289,7 @@ true = 0b1, false = 0b0;        \\ hint: alias booleans
 []                              \\ prop, length
 ^ ^^                            \\ continue/return, break/return
 @ .                             \\ import, export
-* >>                            \\ (unary) declare state, defer
+* >                             \\ (unary) declare state, defer
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ ranges
 1..10;                          \\ basic range
@@ -361,7 +361,7 @@ a() = ( *i=0; i++ );            \\ stateful variable - persist value between fn 
 a(), a();                       \\ 0, 1
 b() = (
   *i = [..4];                   \\ local memory of 4 items
-  >> i = i[-1,1..];             \\ defer (called after fn body)
+  >i = i[-1,1..];               \\ defer (called after fn body)
   i.0 = i.1+1;                  \\ write previous value i.1 to current value i.0
   i.0                           \\ return i.0
 );

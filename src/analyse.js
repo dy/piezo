@@ -136,21 +136,17 @@ export default function analyze(node) {
         // FIXME: make sure left side contains only names or props
         let stash = ls.map((id,i) => temp(`set/${id}`, expr(rs[i])))
         let unstash = ls.map((id,i) => ['=',expr(ls[i]),stash[i][1]]) // catch left ids into current scope
-        return expr(['(',[';',...stash,[',',...unstash]]])
+        return expr([';',...stash,[',',...unstash]])
       }
 
       // x[i] = ...,  x.1 = ...
       if (left[0] === '[]' || left[0] === '.') {
-        let parent = scope
-        scope = Object.create(scope)
         let [,obj,prop] = left,
-            init = temp('val', expr(right)),
+            init = temp('set/val', expr(right)),
             name = init[1],
             idx = left[0] === '.' ? prop : expr(prop)
-        // x[i] = y  ->  (val = y; x[i] = val; val)
-        let block = ['(',[';', init, ['=',[left[0],expr(obj),idx], name], name]]
-        block.scope = scope
-        scope = parent
+        // x[i] = y   ->   val = y; x[i] = val; val
+        let block = [';', init, ['=',[left[0],expr(obj),idx], name], name]
         return block
       }
       // x.1 = ...
