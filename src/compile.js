@@ -157,7 +157,7 @@ export default function compile(node) {
         }
         else err('Unimplemented array initializer',init)
       }
-      // prepend initalizer
+      // prepend length initializer
       out = `(i32.store (i32.const ${memcount-MEM_STRIDE}) (i32.const ${members})) ` + out
       out += `(i32.const ${memcount})`
       memcount += members * MEM_STRIDE

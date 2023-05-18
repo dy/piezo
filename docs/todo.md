@@ -16,6 +16,13 @@
 
 * [x] Add proper scope mechanism (streamline compiler)
 * [ ] case-insensitive
+* [ ] Replace `temp` with `wat/fn` includes:
+  + helper functions naturally isolate temp scope variables () for storing (no names conflict)
+  + swizzling like `set3(a,b,c)` (returns 3 arguments)
+  + loop easily returns result
+  + standardized non-standard operators
+  + we keep analyzer code clean
+  + inliner on optimizing stage can take care of everything else
 * [ ] loops parsing rule
 * [ ] merge scopes, rename internal variables
 * [ ] Implement better array index

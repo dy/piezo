@@ -2394,6 +2394,10 @@ Having wat files is more useful than direct compilation to binary form:
       + minimal
       + adds to the feeling of flow
       + association with terminal's command "output"
+      - breaks loop `a |> b` into `a | >b`
+        ~ fixable-ish via precedence
+        ~ loop has never defers (?)
+        ? can we change loop to `?>`, so it means "until condition holds, defer code"
     * `x() = (*i=0;>>|i++)`
       + `skip forward`
       - too many symbols

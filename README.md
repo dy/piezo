@@ -385,8 +385,8 @@ m = m[1..,0];                   \\ rotate memory left
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ loops
 i=0; i++ < 3 |> log(i);         \\ inline loop: while i++ < 3 do log(i)
-[a, b, c] | item -> x(item);    \\ for each item in a list
-10..1 | i -> (                  \\ iterate over range
+[a, b, c] | item -> x(item);    \\ for each
+10..1 | i -> (                  \\ iterate range
   i < 3 ? ^^;                   \\ `^^` breaks loop
   i < 5 ? ^;                    \\ `^` continues loop
 );
@@ -443,8 +443,8 @@ By that it aspires to standardize sound expressions and make sound more accessib
 
 ### Principles
 
-* _Common syntax_: copy-paste compatible floatbeats.
-* _No-keywords_: safe var names, maximal minification, i18l code.
+* _Common syntax_: familiar code, copy-pastable floatbeats.
+* _No-keywords_: safe var names, max minification, non-latin code.
 * _Case-agnostic_: URL-safe, typo-proof.
 * _Subtle type inference_: type hints instead of heavy syntax.
 * _No OOP_: functional, stateful vars.
@@ -455,5 +455,6 @@ By that it aspires to standardize sound expressions and make sound more accessib
 * _Low-level_: no fancy features beyond math and buffers.
 * _Linear memory_: no garbage collectable constructs.
 * _0 runtime_: statically analyzable.
+* _Flat_: no nested scopes, arrays are flat.
 
 <p align=center><a href="https://github.com/krsnzd/license/">🕉</a></p>

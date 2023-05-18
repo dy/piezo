@@ -11,11 +11,12 @@ const OPAREN=40, CPAREN=41, OBRACK=91, CBRACK=93, SPACE=32, QUOTE=39, DQUOTE=34,
 const PREC_SEMI=1,
 PREC_EXPORT=2,
 PREC_SEQUENCE=3, //  a, b==c, d,   a, b>=c, d,   a | b,c | d,   a?b:c , d
-PREC_LOOP=4, // |>
-PREC_PIPE=5, // |->
-PREC_MAP=6, // ->
-PREC_ASSIGN=7,  // a=b, c=d,  a = b||c,  a = b | c,   a = b&c
-PREC_BOR=8, // a|b , c|d,   a = b|c
+PREC_DEFER=4,
+PREC_LOOP=5, // |>
+PREC_PIPE=6, // |->
+PREC_MAP=7, // ->
+PREC_ASSIGN=8,  // a=b, c=d,  a = b||c,  a = b | c,   a = b&c
+PREC_BOR=9, // a|b , c|d,   a = b|c
 PREC_LABEL=10, // a:b = 2,  a:b, b:c,   a: b&c
 PREC_TERNARY=11,
 PREC_OR=12,
@@ -167,10 +168,10 @@ token('..<', PREC_RANGE, a => ['..<', a, expr(PREC_RANGE)])
 token('.', PREC_CALL, (a,b) => a && (b=skip(isId)) && ['.', a, b])
 
 // *a
-unary('*', PREC_UNARY)
+unary('*', PREC_DEFER)
 
 // >a
-unary('>', PREC_UNARY)
+unary('>', PREC_DEFER)
 
 // @ 'ab'
 unary('@', PREC_TOKEN)
