@@ -136,7 +136,7 @@ export default function analyze(node) {
         // FIXME: make sure left side contains only names or props
         let stash = ls.map((id,i) => temp(`set/${id}`, expr(rs[i])))
         let unstash = ls.map((id,i) => ['=',expr(ls[i]),stash[i][1]]) // catch left ids into current scope
-        return expr([';',...stash,[',',...unstash]])
+        return expr(['(',[';',...stash,[',',...unstash]]])
       }
 
       // x[i] = ...,  x.1 = ...
