@@ -781,6 +781,11 @@ Having wat files is more useful than direct compilation to binary form:
     ~+ `b` or `0`?
   * return type is `0` or `typeof b`
   - burdens `?` with semantic load, impeding other proposals like `try..catch`
+  !? What if `a ?! b`, which is essentially `!a ?: b`
+    + no conflict with ternary `?:`
+    - nah, wrong ordering, we inverse `a`, not `b`
+  !? What if `a ?? b`?
+    - means `a || b` from JS, which is just `a ?: b`
 
 ## [x] Loops: ~~`i <- 0..10 <| a + i`, `i <- list <| a`, `[x <- 1,2,3 <| x*2]`~~ `0..10 | i -> a + i`
   * `for i in 0..10 (a,b,c)`, `for i in src a;`

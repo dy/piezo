@@ -28,6 +28,10 @@ export default function compile(node) {
     err('Unknown operation `' + statement[0] + '`',statement)
   }
 
+  function include(name) {
+    if (!includes.includes(name)) includes.push(name)
+  }
+
   Object.assign(expr, {
     // a; b; c;
     ';'([,...statements]){ let list=[]; for (let s of statements) list.push(expr(s)); return list.filter(Boolean).join('(drop)\n') },
@@ -38,13 +42,7 @@ export default function compile(node) {
     [INT]([,a]) { return `(i32.const ${a})`},
 
     '('(statement){
-      let parent = scope
-      scope = statement.scope
-      // declare locals
-      Object.getOwnPropertyNames(scope).forEach(define)
-      let res = expr(statement[1])
-      scope = parent
-      return res
+      return expr(statement[1])
     },
 
     '()'([,name,[,...args]]){
@@ -110,7 +108,20 @@ export default function compile(node) {
       return `(f64.ne ${fexpr(a)} ${fexpr(b)})`
     },
 
-    // conditions
+    // logical
+    '&&'([,a,b]) {
+      if (desc(a,scope).type==FLOAT || desc(b,scope).type == FLOAT)
+        return include('wat/f64.and'), `(call $wat/f64.and ${fexpr(a)} ${fexpr(b)})`
+      else
+        return include('wat/i32.and'), `(call $wat/i32.and ${expr(a)} ${expr(b)})`
+    },
+    '||'([,a,b]) {
+      if (desc(a,scope).type==FLOAT || desc(b,scope).type == FLOAT)
+        return include('wat/f64.or'), `(call $wat/f64.or ${fexpr(a)} ${fexpr(b)})`
+      else
+        return include('wat/i32.or'), `(call $wat/i32.or ${expr(a)} ${expr(b)})`
+    },
+
     '?:'([,a,b,c]){
       let bDesc = desc(b,scope), cDesc = desc(c,scope);
       // upgrade result to float if any of operands is float
@@ -124,8 +135,8 @@ export default function compile(node) {
       if (b[0] !== '..') err('Non-range passed as right side of clamp operator')
       let [,min,max] = b
       if (desc(a,scope).type == INT && desc(min,scope).type == INT && desc(max,scope).type == INT) {
-        if (!includes.includes('wat/i32.smax')) includes.push('wat/i32.smax')
-        if (!includes.includes('wat/i32.smin')) includes.push('wat/i32.smin')
+        include('wat/i32.smax')
+        include('wat/i32.smin')
         return `(call $wat/i32.smax (call $wat/i32.smin ${expr(a)} ${expr(max)}) ${expr(min)})`
       }
       return `(f64.max (f64.min ${fexpr(a)} ${fexpr(max)}) ${fexpr(min)})`
@@ -187,8 +198,11 @@ export default function compile(node) {
         // FIXME: add static optimization here for property - to avoid calling i32.modwrap if idx is known
 
         // dynamic props - access as a[modwrap(idx, len)]
-        if (!includes.includes('wat/i32.modwrap')) includes.push('wat/i32.modwrap')
-        return `(f64.store (i32.add ${expr(ptr)} (i32.shl (call $wat/i32.modwrap ${iexpr(prop)} ${expr(['[]',ptr])}) (i32.const ${Math.log2(MEM_STRIDE)}))) ${fexpr(b)})`
+        include('wat/f64.store')
+
+        // we do function call to make sure stack has result of setting
+        return
+        // return `(f64.store (i32.add ${expr(ptr)} (i32.shl (call $wat/i32.modwrap ${iexpr(prop)} ${expr(['[]',ptr])}) (i32.const ${Math.log2(MEM_STRIDE)}))) ${fexpr(b)}) ()`
       }
 
       // x(a,b) = y
@@ -247,7 +261,16 @@ export default function compile(node) {
     '|>'([,a,b]) {
       // console.log("TODO: loops", a, b)
       loop++
-      let res = `(loop $loop${loop} (if ${expr(a)} (then ${expr(b)} (br $loop${loop}))))`
+      let res =
+      `(loop $loop${loop} (result i32)\n` +
+      `  (if (result i32) ${expr(a)}\n` +
+      `    (then\n` +
+      `      ${expr(b)}\n` +
+      `      (br $loop${loop})\n` +
+      `    )\n` +
+      `    (else (i32.const 0))\n` +
+      `  )\n` +
+      `)\n`
       loop--
       return res
     }

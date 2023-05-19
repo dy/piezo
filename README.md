@@ -325,7 +325,7 @@ a = b, c = d;                   \\ note: assignment precedence is higher: (a = b
 foo();                          \\ semi-colons at end of line are mandatory
 (c = a + b; c);                 \\ parens define block, return last element
 (a = b+1; a,b,c);               \\ block can return group
-(a ? ^b; c);                    \\ return/break operator can preliminarily return value
+(a ? ^b ; c);                   \\ return/break operator can preliminarily return value
 (a;b;);                         \\ note: returns null, if semicolon is last within block
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ conditions
@@ -338,8 +338,8 @@ sign = a < 0 ? -1 : +1;         \\ inline ternary
   log("Get ready");
   log("Last chance")
 );
-a > b ? c;                      \\ if a > b then c
-a > b ?: c;                     \\ if not a > b then c
+a || b ? c;                     \\ if a or b then c
+a && b ?: c;                    \\ if not a or b then c
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ functions
 double(n) = n*2;                \\ inline function

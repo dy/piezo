@@ -5,6 +5,7 @@ import parse from '../src/parse.js'
 import analyse from '../src/analyse.js'
 import compile from '../src/compile.js'
 import Wabt from '../lib/wabt.js'
+// import Wabt from 'wabt'
 
 
 function clean (str) {
@@ -17,11 +18,13 @@ function clean (str) {
 }
 
 // convert wast code to binary
-let wabt = await Wabt()
+const wabt = await Wabt()
 function compileWat (code, importObj={}) {
   code = '(func $log (import "imports" "log") (param i32))\n(func $logf (import "imports" "log") (param f64))\n' + code
   const wasmModule = wabt.parseWat('inline', code, {
-    simd: true
+    // simd: true,
+    reference_types: true,
+    // function_references: true
   })
 
   const binary = wasmModule.toBinary({
@@ -106,6 +109,22 @@ t('compile: numbers inc/dec', t => {
   wat = compile(`x=0; y=x--; x,y.`)
   mod = compileWat(wat)
   is(mod.exports.x.value, -1)
+})
+
+t('compile: conditions or/and', t => {
+  let wat, mod
+  wat = compile(`x=1;y=0;z=x||y.`)
+  mod = compileWat(wat)
+  is(mod.exports.z.value, 1)
+  wat = compile(`x=1.2;y=0.0;z=x||y.`)
+  mod = compileWat(wat)
+  is(mod.exports.z.value, 1.2)
+  wat = compile(`x=1.2;y=0.2;z=x&&y.`)
+  mod = compileWat(wat)
+  is(mod.exports.z.value, 0.2)
+  wat = compile(`x=1;y=2;z=x&&y.`)
+  mod = compileWat(wat)
+  is(mod.exports.z.value, 2)
 })
 
 t('compile: function oneliners', t => {
@@ -227,9 +246,13 @@ t.skip('debugs', t => {
   const memory = new WebAssembly.Memory({ initial: 1 });
   const importObject = { env: { memory } };
   let module = compileWat(`
+  (func
+    ref.null func
+    drop
+  )
   `, importObject)
 
-  console.log(module.exports.x)
+  console.log(module.exports.select_externref())
 })
 
 t('compile: variable type inference', t => {
@@ -247,7 +270,7 @@ t('compile: variable type inference', t => {
   x = compileWat(compile(`x;x=[];x.`)).exports.x // late-arr type
 })
 
-t.only('compile: loops basic', t => {
+t('compile: loops basic', t => {
   let wat = compile(`x=[..3]; i=0; i<3 |> x[i]=i++; x.`)
   let mod = compileWat(wat)
   let {memory, x} = mod.exports

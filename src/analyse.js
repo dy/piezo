@@ -53,11 +53,6 @@ export default function analyze(node) {
     // a+=b -> a=a+1
     '+='([,a,b]){ return a = expr(a), b = expr(b), ['=',a,['+',a,b]]},
 
-    // a&&b -> tmp=a; tmp ? b : tmp
-    '&&'([,a,b]) { let lhs = temp('and',expr(a)); return [';',lhs,['?:',lhs[1],expr(b),lhs[1]]] },
-    // a||b -> tmp=a; tmp ? tmp : a
-    '||'([,a,b]) { let lhs = temp('or',expr(a)); return [';',lhs,['?:',lhs[1],lhs[1],expr(b)]] },
-
     // a=b; a,b=b,c; a = () -> b
     '='([,left,right]) {
       // (a,b,c) = (d,e,f)
@@ -382,9 +377,9 @@ export function desc(node, scope) {
       // return (desc(a, scope).type === INT && desc(b, scope).type === INT) ? {type:INT} : {type:FLOAT}
       return {type:FLOAT, static:s}
     },
-    '='() { return bDesc },
-    '&&'() { return bDesc },
-    '||'() { return bDesc },
+    '='() { return {...bDesc} },
+    '&&'() { return {type: aDesc.type === FLOAT || bDesc.type === FLOAT ? FLOAT : INT, static:s} },
+    '||'() { return {type: aDesc.type === FLOAT || bDesc.type === FLOAT ? FLOAT : INT, static:s} },
     '=='() { return {type:INT, static:s} },
     '!='() { return {type:INT, static:s} },
     '-<'() {
