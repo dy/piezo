@@ -1,7 +1,7 @@
 // compile source/ast/ir to WAST
 import analyse, { err, desc } from "./analyse.js"
 import stdlib from "./stdlib.js"
-import {FLOAT,INT,RANGE,PTR,FUNC} from './const.js'
+import {FLOAT,INT,RANGE,BUF,FUNC} from './const.js'
 import { parse as parseWat } from "watr";
 
 const F64_PER_PAGE = 8192;
@@ -13,7 +13,8 @@ export default function compile(node) {
 
   let includes = [], // pieces to prepend
     globals = [], // global statements
-    locals, // current local fn body
+    pickers = [], // defined picker functions
+    locals, // current fn local statements
     memcount = 0, // current used memory pointer (number of f64s)
     scope, // current scope
     loop = 0 // current loop
@@ -26,10 +27,6 @@ export default function compile(node) {
     if (typeof statement === 'string') return scope[statement].type === FUNC ? `` : `(${scope[statement].global?'global':'local'}.get $${statement})`
     if (statement[0] in expr) return expr[statement[0]](statement, name) || ''
     err('Unknown operation `' + statement[0] + '`',statement)
-  }
-
-  function include(name) {
-    if (!includes.includes(name)) includes.push(name)
   }
 
   Object.assign(expr, {
@@ -109,9 +106,10 @@ export default function compile(node) {
     },
 
     // logical
+    // FIXME: we can't call and function here since we don't need to evaluate both branches
     '&&'([,a,b]) {
       if (desc(a,scope).type==FLOAT || desc(b,scope).type == FLOAT)
-        return include('wat/f64.and'), `(call $wat/f64.and ${fexpr(a)} ${fexpr(b)})`
+        return include('wat/f64.and'), `(if (call $wat/f64.and ${fexpr(a)} ${fexpr(b)}) (else ${fexpr()}))`
       else
         return include('wat/i32.and'), `(call $wat/i32.and ${expr(a)} ${expr(b)})`
     },
@@ -180,7 +178,7 @@ export default function compile(node) {
       // a[]
       if (!b) {
         let aDesc = desc(a,scope);
-        if (aDesc.type !== PTR) err('Reading length of non-array', a);
+        if (aDesc.type !== BUF) err('Reading length of non-array', a);
         return `(i32.load (i32.sub (${aDesc.global?'global':'local'}.get $${a}) (i32.const ${MEM_STRIDE})))`
       }
       else {
@@ -215,7 +213,7 @@ export default function compile(node) {
         // define init part - params, result
         args?.forEach(id => {
           scope[id]._defined = true
-          dfn.push(`(param $${id} ${scope[id].type == PTR ? 'i32' : 'f64'})`)
+          dfn.push(`(param $${id} ${scope[id].type == BUF ? 'i32' : 'f64'})`)
         })
         if (body.result) dfn.push(`(result ${body.result.type == FLOAT ? 'f64' : 'i32'})`)
 
@@ -237,11 +235,23 @@ export default function compile(node) {
         return
       }
 
-      // a = b
-      if (scope[a].global)
-        return `(global.set $${a} ${expr(b)})(global.get $${a})`
-      else
-        return `(local.tee $${a} ${expr(b)})`
+      // a = b,  a = (b,c),   a = (b;c,d)
+      if (typeof a === 'string') {
+        if (scope[a].global) return `(global.set $${a} ${pick(1,b)})(global.get $${a})`
+        else return `(local.tee $${a} ${pick(1,b)})`
+      }
+
+      // (a,b) = ...
+      if (a[0]===',') {
+        let [,...outputs] = a, inputs = desc(b,scope).members
+
+        if (inputs) outputs = outputs.slice(0, inputs.length).reverse() // (a,b,c)=(c,d) -> (a,b)=(c,d)
+
+        // set as `(i32.const 1)(i32.const 2)(local.set 0)(local.set 1)`
+        return pick(outputs.length,b) +
+          outputs.map(m=>scope[m].global?`(global.set $${m})`:`(local.set $${m})`).join('') +
+          outputs.map(m=>scope[m].global?`(global.get $${m})`:`(local.get $${m})`).join('')
+      }
 
       err('Strange assignment', node)
     },
@@ -276,7 +286,7 @@ export default function compile(node) {
     }
   })
 
-  // define variable in proper scope
+  // define variable in current scope
   function define(name) {
     let v = scope[name]
     if (!v._defined && v.type !== FUNC) {
@@ -287,15 +297,48 @@ export default function compile(node) {
     }
   }
 
-  // render expression wrapped to float, if needed
+  // add include from stdlib
+  function include(name) {
+    if (!includes.includes(name)) includes.push(name)
+  }
+
+  // wrap expression to float, if needed
   function fexpr(node) {
     if (desc(node, scope).type === FLOAT) return expr(node)
     return `(f64.convert_i32_s ${expr(node)})`;
   }
-  // cast last expr into int
+  // cast expr to int
   function iexpr(node) {
     if (desc(node, scope).type === INT) return expr(node)
     return `(i32.trunc_f64_s ${expr(node)})`
+  }
+
+  // create args swapper/picker (fn that maps inputs to outputs), like (a,b,c) -> (a,b)
+  function pick(count, group) {
+    let {members,type} = desc(group,scope), name
+
+    if (!members) {
+      // a = b - skip picking
+      if (count === 1) return expr(group)
+      // (a,b,c) = d
+      let wtype = type===INT?'i32':'f64'
+      name = `$pick/${wtype}.${count}`
+      if (!pickers.includes(name)) {
+        pickers.push(name);
+        globals.unshift(`(func ${name} (param ${wtype}) (result ${(wtype+' ').repeat(count)}) ${`(local.get 0)`.repeat(count)} (return))`)
+      }
+    }
+
+    // N:M or 1:M picker
+    else {
+      name = `$pick/${members.map(d=>d.type===INT?'i32':'f64').join('')}.${count}`
+      if (!pickers.includes(name)) {
+        pickers.push(name);
+        globals.unshift(`(func ${name} (param ${members.map(d=>d.type===INT?'i32':'f64').join(' ')}) (result ${members.slice(0,count).map(d=>d.type===INT?'i32':'f64').join(' ')}) ${members.slice(0,count).map((o,i) => `(local.get ${i})`).join('')} (return))`)
+      }
+    }
+
+    return `(call ${name} ${expr(group)})`
   }
 
 

@@ -45,15 +45,15 @@ t('analyze: sine gen', t => {
   is(scope, {
     export: { sine: 'func' },
     import: { math: ['sin', 'pi', 'max' ] },
-    global: { pi2: { type:'flt',init:[ '*', 'pi', ['int', 2] ]}, sampleRate: {type:'int',init:[ 'int', 44100 ]} },
+    global: { pi2: { type:'flt',init:[ '*', 'pi', [INT, 2] ]}, sampleRate: {type:INT,init:[ INT, 44100 ]} },
     func: {
       sine: {
         name: 'sine',
         args: ['freq'],
-        local: { phase: {type: 'int', stateful: true, init:['int', 0]}, freq: {type:'flt',init:null,arg:true} },
+        local: { phase: {type: INT, stateful: true, init:[INT, 0]}, freq: {type:'flt',init:null,arg:true} },
         return: ['()', 'sin', 'phase'],
         body: [';',
-          ['=', ['*', 'phase'], ['int', 0]],
+          ['=', ['*', 'phase'], [INT, 0]],
           ['+=', 'phase', ['/', ['*', 'freq', 'pi2'], 'sampleRate']],
           ['()', 'sin', 'phase']
         ],

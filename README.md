@@ -315,7 +315,7 @@ a, b, c;                        \\ groups are syntactic sugar
 (a,b) + (c,d);                  \\ operations: (a+c, b+d)
 (a,b).x;                        \\ (a.x, b.x);
 (a,b).x();                      \\ (a.x(), b.x());
-(a,b,c) = (d,e,f);              \\ (a=d, b=e, c=f);
+(a,b) = (c,d,e);                \\ (a=c, b=d);
 (a,b,c) = d;                    \\ (a=d, b=d, c=d);
 a = (b,c,d);                    \\ (a=b);
 a = b, c = d;                   \\ note: assignment precedence is higher: (a = b), (c = d)

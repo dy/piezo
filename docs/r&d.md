@@ -3090,3 +3090,8 @@ Having wat files is more useful than direct compilation to binary form:
 
   * `saw() = (@math#pi; pi*2+...)`
   + allows avoiding conflicts
+
+## [ ] Arrays length: use multiple values output?
+
+  + allows returning arrays as a couple [ptr,length] instead of storing length in memory
+  * see https://hacks.mozilla.org/2019/11/multi-value-all-the-wasm/

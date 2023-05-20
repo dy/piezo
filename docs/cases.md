@@ -23,3 +23,5 @@
 * [ ] https://github.com/austintheriot/hand-crafted-wasm
 * [ ] https://github.com/ClickHouse/NoiSQL
 * [ ] https://github.com/LinusU/pokemon-synthesizer
+* [ ] https://github.com/renzol2/fx
+* [ ] https://github.com/JoepVanlier/JSFX

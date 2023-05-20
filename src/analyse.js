@@ -3,7 +3,7 @@
 // independent of particular compiler/memory layout, so that can be compiled to any target after
 import parse from './parse.js';
 import stdlib from './stdlib.js';
-import {PTR, FLOAT, INT, RANGE, STR, FUNC} from './const.js';
+import {BUF, FLOAT, INT, RANGE, FUNC} from './const.js';
 
 // detect variables & types, simplify tree for easier compilation
 export default function analyze(node) {
@@ -57,7 +57,6 @@ export default function analyze(node) {
     '='([,left,right]) {
       // (a,b,c) = (d,e,f)
       if (left[0]==='(') left = left[1]
-      if (right[0]==='(') right = right[1]
 
       // =a,b,c    =a|b|c    =expr
       // right = expr(right)
@@ -65,17 +64,20 @@ export default function analyze(node) {
       // a = b,  a,b=1,2, [x]a =
       // a = ...
       if (typeof left === 'string') {
-        if (right[0] === ',') err('Assigning multiple values to a single value ' + left, right)
-        right = expr(right)
-        let rDesc = desc(right, scope)
-        if (!scope[left]) scope[left] = rDesc
-        else {
-          scope[left].mutable = true
-          if (!scope[left].type) Object.assign(scope[left], rDesc)
-          // FIXME: figure out if we should permit changing type
-          // else if (scope[left].type !== rDesc.type) err('Changing value type from `' + scope[left].type + '` to ' + '`' + rDesc.type + '`')
-        }
+        define(left, right = expr(right))
         return ['=',left,right]
+      }
+
+      // (a,b) = ...
+      if (left[0] === ',') {
+        if (right[0]==='(' && right[1][0]===',') {
+          let rights = right[1]
+          left.forEach((left,i) => i && rights[i] && define(left, rights[i]))
+          return ['=', left, expr(right)]
+        }
+        // FIXME: define variables more generically here, eg.
+        // (a,b) = (x?^1,2;y?3,4:5,6)
+        return ['=', left, expr(right)]
       }
 
       // x(a,b) - define function: brings arg initializers to fn body keeping only arg names
@@ -120,19 +122,6 @@ export default function analyze(node) {
 
       // *a = ..., *(a,b,c) = ...
       if (left[0] === '*' && left.length < 3) return ['=',expr(left),expr(right)]
-
-      // (a,b) = ...
-      if (left[0] === ',') {
-        // desugar here
-        // (a,b) = (c,d) -> set/a = c; set/b = d; a = set/a; b = set/b;
-        if (left.length !== right.length) err('Unequal number of members in right/left sides of assignment', left)
-        let [,...ls]=left, [,...rs]=right;
-        // FIXME: narrow down that complexity assignments: not always `tmp/` is necessary
-        // FIXME: make sure left side contains only names or props
-        let stash = ls.map((id,i) => temp(`set/${id}`, expr(rs[i])))
-        let unstash = ls.map((id,i) => ['=',expr(ls[i]),stash[i][1]]) // catch left ids into current scope
-        return expr(['(',[';',...stash,[',',...unstash]]])
-      }
 
       // x[i] = ...,  x.1 = ...
       if (left[0] === '[]' || left[0] === '.') {
@@ -211,7 +200,7 @@ export default function analyze(node) {
         // pipe temp vars with resolved names
         [[,pipeArg], [,pipeIdx], [,pipeLen]] = pipeVars = [
           temp('pipe/arg',a),// ['=','pipe/arg',a],
-          temp('pipe/idx',['int',0]),// ['=','pipe/idx',['int',0]],
+          temp('pipe/idx',[INT,0]),// ['=','pipe/idx',[INT,0]],
           temp('pipe/len',['[]','pipe/arg'])// ['=','pipe/len',['[]','pipe/arg']],
         ]
 
@@ -269,7 +258,7 @@ export default function analyze(node) {
       if (Object.getPrototypeOf(scope)) err('Export must be in global scope')
       // FIXME: if (expNode !== node && expNode !== node[node.length-1]) err('Export must be the last node');
 
-      if (!skip) a = expr(a)
+      if (!skip) a = expr(a) // apply converting expression
 
       if (typeof a === 'string') scope[a].export=true
 
@@ -281,6 +270,8 @@ export default function analyze(node) {
         if (typeof l === 'string') scope[l].export = true
         // a()=;
         else if (l[0]==='()') scope[l[1]].export = true
+        // (a,b)=...
+        else if (l[0]===',') l.slice(1).forEach(l => scope[l].export = true)
         else err('Unknown export expression `' + a + '`')
       }
 
@@ -288,7 +279,7 @@ export default function analyze(node) {
       else if (a[0]===',') {
         a.slice(1).forEach(a => expr['.'](['.',a], true))
       }
-      // TODO (a) or (a,b,c)
+      // (a) or (a,b,c)
       else if (a[0]==='(') {
         let members = a[1][0]===';'?a[1][a[1].length-1]:a[1]
         if (members[0]!==',') members = [',',members]
@@ -320,6 +311,18 @@ export default function analyze(node) {
     }
   })
 
+  // [re]define variable in scope
+  function define(name, init) {
+    let rDesc = desc(init, scope)
+    if (!scope[name]) scope[name] = rDesc
+    else {
+      scope[name].mutable = true
+      if (!scope[name].type) Object.assign(scope[name], rDesc)
+      // FIXME: figure out if we should permit changing type
+      else if (scope[name].type !== rDesc.type) err('Changing value type from `' + scope[name].type + '` to ' + '`' + rDesc.type + '`')
+    }
+  }
+
   // evaluate
   node = expr(node)
 
@@ -335,17 +338,18 @@ export default function analyze(node) {
 
 
 /**
- * get descriptor of a node or variable: includes type and other info
+ * Get descriptor of a node or variable: includes type and other info
+ * Note: descriptor is temp object, mutating it doesn't make effect
  * {
- *   type,   - value type - INT, FLOAT, RANGE, PTR (Array)
- *   static?, - if value can be statically precalculated (like prop values)
+ *   type,   - value type - INT, FLOAT, RANGE, BUF (Array)
+ *   static?, - if value can be statically precalculated
  *   min?, max?, - range value limits (descriptors)
- *   multiple? - if result of node is multiple items, like sequence or array.
+ *   members? - if result of node is multiple items, like sequence or array.
  * }
 **/
 export function desc(node, scope) {
   if (!node) err('Bad node')
-  if (typeof node === 'string') return scope[node] || err('Cannot get descriptor of node', node)
+  if (typeof node === 'string') return {...(scope[node] || err('Cannot get descriptor of node', node))}
   if (typeof node === 'number') return
 
   if (node._desc) return node._desc // cached descriptor
@@ -353,7 +357,7 @@ export function desc(node, scope) {
   let [op, a, b, c] = node
   if (op === INT || op === FLOAT) return { type: op, static: true}
 
-  // use node scope
+  // get internal descriptor using node scope, if any
   let prevScope = node.scope || scope
   scope = node.scope || scope
 
@@ -395,25 +399,32 @@ export function desc(node, scope) {
     '..'() {
       return {type: RANGE, min: a && aDesc, max: b && bDesc, static:s }
     },
-    '['() { return {type:PTR} },
+    '['() { return {type:BUF} },
     // '->'() { return {type:FUNC} },
     '[]'() {
       return !b ? {type:INT} : {type:FLOAT} // FIXME: array can include other than float values
     },
     '|'() {
-      if (aDesc.type === PTR) return {...aDesc}
+      if (aDesc.type === BUF) return {...aDesc}
       // FIXME: detect pipe type
       return {type:INT}
     },
     ';'() { return {...desc(node[node.length - 1], scope)} },
-    ','() { return {...desc(node[node.length - 1], scope), multiple:true} },
-    '|>'() { return {...bDesc, multiple: true}; },
-    '('() { return aDesc },
+    ','() {
+      return {
+        ...aDesc,
+        members: node.slice(1).map(node => desc(node,scope)),
+        static: node.slice(1).every(node => desc(node,scope).static)
+      }
+    },
+    // static:true means staic members/length is unknown
+    '|>'() { return {...bDesc, members: [], static: false}; },
+    '('() { return {...aDesc} },
   }
 
   if (opDesc[op]) {
     if (node.length < 2) return {}; // artifacts like [,] or [;]
-    let desc = node._desc = opDesc[op]()
+    let desc = node._desc = opDesc[op]() // cache descriptor for a node
     scope = prevScope // recover scope
     return desc
   }

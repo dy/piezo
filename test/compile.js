@@ -127,7 +127,43 @@ t('compile: conditions or/and', t => {
   is(mod.exports.z.value, 2)
 })
 
-t('compile: function oneliners', t => {
+t.only('compile: assign/pick cases', t => {
+  let wat, mod
+  wat = compile(`a=1;b=2;c=(a,b).`)
+  mod = compileWat(wat)
+  is(mod.exports.c.value, 1)
+
+  wat = compile(`a=1;b=2,c=3;(b,a)=(c,b).`)
+  mod = compileWat(wat)
+  is(mod.exports.b.value, 3)
+  is(mod.exports.a.value, 2)
+
+  wat = compile(`a=1;b=2;(c,b)=(a,b);a,b,c.`)
+  mod = compileWat(wat)
+  console.log(mod.exports)
+  is(mod.exports.c.value, 1)
+  is(mod.exports.b.value, 2)
+  is(mod.exports.a.value, 1)
+
+  wat = compile(`a=1;b=2;(c,a,b)=(a,b).`)
+  mod = compileWat(wat)
+  is(mod.exports.c.value, 1)
+  is(mod.exports.a.value, 2)
+  is(mod.exports.b.value, 2)
+
+  wat = compile(`a=1;b=2;(c,d)=(a,b).`)
+  mod = compileWat(wat)
+  is(mod.exports.c.value, 1)
+  is(mod.exports.d.value, 2)
+
+  wat = compile(`a=1;b=2;a,(b,b)=a.`)
+  mod = compileWat(wat)
+  is(mod.exports.b.value, 1)
+  is(mod.exports.a.value, 1)
+})
+
+
+t.only('compile: function oneliners', t => {
   let wat, mod
   // default
   // wat = compile(`mult(a, b) -> a * b.`)
@@ -242,17 +278,21 @@ t.todo('compile: arrays subarrays', t => {
   is(arr[ptr+1], 2)
 })
 
-t.skip('debugs', t => {
+t.only('debugs', t => {
   const memory = new WebAssembly.Memory({ initial: 1 });
   const importObject = { env: { memory } };
   let module = compileWat(`
-  (func
-    ref.null func
-    drop
+  (func $pick/i32.2 (param i32) (result i32 i32) (local.get 0)(local.get 0) (return))
+  (global $a (mut i32) (i32.const 0))
+  (global $b (mut i32) (i32.const 0))
+  (func $x (param $a i32) (result i32)
+  (call $pick/i32.2 (local.get $a))
+  (if (param i32) (result i32) (then) (else (drop)(i32.const 3)))
   )
+  (export "x" (func $x))
   `, importObject)
 
-  console.log(module.exports.select_externref())
+  console.log(module.exports.x(1))
 })
 
 t('compile: variable type inference', t => {

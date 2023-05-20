@@ -17,8 +17,9 @@
 * [x] Add proper scope mechanism (streamline compiler)
 * [ ] case-insensitive
 * [ ] Replace `temp` with `wat/fn` includes:
+  * [ ] `and`/`or` must be implemented via stack, not tmp values nor function
   + helper functions naturally isolate temp scope variables () for storing (no names conflict)
-  + swizzling like `set3(a,b,c)` (returns 3 arguments)
+  + [x] swizzling like `set3(a,b,c)` (returns 3 arguments)
   + loop easily returns result
   + standardized non-standard operators
   + we keep analyzer code clean

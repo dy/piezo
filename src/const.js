@@ -1,9 +1,8 @@
 
 export const GLOBAL = 'global',
-FUNC = 'func',
-EXPR = 'expr',
-PTR = 'ptr',
-INT = 'int',
-FLOAT = 'float',
-RANGE = 'range',
-STR = 'str'
+FUNC = 'fn',
+BUF = 'b',
+INT = 'i',
+FLOAT = 'f',
+RANGE = 'r',
+STR = 's'
