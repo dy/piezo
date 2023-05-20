@@ -116,10 +116,10 @@ curve(x, amt=1.82 -< 0..10) = (sign(x) * abs(x)) ** amt;
 \\ coin = triangle with pitch jump, produces block
 coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
   out=[..1024];                   \\ output block of 1024 samples
-  *i=0; /i++;
+  *i=0; >i++;
   *phase = 0;                     \\ current phase
   t = i / 1s;
-  /phase += (freq + (t > delay ? jump : 0)) * 2pi / 1s;
+  >phase += (freq + (t > delay ? jump : 0)) * 2pi / 1s;
 
   out |= x -> oscillator[shape](phase)
       | x -> adsr(x, 0, 0, .06, .24)
