@@ -130,24 +130,24 @@ t('parse: statements', t => {
   is(parse('foo()'), ['()','foo'], 'semi-colons at end of line are mandatory')
   is(parse('(c = a + b; c)'), ['(',[';',['=','c',['+','a','b']],'c']], 'parens define block, return last element')
   is(parse('(a=b+1; a,b,c)'), ['(',[';',['=','a',['+','b',[INT,1]]],[',','a','b','c']]], 'block can return group')
-  // is(parse('(a ? ^b; c)'), ['(',[';',['?','a',['^','b']],'c']], 'return/break operator can preliminarily return value')
+  // is(parse('(a ? ^b; c)'), ['(',[';',['?:','a',['^','b']],'c']], 'return/break operator can preliminarily return value')
   is(parse('(foo(); bar();)'), ['(',[';',['()','foo'],['()','bar']]], 'semi-colon after last statement returns void')
 })
 
 t('parse: conditions', t => {
-  is(parse(`sign = a < 0 ? -1 : +1`), ['=','sign',['?',['<','a',[INT,0]], ['-',[INT,1]], ['+',[INT,1]]]], 'inline ternary')
-  // is(parse('a > b ? ++b'), ['?',['>','a','b'],['++','b']], 'if operator')
+  is(parse(`sign = a < 0 ? -1 : +1`), ['=','sign',['?:',['<','a',[INT,0]], ['-',[INT,1]], ['+',[INT,1]]]], 'inline ternary')
+  // is(parse('a > b ? ++b'), ['?:',['>','a','b'],['++','b']], 'if operator')
   // is(parse('a > b ?: ++b'), ['?:', ['>','a','b'], ['++','b']], 'elvis operator (else if)')
   // FIXME: confusable with a > -b
-  // is(parse('a,b,c >- x ? a : b : c'), ['?', ['>-', [',','a','b','c'], [':','a','b','c']]], 'switch operator')
+  // is(parse('a,b,c >- x ? a : b : c'), ['?:', ['>-', [',','a','b','c'], [':','a','b','c']]], 'switch operator')
   is(parse(`2+2 >= 4 ?        // multiline ternary
     a
   : "a" < "b" ?               // else if
     b
-  : (c)`), ['?',
+  : (c)`), ['?:',
     ['>=', ['+',[INT,2],[INT,2]], [INT,4]],
     'a',
-    ['?',
+    ['?:',
       ['<', ['"','a'],['"','b']],
       'b',
       ['(','c']
@@ -175,7 +175,7 @@ t('parse: loops', t => {
   is(parse('c |> d |> e'),['|>',['|>','c','d'],'e'], 'c |> d |> e')
   is(parse('a -= b += c'), ['-=','a',['+=','b','c']])
   is(parse('a |> b = c'), ['|>','a',['=','b','c']])
-  is(parse('a?b:c |> d'), ['|>',['?','a','b','c'],'d'])
+  is(parse('a?b:c |> d'), ['|>',['?:','a','b','c'],'d'])
   is(parse('a , b|>c'),[',','a',['|>','b','c']])
   is(parse('b|>c, d'),[',',['|>','b','c'],'d'])
   is(parse('a->b |> c'),['|>',['->','a','b'],'c'])

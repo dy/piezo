@@ -54,19 +54,22 @@ export default function compile(node) {
         return expr(['-',[INT,0],a[1]])
       }
       if (desc(a,scope).type == INT && desc(b,scope).type == INT) return `(i32.sub ${expr(a)} ${expr(b)})`
-      return `(f64.sub ${fexpr(a)} ${fexpr(b)})`
+      return `(f64.sub ${expr(asFloat(a))} ${expr(asFloat(b))})`
     },
     '+'([,a,b]) {
       if (desc(a,scope).type == INT && desc(b,scope).type == INT) return `(i32.add ${expr(a)} ${expr(b)})`
-      return `(f64.add ${fexpr(a)} ${fexpr(b)})`
+      return `(f64.add ${expr(asFloat(a))} ${expr(asFloat(b))})`
     },
     '*'([,a,b]) {
       if (desc(a,scope).type == INT && desc(b,scope).type == INT) return `(i32.mul ${expr(a)} ${expr(b)})`
       // 1.0 * a -> a * 1.0
       if (a[0]===FLOAT && a[1]===1) [a,b] = [b,a]
       // a * 1.0 -> convert to float
-      if (b[0]===FLOAT && b[1]===1) return fexpr(a)
-      return `(f64.mul ${fexpr(a)} ${fexpr(b)})`
+      if (b[0]===FLOAT && b[1]===1) return `(f64.convert_i32_s ${expr(a)})`
+      return `(f64.mul ${expr(asFloat(a))} ${expr(asFloat(b))})`
+    },
+    '/'(){
+      err('Unimplemented, but needs to convert to float too')
     },
     '++'([,a]) { return expr(['+=',a,[INT,1]]) },
     '--'([,a]) { return expr(['-=',a,[INT,1]]) },
@@ -77,55 +80,54 @@ export default function compile(node) {
     '<'([,a,b]) {
       let aDesc = desc(a, scope), bDesc = desc(b, scope)
       if (aDesc.type === INT && bDesc.type === INT) return `(i32.lt_s ${expr(a)} ${expr(b)})`
-      return `(f64.lt ${fexpr(a)} ${fexpr(b)})`
+      return `(f64.lt ${expr(asFloat(a))} ${expr(asFloat(b))})`
     },
     '<='([,a,b]) {
       let aDesc = desc(a, scope), bDesc = desc(b, scope)
       if (aDesc.type === INT && bDesc.type === INT) return `(i32.le_s ${expr(a)} ${expr(b)})`
-      return `(f64.le ${fexpr(a)} ${fexpr(b)})`
+      return `(f64.le ${expr(asFloat(a))} ${expr(asFloat(b))})`
     },
     '>'([,a,b]) {
       let aDesc = desc(a, scope), bDesc = desc(b, scope)
       if (aDesc.type === INT && bDesc.type === INT) return `(i32.gt_s ${expr(a)} ${expr(b)})`
-      return `(f64.gt ${fexpr(a)} ${fexpr(b)})`
+      return `(f64.gt ${expr(asFloat(a))} ${expr(asFloat(b))})`
     },
     '>='([,a,b]) {
       let aDesc = desc(a, scope), bDesc = desc(b, scope)
       if (aDesc.type === INT && bDesc.type === INT) return `(i32.ge_s ${expr(a)} ${expr(b)})`
-      return `(f64.ge ${fexpr(a)} ${fexpr(b)})`
+      return `(f64.ge ${expr(asFloat(a))} ${expr(asFloat(b))})`
     },
     '=='([,a,b]) {
       let aDesc = desc(a, scope), bDesc = desc(b, scope)
       if (aDesc.type === INT && bDesc.type === INT) return `(i32.eq_s ${expr(a)} ${expr(b)})`
-      return `(f64.eq ${fexpr(a)} ${fexpr(b)})`
+      return `(f64.eq ${expr(asFloat(a))} ${expr(asFloat(b))})`
     },
     '!='([,a,b]) {
       let aDesc = desc(a, scope), bDesc = desc(b, scope)
       if (aDesc.type === INT && bDesc.type === INT) return `(i32.ne_s ${expr(a)} ${expr(b)})`
-      return `(f64.ne ${fexpr(a)} ${fexpr(b)})`
+      return `(f64.ne ${expr(asFloat(a))} ${expr(asFloat(b))})`
     },
 
-    // logical
-    // FIXME: we can't call and function here since we don't need to evaluate both branches
-    '&&'([,a,b]) {
-      if (desc(a,scope).type==FLOAT || desc(b,scope).type == FLOAT)
-        return include('wat/f64.and'), `(if (call $wat/f64.and ${fexpr(a)} ${fexpr(b)}) (else ${fexpr()}))`
-      else
-        return include('wat/i32.and'), `(call $wat/i32.and ${expr(a)} ${expr(b)})`
-    },
+    // logical - we put value twice to the stack and then just drop if not needed
     '||'([,a,b]) {
       if (desc(a,scope).type==FLOAT || desc(b,scope).type == FLOAT)
-        return include('wat/f64.or'), `(call $wat/f64.or ${fexpr(a)} ${fexpr(b)})`
+        return `${pick(2,asFloat(a))}(if (param f64) (result f64) (f64.ne (f64.const 0)) (then) (else (drop) ${expr(asFloat(b))}))`
       else
-        return include('wat/i32.or'), `(call $wat/i32.or ${expr(a)} ${expr(b)})`
+        return `${pick(2,a)}(if (param i32) (result i32) (then) (else (drop) ${expr(b)}))`
+    },
+    '&&'([,a,b]) {
+      if (desc(a,scope).type==FLOAT || desc(b,scope).type == FLOAT)
+        return `${pick(2,asFloat(a))}(if (param f64) (result f64) (f64.ne (f64.const 0)) (then (drop) ${expr(asFloat(b))}))`
+      else
+        return `${pick(2,a)}(if (param i32) (result i32) (then (drop) ${expr(b)}))`
     },
 
     '?:'([,a,b,c]){
       let bDesc = desc(b,scope), cDesc = desc(c,scope);
       // upgrade result to float if any of operands is float
       if (bDesc.type==FLOAT || cDesc.type == FLOAT)
-        return `(if (result f64) ${iexpr(a)} (then ${fexpr(b)}) (else ${fexpr(c)}))`
-      return `(if (result i32) ${iexpr(a)} (then ${expr(b)}) (else ${expr(c)}))`
+        return `(if (result f64) ${expr(asInt(a))} (then ${exrp(asFloat(b))}) (else ${expr(asFloat(c))}))`
+      return `(if (result i32) ${expr(asInt(a))} (then ${expr(b)}) (else ${expr(c)}))`
     },
 
     // a -< range - clamp a to indicated range
@@ -137,7 +139,7 @@ export default function compile(node) {
         include('wat/i32.smin')
         return `(call $wat/i32.smax (call $wat/i32.smin ${expr(a)} ${expr(max)}) ${expr(min)})`
       }
-      return `(f64.max (f64.min ${fexpr(a)} ${fexpr(max)}) ${fexpr(min)})`
+      return `(f64.max (f64.min ${expr(asFloat(a))} ${expr(asFloat(max))}) ${expr(asFloat(min))})`
     },
 
     // [1,2,3]
@@ -149,7 +151,7 @@ export default function compile(node) {
       for (let init of inits) {
         let idesc = desc(init,scope)
         if (idesc.type === INT || idesc.type === FLOAT)
-          out += `(f64.store (i32.const ${memcount + members++ * MEM_STRIDE}) ${fexpr(init)}) `
+          out += `(f64.store (i32.const ${memcount + members++ * MEM_STRIDE}) ${expr(asFloat(init))}) `
         else if (idesc.type === RANGE) {
           let [,min,max] = init
           // simple numeric range like [0..1]
@@ -200,7 +202,7 @@ export default function compile(node) {
 
         // we do function call to make sure stack has result of setting
         return
-        // return `(f64.store (i32.add ${expr(ptr)} (i32.shl (call $wat/i32.modwrap ${iexpr(prop)} ${expr(['[]',ptr])}) (i32.const ${Math.log2(MEM_STRIDE)}))) ${fexpr(b)}) ()`
+        // return `(f64.store (i32.add ${expr(ptr)} (i32.shl (call $wat/i32.modwrap ${asInt(prop)} ${expr(['[]',ptr])}) (i32.const ${Math.log2(MEM_STRIDE)}))) ${asFloat(b)}) ()`
       }
 
       // x(a,b) = y
@@ -261,10 +263,14 @@ export default function compile(node) {
       // console.log('|',a,b)
       // 0 | b -> b | 0
       if (a[0] === INT && a[1] === 0) [a,b]=[b,a]
-      // a | 0
-      if (a[0] === INT && a[1] === 0) if (desc(a,scope).type === FLOAT) return iexpr(a)
+      if (b[0] === INT && b[1] === 0) {
+        // 1.2 | 0  -> truncate float
+        if (desc(a,scope).type === FLOAT) return `(i32.trunc_f64_s ${expr(a)}`
+        // a | 0 -> skip
+        return expr(1)
+      }
 
-      return `(i32.or ${iexpr(a)} ${iexpr(b)})`
+      return `(i32.or ${expr(asInt(a))} ${expr(asInt(b))})`
     },
 
     // a |> b
@@ -286,6 +292,17 @@ export default function compile(node) {
     }
   })
 
+  // wrap expression to float, if needed
+  function asFloat(node) {
+    if (desc(node, scope).type === FLOAT) return node
+    return ['*',node,[FLOAT,1]];
+  }
+  // cast expr to int
+  function asInt(node) {
+    if (desc(node, scope).type === INT) return node
+    return ['|',node,[INT,0]]
+  }
+
   // define variable in current scope
   function define(name) {
     let v = scope[name]
@@ -300,17 +317,6 @@ export default function compile(node) {
   // add include from stdlib
   function include(name) {
     if (!includes.includes(name)) includes.push(name)
-  }
-
-  // wrap expression to float, if needed
-  function fexpr(node) {
-    if (desc(node, scope).type === FLOAT) return expr(node)
-    return `(f64.convert_i32_s ${expr(node)})`;
-  }
-  // cast expr to int
-  function iexpr(node) {
-    if (desc(node, scope).type === INT) return expr(node)
-    return `(i32.trunc_f64_s ${expr(node)})`
   }
 
   // create args swapper/picker (fn that maps inputs to outputs), like (a,b,c) -> (a,b)

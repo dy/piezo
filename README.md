@@ -436,17 +436,20 @@ Ideally its usage for sound should be reduced to minimum – a single audio proc
 That's motivation for some languages or tools like _mono_, _zzfx_, _bytebeat_, _[hxos](https://github.com/stagas/hxos)_ etc.
 
 _Lino_ is alternative implementation to _mono_, incorporating its ideas and vision, with focus on ergonomics and portability.
-It aims to express sound formulas in a very compact and robust form, overcoming common languages legacy and limitations, easy to "tweak and tweet".
-It attempts to have intuitive syntax and feeling of "flow", fit for live coding sessions.
-It also focuses on accessibility, so that produced code can be plugged into various environments, not necessarily with sound capabilities, like servers etc.
-By that it aspires to standardize sound expressions and make sound more accessible.
+_Lino_ is alternative to AssemblyScript, without heavy types agenda or JS legacy.
+_Lino_ is like low-level distilled functional JS compiling to WASM.
+
+It aims to express sound code in a very compact and robust form, easy to "tweak and tweet".
+It attempts to have intuitive syntax and flow, fit for live coding sessions.
+It also focuses on accessibility, so that produced code can be plugged into various environments, including no-sound ones.
+It aspires to standardize sound expressions and make sound more accessible.
 
 ### Principles
 
 * _Common syntax_: familiar code, copy-pastable floatbeats.
 * _No-keywords_: safe var names, max minification, non-latin code.
 * _Case-agnostic_: URL-safe, typo-proof.
-* _Subtle type inference_: type hints instead of heavy syntax.
+* _Subtle type inference_: type hints instead of dedicated syntax.
 * _No OOP_: functional, stateful vars.
 * _Groups_: multiple returns, multiple operands.
 * _No implicit globals_: wysiwyg.

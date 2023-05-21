@@ -127,7 +127,7 @@ t('compile: conditions or/and', t => {
   is(mod.exports.z.value, 2)
 })
 
-t.only('compile: assign/pick cases', t => {
+t('compile: assign/pick cases', t => {
   let wat, mod
   wat = compile(`a=1;b=2;c=(a,b).`)
   mod = compileWat(wat)
@@ -140,7 +140,6 @@ t.only('compile: assign/pick cases', t => {
 
   wat = compile(`a=1;b=2;(c,b)=(a,b);a,b,c.`)
   mod = compileWat(wat)
-  console.log(mod.exports)
   is(mod.exports.c.value, 1)
   is(mod.exports.b.value, 2)
   is(mod.exports.a.value, 1)
@@ -162,8 +161,43 @@ t.only('compile: assign/pick cases', t => {
   is(mod.exports.a.value, 1)
 })
 
+t('compile: conditions', t => {
+  let wat, mod
+  wat = compile(`a=1;b=2;c=a?1:2.`)
+  mod = compileWat(wat)
+  is(mod.exports.c.value, 1)
 
-t.only('compile: function oneliners', t => {
+  wat = compile(`a=1;b=2;c=a&&b.`)
+  mod = compileWat(wat)
+  is(mod.exports.c.value, 2)
+
+  wat = compile(`a=0;b=2;c=a&&b.`)
+  mod = compileWat(wat)
+  is(mod.exports.c.value, 0)
+
+  wat = compile(`a=0.0;b=2.1;c=a&&b.`)
+  mod = compileWat(wat)
+  is(mod.exports.c.value, 0)
+
+  wat = compile(`a=0.1;b=2.1;c=a&&b.`)
+  mod = compileWat(wat)
+  is(mod.exports.c.value, 2.1)
+
+  wat = compile(`a=1;b=2;c=a||b.`)
+  mod = compileWat(wat)
+  is(mod.exports.c.value, 1)
+
+  wat = compile(`a=0;b=2;c=a||b.`)
+  mod = compileWat(wat)
+  is(mod.exports.c.value, 2)
+
+  wat = compile(`a=0.0;b=2.1;c=a||b.`)
+  mod = compileWat(wat)
+  is(mod.exports.c.value, 2.1)
+})
+
+
+t('compile: function oneliners', t => {
   let wat, mod
   // default
   // wat = compile(`mult(a, b) -> a * b.`)
@@ -278,7 +312,7 @@ t.todo('compile: arrays subarrays', t => {
   is(arr[ptr+1], 2)
 })
 
-t.only('debugs', t => {
+t.skip('debugs', t => {
   const memory = new WebAssembly.Memory({ initial: 1 });
   const importObject = { env: { memory } };
   let module = compileWat(`

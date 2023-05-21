@@ -181,9 +181,9 @@ unary('@', PREC_TOKEN)
 // binary('?', PREC_TERNARY)
 // binary('?:', PREC_TERNARY)
 
-// a?b:c,   a ? b?c:d : e,   a ? b : c?d:e
+// a?b:c
 token('?', PREC_TERNARY, (a, b, c) => (
-  a && (b=expr(PREC_TERNARY-1)) && skip(c => c === COLON) && (c=expr(PREC_TERNARY-1), ['?', a, b, c])
+  a && (b=expr(PREC_TERNARY-1)) && skip(c => c === COLON) && (c=expr(PREC_TERNARY-1), ['?:', a, b, c])
 ))
 // a:b, c:d
 binary(':', PREC_LABEL, false)
