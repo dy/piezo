@@ -17,16 +17,16 @@
 * [x] Add proper scope mechanism (streamline compiler)
 * [ ] case-insensitive
 * [ ] Replace `temp` with `wat/fn` includes:
-  * [ ] `and`/`or` must be implemented via stack, not tmp values nor function
+  * [x] `and`/`or` must be implemented via stack, not tmp values nor function
   + helper functions naturally isolate temp scope variables () for storing (no names conflict)
   + [x] swizzling like `set3(a,b,c)` (returns 3 arguments)
   + loop easily returns result
   + standardized non-standard operators
   + we keep analyzer code clean
   + inliner on optimizing stage can take care of everything else
-* [ ] loops parsing rule
-* [ ] merge scopes, rename internal variables
-* [ ] Implement better array index
+* [ ] more complex group conditionals: `a,b,c || d,e`
+* [ ] implement scopes as either tmp functions or blocks
+* [x] Implement storing buffer items
 * [ ] Test nested scopes variables
 * [ ] Test optional arguments
 * [ ] Test pipe over different cases

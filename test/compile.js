@@ -274,7 +274,7 @@ t('compile: arrays from range', t => {
   is(yl.value,4,'ylen')
 })
 
-t.todo('compile: arrays write', t => {
+t('compile: arrays write', t => {
   let wat = compile(`x = [..3]; x[0]=1; x.1=2; x[-1]=x[]; x.`)
   // console.log(wat)
   let mod = compileWat(wat)
@@ -316,17 +316,30 @@ t.skip('debugs', t => {
   const memory = new WebAssembly.Memory({ initial: 1 });
   const importObject = { env: { memory } };
   let module = compileWat(`
-  (func $pick/i32.2 (param i32) (result i32 i32) (local.get 0)(local.get 0) (return))
-  (global $a (mut i32) (i32.const 0))
-  (global $b (mut i32) (i32.const 0))
-  (func $x (param $a i32) (result i32)
-  (call $pick/i32.2 (local.get $a))
-  (if (param i32) (result i32) (then) (else (drop)(i32.const 3)))
-  )
-  (export "x" (func $x))
+  (memory (export "memory") 1)
+(func $buf.len (param i32) (result i32) (i32.load (i32.sub (local.get 0) (i32.const 8))))
+(func $i32.modwrap (param i32 i32) (result i32) (local $rem i32)
+  (local.set $rem (i32.rem_s (local.get 0) (local.get 1)))
+  (if (result i32) (i32.and (local.get $rem) (i32.const 0x80000000))
+    (then (i32.add (local.get 1) (local.get $rem)))
+    (else (local.get $rem))
+  ))
+(func $buf.store (param $ptr i32) (param $idx i32) (param $val f64) (f64.store (i32.add (local.get $ptr) (i32.shl (local.get $idx) (i32.const 3))) (local.get $val)))
+(global $x (mut i32) (i32.const 0))
+(global $set/val (mut i32) (i32.const 0))
+(global $set/val1 (mut i32) (i32.const 0))
+(global $set/val2 (mut i32) (i32.const 0))
+(func $module/init
+(global.set $x (i32.store (i32.const 0) (i32.const 3)) (i32.const 8))(global.get $x)(drop)
+(global.set $set/val (i32.const 1))(global.get $set/val)(drop)
+(call $buf.store (global.get $x) (call $i32.modwrap (i32.const 0) (call $buf.len (global.get $x))) (f64.convert_i32_s (global.get $set/val)))(drop)
+
+(global.get $x)(return))
+(start $module/init)
+(export "x" (global $x))
   `, importObject)
 
-  console.log(module.exports.x(1))
+  console.log(module.exports.x)
 })
 
 t('compile: variable type inference', t => {

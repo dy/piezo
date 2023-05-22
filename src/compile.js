@@ -20,12 +20,12 @@ export default function compile(node) {
     loop = 0 // current loop
 
   // processess global statements, returns nothing, only modifies globals, inits, out, memory
-  function expr(statement, name) {
+  function expr(statement) {
     if (!statement) return ''
     // a; - just declare in proper scope
     // FIXME: funcs may need returning something meaningful
     if (typeof statement === 'string') return scope[statement].type === FUNC ? `` : `(${scope[statement].global?'global':'local'}.get $${statement})`
-    if (statement[0] in expr) return expr[statement[0]](statement, name) || ''
+    if (statement[0] in expr) return expr[statement[0]](statement) || ''
     err('Unknown operation `' + statement[0] + '`',statement)
   }
 
@@ -75,6 +75,11 @@ export default function compile(node) {
     '--'([,a]) { return expr(['-=',a,[INT,1]]) },
     '+='([,a,b]) { return expr(['=',a,['+',a,b]]) },
     '-='([,a,b]) { return expr(['=',a,['-',a,b]]) },
+    '%%'([,a,b]) {
+      // common case of int is array index access
+      if (desc(a,scope).type === INT && desc(b,scope).type === INT) return extCall('i32.modwrap', a, b)
+      err('Unimplemented: float modwrap')
+    },
 
     // comparisons
     '<'([,a,b]) {
@@ -134,10 +139,20 @@ export default function compile(node) {
     '-<'([,a,b]) {
       if (b[0] !== '..') err('Non-range passed as right side of clamp operator')
       let [,min,max] = b
+
+      // a -< 0..
+      if (!max) {
+        if (desc(a,scope).type === INT && desc(min,scope).type === INT) return extCall('i32.smax', a, min)
+        return `(f64.max ${expr(asFloat(a))} ${expr(asFloat(min))})`
+      }
+      // a -< ..10
+      if (!min) {
+        if (desc(a,scope).type === INT && desc(max,scope).type === INT) return extCall('i32.smin', a, max)
+        return `(f64.min ${expr(asFloat(a))} ${expr(asFloat(max))})`
+      }
+      // a -< 0..10
       if (desc(a,scope).type == INT && desc(min,scope).type == INT && desc(max,scope).type == INT) {
-        include('wat/i32.smax')
-        include('wat/i32.smin')
-        return `(call $wat/i32.smax (call $wat/i32.smin ${expr(a)} ${expr(max)}) ${expr(min)})`
+        return extCall('i32.smax', ['-<',a,['..',undefined,max]], min)
       }
       return `(f64.max (f64.min ${expr(asFloat(a))} ${expr(asFloat(max))}) ${expr(asFloat(min))})`
     },
@@ -181,28 +196,24 @@ export default function compile(node) {
       if (!b) {
         let aDesc = desc(a,scope);
         if (aDesc.type !== BUF) err('Reading length of non-array', a);
-        return `(i32.load (i32.sub (${aDesc.global?'global':'local'}.get $${a}) (i32.const ${MEM_STRIDE})))`
+        return extCall('buf.len', a)
       }
-      else {
-        err('Unimplemented prop access')
-      }
+      err('Unimplemented prop access')
     },
 
     '='([,a,b]) {
       // FIXME: accept functions
       // x[y]=1, x.y=1
       if (a[0] === '[]' || a[0] === '.') {
-        let [,ptr,prop] = a
-        if (a[0] === '.') prop = [INT, parseInt(prop)]
+        let [,buf,idx] = a
+        if (a[0] === '.') idx = [INT, parseInt(idx)]
 
         // FIXME: add static optimization here for property - to avoid calling i32.modwrap if idx is known
+        // FIXME: another static optimization: if length is known in advance (likely yes) - make static modwrap
+        // FIXME: validate if ptr is real buffer and not fake, statically?;
 
-        // dynamic props - access as a[modwrap(idx, len)]
-        include('wat/f64.store')
-
-        // we do function call to make sure stack has result of setting
-        return
-        // return `(f64.store (i32.add ${expr(ptr)} (i32.shl (call $wat/i32.modwrap ${asInt(prop)} ${expr(['[]',ptr])}) (i32.const ${Math.log2(MEM_STRIDE)}))) ${asFloat(b)}) ()`
+        // FIXME: pass length modwrapped here
+        return extCall('buf.store', buf, ['%%', asInt(idx), ['[]',buf]], asFloat(b))
       }
 
       // x(a,b) = y
@@ -314,9 +325,10 @@ export default function compile(node) {
     }
   }
 
-  // add include from stdlib
-  function include(name) {
+  // add include from stdlib and return call
+  function extCall(name, ...args) {
     if (!includes.includes(name)) includes.push(name)
+    return `(call $${name} ${args.map(expr).join(' ')})`
   }
 
   // create args swapper/picker (fn that maps inputs to outputs), like (a,b,c) -> (a,b)
@@ -361,8 +373,7 @@ export default function compile(node) {
 
   // Declare includes
   for (let include of includes) {
-    let [lib,member] = include.split('/')
-    globals.unshift(stdlib[lib][member])
+    globals.unshift(stdlib[include])
   }
 
   // Declare memories

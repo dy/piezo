@@ -3078,13 +3078,15 @@ Having wat files is more useful than direct compilation to binary form:
 ? ALT: `a < 2 ~> a++`, `list::item ~> item * 2`, `list::item ~> item * 2 :: item ~> filter(item)`
   - unconventional characters
 
-## [ ] List comprehension: how?
+## [ ] List comprehension: how? ->
 
   * The size of final list is unknown in advance. It requires dynamic-size mem allocation.
   ? Can we detect size in advance somehow?
   ? We can reserve memory slot for dynamic ops and perform various stuff there
     * we may need it anyways for memory swiggling ops
   ? Alternatively we can create large-dynamic slot for the time of creation, then dispose unused after init
+  -> Just create new array and push members to it, increasing array's length. We suggest there's only one dynamic array at-a-time created, so it's safe to increase length on creating time.
+    -> Or better just write length after the array is created, eg. somewhere in dynamic `$alloc` method.
 
 ## [ ] Import into function scope?
 
