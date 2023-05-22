@@ -286,7 +286,7 @@ true = 0b1, false = 0b0;        \\ hint: alias booleans
 []                              \\ prop, length
 * >                             \\ (unary) declare state, defer
 ^ ^^                            \\ continue/return, break/return
-@                               \\ export
+@ .                             \\ import, end of program
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ ranges
 1..10;                          \\ basic range

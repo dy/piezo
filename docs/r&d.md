@@ -547,7 +547,7 @@ Having wat files is more useful than direct compilation to binary form:
     + the most laconic version
   4. webassembly doesn't use continue, just `^` for break.
 
-### [x] ? Can we use something else but . for export? → let's try `a.` as global export operator.
+### [x] ? Can we use something else but . for export? → ~~let's try `a.` as global export operator~~ -> last members are exported by default, `.` indicates end of program.
 
   - that seems to create confusion for `a(x,y) = x*y.` case
   - that doesn't seem to belong to natural languages - marking . with export.
@@ -580,6 +580,9 @@ Having wat files is more useful than direct compilation to binary form:
     + explicit
     - relative conflict with preliminary return in functions `a -> (^x; y)`
     + file starts with import operator, and ends with export operator.
+  9.1 `.` means end of program, last members are exported.
+    + `a,b,c.` exports
+    + but also just `fn().` indicates end of program
 
 ## [x] State management → function state identified by callsite
 
@@ -2947,7 +2950,7 @@ Having wat files is more useful than direct compilation to binary form:
   * likely can be `osc=[sin(x)=...x,tri(x)=...x]`
 + resolves the issue of scope (above): no need to make all vars global since no scope recursion
 
-## [x] Replace `<|`, `|`, `|>` with `:: &` / `:: #` ? -> ~~Let's try `::` for loop/generator and `list -> item ::` for extended loop/tranformer~~ let's use `<|` for loop/pipe, `|>` for writing out iteration results
+## [x] Replace `<|`, `|`, `|>` with `:: &` / `:: #` ? -> ~~Let's try `::` for loop/generator and `list -> item ::` for extended loop/tranformer~~ let's use `<|` for loop/pipe, `#` for member placeholder, `|>` for writing out iteration results
 
 + Less problems with overloading `|`
 + Fold operator is likely not as useful
