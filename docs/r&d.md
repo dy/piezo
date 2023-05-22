@@ -2947,7 +2947,7 @@ Having wat files is more useful than direct compilation to binary form:
   * likely can be `osc=[sin(x)=...x,tri(x)=...x]`
 + resolves the issue of scope (above): no need to make all vars global since no scope recursion
 
-## [x] Replace `<|`, `|`, `|>` with `:: &` / `:: #` ? -> Let's try `::` for loop/generator and `list -> item ::` for extended loop/tranformer
+## [x] Replace `<|`, `|`, `|>` with `:: &` / `:: #` ? -> ~~Let's try `::` for loop/generator and `list -> item ::` for extended loop/tranformer~~ let's use `<|` for loop/pipe, `|>` for writing out iteration results
 
 + Less problems with overloading `|`
 + Fold operator is likely not as useful
@@ -3046,37 +3046,90 @@ Having wat files is more useful than direct compilation to binary form:
     `out |>= sin(phase) | x -> adsr()`, which is heavy operator `|>=`
     ~ would be easier to have `out ::= sin(phase)`?
     ~ likely relatively rare
-  -~ overloading `|`
-  ? `list |> x` - how do we make difference with this and `a < 10 |> i++`? List is always truthy
+  -~ overloading `|` (although resolvable, is not clean still)
+  -? `list |> x` - how do we make difference with this and `a < 10 |> i++`? List is always truthy
     ? should we just make `|>` always for condition as the left part, ie. only `while` loop?
       + that would solve `|>=` operator problem
       - generators would become transforms `out |= _ -> sin()`
   ? should we make `a < 2 -> a++`
     - nah, non-argument meaning for `->` is not nice
+  ~- blocks potential space for anonymous functions
 
 ? ALT: `list -> item :: item*2`, `a < 2 :: a++`, `list -> item ::= item*2 -> item :: filter(item)`
   + combines nicely list comprehension, for..in and while
-  + known pattern, avoids association with functors / lambdas
+  + known list comprehension pattern, avoids association with functors / lambdas
   + frees `|`
   ? modify list in place `list ::= item -> item * 2` doesn't make sense
     ?+ `list -> item ::= item * 2`
+      ?- but then `list ::= gen()` skips member, generally member picking must be optional-ish operation
     + allows generating naturally as `list ::= a*b`, so that no `item` is needed
   ? pipes `list -> item :: filter(item) -> filteredItem :: gain(item)`
     + always returns a list
     - a bit lengthy and unpredictable
-  - a bit haskelly feeling, somewhat chunky
+    ? should we prohibit pipes for explicity? `(list -> item :: filter(item)) -> item :: gain(item)`
+  - a bit haskelly feeling, somewhat chunky, no pipes :(
   - `list -> item, i ::= item * 2` is not the most meaningful, unlike `list |= item, i -> item * 2`
+    + pipes reinforce mention of anonymous functions that we try to avoid
+  + `list -> item` and `a < b` are good left-hand part of a loop, indicating that the right part is repeatable
+  + `:` has a bit more to do from branching in `?:`
+  + No op overloading problems
+  + No mention of fake anonymous functions
+  + No conflict with `a | >b`
+  + Leaves `|>` operator for something meaningful
+  - a bit cryptic and non-intuitive things like `[0, .1, ...] -> x :: lpf(x, 108, 5)`, `out ::= oscillator[shape](phase) -> x :: adsr(x, 0, 0, .06, .24) -> x :: curve(x, 1.82);`
 
 ? ALT: `list | & * 2 | filter(&)`, `a < 2 | a++`, `list |= & * 2`
   + the most minimal syntax
   + classical look
-  - too short syntax for item iterators, it's more about pipes
+  + member picking problem is resolved: it's optional
+  - too short syntax for item iterators, it's more about pipe operator
+    ~ see below
   - overloading `|` is not very wanted effect
-  - having rhs as code is not very wanted effect, it looks more like function body
+  - having rhs as code is not very wanted effect, it "wants to be" in a function body
   - placeholder doesn't allow `idx` as second variable
+  ? can we replace `|` with just a bit more elaborate, eg.
+    * `a < 2 |: a++`, `list |: # * 2 |: filter(#)`, `list |:= # * 2`
+    * `a < 2 |> a++`, `list |> # * 2 |> filter(#)`, `list |>= # * 2`
+    * `a < 2 <| a++`, `list <| # * 2 <| filter(#)`, `list <|= # * 2`
 
-? ALT: `a < 2 ~> a++`, `list::item ~> item * 2`, `list::item ~> item * 2 :: item ~> filter(item)`
-  - unconventional characters
+? ALT: `list <| # * 2 <| filter(#)`, `a < 2 <| a++`, `list <|= # * 2`
+  + `<|` is graphically meaningful for loop
+  + `#` is meaningful for member
+    - reserves that keyword, can't simply use in var names
+      ~ kind of fine to redefine that for local scope
+        - we don't redefine variables in scopes, we only assign values to them
+          ~ kind of not the biggest evil
+      ~ we can limit `#` to be used in var names as part, never by itself
+    ? `.`, has almost same meaning & benefints
+      * `list <| . * 2 <| filter(.)`, `a < 2 <| a++`, `list <|= . * 2`
+      - will make export as last statement
+        + which can be actually good & less noise & compatible with function return, it's unnecessary decorum there
+      - conflicts with ranges as `list <| ...1` - is that `.. .1` or `. .. 1`?
+  + keeps spirit of pipes, more meaningfully
+  + no mandatory member
+  + innovative & hereditary same time
+  + very compact
+  - problem with mapping `list <|= # * 2` - too heavy for map operator
+    ? do directly as `list = list <| # * 2`
+      - it's not obvious that we assign iterator result (group or last member) to initial variable
+    ? should we consider `list[..] = list <| #` instead?
+      + keeps pipe untouched
+      + introduce all-range operator (cool!)
+      + matches lists reassignment
+      + makes iterator meaningful in terms of returning result of pipe
+      - not obvious that _last_ pipe member is written back, not _first_
+    ? should we encourage `list <| ... <| list[i] = #` as result of pipe
+    ? should we just make `#` writable as `list <| # = result`
+      + very laconic
+      + !clever
+      + can modify list on the fly
+      + allows short operators as `list <| # *= volume`
+      - saving last value in pipe is weird `list <| #*2 <| filter(#) <| #=#`
+    ? should we direct pipe somewhere at the end?
+      `list <| #*2 <| filter(#) |> list`
+  ? how do we indicate index?
+    ? `list <| (*i=0, *prev; >i++, >prev=#;)`
+      + !clever!
 
 ## [ ] List comprehension: how? ->
 

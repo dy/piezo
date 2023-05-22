@@ -23,7 +23,7 @@ gain(                               \\ defines a function with block, volume arg
   block,                            \\ block type is inferred as buffer from pipe operation |=
   volume -< 0..100.0                \\ volume is clamped to 0..100, type is inferred as float
 ) = (
-  block |= x -> x * volume          \\ maps samples via pipe: block = block | x -> x * volume
+  block <| # *= volume              \\ maps samples via pipe: for each x in block do x *= volume
 );
 
 gain([0, .1, .2, .3, .4, .5], 2);   \\ [0, .2, .4, .6, .8, 1]
@@ -67,10 +67,9 @@ lpf(                                \\ per-sample processing function
   y0                                \\ return y0
 );
 
-\\ use via pipe
-\\ [0, .1, ...] | x -> lpf(x, 108, 5)
+\\ [0, .1, ...] <| lpf(#, 108, 5)
 
-lpf.                                \\ export lpf function
+lpf                                 \\ export lpf function
 ```
 
 ### ZZFX
@@ -121,10 +120,10 @@ coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
   t = i / 1s;
   >phase += (freq + (t > delay ? jump : 0)) * 2pi / 1s;
 
-  out |= x -> oscillator[shape](phase)
-      | x -> adsr(x, 0, 0, .06, .24)
-      | x -> curve(x, 1.82);
-
+  out <| oscillator[shape](phase)
+      <| adsr(#, 0, 0, .06, .24)
+      <| curve(#, 1.82)
+  |> out;
   out
 );
 ```
@@ -256,7 +255,7 @@ mult(108,2) // 216
 ```
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ variables
 foo=1, bar=2;                   \\ declare vars
-Ab_C_F#, $0, Δx, _, $, #;       \\ names permit alnum, unicodes, #, _, $
+Ab_C_F#, $0, Δx, _;             \\ names permit alnum, unicodes, #, _, $
 fooBar123 == FooBar123;         \\ names are case-insensitive (lowcase encouraged!)
 default=1, eval=fn, else=0;     \\ lino has no reserved words
 
@@ -284,12 +283,12 @@ true = 0b1, false = 0b0;        \\ hint: alias booleans
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ extra operators
 ** // %%                        \\ pow, int (floor) division, unsigned mod (wraps negatives)
-|> |-> |=                       \\ loop, iterate, map
+<| |>                           \\ loop, map
 -< -<=                          \\ clamp
 []                              \\ prop, length
-^ ^^                            \\ continue/return, break/return
-@ .                             \\ import, export
 * >                             \\ (unary) declare state, defer
+^ ^^                            \\ continue/return, break/return
+@                               \\ export
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ ranges
 1..10;                          \\ basic range
@@ -384,21 +383,21 @@ m[0..] = m[-1..0];              \\ reverse order
 m = m[1..,0];                   \\ rotate memory left
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ loops
-i=0; i++ < 3 |> log(i);         \\ inline loop: while i++ < 3 do log(i)
-[a, b, c] | item -> x(item);    \\ for each
-10..1 | i -> (                  \\ iterate range
-  i < 3 ? ^^;                   \\ `^^` breaks loop
-  i < 5 ? ^;                    \\ `^` continues loop
+i=0; i++ < 3 <| log(i);         \\ inline loop: while i++ < 3 do log(i)
+[a, b, c] <| x(#);              \\ for each item (# is placeholder for member)
+10..1 <| (                      \\ iterate range
+  # < 3 ? ^^;                   \\ `^^` breaks loop
+  # < 5 ? ^;                    \\ `^` continues loop
 );
-[1..10 | x -> x * 2];           \\ list comprehension
-items |= x -> x * 2;            \\ map items (mutates buffer)
-items | x -> a(x)
-      | x -> b(x);              \\ pipe
+[1..10 <| # * 2];               \\ list comprehension
+items <| # *= 2;                \\ map items (rewrite items in source array)
+items <| a(#) <| b(#);          \\ chain iterations
+(a,b,c) |> item;                \\ copy buffer, group or iterations to output buffer
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ import, export
 @./path/to/module#x,y,z;        \\ any file can be imported directly
 @math#pi,sin,max;               \\ or defined via import-maps.json
-x, y, z.                        \\ last statement ending with . exports members
+x, y, z                         \\ last statement ending with . exports members
 ```
 
 <!--
