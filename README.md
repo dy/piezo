@@ -19,11 +19,11 @@
 Provides k-rate amplification for block of samples.
 
 ```
-gain(                               \\ defines a function with block, volume arguments.
+gain(                               \\ define a function with block, volume arguments.
   block,                            \\ block type is inferred as buffer from pipe operation |=
   volume -< 0..100.0                \\ volume is clamped to 0..100, type is inferred as float
 ) = (
-  block <| # *= volume              \\ maps samples via pipe: for each x in block do x *= volume
+  block <| # * volume |> block;     \\ map samples via pipe: for each x in block do x *= volume
 );
 
 gain([0, .1, .2, .3, .4, .5], 2);   \\ [0, .2, .4, .6, .8, 1]
@@ -69,7 +69,7 @@ lpf(                                \\ per-sample processing function
 
 \\ [0, .1, ...] <| lpf(#, 108, 5)
 
-lpf                                 \\ export lpf function
+lpf.                                \\ export lpf function, end program
 ```
 
 ### ZZFX
@@ -105,7 +105,6 @@ adsr(x, a, d, (s, sv=1), r) = (   \\ optional group-argument
     sv :                          \\ sustain volume
     (total - t)/r * sv
   ) * x;
-
   y
 );
 
@@ -123,9 +122,8 @@ coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
   out <| oscillator[shape](phase)
       <| adsr(#, 0, 0, .06, .24)
       <| curve(#, 1.82)
-  |> out;
-  out
-);
+  |> out
+).
 ```
 
 <!--
@@ -180,7 +178,7 @@ melodytest(time) = (
   melody = 0;
   i = 0;
 
-  i++ < 5 |> (
+  i++ < 5 <| (
     melody += tri(
       time * mix(
         200 + (i * 900),
@@ -200,7 +198,7 @@ melody(time) = melodytest(time) * fract(time * 2) ** 6 * 1;
 song() = (
   *t=0; @t++; time = t / 1s;
   (kick(time) + snare(time)*.15 + hihat(time)*.05 + melody(time)) / 4
-).
+)
 ```
 
 Features:
