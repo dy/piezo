@@ -3083,6 +3083,7 @@ Having wat files is more useful than direct compilation to binary form:
   + No conflict with `a | >b`
   + Leaves `|>` operator for something meaningful
   - a bit cryptic and non-intuitive things like `[0, .1, ...] -> x :: lpf(x, 108, 5)`, `out ::= oscillator[shape](phase) -> x :: adsr(x, 0, 0, .06, .24) -> x :: curve(x, 1.82);`
+  - reminds some crazy wasm spec `blocktype ::= 0x40       => [] -> []`
 
 ? ALT: `list | & * 2 | filter(&)`, `a < 2 | a++`, `list |= & * 2`
   + the most minimal syntax
@@ -3137,6 +3138,18 @@ Having wat files is more useful than direct compilation to binary form:
     ? `list <| (*i=0, *prev; >i++, >prev=#;)`
       + !clever!
 
+## [ ] `list <| x` vs `a < 1 <| x` - how do we know left side type?
+  * type can be unknown, like `x(arg)=(arg <| ...)`
+    ? do we run it until condition holds true?
+    ? do we consider argument a list?
+
+  * Figure out condition from op in left part: `a < 2 <| #`
+    - what if left condition is dynamic: `item <| item = nextItem()`
+  * `a < 2 ?| item = nextItem`
+  * `list[..] <| #`
+    ~ supposedly creates iteration subbuffer
+    - `[1,2,3] <| #` would need to become `[1,2,3][..] <| #`
+
 ## [ ] List comprehension: how? ->
 
   * The size of final list is unknown in advance. It requires dynamic-size mem allocation.
@@ -3156,6 +3169,10 @@ Having wat files is more useful than direct compilation to binary form:
 
   + allows returning arrays as a couple [ptr,length] instead of storing length in memory
   * see https://hacks.mozilla.org/2019/11/multi-value-all-the-wasm/
+  + allows creating multiple buffers from same memory part
+    + length should not be stored in memory
+  ? ALT: use `i64` to store both array pointer and length.
+    - returns BigInt, which needs to be reinterpreted client-side to get pointer to memory
 
 ## [ ] Overdeclaring local variables
 

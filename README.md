@@ -358,7 +358,7 @@ a() = ( *i=0; i++ );            \\ stateful variable - persist value between fn 
 a(), a();                       \\ 0, 1
 b() = (
   *i = [..4];                   \\ local memory of 4 items
-  >i = i[-1,1..];               \\ defer (called after fn body)
+  >i = i[-1,1..];               \\ rotate memory after fn body
   i.0 = i.1+1;                  \\ write previous value i.1 to current value i.0
   i.0                           \\ return i.0
 );
@@ -382,15 +382,14 @@ m = m[1..,0];                   \\ rotate memory left
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ loops
 i=0; i++ < 3 <| log(i);         \\ inline loop: while i++ < 3 do log(i)
-[a, b, c] <| x(#);              \\ for each item (# is placeholder for member)
+[a, b, c] <| x(#);              \\ for each item (# is placeholder for item)
 10..1 <| (                      \\ iterate range
   # < 3 ? ^^;                   \\ `^^` breaks loop
   # < 5 ? ^;                    \\ `^` continues loop
 );
 [1..10 <| # * 2];               \\ list comprehension
-items <| # *= 2;                \\ map items (rewrite items in source array)
 items <| a(#) <| b(#);          \\ chain iterations
-(a,b,c) |> item;                \\ copy buffer, group or iterations to output buffer
+(a,b,c) |> item;                \\ write iterations to output buffer
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ import, export
 @./path/to/module#x,y,z;        \\ any file can be imported directly

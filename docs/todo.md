@@ -24,6 +24,8 @@
   + standardized non-standard operators
   + we keep analyzer code clean
   + inliner on optimizing stage can take care of everything else
+* [ ] implement outside-of-memory buffer lengths: either i64 or 2 values in stack
+* [ ] refactor `pick(N,arg)` into `dup(arg,3)`
 * [ ] more complex group conditionals: `a,b,c || d,e`
 * [ ] implement scopes as either tmp functions or blocks
 * [x] Implement storing buffer items
