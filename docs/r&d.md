@@ -583,6 +583,9 @@ Having wat files is more useful than direct compilation to binary form:
   9.1 `.` means end of program, last members are exported.
     + `a,b,c.` exports
     + but also just `fn().` indicates end of program
+    + `.` is self-sufficient
+    + `.` is replacement for `;`
+    ?! missing `.` means program is unfinished? like, a library to include?
 
 ## [x] State management → function state identified by callsite
 
