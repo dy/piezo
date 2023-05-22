@@ -126,12 +126,9 @@ export default function analyze(node) {
       // x[i] = ...,  x.1 = ...
       if (left[0] === '[]' || left[0] === '.') {
         let [,obj,prop] = left,
-            init = temp('set/val', expr(right)),
-            name = init[1],
             idx = left[0] === '.' ? prop : expr(prop)
         // x[i] = y   ->   val = y; x[i] = val; val
-        let block = [';', init, ['=',[left[0],expr(obj),idx], name], name]
-        return block
+        return ['=',[left[0],expr(obj),idx], expr(right)]
       }
       // x.1 = ...
       if (left[0] === '.') {

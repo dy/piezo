@@ -3097,3 +3097,8 @@ Having wat files is more useful than direct compilation to binary form:
 
   + allows returning arrays as a couple [ptr,length] instead of storing length in memory
   * see https://hacks.mozilla.org/2019/11/multi-value-all-the-wasm/
+
+## [ ] Overdeclaring local variables
+
+  * `(x=1; (x=2;))` - `x` in both scopes is the same variable, so that we can't declare `x` within nested scope this way.
+  * that means there's one global namespace
