@@ -17,7 +17,7 @@ export const std = {
   ))`,
 
   "buf.len": `(func $buf.len (param i32) (result i32) (i32.load (i32.sub (local.get 0) (i32.const 8))))`,
-  "buf.store": `(func $buf.store (param $ptr i32) (param $idx i32) (param $val f64) (result f64) (f64.store (i32.add (local.get $ptr) (i32.shl (local.get $idx) (i32.const 3))) (local.get $val)) (local.get $val))`
+  "buf.store": `(func $buf.store (param $ptr i32) (param $idx i32) (param $val f64) (result f64) (f64.store (i32.add (local.get $ptr) (i32.shl (local.get $idx) (i32.const 3))) (local.get $val)) (local.get $val)(return))`
 }
 
 export const math = {

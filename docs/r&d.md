@@ -2573,10 +2573,12 @@ Having wat files is more useful than direct compilation to binary form:
   + allows fast direct static ranges easily
   + removes tacky problems: ranges combination, min/max reading (since they're immediately available)
 
-## [x] Drop ints and use only f64? -> keep both for now, complexity is controllable
+## [ ] Drop ints and use only f64? -> keep both for now, complexity is controllable
 
 + waay less code
-+ no type conversions issue
++ no type conversion question, since values are floats always
++ no type detection issue
++ f64 stores more ints than i32 (up to i52)
 - no compatibility with bytebeat
 - no meaningful shift/binary operations
 
@@ -3138,18 +3140,6 @@ Having wat files is more useful than direct compilation to binary form:
     ? `list <| (*i=0, *prev; >i++, >prev=#;)`
       + !clever!
 
-## [ ] `list <| x` vs `a < 1 <| x` - how do we know left side type?
-  * type can be unknown, like `x(arg)=(arg <| ...)`
-    ? do we run it until condition holds true?
-    ? do we consider argument a list?
-
-  * Figure out condition from op in left part: `a < 2 <| #`
-    - what if left condition is dynamic: `item <| item = nextItem()`
-  * `a < 2 ?| item = nextItem`
-  * `list[..] <| #`
-    ~ supposedly creates iteration subbuffer
-    - `[1,2,3] <| #` would need to become `[1,2,3][..] <| #`
-
 ## [ ] List comprehension: how? ->
 
   * The size of final list is unknown in advance. It requires dynamic-size mem allocation.
@@ -3165,14 +3155,62 @@ Having wat files is more useful than direct compilation to binary form:
   * `saw() = (@math#pi; pi*2+...)`
   + allows avoiding conflicts
 
-## [ ] Arrays length: use multiple values output?
+## [ ] `list <| x` vs `a < 1 <| x` - how do we know left side type?
+  * type can be unknown, like `x(arg)=(arg <| ...)`
+    ? do we run it until condition holds true?
+    ? do we consider argument a list?
+  * Figure out condition from op in left part: `a < 2 <| #`
+    - what if left condition is dynamic: `item <| item = nextItem()`
 
-  + allows returning arrays as a couple [ptr,length] instead of storing length in memory
-  * see https://hacks.mozilla.org/2019/11/multi-value-all-the-wasm/
-  + allows creating multiple buffers from same memory part
-    + length should not be stored in memory
+  ? `list[..] <| #`
+    ~ supposedly creates iteration subbuffer
+    - `[1,2,3] <| #` would need to become `[1,2,3][..] <| #`
+  ? ALT: Use multiple stack values?
+    + allows returning arrays as a couple [ptr,length] instead of storing length in memory
+    * see https://hacks.mozilla.org/2019/11/multi-value-all-the-wasm/
+    + allows creating multiple buffers from same memory part
+      + length should not be stored in memory
+    - enforces functions taking array arg to convert into taking 2-args (ptr + len), which doesn't convert to js well
+      ? how much do we need to have access to raw memory from JS side?
+    + the most reliable solution in terms of precision/scalability
+    +? allows kind-of detecting array argument. How?
+      . easy from callsite, but how externally detect that the arg is array?
+        ? prohibit external array args?
+          + we don't expose implicit memory to JS: explicit export
+          -? how do we do processing then?
+            ?+ export global array, write to it, read it?
+              ?- do we ensure singleton exportable global memory then?
+                - that single memory contains a bunch of internal info: no way to give ptr/length
+  ? ALT: funcref returning ptr and length upon call?
+    + we anyways read length via operator
+    + can store these variables anywhere, not just memory
+    ~- not any js fn can be passed
+    + csn be stored in separate table
+    - requires memory variable to be exported...
+      ~ maybe unavoidable if user needs to import memory
+    - not sure if we can create infinite functions
+  ? ALT: can be fn getter/setter that writes or reads value of the array
+    - not sure if we can create dynamic functions with local state...
   ? ALT: use `i64` to store both array pointer and length.
-    - returns BigInt, which needs to be reinterpreted client-side to get pointer to memory
+    - returns BigInt, which needs to be reinterpreted client-side to get pointer to memory, not obvious
+  ? ALT: use `f64` real/fraction for address/length
+    + wider addr/length range, up to `2^52` of int values
+      - it may be not as good as `2^25`, consider storing length as `i16` (32756) - not so much, but already 52-16=36 bits for array length...
+        ~kind of fine still, we can store fraction as the right part of float, at the very end
+    + possible to use as ptr directly in JS `new Float64Array(memory, ptr, ptr%1)`
+    -? how do we know if value is an array?
+      - if we designate extra bit for detection array, it takes away precision from all other floats
+  ? ALT: track all known array ptrs in a table/memory or just as global vars
+    + we can represent them single-var via just id, not actual pointer
+      - we can do infinite slices, storing all of them as ids is impossible
+
+## [ ] Prohibit dynamic arrays `a()=(x=[1,2,3])`?
+  + ensures static memory: doesn't grow cept comprehension
+  -? we can track & dispose them by the end of function call ourselves...
+    * if array is returned the ref is lost
+  + we can track all arrays, including stateful, static-time
+    ?+ callsite is supposedly fully predictive: there's no chance for arbitrary new callsites, is there?
+  + we can slice existing memory easily
 
 ## [ ] Overdeclaring local variables
 

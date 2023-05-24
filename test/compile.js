@@ -316,13 +316,13 @@ t.only('debugs', t => {
   const memory = new WebAssembly.Memory({ initial: 1 });
   const importObject = { env: { memory } };
   let module = compileWat(`
-  (func $x (result i64)
-    i64.const 42   ;; Load a constant value of 42
+  (func $x (param i32 i32) (result i32 i32)
+    (local.get 0)(local.get 1)
   )
   (export "x" (func $x))
   `, importObject)
 
-  console.log(module.exports.x())
+  console.log(module.exports.x(1,2))
 })
 
 t('compile: variable type inference', t => {

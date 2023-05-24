@@ -19,42 +19,42 @@
 * [ ] Replace `temp` with `wat/fn` includes:
   * [x] `and`/`or` must be implemented via stack, not tmp values nor function
   + helper functions naturally isolate temp scope variables () for storing (no names conflict)
-  + [x] swizzling like `set3(a,b,c)` (returns 3 arguments)
+  + [x] swizzling like `pick3(a,b,c,d)` (returns 3 arguments)
   + loop easily returns result
   + standardized non-standard operators
   + we keep analyzer code clean
   + inliner on optimizing stage can take care of everything else
-* [ ] implement outside-of-memory buffer lengths: either i64 or 2 values in stack
+* [ ] merge analyzer into compile
+  + the difference between them is unclear, compiler can map expression results
+  + compiler follows scopes anyways, easier to merge scope vars if needed
+  + we use desc anyways from analyser all the time
+  + we don't test analyser anyways, it's not stable
+* [ ] implement new loop/pipe `<|`, `|>`
+* [ ] implement no-ptr buffer lengths: either i64 or 2 values in stack
 * [ ] refactor `pick(N,arg)` into `dup(arg,3)`
 * [ ] more complex group conditionals: `a,b,c || d,e`
 * [ ] implement scopes as either tmp functions or blocks
 * [x] Implement storing buffer items
 * [ ] Test nested scopes variables
 * [ ] Test optional arguments
-* [ ] Test pipe over different cases
-* [ ] Implement memory alloc
+* [ ] Implement memory alloc fn
 * [x] Simple loops
 * [ ] Audio gain example
 * [ ] Sine gen example
-* [ ] All reference cases
-* [ ] Add nice serialization (toString) to AST nodes, to return nicely formatted code
-* [ ] Add reference line number to AST nodes to display nice errors
-* [ ] Make `err` function displaying errors nicely
+* [ ] All lang reference cases
+* [ ] Nice errors: line number to AST nodes?
+* [ ] Stub all wrong syntax error cases, like `++a=123;` etc - any operators on the lhs of `=` etc., all permutations
+* [ ] math: sin, cos, pow, mod etc - from mono https://github.com/stagas/mono
+* [ ] *state (global var per callsite?)
 
 * [ ] Processing modules collection
 
 * [ ] Demo page in style of assembly AI with wavefont marquee player
 
-* [ ] stdlib
-  * cos, sin, pow, mod
-
 * [ ] @audio/gain module
   * compiles basic son file to multicased function `gain`
   * [ ] wasm gain node: browser
   * [ ] wasm gain node: node
-
-* [ ] *state
-  * [ ] instances state can be allocated as global variables in advance by stacktrace
 
 * [ ] sonr expressions
   * `sin(432 + 10*sin(8)) * adsr(0, 0, .4, 0)`
