@@ -381,15 +381,15 @@ m[0..] = m[-1..0];              \\ reverse order
 m = m[1..,0];                   \\ rotate memory left
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ loops
-i=0; i++ < 3 <| log(i);         \\ inline loop: while i++ < 3 do log(i)
-[a, b, c] <| x(#);              \\ for each item (# is placeholder for item)
+[a, b, c] <| x(#);              \\ for each, # is placeholder for item
 10..1 <| (                      \\ iterate range
   # < 3 ? ^^;                   \\ `^^` breaks loop
   # < 5 ? ^;                    \\ `^` continues loop
 );
+0.. <| # >= 3 ? ^^ : log(#);    \\ while idx < 3 log(idx)
 [1..10 <| # * 2];               \\ list comprehension
 items <| a(#) <| b(#);          \\ chain iterations
-(a,b,c) |> item;                \\ write iterations to output buffer
+(a,b,c) |> items;               \\ write iterations to buffer
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ import, export
 @./path/to/module#x,y,z;        \\ any file can be imported directly

@@ -785,8 +785,10 @@ Having wat files is more useful than direct compilation to binary form:
   - weirdly confusing, as if very important part is lost. Maybe just introduce elvis `a>b ? a=1` → `a<=b ?: a=1`
   - it has no definite returning type. What's the result of `(a ? b)`?
     ~+ `b` or `0`?
+    ~+ likely returning type is never going to be needed
   * return type is `0` or `typeof b`
   - burdens `?` with semantic load, impeding other proposals like `try..catch`
+    ~ there's a chance try..catch is not going to be needed
   !? What if `a ?! b`, which is essentially `!a ?: b`
     + no conflict with ternary `?:`
     - nah, wrong ordering, we inverse `a`, not `b`
@@ -2844,9 +2846,13 @@ Having wat files is more useful than direct compilation to binary form:
       ? can we work that around?
   - harder for optimizers
 
-## [x] How to detect optional params -> enforce optional arguments always be f64
+## [ ] How to detect optional params -> static-time decorating
 
   * If we enforce function arguments always be f64 we can detect it via NaN
+    - unnecessarily slows down fn calls
+  * Optional args must be detected statically in fn callsite for perfect performance
+    - makes exported functions not support that
+      + seems that it's unavoidable that we lose identical signature
 
 ## [x] Precedence hurdle: |, (<|, |>), (=, +=) -> let's make `| ->` a ternary and keep `|` precedence as is
 
@@ -3134,28 +3140,14 @@ Having wat files is more useful than direct compilation to binary form:
       + can modify list on the fly
       + allows short operators as `list <| # *= volume`
       - saving last value in pipe is weird `list <| #*2 <| filter(#) <| #=#`
+      - we can iterate via range `0.. <| # = 1` - assignment doesn't make sense here
     ? should we direct pipe somewhere at the end?
       `list <| #*2 <| filter(#) |> list`
   ? how do we indicate index?
     ? `list <| (*i=0, *prev; >i++, >prev=#;)`
       + !clever!
 
-## [ ] List comprehension: how? ->
-
-  * The size of final list is unknown in advance. It requires dynamic-size mem allocation.
-  ? Can we detect size in advance somehow?
-  ? We can reserve memory slot for dynamic ops and perform various stuff there
-    * we may need it anyways for memory swiggling ops
-  ? Alternatively we can create large-dynamic slot for the time of creation, then dispose unused after init
-  -> Just create new array and push members to it, increasing array's length. We suggest there's only one dynamic array at-a-time created, so it's safe to increase length on creating time.
-    -> Or better just write length after the array is created, eg. somewhere in dynamic `$alloc` method.
-
-## [ ] Import into function scope?
-
-  * `saw() = (@math#pi; pi*2+...)`
-  + allows avoiding conflicts
-
-## [ ] `list <| x` vs `a < 1 <| x` - how do we know left side type?
+## [x] `list <| x` vs `a < 1 <| x` - how do we know left side type? -> lhs is always either `.. <| #+1` or array
   * type can be unknown, like `x(arg)=(arg <| ...)`
     ? do we run it until condition holds true?
     ? do we consider argument a list?
@@ -3165,6 +3157,30 @@ Having wat files is more useful than direct compilation to binary form:
   ? `list[..] <| #`
     ~ supposedly creates iteration subbuffer
     - `[1,2,3] <| #` would need to become `[1,2,3][..] <| #`
+    - anything on the lhs will be multiplied in pipe expression
+  ? `a < 1 ? <| a++`, `list <| #+1`
+
+  * it seems whatever type array arg has as a data, that's not what we intend: we should not waste time on detection
+
+  ? ALT: `#` means iteration, `list <| #+1` is iterator, `list <| 1` is while loop.
+    - not explicit enough that `#` somewhere in rhs is iteration
+
+  ? ALT: `list |> # + 1`, `a < 1 <| a++`
+    - that's same loop, separating operators is confusing
+
+  ? ALT: `list#item |> item + 1 |> item + 2`
+    - pipe is not connectable
+
+  ? ALT: iteration is always via ranges
+    * `.. <| # + 1` for infinite loop - break if needed
+      + `.. <| # < 3 ? ^^;`
+    * `..100 <| #` for limited loop
+    * `0.. <| # + 1` another kind of limited loop with nicer id
+    ? `..(a ? >< : 0) <| a + 1`
+    + refers to `..` in more looping sense!
+
+## [ ] How to represent array pointer in code?
+
   ? ALT: Use multiple stack values?
     + allows returning arrays as a couple [ptr,length] instead of storing length in memory
     * see https://hacks.mozilla.org/2019/11/multi-value-all-the-wasm/
@@ -3181,7 +3197,13 @@ Having wat files is more useful than direct compilation to binary form:
             ?+ export global array, write to it, read it?
               ?- do we ensure singleton exportable global memory then?
                 - that single memory contains a bunch of internal info: no way to give ptr/length
-  ? ALT: funcref returning ptr and length upon call?
+    ? still not clear - how do we know if arg is an array or f64
+      + by-operator, as we do now with ints/floats
+    - not clear which fn argument can be an array, even from call signature `a(arr, b, c)`
+      -> arg must be only one
+  ? with GC types can be solved as `(type $ptr (struct i32 i32)) (func (param (ref $ptr)))`
+    - unknown when structs will be supported
+  ? ~~ALT: funcref returning ptr and length upon call?~~
     + we anyways read length via operator
     + can store these variables anywhere, not just memory
     ~- not any js fn can be passed
@@ -3189,20 +3211,43 @@ Having wat files is more useful than direct compilation to binary form:
     - requires memory variable to be exported...
       ~ maybe unavoidable if user needs to import memory
     - not sure if we can create infinite functions
-  ? ALT: can be fn getter/setter that writes or reads value of the array
+  ? ~~ALT: can be fn getter/setter that writes or reads value of the array~~
     - not sure if we can create dynamic functions with local state...
   ? ALT: use `i64` to store both array pointer and length.
-    - returns BigInt, which needs to be reinterpreted client-side to get pointer to memory, not obvious
+    - returns BigInt, which needs to be reinterpreted client-side to get pointer to memory, not obvious how
   ? ALT: use `f64` real/fraction for address/length
     + wider addr/length range, up to `2^52` of int values
       - it may be not as good as `2^25`, consider storing length as `i16` (32756) - not so much, but already 52-16=36 bits for array length...
         ~kind of fine still, we can store fraction as the right part of float, at the very end
+      - generally it's precision scaling problem
     + possible to use as ptr directly in JS `new Float64Array(memory, ptr, ptr%1)`
-    -? how do we know if value is an array?
-      - if we designate extra bit for detection array, it takes away precision from all other floats
+    - value needs to be checked somehow if that's an array = we don't have clear understanding if that's an array or float
+      ?+ we can avoid value check if we consider it an array by-operation, so that all array ops are non-overlapping with math. Eg. `a |> b` and `a ?> b`
+        + we just enforce lhs `a <| #+1` to be a list
+    + to get length: reinterpret f64 as i64; apply length mask 0xffff; wrap to i32.
+    * if we stick to this, essentially it means any number becomes memory pointer
+    ~- any number for `<|` operator is treated as memory pointer, which might be undesired effect
+      ~- we may expect `3 <| # + 1` to be loop of 3 items
+        ~+ it's sort of fine to treat it as `3.0` and just skip looping
+      ~ `3.14 <| # + 1` means iterate memory at offset 3 for 14 elements
+        ?+ kind of useful for logging memory state?
+        + kind of reinforces notion of singleton-memory
+
+  ? ALT: v128
+    + throws at times ensuring arrays belong to lino, not outside
+    + perfectly holds 2xi64 or something else like eg. shift or memory idx
+    - fn arg requires to be indicated somehow via syntax, like `a([]x)`
+      ?+ do we need that? operator `|>` can naturally expect v128
+        - yes: to define function signature / types, we should know what type of argument is that
+    ?- no conversions from/to i32/f64.
+      ? Do we need it?
+    ? how to interact with arrays from JS side?
+    - requires SIMD
+    - may be not available in some environments
+
   ? ALT: track all known array ptrs in a table/memory or just as global vars
     + we can represent them single-var via just id, not actual pointer
-      - we can do infinite slices, storing all of them as ids is impossible
+    - we can do infinite slices, storing all of them as ids is impossible
 
 ## [ ] Prohibit dynamic arrays `a()=(x=[1,2,3])`?
   + ensures static memory: doesn't grow cept comprehension
@@ -3212,7 +3257,26 @@ Having wat files is more useful than direct compilation to binary form:
     ?+ callsite is supposedly fully predictive: there's no chance for arbitrary new callsites, is there?
   + we can slice existing memory easily
 
+## [x] List comprehension: how? -> last memory slot is dynamic, and length is increased every time array gets an item
+
+  * The size of final list is unknown in advance. It requires dynamic-size mem allocation.
+  ? Can we detect size in advance somehow?
+  ? We can reserve memory slot for dynamic ops and perform various stuff there
+    * we may need it anyways for memory swiggling ops
+  ? Alternatively we can create large-dynamic slot for the time of creation, then dispose unused after init
+  -> Just create new array and push members to it, increasing array's length. We suggest there's only one dynamic array at-a-time created, so it's safe to increase length on creating time.
+    -> Or better just write length after the array is created, eg. somewhere in dynamic `$alloc` method.
+
+## [ ] Import into function scope?
+
+  * `saw() = (@math#pi; pi*2+...)`
+  + allows avoiding conflicts
+
 ## [ ] Overdeclaring local variables
 
   * `(x=1; (x=2;))` - `x` in both scopes is the same variable, so that we can't declare `x` within nested scope this way.
   * that means there's one global namespace
+
+## [ ] Changing variables type `x=1;x=1.0;`
+
+  * that's problematic via wasm, since it enforces variable type: would be wrong to cast float to int

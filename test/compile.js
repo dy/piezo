@@ -24,6 +24,7 @@ function compileWat (code, importObj={}) {
   const wasmModule = wabt.parseWat('inline', code, {
     // simd: true,
     reference_types: true,
+    gc: true
     // function_references: true
   })
 
@@ -316,13 +317,12 @@ t.only('debugs', t => {
   const memory = new WebAssembly.Memory({ initial: 1 });
   const importObject = { env: { memory } };
   let module = compileWat(`
-  (func $x (param i32 i32) (result i32 i32)
-    (local.get 0)(local.get 1)
-  )
-  (export "x" (func $x))
+    (type $tuple (struct (field $id f32)))
+    (func (result (ref $tuple))
+      (struct.new $tuple (f32.const 0)))
   `, importObject)
 
-  console.log(module.exports.x(1,2))
+  console.log(module.exports.x(1n))
 })
 
 t('compile: variable type inference', t => {
