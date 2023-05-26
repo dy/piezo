@@ -421,15 +421,9 @@ NOTE: indexOf can be done as `string | (x,i) -> (x == "l" ? i)`
 -->
 
 
-## Inspiration
-
-* [mono](https://github.com/stagas/mono) – spiritual brother at cowbell.lol, functionally equivalent.
-* [min](https://github.com/r-lyeh/min) – syntax / style inspiration.
-
-
 ## Motivation
 
-_Lino_ is intended to be low-level static language with minimal JS-like syntax. Inspired by _mono_, _zzfx_, _bytebeat_, _[hxos](https://github.com/stagas/hxos)_ etc.
+_Lino_ is intended to be low-level static language with minimal JS-like syntax. Inspired by [_mono_](https://github.com/stagas/mono), _zzfx_, _bytebeat_, _[hxos](https://github.com/stagas/hxos)_, [_min_](https://github.com/r-lyeh/min) etc.
 
 Because JavaScript and _Web Audio API_ is not suitable for sound purposes – it has unpredictable pauses, glitches and so on. It better be handled worklet with WASM code.
 
