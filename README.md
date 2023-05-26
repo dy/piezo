@@ -12,6 +12,157 @@
 * [sonr](https://github.com/sonr/)
 -->
 
+
+## Reference
+
+```
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ variables
+foo=1, bar=2;                   \\ declare vars
+Ab_C_F#, $0, Δx, _;             \\ names permit alnum, unicodes, #, _, $
+fooBar123 == FooBar123;         \\ names are case-insensitive (lowcase encouraged!)
+default=1, eval=fn, else=0;     \\ lino has no reserved words
+
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ numbers
+16, 0x10, 0b0;                  \\ int (dec, hex or binary form)
+16.0, .1, 1e3, 2e-3;            \\ floats
+true = 0b1, false = 0b0;        \\ hint: alias booleans
+
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ type cast
+1 * 2; 12 - 10;                 \\ ints persist type if possible
+1 / 3; 2 * 3.14;                \\ ints upgrade to floats via float operations
+3.14 | 0; 2.5 // 1;             \\ floats cast to ints in int operations
+
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ units
+1k = 1000; 1pi = 3.1415;        \\ define units
+1s = 44100; 1ms = 0.001s;       \\ useful for sample indexes
+10.1k, 2pi;                     \\ units deconstruct to numbers: 10100, 6.283
+1h2m3.5s;                       \\ unit combinations
+
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ standard operators
++ - * / % -- ++                 \\ arithmetical
+&& || ! ?:                      \\ logical
+& | ^ ~ >> <<                   \\ binary
+== != >= <=                     \\ comparisons
+
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ extended operators
+** // %%                        \\ pow, int (floor) division, unsigned mod (wraps negatives)
+<| <|= #                        \\ for each, map, member
+-< -<=                          \\ clamp
+[]                              \\ prop, length
+* >                             \\ (unary) declare state, defer
+^ ^^                            \\ continue/return, break/return
+@ .                             \\ import, end of program
+
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ ranges
+1..10;                          \\ basic range
+1.., ..10, ..;                  \\ open ranges
+10..1;                          \\ reverse range
+1.08..108.0;                    \\ float range
+0>..10, 0..<10, 0>..<10;        \\ non-inclusive ranges
+(x-1)..(x+1);                   \\ calculated ranges
+1..2 + 2..3;                    \\ add ranges: 1..3
+1..3 - 2..;                     \\ subtract ranges: 1..2
+(-10..10)[];                    \\ span: 20
+x -< 0..10;                     \\ clamp(x, 0, 10)
+x -< ..10;                      \\ min(x, 10)
+x -< 0..;                       \\ max(0, x)
+x -<= 0..10;                    \\ x = clamp(x, 0, 10)
+a,b,c = 0..2;                   \\ ranges are sugar, not data type: a==0, b==1, c==2
+
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ groups
+a, b, c;                        \\ groups are sugar, not tuple
+(a, b, c)++;                    \\ apply operation to multiple elements: (a++, b++, c++)
+(a, (b, c));                    \\ groups are always flat == (a, b, c)
+(a,b,c) = (d,e,f);              \\ assign: a=d, b=e, c=f
+(a,b) = (b,a);                  \\ swap: temp=a; a=b; b=temp;
+(a,b) + (c,d);                  \\ operations: (a+c, b+d)
+(a,b).x;                        \\ (a.x, b.x);
+(a,b).x();                      \\ (a.x(), b.x());
+(a,b) = (c,d,e);                \\ (a=c, b=d);
+(a,b,c) = d;                    \\ (a=d, b=d, c=d);
+a = (b,c,d);                    \\ (a=b);
+a = b, c = d;                   \\ note: assignment precedence is higher: (a = b), (c = d)
+(a,b,c) = fn();                 \\ functions can return multiple values;
+
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ statements
+foo();                          \\ semi-colons at end of line are mandatory
+(c = a + b; c);                 \\ parens define block, return last element
+(a = b+1; a,b,c);               \\ block can return group
+(a ? ^b ; c);                   \\ return/break operator can preliminarily return value
+(a;b;);                         \\ note: returns null, if semicolon is last within block
+(a=1; a=1.0);                   \\ a is upgraded to float
+
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ conditions
+sign = a < 0 ? -1 : +1;         \\ inline ternary
+(2+2 >= 4) ?                    \\ multiline ternary
+  log("Math works!")
+: "a" < "b" ?                   \\ else if
+  log("Sort strings")
+: (                             \\ else
+  log("Get ready");
+  log("Last chance")
+);
+a || b ? c;                     \\ if a or b then c
+a && b ?: c;                    \\ elvis: if not a and b then c
+
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ functions
+double(n) = n*2;                \\ inline function
+triple(n=1) = (                 \\ optional args
+  n == 0 ? ^n;                  \\ return n
+  n*3                           \\ returns last value
+);
+triple();                       \\ 3
+triple(5);                      \\ 15
+triple(n: 10);                  \\ 30. named argument.
+copy = triple;                  \\ capture function
+copy(n: 10);                    \\ also 30
+clamp(v -< 0..10) = v;          \\ clamp argument
+x() = (1,2,3);                  \\ return group (multiple values)
+(a,b,c) = x();                  \\ assign to a group
+
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ stateful variables
+a() = ( *i=0; i++ );            \\ stateful variable - persist value between fn calls
+a(), a();                       \\ 0, 1
+b() = (
+  *i = [..4];                   \\ local memory of 4 items
+  >i = i[-1,1..];               \\ defer memory shift, called after fn body
+  i.0 = i.1+1;                  \\ write previous value i.1 to current value i.0
+  i.0                           \\ return i.0
+);
+b(), b(), b();                  \\ 1, 2, 3
+
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ buffers
+m = [1,2,3,4];                  \\ create buffer of 4 items
+m = [..1000];                   \\ create buffer of 1000 items
+m = [l:2, r:4, c:6];            \\ create with position aliases
+m = [n[1..3, 5, 6..]];          \\ create copy from indicated subrange
+m = [1, 2..4, ..10, n];         \\ create from mixed definition (buffer is always flat)
+m.0, m.1, m.2, m.3;             \\ read item by static index (0-based)
+m[0], m[1], m[-1];              \\ read by dynamic index, negative for last element
+m[1..2];                        \\ read multiple values
+m[];                            \\ get length
+m[0] = 1;                       \\ write single value
+m[1..] = (7,8);                 \\ write multiple values from specified index
+m[1,2] = m[2,1];                \\ rearrange items
+m[0..] = m[-1..0];              \\ reverse order
+m = m[1..,0];                   \\ rotate memory left
+
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ loops
+[a, b, c] <| x(#);              \\ for each item # call x(item)
+10..1 <| (                      \\ iterate range
+  # < 3 ? ^^;                   \\ ^^ breaks loop
+  # < 5 ? ^;                    \\ ^ continues loop
+);
+0.. <| # >= 3 ? ^^ : log(#);    \\ while idx < 3 log(idx)
+[1..10 <| # * 2];               \\ list comprehension
+items <| a(#) <| b(#);          \\ chain iterations
+
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ import, export
+@./path/to/module#x,y,z;        \\ any file can be imported directly
+@math#pi,sin,max;               \\ or defined via import-maps.json
+x, y, z                         \\ last statement ending with . exports members
+```
+
 ## Examples
 
 ### Gain Processor
@@ -246,155 +397,6 @@ mult(108,2) // 216
 ```
 
 
-## Reference
-
-```
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ variables
-foo=1, bar=2;                   \\ declare vars
-Ab_C_F#, $0, Δx, _;             \\ names permit alnum, unicodes, #, _, $
-fooBar123 == FooBar123;         \\ names are case-insensitive (lowcase encouraged!)
-default=1, eval=fn, else=0;     \\ lino has no reserved words
-
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ numbers
-16, 0x10, 0b0;                  \\ int (dec, hex or binary form)
-16.0, .1, 1e3, 2e-3;            \\ floats
-true = 0b1, false = 0b0;        \\ hint: alias booleans
-
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ type cast
-1 * 2; 12 - 10;                 \\ ints persist type if possible
-1 / 3; 2 * 3.14;                \\ ints upgrade to floats via float operations
-3.14 | 0; 2.5 // 1;             \\ floats cast to ints in int operations
-
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ units
-1k = 1000; 1pi = 3.1415;        \\ define units
-1s = 44100; 1ms = 0.001s;       \\ useful for sample indexes
-10.1k, 2pi;                     \\ units deconstruct to numbers: 10100, 6.283
-1h2m3.5s;                       \\ unit combinations
-
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ standard operators
-+ - * / % -- ++                 \\ arithmetical
-&& || ! ?:                      \\ logical
-& | ^ ~ >> <<                   \\ binary
-== != >= <=                     \\ comparisons
-
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ extended operators
-** // %%                        \\ pow, int (floor) division, unsigned mod (wraps negatives)
-<| <|= #                        \\ for each, map, member
--< -<=                          \\ clamp
-[]                              \\ prop, length
-* >                             \\ (unary) declare state, defer
-^ ^^                            \\ continue/return, break/return
-@ .                             \\ import, end of program
-
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ ranges
-1..10;                          \\ basic range
-1.., ..10, ..;                  \\ open ranges
-10..1;                          \\ reverse range
-1.08..108.0;                    \\ float range
-0>..10, 0..<10, 0>..<10;        \\ non-inclusive ranges
-(x-1)..(x+1);                   \\ calculated ranges
-1..2 + 2..3;                    \\ add ranges: 1..3
-1..3 - 2..;                     \\ subtract ranges: 1..2
-(-10..10)[];                    \\ span: 20
-x -< 0..10;                     \\ clamp(x, 0, 10)
-x -< ..10;                      \\ min(x, 10)
-x -< 0..;                       \\ max(0, x)
-x -<= 0..10;                    \\ x = clamp(x, 0, 10)
-a,b,c = 0..2;                   \\ ranges are sugar, not data type: a==0, b==1, c==2
-
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ groups
-a, b, c;                        \\ groups are sugar, not tuple
-(a, b, c)++;                    \\ apply operation to multiple elements: (a++, b++, c++)
-(a, (b, c));                    \\ groups are always flat == (a, b, c)
-(a,b,c) = (d,e,f);              \\ assign: a=d, b=e, c=f
-(a,b) = (b,a);                  \\ swap: temp=a; a=b; b=temp;
-(a,b) + (c,d);                  \\ operations: (a+c, b+d)
-(a,b).x;                        \\ (a.x, b.x);
-(a,b).x();                      \\ (a.x(), b.x());
-(a,b) = (c,d,e);                \\ (a=c, b=d);
-(a,b,c) = d;                    \\ (a=d, b=d, c=d);
-a = (b,c,d);                    \\ (a=b);
-a = b, c = d;                   \\ note: assignment precedence is higher: (a = b), (c = d)
-(a,b,c) = fn();                 \\ functions can return multiple values;
-
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ statements
-foo();                          \\ semi-colons at end of line are mandatory
-(c = a + b; c);                 \\ parens define block, return last element
-(a = b+1; a,b,c);               \\ block can return group
-(a ? ^b ; c);                   \\ return/break operator can preliminarily return value
-(a;b;);                         \\ note: returns null, if semicolon is last within block
-(a=1; a=1.0);                   \\ a is upgraded to float
-
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ conditions
-sign = a < 0 ? -1 : +1;         \\ inline ternary
-(2+2 >= 4) ?                    \\ multiline ternary
-  log("Math works!")
-: "a" < "b" ?                   \\ else if
-  log("Sort strings")
-: (                             \\ else
-  log("Get ready");
-  log("Last chance")
-);
-a || b ? c;                     \\ if a or b then c
-a && b ?: c;                    \\ elvis: if not a and b then c
-
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ functions
-double(n) = n*2;                \\ inline function
-triple(n=1) = (                 \\ optional args
-  n == 0 ? ^n;                  \\ return n
-  n*3                           \\ returns last value
-);
-triple();                       \\ 3
-triple(5);                      \\ 15
-triple(n: 10);                  \\ 30. named argument.
-copy = triple;                  \\ capture function
-copy(n: 10);                    \\ also 30
-clamp(v -< 0..10) = v;          \\ clamp argument
-x() = (1,2,3);                  \\ return group (multiple values)
-(a,b,c) = x();                  \\ assign to a group
-
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ stateful variables
-a() = ( *i=0; i++ );            \\ stateful variable - persist value between fn calls
-a(), a();                       \\ 0, 1
-b() = (
-  *i = [..4];                   \\ local memory of 4 items
-  >i = i[-1,1..];               \\ defer memory shift, called after fn body
-  i.0 = i.1+1;                  \\ write previous value i.1 to current value i.0
-  i.0                           \\ return i.0
-);
-b(), b(), b();                  \\ 1, 2, 3
-
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ buffers
-m = [1,2,3,4];                  \\ create buffer of 4 items
-m = [..1000];                   \\ create buffer of 1000 items
-m = [l:2, r:4, c:6];            \\ create with position aliases
-m = [n[1..3, 5, 6..]];          \\ create copy from indicated subrange
-m = [1, 2..4, ..10, n];         \\ create from mixed definition (buffer is always flat)
-m.0, m.1, m.2, m.3;             \\ read item by static index (0-based)
-m[0], m[1], m[-1];              \\ read by dynamic index, negative for last element
-m[1..2];                        \\ read multiple values
-m[];                            \\ get length
-m[0] = 1;                       \\ write single value
-m[1..] = (7,8);                 \\ write multiple values from specified index
-m[1,2] = m[2,1];                \\ rearrange items
-m[0..] = m[-1..0];              \\ reverse order
-m = m[1..,0];                   \\ rotate memory left
-
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ loops
-[a, b, c] <| x(#);              \\ for each item # call x(item)
-10..1 <| (                      \\ iterate range
-  # < 3 ? ^^;                   \\ ^^ breaks loop
-  # < 5 ? ^;                    \\ ^ continues loop
-);
-0.. <| # >= 3 ? ^^ : log(#);    \\ while idx < 3 log(idx)
-[1..10 <| # * 2];               \\ list comprehension
-items <| a(#) <| b(#);          \\ chain iterations
-
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ import, export
-@./path/to/module#x,y,z;        \\ any file can be imported directly
-@math#pi,sin,max;               \\ or defined via import-maps.json
-x, y, z                         \\ last statement ending with . exports members
-```
 
 <!--
 
