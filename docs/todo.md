@@ -30,7 +30,8 @@
   + we use desc anyways from analyser all the time
   + we don't test analyser anyways, it's not stable
 * [ ] implement array pointer as float64
-* [ ] `x=1; x=1.0` - defines variable as float
+* [ ] `x=1; x=1.0` - upgrade definition to float
+* [ ] count number of stack items in result, for proper `(drop)` amount, eg. `a ? b;` possibly has 0 items in stack;
 * [ ] implement new loop/pipe `<|`, `|>`
 * [ ] implement no-ptr buffer lengths: either i64 or 2 values in stack
 * [ ] refactor `pick(N,arg)` into `dup(arg,3)`

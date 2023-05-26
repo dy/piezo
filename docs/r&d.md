@@ -207,7 +207,16 @@ Having wat files is more useful than direct compilation to binary form:
     → sets can be listed as `(a,b,c)` ()
       ⇒ or even better, as functional languages do: `type in a|b|c`
 
-## [x] !? erlang strings: "hello" === [104,101,108,108,111]
+## [ ] Strings:
+
+  * Erlang-like "hello" === [104,101,108,108,111]
+    + Standard
+    - Case-sensitivize code
+  * Base32
+  * hex only
+    + standard form
+    + easy to convert memory
+    - not as useful, no way to preview content
 
 ## [ ] !? atoms: 'hello' (not string)
   * Atoms are useful for referencing:
@@ -3232,9 +3241,10 @@ Having wat files is more useful than direct compilation to binary form:
     ~- any number for `<|` operator is treated as memory pointer, which might be undesired effect
       ~- we may expect `3 <| # + 1` to be loop of 3 items
         ~+ it's sort of fine to treat it as `3.0` and just skip looping
-      ~ `3.14 <| # + 1` means iterate memory at offset 3 for 14 elements
+      ~ `3.000xxx <| # + 1` means iterate memory at offset 3 for 14 elements
         ?+ kind of useful for logging memory state?
         + kind of reinforces notion of singleton-memory
+        + can be useful for sound hackers - iterations of fragments of waveforms (granular synth) etc.
     ~- some dec combinations are impossible, eg. `1.102` turns into `1.10200000000000009059`
       + we need to encode int24 into fractional part as binary, allows up to 99999999 memory address value
 
