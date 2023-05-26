@@ -23,7 +23,7 @@ gain(                               \\ define a function with block, volume argu
   block,                            \\ block type is inferred as buffer from pipe operation |=
   volume -< 0..100.0                \\ volume is clamped to 0..100, type is inferred as float
 ) = (
-  block <| # * volume |> block;     \\ map samples via pipe: for each x in block do x *= volume
+  block <|= # * volume;             \\ map each sample via multiplying by value
 );
 
 gain([0, .1, .2, .3, .4, .5], 2);   \\ [0, .2, .4, .6, .8, 1]
@@ -119,10 +119,9 @@ coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
   t = i / 1s;
   >phase += (freq + (t > delay ? jump : 0)) * 2pi / 1s;
 
-  out <| oscillator[shape](phase)
+  out <|= oscillator[shape](phase)
       <| adsr(#, 0, 0, .06, .24)
       <| curve(#, 1.82)
-  |> out
 ).
 ```
 
@@ -176,13 +175,12 @@ noise(x) = sin((x + 10) * sin((x + 10) ** (fract(x) + 10)));
 melodytest(time) = (
   melodyString = "00040008",
   melody = 0;
-  i = 0;
 
-  i++ < 5 <| (
+  0..5 <| (
     melody += tri(
       time * mix(
-        200 + (i * 900),
-        500 + (i * 900),
+        200 + (# * 900),
+        500 + (# * 900),
         melodyString[floor(time * 2) % melodyString[]] / 16
       )
     ) * (1 - fract(time * 4))
@@ -264,7 +262,7 @@ true = 0b1, false = 0b0;        \\ hint: alias booleans
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ type cast
 1 * 2; 12 - 10;                 \\ ints persist type if possible
-1 / 3; 2 * 3.14;                \\ ints cast to floats in float operations
+1 / 3; 2 * 3.14;                \\ ints upgrade to floats via float operations
 3.14 | 0; 2.5 // 1;             \\ floats cast to ints in int operations
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ units
@@ -279,9 +277,9 @@ true = 0b1, false = 0b0;        \\ hint: alias booleans
 & | ^ ~ >> <<                   \\ binary
 == != >= <=                     \\ comparisons
 
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ extra operators
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ extended operators
 ** // %%                        \\ pow, int (floor) division, unsigned mod (wraps negatives)
-<| |>                           \\ loop, map
+<| <|= #                        \\ for each, map, member
 -< -<=                          \\ clamp
 []                              \\ prop, length
 * >                             \\ (unary) declare state, defer
@@ -290,7 +288,7 @@ true = 0b1, false = 0b0;        \\ hint: alias booleans
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ ranges
 1..10;                          \\ basic range
-1.., ..10;                      \\ open ranges
+1.., ..10, ..;                  \\ open ranges
 10..1;                          \\ reverse range
 1.08..108.0;                    \\ float range
 0>..10, 0..<10, 0>..<10;        \\ non-inclusive ranges
@@ -302,9 +300,10 @@ x -< 0..10;                     \\ clamp(x, 0, 10)
 x -< ..10;                      \\ min(x, 10)
 x -< 0..;                       \\ max(0, x)
 x -<= 0..10;                    \\ x = clamp(x, 0, 10)
+a,b,c = 0..2;                   \\ ranges are sugar, not data type: a==0, b==1, c==2
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ groups
-a, b, c;                        \\ groups are syntactic sugar
+a, b, c;                        \\ groups are sugar, not tuple
 (a, b, c)++;                    \\ apply operation to multiple elements: (a++, b++, c++)
 (a, (b, c));                    \\ groups are always flat == (a, b, c)
 (a,b,c) = (d,e,f);              \\ assign: a=d, b=e, c=f
@@ -324,6 +323,7 @@ foo();                          \\ semi-colons at end of line are mandatory
 (a = b+1; a,b,c);               \\ block can return group
 (a ? ^b ; c);                   \\ return/break operator can preliminarily return value
 (a;b;);                         \\ note: returns null, if semicolon is last within block
+(a=1; a=1.0);                   \\ a is upgraded to float
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ conditions
 sign = a < 0 ? -1 : +1;         \\ inline ternary
@@ -336,12 +336,12 @@ sign = a < 0 ? -1 : +1;         \\ inline ternary
   log("Last chance")
 );
 a || b ? c;                     \\ if a or b then c
-a && b ?: c;                    \\ if not a or b then c
+a && b ?: c;                    \\ elvis: if not a and b then c
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ functions
 double(n) = n*2;                \\ inline function
 triple(n=1) = (                 \\ optional args
-  n == 0 ? ^n;                  \\ preliminarily return n
+  n == 0 ? ^n;                  \\ return n
   n*3                           \\ returns last value
 );
 triple();                       \\ 3
@@ -358,7 +358,7 @@ a() = ( *i=0; i++ );            \\ stateful variable - persist value between fn 
 a(), a();                       \\ 0, 1
 b() = (
   *i = [..4];                   \\ local memory of 4 items
-  >i = i[-1,1..];               \\ rotate memory after fn body
+  >i = i[-1,1..];               \\ defer memory shift, called after fn body
   i.0 = i.1+1;                  \\ write previous value i.1 to current value i.0
   i.0                           \\ return i.0
 );
@@ -381,15 +381,14 @@ m[0..] = m[-1..0];              \\ reverse order
 m = m[1..,0];                   \\ rotate memory left
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ loops
-[a, b, c] <| x(#);              \\ for each, # is placeholder for item
+[a, b, c] <| x(#);              \\ for each item # call x(item)
 10..1 <| (                      \\ iterate range
-  # < 3 ? ^^;                   \\ `^^` breaks loop
-  # < 5 ? ^;                    \\ `^` continues loop
+  # < 3 ? ^^;                   \\ ^^ breaks loop
+  # < 5 ? ^;                    \\ ^ continues loop
 );
 0.. <| # >= 3 ? ^^ : log(#);    \\ while idx < 3 log(idx)
 [1..10 <| # * 2];               \\ list comprehension
 items <| a(#) <| b(#);          \\ chain iterations
-(a,b,c) |> items;               \\ write iterations to buffer
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ import, export
 @./path/to/module#x,y,z;        \\ any file can be imported directly
@@ -425,35 +424,28 @@ NOTE: indexOf can be done as `string | (x,i) -> (x == "l" ? i)`
 * [mono](https://github.com/stagas/mono) – spiritual brother at cowbell.lol, functionally equivalent.
 * [min](https://github.com/r-lyeh/min) – syntax / style inspiration.
 
+
 ## Motivation
 
-JavaScript and _Web Audio API_ is not suitable for sound purposes due to its unstable nature, it proves to have unpredictable pauses, glitches and so on.
-Ideally its usage for sound should be reduced to minimum – a single audio processing worklet, output, and the rest is handled by WASM code.
-That's motivation for some languages or tools like _mono_, _zzfx_, _bytebeat_, _[hxos](https://github.com/stagas/hxos)_ etc.
+_Lino_ is intended to be low-level static language with minimal JS-like syntax. Inspired by _mono_, _zzfx_, _bytebeat_, _[hxos](https://github.com/stagas/hxos)_ etc.
 
-_Lino_ is alternative implementation to _mono_, incorporating its ideas and vision, with focus on ergonomics and portability.
-_Lino_ is alternative to AssemblyScript, without heavy types agenda or JS legacy.
-_Lino_ is like low-level distilled functional JS compiling to WASM.
+Because JavaScript and _Web Audio API_ is not suitable for sound purposes – it has unpredictable pauses, glitches and so on. It better be handled worklet with WASM code.
 
-It aims to express sound code in a very compact and robust form, easy to "tweak and tweet".
-It attempts to have intuitive syntax and flow, fit for live coding sessions.
-It also focuses on accessibility, so that produced code can be plugged into various environments, including no-sound ones.
-It aspires to standardize sound expressions and make sound more accessible.
 
 ### Principles
 
 * _Common syntax_: familiar code, copy-pastable floatbeats.
-* _No-keywords_: safe var names, max minification, non-latin code.
+* _No-keywords_: safe var names, max minification, i18l code.
 * _Case-agnostic_: URL-safe, typo-proof.
-* _Subtle type inference_: type hints instead of dedicated syntax.
-* _No OOP_: functional, stateful vars.
+* _Subtle type inference_: type by-operator, not dedicated syntax.
+* _No OOP_: functions, stateful vars.
 * _Groups_: multiple returns, multiple operands.
 * _No implicit globals_: wysiwyg.
-* _Ranges_: prevent out-of-range arguments.
-* _Pipes_: loops on steroids.
+* _Ranges_: prevent blowing up values.
+* _Pipes_: iterators instead of loops.
 * _Low-level_: no fancy features beyond math and buffers.
-* _Linear memory_: no garbage collectable constructs.
+* _Static/Linear memory_: no garbage to collect.
 * _0 runtime_: statically analyzable.
-* _Flat_: no nested scopes, arrays are flat.
+* _Flat_: no nested scopes, flat arrays.
 
 <p align=center><a href="https://github.com/krsnzd/license/">🕉</a></p>

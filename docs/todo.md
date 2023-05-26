@@ -29,6 +29,8 @@
   + compiler follows scopes anyways, easier to merge scope vars if needed
   + we use desc anyways from analyser all the time
   + we don't test analyser anyways, it's not stable
+* [ ] implement array pointer as float64
+* [ ] `x=1; x=1.0` - defines variable as float
 * [ ] implement new loop/pipe `<|`, `|>`
 * [ ] implement no-ptr buffer lengths: either i64 or 2 values in stack
 * [ ] refactor `pick(N,arg)` into `dup(arg,3)`

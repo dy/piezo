@@ -2961,7 +2961,7 @@ Having wat files is more useful than direct compilation to binary form:
   * likely can be `osc=[sin(x)=...x,tri(x)=...x]`
 + resolves the issue of scope (above): no need to make all vars global since no scope recursion
 
-## [x] Replace `<|`, `|`, `|>` with `:: &` / `:: #` ? -> ~~Let's try `::` for loop/generator and `list -> item ::` for extended loop/tranformer~~ let's use `<|` for loop/pipe, `#` for member placeholder, `|>` for writing out iteration results
+## [x] Replace `<|`, `|`, `|>`? -> ~~Let's try `::` for loop/generator and `list -> item ::` for extended loop/tranformer~~ let's use `<|` for loop/pipe, `#` for member placeholder, `a <|= b <| c` for writing out iteration results
 
 + Less problems with overloading `|`
 + Fold operator is likely not as useful
@@ -3107,7 +3107,7 @@ Having wat files is more useful than direct compilation to binary form:
     * `a < 2 |> a++`, `list |> # * 2 |> filter(#)`, `list |>= # * 2`
     * `a < 2 <| a++`, `list <| # * 2 <| filter(#)`, `list <|= # * 2`
 
-? ALT: `list <| # * 2 <| filter(#)`, `a < 2 <| a++`, `list <|= # * 2`
+? ALT: `list <| # * 2 <| filter(#)`, `a < 2 <| a++`, `list = list <| # * 2`
   + `<|` is graphically meaningful for loop
   + `#` is meaningful for member
     - reserves that keyword, can't simply use in var names
@@ -3125,8 +3125,10 @@ Having wat files is more useful than direct compilation to binary form:
   + innovative & hereditary same time
   + very compact
   - problem with mapping `list <|= # * 2` - too heavy for map operator
+    + quite nice directional meaning btw, like arrow points that the result is rewritten by-element
     ? do directly as `list = list <| # * 2`
       - it's not obvious that we assign iterator result (group or last member) to initial variable
+        ?+ why not obvious? quite obvious
     ? should we consider `list[..] = list <| #` instead?
       + keeps pipe untouched
       + introduce all-range operator (cool!)
@@ -3147,7 +3149,8 @@ Having wat files is more useful than direct compilation to binary form:
     ? `list <| (*i=0, *prev; >i++, >prev=#;)`
       + !clever!
 
-## [x] `list <| x` vs `a < 1 <| x` - how do we know left side type? -> lhs is always either `.. <| #+1` or array
+## [ ] `list <| x` vs `a < 1 <| x` - how do we know left side type? -> lhs is always either `.. <| #` or `list <| #`
+
   * type can be unknown, like `x(arg)=(arg <| ...)`
     ? do we run it until condition holds true?
     ? do we consider argument a list?
@@ -3179,7 +3182,7 @@ Having wat files is more useful than direct compilation to binary form:
     ? `..(a ? >< : 0) <| a + 1`
     + refers to `..` in more looping sense!
 
-## [ ] How to represent array pointer in code?
+## [ ] How to represent array pointer in code? -> let's try f64
 
   ? ALT: Use multiple stack values?
     + allows returning arrays as a couple [ptr,length] instead of storing length in memory
@@ -3224,7 +3227,7 @@ Having wat files is more useful than direct compilation to binary form:
     - value needs to be checked somehow if that's an array = we don't have clear understanding if that's an array or float
       ?+ we can avoid value check if we consider it an array by-operation, so that all array ops are non-overlapping with math. Eg. `a |> b` and `a ?> b`
         + we just enforce lhs `a <| #+1` to be a list
-    + to get length: reinterpret f64 as i64; apply length mask 0xffff; wrap to i32.
+    + to get length: reinterpret f64 as i64; apply length mask 0xffffff; wrap to i32.
     * if we stick to this, essentially it means any number becomes memory pointer
     ~- any number for `<|` operator is treated as memory pointer, which might be undesired effect
       ~- we may expect `3 <| # + 1` to be loop of 3 items
@@ -3232,6 +3235,8 @@ Having wat files is more useful than direct compilation to binary form:
       ~ `3.14 <| # + 1` means iterate memory at offset 3 for 14 elements
         ?+ kind of useful for logging memory state?
         + kind of reinforces notion of singleton-memory
+    ~- some dec combinations are impossible, eg. `1.102` turns into `1.10200000000000009059`
+      + we need to encode int24 into fractional part as binary, allows up to 99999999 memory address value
 
   ? ALT: v128
     + throws at times ensuring arrays belong to lino, not outside
@@ -3257,7 +3262,7 @@ Having wat files is more useful than direct compilation to binary form:
     ?+ callsite is supposedly fully predictive: there's no chance for arbitrary new callsites, is there?
   + we can slice existing memory easily
 
-## [x] List comprehension: how? -> last memory slot is dynamic, and length is increased every time array gets an item
+## [ ] List comprehension: how? -> last memory slot is dynamic, and length is increased every time array gets an item
 
   * The size of final list is unknown in advance. It requires dynamic-size mem allocation.
   ? Can we detect size in advance somehow?
@@ -3277,6 +3282,6 @@ Having wat files is more useful than direct compilation to binary form:
   * `(x=1; (x=2;))` - `x` in both scopes is the same variable, so that we can't declare `x` within nested scope this way.
   * that means there's one global namespace
 
-## [ ] Changing variables type `x=1;x=1.0;`
+## [ ] Changing variables type `x=1;x=1.0;` -> upgrade type to float if it's ever assigned
 
   * that's problematic via wasm, since it enforces variable type: would be wrong to cast float to int
