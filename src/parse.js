@@ -12,9 +12,7 @@ const PREC_SEMI=1,
 PREC_EXPORT=2,
 PREC_SEQUENCE=3, //  a, b==c, d,   a, b>=c, d,   a | b,c | d,   a?b:c , d
 PREC_DEFER=4,
-PREC_LOOP=5, // |>
-PREC_PIPE=6, // |->
-PREC_MAP=7, // ->
+PREC_LOOP=5, // <|
 PREC_ASSIGN=8,  // a=b, c=d,  a = b||c,  a = b | c,   a = b&c
 PREC_BOR=9, // a|b , c|d,   a = b|c
 PREC_LABEL=10, // a:b = 2,  a:b, b:c,   a: b&c
@@ -109,6 +107,7 @@ binary('=', PREC_ASSIGN, true)
 binary('+=', PREC_ASSIGN, true)
 binary('-=', PREC_ASSIGN, true)
 binary('-<=', PREC_ASSIGN, true)
+binary('<|=', PREC_ASSIGN, true)
 binary('**', PREC_POW, true)
 
 binary('+', PREC_SUM)
@@ -116,7 +115,7 @@ binary('-', PREC_SUM)
 binary('*', PREC_MULT)
 binary('/', PREC_MULT)
 binary('%', PREC_MULT)
-// binary('|', PREC_BOR)
+binary('|', PREC_BOR)
 binary('&', PREC_BAND)
 binary('^', PREC_XOR)
 binary('==', PREC_EQ)
@@ -130,17 +129,7 @@ binary('>>>', PREC_SHIFT)
 binary('<<', PREC_SHIFT)
 
 binary('-<', PREC_CLAMP) // a -< b
-
-binary('|>', PREC_LOOP)
-nary('|', PREC_PIPE)
-token('|', PREC_BOR, (a,b)=> (
-  // return BOR precedence only if rhs is not `->`, otherwise lower precedence
-  // NOTE: there is a case with rhs higher than map:  a|b=c
-  // it's parsed as a | b=c, which is better than "logical"  a|b  = c
-  a && (b=expr(PREC_ASSIGN-1)) && (b[0]!=='->') && ['|',a,b]
-))
-// NOTE: we take functions same precedence as assign to be able `a = x -> y`
-binary('->', PREC_ASSIGN, true)
+binary('<|', PREC_LOOP)
 
 // unaries
 unary('+', PREC_UNARY)
@@ -177,9 +166,9 @@ unary('>', PREC_DEFER)
 unary('@', PREC_TOKEN)
 
 // a?b, a?:b
-// NOTE: duplicate of || &&
-// binary('?', PREC_TERNARY)
-// binary('?:', PREC_TERNARY)
+// NOTE: unlike || && this one doesn't return item
+binary('?', PREC_TERNARY)
+binary('?:', PREC_TERNARY)
 
 // a?b:c
 token('?', PREC_TERNARY, (a, b, c) => (

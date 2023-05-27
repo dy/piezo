@@ -313,7 +313,7 @@ t.todo('compile: arrays subarrays', t => {
   is(arr[ptr+1], 2)
 })
 
-t.only('debugs', t => {
+t.skip('debugs', t => {
   const memory = new WebAssembly.Memory({ initial: 1 });
   const importObject = { env: { memory } };
   let module = compileWat(`

@@ -153,71 +153,8 @@ export default function analyze(node) {
       return body
     },
 
-    // (args) -> (body), - syntax sugar
-    '->'([,args,body]) {
-      let parent = scope
-      scope = Object.create(scope)
-
-      let init = [';'], out = Object.assign(['->'], {
-        scope,
-        result:null // result type
-      })
-      if (args) {
-        if (args[0]==='(') [,args]=args;
-        args = !args ? [] : args[0] === ',' ? args.slice(1) : [args];
-        // (a,b)->, (a=1,b=2)->, (a=(1;2))->
-        for (let arg of args) {
-          if (typeof arg === 'string') scope[arg]={arg:true, type:FLOAT}, out.args.push(arg)
-          else if (arg[0] === '=') scope[arg[1]]={arg:true, type:FLOAT}, init.push(arg), out.args.push(arg[1])
-          else if (arg[0] === '-<') scope[arg[1]]={arg:true, type:FLOAT}, init.push(arg), out.args.push(arg[1])
-          // FIXME: array arguments
-          else err('Bad arguments syntax', body)
-        }
-      }
-
-      out.push(expr(init), body = expr(body[0]==='(' ? body[1] : body))
-      out.result = desc(body[0] === ';' ? body[body.length - 1] : body, scope) // detect result type
-      scope = parent
-      return out
-    },
-
     // a | b, a | x -> y
     '|'([,a,b]) {
-      // arg | (x,i) -> body,  immediate function gets converted into loop
-      if (b[0] === '->') {
-        let fn = expr(b), [argName, idxName] = fn.args, pipeVars, pipeArg, pipeIdx, pipeLen
-
-        // FIXME: arguments must be simple here
-
-        // FIXME: modify pipe/args and idx depending on stack callsite, to avoid name conflict in nested pipes
-        // a | (x,idx) -> body   becomes    arg = a; i = 0; i < arg[] |> (idx=i; x = arg[i]; i++; body)
-        let parent = scope
-        scope = fn.scope;
-
-        // pipe temp vars with resolved names
-        [[,pipeArg], [,pipeIdx], [,pipeLen]] = pipeVars = [
-          temp('pipe/arg',a),// ['=','pipe/arg',a],
-          temp('pipe/idx',[INT,0]),// ['=','pipe/idx',[INT,0]],
-          temp('pipe/len',['[]','pipe/arg'])// ['=','pipe/len',['[]','pipe/arg']],
-        ]
-
-        let out = ['(',expr([';',
-          ...pipeVars,
-          ['|>',
-            ['<',pipeIdx,pipeLen],
-            [';',
-              argName && ['=',argName,['[]',pipeArg,pipeIdx]],
-              idxName && ['=',idxName,pipeIdx],
-              ['++',pipeIdx],
-              fn[2] // write only body
-            ]
-          ]
-        ])]
-        out.scope = scope
-        scope = parent
-        return out;
-      }
-
       // a | b,   binary OR
       return ['|',expr(a),expr(b)]
     },
