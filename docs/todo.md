@@ -29,18 +29,22 @@
   + compiler follows scopes anyways, easier to merge scope vars if needed
   + we use desc anyways from analyser all the time
   + we don't test analyser anyways, it's not stable
+  + simplifies parent state management
+* [ ] use f64 everywhere
 * [ ] implement array pointer as float64
-* [ ] `x=1; x=1.0` - upgrade definition to float
-* [ ] count number of stack items in result, for proper `(drop)` amount, eg. `a ? b;` possibly has 0 items in stack;
+* [ ] `x=1; x=1.0` - add float dup
+* [ ] arity of ops, for proper `(drop)` amount, eg. `a ? b;` has 0 items in stack;
 * [ ] implement new loop/pipe `<|`, `|>`
 * [ ] implement no-ptr buffer lengths: either i64 or 2 values in stack
 * [ ] refactor `pick(N,arg)` into `dup(arg,3)`
 * [ ] more complex group conditionals: `a,b,c || d,e`
 * [ ] implement scopes as either tmp functions or blocks
 * [x] Implement storing buffer items
-* [ ] Test nested scopes variables
+* [ ] Test nested scopes variables `(x=0;(y=1);y)`
+* [ ] Extend i32 to i64 whereever possible
 * [ ] Test optional arguments
 * [ ] Implement memory alloc fn
+* [ ] Test a,,c = d,e,f; a,b,c = d,,f
 * [x] Simple loops
 * [ ] Audio gain example
 * [ ] Sine gen example

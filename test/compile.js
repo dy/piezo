@@ -2,7 +2,6 @@
 
 import t, { is, not, ok, same, throws } from 'tst'
 import parse from '../src/parse.js'
-import analyse from '../src/analyse.js'
 import compile from '../src/compile.js'
 import Wabt from '../lib/wabt.js'
 // import Wabt from 'wabt'
@@ -84,6 +83,18 @@ t('compile: globals multiple', () => {
   mod = compileWat(wat)
   is(mod.exports.a.value, -1)
   is(mod.exports.b.value, -1)
+})
+
+t.todo('compile: export kinds', t => {
+
+  throws(() => analyse(parse(`x,y.;z`)), /export/i)
+  is(analyse(parse(`x.`)).export, {x:'global'})
+  is(analyse(parse(`x=1.`)).export, {x:'global'})
+  is(analyse(parse(`x,y.`)).export, {x:'global',y:'global'})
+  is(analyse(parse(`x,y,z.`)).export, {x:'global',y:'global',z:'global'})
+  is(analyse(parse(`x=1;x.`)).export, {x:'global'})
+  is(analyse(parse(`x=1,y=1;x,y.`)).export, {x:'global',y:'global'})
+  is(analyse(parse(`(x,y)=(1,1).`)).export, {x:'global',y:'global'})
 })
 
 t('compile: numbers negatives', t => {

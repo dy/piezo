@@ -2555,7 +2555,7 @@ Having wat files is more useful than direct compilation to binary form:
 - not clear if `'oscillator'`, `'Oscillator'`, `oscillator` and `Oscillator` resolve to the same
 - can cause conflicts with "bad" names, like `pipe/arg`
 
-## [~] Ranges: how to organize in wasm level? -> let's try syntactic ranges and wait if we need ranges math/vars
+## [~] Ranges: how to organize in wasm level? -> let's try syntactic ranges and wait if we need ranges as primitives
 
 1. v128 as f64x2
   + stores
@@ -2584,7 +2584,7 @@ Having wat files is more useful than direct compilation to binary form:
   + allows fast direct static ranges easily
   + removes tacky problems: ranges combination, min/max reading (since they're immediately available)
 
-## [ ] Drop ints and use only f64? -> keep both for now, complexity is controllable
+## [x] Drop ints and use only f64? -> let's try to use only f64 for variables
 
 + waay less code
 + no type conversion question, since values are floats always
@@ -2592,6 +2592,28 @@ Having wat files is more useful than direct compilation to binary form:
 + f64 stores more ints than i32 (up to i52)
 - no compatibility with bytebeat
 - no meaningful shift/binary operations
+  ? can we perform binary ops in terms of int parts of floats?
+    ~+ i32 can be result of operation, eg. `a|b`
+      * then we can track it similar to `static` property
+      * eg. `(a|b)^c` doesn't convert back-forth between f64-i32 and only does binaries
+    + we anyways track number of args from operation, so we can track their types or have flag detector in getDesc
++ less cognitive load for users:
+  + less to learn from readme
+  + less care about types
++ solves problem of variable reassignment, eg. `x=1;x=1.0`: we have only one type and don't wreck our brain.
++ we reserve i32 for internal tasks only
++ makes easy to store variables in memory
+-> ok, so variables are always f64, but calc results can be any, so we only extend i32 to f64 in assignment or fn return
+
+## [x] How to pass int to a function? -> we force ints into floats every so often
+
+1. Detect i32 from default value `x(i=1)=(...)`
+  - default value can be calculable, not primitive, eg. `x(a,b=a)=(...)`
+  - floats downgrade to ints in external calls `x(5.4)`
+  - we need to track fn signatures to perform calls
+2. Enforce float args, `x(i)=(...)`
+  + f64 covers i32 range anyways, so even binary patterns can be preserved
+  - some tax of converting i32 to float, that's it
 
 ## [x] Use f32 instead of f64 -> keep f64
 
@@ -2859,9 +2881,10 @@ Having wat files is more useful than direct compilation to binary form:
 
   * If we enforce function arguments always be f64 we can detect it via NaN
     - unnecessarily slows down fn calls
+    + allows external default args
+    + with f64 vars there's no big problem for one extra check a!=a
   * Optional args must be detected statically in fn callsite for perfect performance
-    - makes exported functions not support that
-      + seems that it's unavoidable that we lose identical signature
+    - makes exported functions require all params
 
 ## [x] Precedence hurdle: |, (<|, |>), (=, +=) -> let's make `| ->` a ternary and keep `|` precedence as is
 
@@ -3292,6 +3315,17 @@ Having wat files is more useful than direct compilation to binary form:
   * `(x=1; (x=2;))` - `x` in both scopes is the same variable, so that we can't declare `x` within nested scope this way.
   * that means there's one global namespace
 
-## [ ] Changing variables type `x=1;x=1.0;` -> upgrade type to float if it's ever assigned
+## [ ] Changing variables type `x=1;x=1.0;` -> vars are always float
 
   * that's problematic via wasm, since it enforces variable type: would be wrong to cast float to int
+  ? upgrade type definition to float if it's ever assigned to
+  ? declare float alias variable at the moment of finding upgrade
+    + allows merging analyser into 1-pass compiler
+    + retains precision
+
+## [x] Limited variables `x-<0..100; x=1000;` -> nah
+  + allows static tracking of value
+  + compatible with arguments limiting
+  - we don't have explicit var declaration
+    * so `x-<..100` is confusable with just single clamp operation.
+    - fn args don't get ever-clamped, just once
