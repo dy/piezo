@@ -7,7 +7,7 @@ import { parse as parseWat } from "watr";
 const F64_PER_PAGE = 8192;
 const MEM_STRIDE = 8; // bytes per f64
 
-let includes, globals, pickers, locals, memcount, loop, exports;
+let includes, globals, pickers, locals, memcount, loop, exports, block;
 
 export default function compile(node) {
   if (typeof node === 'string') node = parse(node)
@@ -23,17 +23,22 @@ export default function compile(node) {
   block = Object.assign([''],{cur:0}), // current block count
   exports = {} // list of items to export
 
-  // begin - pretend global to be a function init
+  // run global in start function
   let res = `(func $module/init ${expr(node)})(start $module/init)`
 
-  // Declare memories
+  // declare variables
+  for (let name in globals) {
+    res = `(global $${name} (mut f64) (f64.const 0))\n${res}`
+  }
+
+  // declare memories
   if (memcount) res += `\n(memory (export "memory") ${Math.ceil(memcount / F64_PER_PAGE)})`
 
-  // Declare includes
+  // declare includes
   for (let include of includes)
     res += `\n${stdlib[include]}`
 
-  // Provide exports
+  // provide exports
   for (let name in exports)
     res += `\n(export "${name}" (${scope[name].type === FUNC ? 'func' : 'global'} $${name}))`
 
@@ -51,8 +56,8 @@ function expr(statement) {
   if (typeof statement === 'string') {
     // just x,y; or a=x; where x is undefined
     statement = statement + block.join('.')
-    if (!locals[statement] && !globals[statement]) err('Undefined variable ' + statement);
-    return op(`(${locals[statement]?'local':'global'}.get $${statement})`,`f64`)
+    if (!locals?.[statement] && !globals[statement]) err('Undefined variable ' + statement);
+    return op(`(${locals?.[statement]?'local':'global'}.get $${statement})`,`f64`)
   }
   if (statement[0] in expr) return expr[statement[0]](statement) || ''
   err('Unknown operation `' + statement[0] + '`',statement)
@@ -99,11 +104,13 @@ Object.assign(expr, {
   '()'([,name, list]) {
     list = !list ? [] : list[0]===',' ? list.slice(1) : list
 
+    if (!globals[name]) err('Unknown function call: ' + name)
+
     // FIXME: make sure default args are gotten values
     let {args} = globals[name]
 
-    if (!globals[name]) err('Unknown function call: ' + name)
-    return op(`(call $${name} ${list.map(expr).join(' ')})`, globals[name].type)
+    // FIXME: this is very primitive call, must account input trypes properly
+    return op(`(call $${name} ${list.map(expr).join(' ')})`, 'f64')
   },
 
   // [1,2,3]
@@ -172,11 +179,11 @@ Object.assign(expr, {
       a = a + block.join('.') // prevent scope clash
       if (!locals) {
         if (!globals[a]) globals[a] = {var:true}
-        return op(`(global.set $${a} ${pick(1,b)})(global.get $${a})`, 'f64')
+        return op(`(global.set $${a} ${asFloat(pick(1,b))})(global.get $${a})`, 'f64')
       }
       else {
         if (!locals[a]) locals[a] = {var:true}
-        return op(`(local.tee $${a} ${pick(1,b)})`, 'f64')
+        return op(`(local.tee $${a} ${asFloat(pick(1,b))})`, 'f64')
       }
     }
 
@@ -185,6 +192,8 @@ Object.assign(expr, {
       let [,...outputs] = a[1], inputs = pick(outputs.length,b)
 
       if (inputs) outputs = outputs.slice(0, inputs.length).reverse() // (a,b,c)=(c,d) -> (a,b)=(c,d)
+
+      // FIXME: mark globals as mutable
 
       // set as `(i32.const 1)(i32.const 2)(local.set 0)(local.set 1)`
       return op(
@@ -362,7 +371,6 @@ Object.assign(expr, {
       err('Stateful variable: unimplemented')
       return ``
     }
-
     let aop = expr(a), bop = expr(b)
     return op(`(f64.mul ${asFloat(aop)} ${asFloat(bop)})`,'f64')
   },
@@ -466,9 +474,9 @@ Object.assign(expr, {
 })
 
 // wrap expression to float, if needed
-function asFloat(op) {
-  if (op.type[0] === 'f64') return op
-  return op(`(f64.convert_i32_s ${op})`, 'f64')
+function asFloat(o) {
+  if (o.type[0] === 'f64') return o
+  return op(`(f64.convert_i32_s ${o})`, 'f64')
 }
 // cast expr to int
 function asInt(op) {
