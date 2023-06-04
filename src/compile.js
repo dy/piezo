@@ -396,23 +396,23 @@ Object.assign(expr, {
   // a -< range - clamp a to indicated range
   '-<'([,a,b]) {
     if (b[0] !== '..') err('Non-range passed as right side of clamp operator')
-    let [,min,max] = b
+    let [,min,max] = b, aop = expr(a), minop = min && expr(min), maxop = max && expr(max)
 
     // a -< 0..
     if (!max) {
-      if (getDesc(a).type === INT && getDesc(min).type === INT) return inc('i32.smax'), expr(['()','i32.smax', [',',a, min]])
-      return `(f64.max ${expr(asFloat(a))} ${expr(asFloat(min))})`
+      if (aop.type[0] === 'i32' && minop.type[0] === 'i32') return inc('i32.smax'), op(`(call $i32.max ${aop} ${minop})`,'i32')
+      return op(`(f64.max ${asFloat(aop)} ${asFloat(minop)})`, 'f64')
     }
     // a -< ..10
     if (!min) {
-      if (getDesc(a).type === INT && getDesc(max).type === INT) return inc('i32.smin'), expr(['()','i32.smin', [',',a, max]])
-      return op(`(f64.min ${expr(asFloat(a))} ${expr(asFloat(max))})`, '64')
+      if (aop.type[0] === 'i32' && maxop.type[0] === 'i32') return inc('i32.smin'), op(`(call $i32.min ${aop} ${maxop})`,'i32')
+      return op(`(f64.min ${asFloat(aop)} ${asFloat(maxop)})`, 'f64')
     }
     // a -< 0..10
-    if (getDesc(a).type == INT && getDesc(min).type == INT && getDesc(max).type == INT) {
-      return inc('i32.smax'), expr(['()','i32.smax', ['-<',a,['..',undefined,max], min]])
+    if (aop.type == 'i32' && minop.type == 'i32' && maxop.type == 'i32') {
+      return inc('i32.smax'),inc('i32.smin'), op(`(call $i32.smax (call $i32.smin ${aop} ${maxop}) ${minop})`,'i32')
     }
-    return op(`(f64.max (f64.min ${expr(asFloat(a))} ${expr(asFloat(max))}) ${expr(asFloat(min))})`, 'f64')
+    return op(`(f64.max (f64.min ${asFloat(aop)} ${asFloat(maxop)}) ${asFloat(minop)})`, 'f64')
   },
 
 
