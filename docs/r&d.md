@@ -795,6 +795,7 @@ Having wat files is more useful than direct compilation to binary form:
   - it has no definite returning type. What's the result of `(a ? b)`?
     ~+ `b` or `0`?
     ~+ likely returning type is never going to be needed
+    ~+ it's 0, ie. kind-of step function `a ? b`
   * return type is `0` or `typeof b`
   - burdens `?` with semantic load, impeding other proposals like `try..catch`
     ~ there's a chance try..catch is not going to be needed
@@ -803,6 +804,12 @@ Having wat files is more useful than direct compilation to binary form:
     - nah, wrong ordering, we inverse `a`, not `b`
   !? What if `a ?? b`?
     - means `a || b` from JS, which is just `a ?: b`
+
+## [ ] mix, smoothstep operators
+
+  * `x -< a..b` defines clamping
+  * `a..b -> x` looks like function, but is possible
+  * can be done via external lib
 
 ## [x] Loops: ~~`i <- 0..10 <| a + i`, `i <- list <| a`, `[x <- 1,2,3 <| x*2]`~~ `0..10 | i -> a + i`
   * `for i in 0..10 (a,b,c)`, `for i in src a;`

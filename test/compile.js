@@ -125,16 +125,22 @@ t('compile: numbers inc/dec', t => {
 
 t('compile: conditions or/and', t => {
   let wat, mod
-  wat = compile(`x=1;y=0;z=x||y.`)
+  wat = compile(`z=1||0.`)
   mod = compileWat(wat)
   is(mod.exports.z.value, 1)
-  wat = compile(`x=1.2;y=0.0;z=x||y.`)
+  wat = compile(`z=1.2||0.0.`)
   mod = compileWat(wat)
   is(mod.exports.z.value, 1.2)
-  wat = compile(`x=1.2;y=0.2;z=x&&y.`)
+  wat = compile(`z=1.2||0.`)
+  mod = compileWat(wat)
+  is(mod.exports.z.value, 1.2)
+  wat = compile(`z=1||0.0.`)
+  mod = compileWat(wat)
+  is(mod.exports.z.value, 1)
+  wat = compile(`z=1.2&&0.2.`)
   mod = compileWat(wat)
   is(mod.exports.z.value, 0.2)
-  wat = compile(`x=1;y=2;z=x&&y.`)
+  wat = compile(`z=1&&2.`)
   mod = compileWat(wat)
   is(mod.exports.z.value, 2)
 })
@@ -179,31 +185,39 @@ t('compile: conditions', t => {
   mod = compileWat(wat)
   is(mod.exports.c.value, 1)
 
-  wat = compile(`a=1;b=2;c=a&&b.`)
+  wat = compile(`a=1;b=2;a?c=b.`)
   mod = compileWat(wat)
   is(mod.exports.c.value, 2)
 
-  wat = compile(`a=0;b=2;c=a&&b.`)
+  wat = compile(`a=0;b=2;a?c=b.`)
   mod = compileWat(wat)
   is(mod.exports.c.value, 0)
 
-  wat = compile(`a=0.0;b=2.1;c=a&&b.`)
+  wat = compile(`a=0.0;b=2.1;a?c=b.`)
   mod = compileWat(wat)
   is(mod.exports.c.value, 0)
 
-  wat = compile(`a=0.1;b=2.1;c=a&&b.`)
+  wat = compile(`a=0.1;b=2.1;a?c=b.`)
   mod = compileWat(wat)
   is(mod.exports.c.value, 2.1)
 
-  wat = compile(`a=1;b=2;c=a||b.`)
+  wat = compile(`a=1;b=2;a?:c=b.`)
   mod = compileWat(wat)
-  is(mod.exports.c.value, 1)
+  is(mod.exports.c.value, 0)
 
-  wat = compile(`a=0;b=2;c=a||b.`)
+  wat = compile(`a=0;b=2;a?:c=b.`)
   mod = compileWat(wat)
   is(mod.exports.c.value, 2)
 
-  wat = compile(`a=0.0;b=2.1;c=a||b.`)
+  wat = compile(`a=0.0;b=2.1;a?:c=b.`)
+  mod = compileWat(wat)
+  is(mod.exports.c.value, 2.1)
+
+  wat = compile(`a=0.0;b=2.1;c=a?b.`)
+  mod = compileWat(wat)
+  is(mod.exports.c.value, 0)
+
+  wat = compile(`a=0.1;b=2.1;c=a?b.`)
   mod = compileWat(wat)
   is(mod.exports.c.value, 2.1)
 })
@@ -328,9 +342,18 @@ t.skip('debugs', t => {
   const memory = new WebAssembly.Memory({ initial: 1 });
   const importObject = { env: { memory } };
   let module = compileWat(`
-    (type $tuple (struct (field $id f32)))
-    (func (result (ref $tuple))
-      (struct.new $tuple (f32.const 0)))
+  (func $pick/f64.f64.i32.3 (param f64 f64 i32) (result f64 f64 i32) (local.get 0)(local.get 1)(local.get 2) (return))
+(global $sampleRate.1 (mut f64) (f64.const 0))
+(global $pi2.1 (mut f64) (f64.const 0))
+(global $pi.1 (mut f64) (f64.const 0))
+(func $module/init
+(call $pick/f64.f64.i32.3 (f64.const 3.14) (f64.mul (f64.const 3.14) (f64.convert_i32_s (i32.const 2))) (i32.const 44100))
+(f64.convert_i32_s)(global.set $sampleRate.1)(global.set $pi2.1)(global.set $pi.1)(global.get $sampleRate.1)(global.get $pi2.1)(global.get $pi.1)(return)
+)
+(start $module/init)
+(export "pi.1" (global $pi.1))
+(export "pi2.1" (global $pi2.1))
+(export "sampleRate.1" (global $sampleRate.1))
   `, importObject)
 
   console.log(module.exports.x(1n))

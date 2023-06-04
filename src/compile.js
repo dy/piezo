@@ -20,7 +20,7 @@ export default function compile(node) {
   pickers = {}, // defined picker functions
   memcount = 0, // current used memory pointer (number of f64s)
   loop = 0, // current loop number
-  block = Object.assign([],{cur:0}), // current block count
+  block = Object.assign([''],{cur:0}), // current block count
   exports = null // items to export
 
   // run global in start function
@@ -96,7 +96,7 @@ Object.assign(expr, {
 
     // resolve block scopes var names conflict
     block.cur++
-    block[block.cur-1]=(block[block.cur-1]||0)+1
+    block[block.cur]=(block[block.cur]||0)+1
 
     // FIXME: detect block type, if it needs preliminary return - then we ought to wrap it
     let res = expr(body)
@@ -261,7 +261,7 @@ Object.assign(expr, {
       )
     }
 
-    err('Unknown assignment', node)
+    err('Unknown assignment', a)
   },
 
   // a <| b
@@ -371,28 +371,23 @@ Object.assign(expr, {
   // logical - we put value twice to the stack and then just drop if not needed
   '||'([,a,b]) {
     let aop = expr(a), bop = expr(b)
-    if (aop.type[0]=='f64')
-      return op(`${pick(2,aop)}(if (param f64) (result f64) (f64.ne (f64.const 0)) (then) (else (drop) ${asFloat(bop)}))`,'f64')
-    else if (aop.type[0]=='i32'&&bop.type[0]=='i32')
-      return op(`${pick(2,aop)}(if (param i32) (result i32) (then) (else (drop) ${bop}))`,'i32')
-    else
-      return op(`${pick(2,aop)}(if (param i32) (result f64) (then (f64.convert_i32_s)) (else (drop) ${asFloat(bop)}))`,'f64')
+    if (aop.type[0]=='f64') return op(`${pick(2,aop)}(if (param f64) (result f64) (f64.ne (f64.const 0)) (then) (else (drop) ${asFloat(bop)}))`,'f64')
+    if (bop.type[0]=='i32') return op(`${pick(2,aop)}(if (param i32) (result i32) (then) (else (drop) ${bop}))`,'i32')
+    return op(`${pick(2,aop)}(if (param i32) (result f64) (then (f64.convert_i32_s)) (else (drop) ${asFloat(bop)}))`,'f64')
   },
   '&&'([,a,b]) {
     let aop = expr(a), bop = expr(b)
-    if (aop.type[0]=='f64')
-      return op(`${pick(2,aop)}(if (param f64) (result f64) (f64.ne (f64.const 0)) (then (drop) ${asFloat(bop)}))`,'f64')
-    else if (aop.type[0]=='i32'&&bop.type[0]=='i32')
-      return op(`${pick(2,aop)}(if (param i32) (result i32) (then (drop) ${bop}))`,'i32')
-    else
-      return op(`${pick(2,aop)}(if (param i32) (result f64) (then (f64.convert_i32_s) (drop) ${asFloat(bop)}))`,'f64')
+    if (aop.type[0]=='f64') return op(`${pick(2,aop)}(if (param f64) (result f64) (f64.ne (f64.const 0)) (then (drop) ${asFloat(bop)}))`,'f64')
+    if (bop.type[0]=='i32') return op(`${pick(2,aop)}(if (param i32) (result i32) (then (drop) ${bop}))`,'i32')
+    return op(`${pick(2,aop)}(if (param i32) (result f64) (then (f64.convert_i32_s) (drop) ${asFloat(bop)}))`,'f64')
   },
-  '?:'([,a,b,c]){
-    let bDesc = getDesc(b), cDesc = getDesc(c);
-    // upgrade result to float if any of operands is float
-    if (bDesc.type==FLOAT || cDesc.type == FLOAT)
-      return `(if (result f64) ${asInt(expr(a))} (then ${asFloat(expr(b))}) (else ${asFloat(expr(c))}))`
-    return `(if (result i32) ${asInt(expr(a))} (then ${expr(b)}) (else ${expr(c)}))`
+  // parsing alias ? -> ?:
+  '?'([,a,b]) {return expr['?:'](['?:',a,b,[FLOAT,0]])},
+  '?:'([,a,b,c]) {
+    if (!c) c=b, b=[FLOAT,0]; // parsing alias
+    console.log(a,b,c)
+    let aop = expr(a), bop = expr(b), cop = expr(c)
+    return op(`(if (result f64) ${aop.type[0]=='i32'?aop:`(f64.ne ${aop} (f64.const 0))`} (then ${asFloat(bop)}) (else ${asFloat(cop)}))`, 'f64')
   },
 
   // a -< range - clamp a to indicated range
@@ -469,9 +464,9 @@ function asFloat(o) {
   return op(`(f64.convert_i32_s ${o})`, 'f64')
 }
 // cast expr to int
-function asInt(op) {
-  if (op.type[0] === 'i32') return op
-  return op(`(i32.trunc_f64_s ${aop}`, 'i32')
+function asInt(o) {
+  if (o.type[0] === 'i32') return o
+  return op(`(i32.trunc_f64_s ${o})`, 'i32')
 }
 
 // add include from stdlib and return call

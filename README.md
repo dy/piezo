@@ -101,6 +101,7 @@ sign = a < 0 ? -1 : +1;         \\ inline ternary
 );
 a || b ? c;                     \\ if a or b then c
 a && b ?: c;                    \\ elvis: if not a and b then c
+a = b ? c;                      \\ if b then a = c (else a = 0)
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ functions
 double(n) = n*2;                \\ inline function

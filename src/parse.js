@@ -13,12 +13,12 @@ PREC_EXPORT=2,
 PREC_SEQUENCE=3, //  a, b==c, d,   a, b>=c, d,   a | b,c | d,   a?b:c , d
 PREC_DEFER=4,
 PREC_LOOP=5, // <|
+PREC_LABEL=7, // a:b = 2,  a:b, b:c,   a: b&c
+PREC_IF=8,    // a ? b=c
 PREC_ASSIGN=8,  // a=b, c=d,  a = b||c,  a = b | c,   a = b&c
-PREC_BOR=9, // a|b , c|d,   a = b|c
-PREC_LABEL=10, // a:b = 2,  a:b, b:c,   a: b&c
-PREC_TERNARY=11,
-PREC_OR=12,
-PREC_AND=13,
+PREC_OR=11,
+PREC_AND=12,
+PREC_BOR=13, // a|b , c|d,   a = b|c
 PREC_XOR=14,
 PREC_BAND=15,
 PREC_EQ=16,
@@ -167,12 +167,12 @@ unary('@', PREC_TOKEN)
 
 // a?b, a?:b
 // NOTE: unlike || && this one doesn't return item
-binary('?', PREC_TERNARY)
-binary('?:', PREC_TERNARY)
+binary('?', PREC_IF, true)
+binary('?:', PREC_IF, true)
 
 // a?b:c
-token('?', PREC_TERNARY, (a, b, c) => (
-  a && (b=expr(PREC_TERNARY-1)) && skip(c => c === COLON) && (c=expr(PREC_TERNARY-1), ['?:', a, b, c])
+token('?', PREC_IF, (a, b, c) => (
+  a && (b=expr(PREC_IF-1)) && skip(c => c === COLON) && (c=expr(PREC_IF-1), ['?:', a, b, c])
 ))
 // a:b, c:d
 binary(':', PREC_LABEL, false)
