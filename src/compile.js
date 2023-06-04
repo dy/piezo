@@ -17,22 +17,26 @@ export default function compile(node) {
   globals = {}, // global scope (as name props)
   locals, // current fn local scope
   includes = [], // pieces to prepend
-  pickers = [], // defined picker functions
+  pickers = {}, // defined picker functions
   memcount = 0, // current used memory pointer (number of f64s)
   loop = 0, // current loop number
-  block = Object.assign([''],{cur:0}), // current block count
-  exports = {} // list of items to export
+  block = Object.assign([],{cur:0}), // current block count
+  exports = null // items to export
 
   // run global in start function
-  let res = `(func $module/init ${expr(node)})(start $module/init)`
+  let init = expr(node)
+  let res = `(func $module/init\n${init}\n(return))\n(start $module/init)`
 
   // declare variables
-  for (let name in globals) {
-    res = `(global $${name} (mut f64) (f64.const 0))\n${res}`
-  }
+  for (let name in globals)
+    res = `(global $${name} (mut f64) (f64.const 0))\n` + res
 
   // declare memories
   if (memcount) res += `\n(memory (export "memory") ${Math.ceil(memcount / F64_PER_PAGE)})`
+
+  // declare pickers
+  for (let name in pickers)
+    res = pickers[name] + '\n' + res
 
   // declare includes
   for (let include of includes)
@@ -40,7 +44,7 @@ export default function compile(node) {
 
   // provide exports
   for (let name in exports)
-    res += `\n(export "${name}" (${scope[name].type === FUNC ? 'func' : 'global'} $${name}))`
+    res += `\n(export "${name}" (${exports[name].func ? 'func' : 'global'} $${name}))`
 
   console.log(res)
   console.log(...parseWat(res))
@@ -55,8 +59,9 @@ function expr(statement) {
   // FIXME: funcs may need returning something meaningful
   if (typeof statement === 'string') {
     // just x,y; or a=x; where x is undefined
-    statement = statement + block.join('.')
+    statement += block.slice(0,block.cur).join('.')
     if (!locals?.[statement] && !globals[statement]) err('Undefined variable ' + statement);
+    if (exports) exports[statement] = globals[statement]
     return op(`(${locals?.[statement]?'local':'global'}.get $${statement})`,`f64`)
   }
   if (statement[0] in expr) return expr[statement[0]](statement) || ''
@@ -87,16 +92,16 @@ Object.assign(expr, {
 
   '('([,body]){
     // ((a)) -> a
-    while (body[0]==='(' && body.length == 2) body = body[1]
+    while (body[0]==='(') body = body[1]
 
     // resolve block scopes var names conflict
-    block[++block.cur] = (block[block.cur]||0)
+    block.cur++
+    block[block.cur-1]=(block[block.cur-1]||0)+1
 
     // FIXME: detect block type, if it needs preliminary return - then we ought to wrap it
     let res = expr(body)
-    res.block = block.cur // just in case
 
-    block[block.cur--]++
+    block.cur--
 
     return res
   },
@@ -161,6 +166,8 @@ Object.assign(expr, {
   },
 
   '='([,a,b]) {
+    while (a[0] === '(') a = a[1] // unbracket
+
     // x[y]=1, x.y=1
     if (a[0] === '[]' || a[0] === '.') {
       let [,buf,idx] = a
@@ -176,30 +183,28 @@ Object.assign(expr, {
 
     // a = b,  a = (b,c),   a = (b;c,d)
     if (typeof a === 'string') {
-      a = a + block.join('.') // prevent scope clash
-      if (!locals) {
-        if (!globals[a]) globals[a] = {var:true}
-        return op(`(global.set $${a} ${asFloat(pick(1,b))})(global.get $${a})`, 'f64')
-      }
-      else {
-        if (!locals[a]) locals[a] = {var:true}
-        return op(`(local.tee $${a} ${asFloat(pick(1,b))})`, 'f64')
-      }
+      a += block.slice(0,block.cur).join('.') // prevent scope clash
+      define(a)
+      return op(locals ? `(local.tee $${a} ${pick(1,asFloat(expr(b)))})` : `(global.set $${a} ${pick(1,asFloat(expr(b)))})(global.get $${a})`, 'f64')
     }
 
     // (a,b) = ...
-    if (a[0]==='(' && a[1][0]===',') {
-      let [,...outputs] = a[1], inputs = pick(outputs.length,b)
+    if (a[0]===',') {
+      let [,...outputs] = a, inputs = pick(outputs.length,expr(b))
 
-      if (inputs) outputs = outputs.slice(0, inputs.length).reverse() // (a,b,c)=(c,d) -> (a,b)=(c,d)
+      // define/provide exports
+      for (let name of outputs) define(name+block.slice(0,block.cur).join('.'))
 
-      // FIXME: mark globals as mutable
+      // (a,b,c)=(c,d) -> (a,b)=(c,d)
+      if (inputs.type.length > 1) outputs = outputs.slice(0, inputs.type.length)
 
       // set as `(i32.const 1)(i32.const 2)(local.set 0)(local.set 1)`
       return op(
-        inputs +
-        outputs.map(m=>(m=m+block.join('.'),globals[m]?`(global.set $${m})`:`(local.set $${m})`)).join('') +
-        outputs.map(m=>(m=m+block.join('.'),globals[m]?`(global.get $${m})`:`(local.get $${m})`)).join(''),
+        inputs + '\n'+
+        outputs.map((n,i)=> (
+          n+=block.slice(0,block.cur).join('.'), `${inputs.type[i] === 'i32' ? `(f64.convert_i32_s)` : ''}(${globals[n]?`global`:`local`}.set $${n})`
+        )).reverse().join('') +
+        outputs.reverse().map(n=>(n+=block.slice(0,block.cur).join('.'),`(${globals[n]?'global':'local'}.get $${n})`)).join(''),
         Array(outputs.length).fill(`f64`)
       )
     }
@@ -276,72 +281,6 @@ Object.assign(expr, {
     `)\n`
     loop--
     return res
-  },
-
-  // @ 'math#sin', @ 'path/to/lib'
-  '@'([,path]) {
-    if (locals) err('Import must be in global scope')
-    if (Array.isArray(path)) path[0] === "'" ? path = path[1] : err('Bad path `' + path + '`')
-    let url = new URL('import:'+path)
-    let {hash, pathname} = url
-    throw 'Unimplemented'
-
-    // FIXME: include directive into syntax tree
-    // let src = fetchSource(pathname)
-    // let include = parse(src)
-    // node.splice(node.indexOf(impNode), 1, null, include)
-
-    let lib = stdlib[pathname], members = hash ? hash.slice(1).split(',') : Object.keys(lib)
-    for (let member of members) {
-      scope[member] = { import: pathname, type: lib[member][1] }
-    }
-    // we return nothing since member is marked as imported
-    return ''
-  },
-
-  // a,b,c . x?
-  '.'([,a,b], skip=false) {
-    // a.b
-    if (b) err('prop access is unimplemented ' + a + b, a)
-
-    // FIXME: does nothing here, export is just last items in globals.
-    return expr(a)
-
-    // a.
-    if (locals) err('Export must be in global scope')
-    // FIXME: if (expNode !== node && expNode !== node[node.length-1]) err('Export must be the last node');
-
-    if (!skip) a = expr(a) // apply converting expression
-
-    if (typeof a === 'string') scope[a].export=true
-
-    // a=b
-    else if (a[0]==='=') {
-      let [,l,r] = a
-      if (l[0]==='(') [,l]=l; if (r[0]==='(') [,r]=r; // unbracket
-      // a=...;
-      if (typeof l === 'string') scope[l].export = true
-      // a()=;
-      else if (l[0]==='()') scope[l[1]].export = true
-      // (a,b)=...
-      else if (l[0]===',') l.slice(1).forEach(l => scope[l].export = true)
-      else err('Unknown export expression `' + a + '`')
-    }
-
-    // a,b  or  a=1,b=2
-    else if (a[0]===',') {
-      a.slice(1).forEach(a => expr['.'](['.',a], true))
-    }
-    // (a) or (a,b,c)
-    else if (a[0]==='(') {
-      let members = a[1][0]===';'?a[1][a[1].length-1]:a[1]
-      if (members[0]!==',') members = [',',members]
-      members.slice(1).forEach(a => expr['.'](['.',a], true))
-    }
-    else err('Unknown expr ' + a[0], a)
-
-    // we get rid of '.' for compiler, since all vars are marked as exported
-    return a
   },
 
   '-'([,a,b]) {
@@ -431,23 +370,29 @@ Object.assign(expr, {
 
   // logical - we put value twice to the stack and then just drop if not needed
   '||'([,a,b]) {
-    if (getDesc(a).type==FLOAT || getDesc(b).type == FLOAT)
-      return `${pick(2,asFloat(a))}(if (param f64) (result f64) (f64.ne (f64.const 0)) (then) (else (drop) ${expr(asFloat(b))}))`
+    let aop = expr(a), bop = expr(b)
+    if (aop.type[0]=='f64')
+      return op(`${pick(2,aop)}(if (param f64) (result f64) (f64.ne (f64.const 0)) (then) (else (drop) ${asFloat(bop)}))`,'f64')
+    else if (aop.type[0]=='i32'&&bop.type[0]=='i32')
+      return op(`${pick(2,aop)}(if (param i32) (result i32) (then) (else (drop) ${bop}))`,'i32')
     else
-      return `${pick(2,a)}(if (param i32) (result i32) (then) (else (drop) ${expr(b)}))`
+      return op(`${pick(2,aop)}(if (param i32) (result f64) (then (f64.convert_i32_s)) (else (drop) ${asFloat(bop)}))`,'f64')
   },
   '&&'([,a,b]) {
-    if (getDesc(a).type==FLOAT || getDesc(b).type == FLOAT)
-      return `${pick(2,asFloat(a))}(if (param f64) (result f64) (f64.ne (f64.const 0)) (then (drop) ${expr(asFloat(b))}))`
+    let aop = expr(a), bop = expr(b)
+    if (aop.type[0]=='f64')
+      return op(`${pick(2,aop)}(if (param f64) (result f64) (f64.ne (f64.const 0)) (then (drop) ${asFloat(bop)}))`,'f64')
+    else if (aop.type[0]=='i32'&&bop.type[0]=='i32')
+      return op(`${pick(2,aop)}(if (param i32) (result i32) (then (drop) ${bop}))`,'i32')
     else
-      return `${pick(2,a)}(if (param i32) (result i32) (then (drop) ${expr(b)}))`
+      return op(`${pick(2,aop)}(if (param i32) (result f64) (then (f64.convert_i32_s) (drop) ${asFloat(bop)}))`,'f64')
   },
   '?:'([,a,b,c]){
     let bDesc = getDesc(b), cDesc = getDesc(c);
     // upgrade result to float if any of operands is float
     if (bDesc.type==FLOAT || cDesc.type == FLOAT)
-      return `(if (result f64) ${expr(asInt(a))} (then ${exrp(asFloat(b))}) (else ${expr(asFloat(c))}))`
-    return `(if (result i32) ${expr(asInt(a))} (then ${expr(b)}) (else ${expr(c)}))`
+      return `(if (result f64) ${asInt(expr(a))} (then ${asFloat(expr(b))}) (else ${asFloat(expr(c))}))`
+    return `(if (result i32) ${asInt(expr(a))} (then ${expr(b)}) (else ${expr(c)}))`
   },
 
   // a -< range - clamp a to indicated range
@@ -471,7 +416,52 @@ Object.assign(expr, {
     }
     return op(`(f64.max (f64.min ${expr(asFloat(a))} ${expr(asFloat(max))}) ${expr(asFloat(min))})`, 'f64')
   },
+
+
+  // @ 'math#sin', @ 'path/to/lib'
+  '@'([,path]) {
+    if (locals) err('Import must be in global scope')
+    if (Array.isArray(path)) path[0] === "'" ? path = path[1] : err('Bad path `' + path + '`')
+    let url = new URL('import:'+path)
+    let {hash, pathname} = url
+    throw 'Unimplemented'
+
+    // FIXME: include directive into syntax tree
+    // let src = fetchSource(pathname)
+    // let include = parse(src)
+    // node.splice(node.indexOf(impNode), 1, null, include)
+
+    let lib = stdlib[pathname], members = hash ? hash.slice(1).split(',') : Object.keys(lib)
+    for (let member of members) {
+      scope[member] = { import: pathname, type: lib[member][1] }
+    }
+    // we return nothing since member is marked as imported
+    return ''
+  },
+
+  // a,b,c . x?
+  '.'([,a,b]) {
+    // a.b
+    if (b) err('Prop access is unimplemented ' + a + b, a)
+
+    if (locals) err('Export must be in global scope')
+    // FIXME: if (expNode !== node && expNode !== node[node.length-1]) err('Export must be the last node');
+
+    exports = {}
+    return expr(a)
+  },
 })
+
+// define variable in current scope, export if necessary
+function define(name) {
+  if (!locals) {
+    if (!globals[name]) globals[name] = {var:true}
+    if (exports) exports[name] = globals[name]
+  }
+  else {
+    if (!locals[name]) locals[name] = {var:true}
+  }
+}
 
 // wrap expression to float, if needed
 function asFloat(o) {
@@ -489,32 +479,30 @@ function inc(name) {
   if (!includes.includes(name)) includes.push(name)
 }
 
-// create args swapper/picker (fn that maps inputs to outputs), like (a,b,c) -> (a,b)
-function pick(count, group) {
-  let res = expr(group), name
+// pick N input args into stack, like (a,b,c) -> (a,b)
+function pick(count, input) {
+  let name
 
   // if result of expression is 1 element, eg. (a,b,c) = d - we duplicate it
-  if (res.type.length === 1) {
+  if (input.type.length === 1) {
     // a = b - skip picking
-    if (count === 1) return res
+    if (count === 1) return input
     // (a,b,c) = d
-    let {type} = res.type[0]
+    let {type} = input
     name = `$pick/${type}.${count}`
-    if (!pickers.includes(name)) {
-      pickers.push(name);
-      globals.unshift(`(func ${name} (param ${type}) (result ${(type+' ').repeat(count)}) ${`(local.get 0)`.repeat(count)} (return))`)
+    if (!pickers[name]) {
+      pickers[name] = `(func ${name} (param ${type}) (result ${(type+' ').repeat(count)}) ${`(local.get 0)`.repeat(count)} (return))`
     }
-    return op(`(call ${name} ${res})`, res.type, {static: res.static})
+    return op(`(call ${name} ${input})`, input.type, {static: input.static})
   }
 
-  // N:M or 1:M picker / swapper
-  name = `$pick/${res.type.join('.')}.${count}`
-  if (!pickers.includes(name)) {
-    pickers.push(name);
-    globals.unshift(`(func ${name} (param ${res.type.join(' ')}) (result ${res.type.slice(0,count).join(' ')}) ${res.type.slice(0,count).map((o,i) => `(local.get ${i})`).join('')} (return))`)
+  // N:M or 1:M picker
+  name = `$pick/${input.type.join('.')}.${count}`
+  if (!pickers[name]) {
+    pickers[name] = `(func ${name} (param ${input.type.join(' ')}) (result ${input.type.slice(0,count).join(' ')}) ${input.type.slice(0,count).map((o,i) => `(local.get ${i})`).join('')} (return))`
   }
 
-  return op(`(call ${name} ${res})`, res.type.slice(0,count), {static: res.static})
+  return op(`(call ${name} ${input})`, input.type.slice(0,count), {static: input.static})
 }
 
 // create op result
@@ -522,11 +510,11 @@ function pick(count, group) {
 // makes sure it stringifies properly into wasm expression
 // provides any additional info: types, static, min/max etc
 // supposed to be a replacement for getDesc to avoid mirroring every possible op
-function op(ops, type, info={}) {
-  if (typeof ops === 'string') ops = [ops]
+function op(str, type, info={}) {
+  str = new String(str)
   if (!type) type = []
   else if (typeof type === 'string') type = [type]
-  return Object.assign(ops, {type, toString(){ return this.join('') }, ...info})
+  return Object.assign(str, {type, ...info})
 }
 
 export function err(msg, node={}) {
