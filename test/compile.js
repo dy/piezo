@@ -225,11 +225,6 @@ t('compile: conditions', t => {
 
 t('compile: function oneliners', t => {
   let wat, mod
-  // default
-  // wat = compile(`mult(a, b) -> a * b.`)
-  // mod = compileWat(wat);
-  // is(mod.exports.mult(2,4), 8)
-
   // no semi
   wat = compile(`mult(a, b=2) = a * b.`)
   mod = compileWat(wat)

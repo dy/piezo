@@ -7,7 +7,7 @@ import { parse as parseWat } from "watr";
 const F64_PER_PAGE = 8192;
 const MEM_STRIDE = 8; // bytes per f64
 
-let includes, globals, pickers, locals, memcount, loop, exports, block;
+let includes, globals, funcs, locals, memcount, loop, exports, block;
 
 export default function compile(node) {
   if (typeof node === 'string') node = parse(node)
@@ -17,15 +17,17 @@ export default function compile(node) {
   globals = {}, // global scope (as name props)
   locals, // current fn local scope
   includes = [], // pieces to prepend
-  pickers = {}, // defined picker functions
+  funcs = {}, // defined picker functions
   memcount = 0, // current used memory pointer (number of f64s)
   loop = 0, // current loop number
   block = Object.assign([''],{cur:0}), // current block count
   exports = null // items to export
 
   // run global in start function
-  let init = expr(node)
-  let res = `(func $module/init\n${init}\n(return))\n(start $module/init)`
+  let init = expr(node), res = ``
+
+  // run globals init, if needed
+  if (init) res = `(func $module/init\n${init}\n(return))\n(start $module/init)`
 
   // declare variables
   for (let name in globals)
@@ -34,9 +36,9 @@ export default function compile(node) {
   // declare memories
   if (memcount) res += `\n(memory (export "memory") ${Math.ceil(memcount / F64_PER_PAGE)})`
 
-  // declare pickers
-  for (let name in pickers)
-    res = pickers[name] + '\n' + res
+  // declare funcs
+  for (let name in funcs)
+    res = funcs[name] + '\n' + res
 
   // declare includes
   for (let include of includes)
@@ -61,7 +63,7 @@ function expr(statement) {
     // just x,y; or a=x; where x is undefined
     statement += block.slice(0,block.cur).join('.')
     if (!locals?.[statement] && !globals[statement]) err('Undefined variable ' + statement);
-    if (exports) exports[statement] = globals[statement]
+    if (!locals && exports) exports[statement] = globals[statement]
     return op(`(${locals?.[statement]?'local':'global'}.get $${statement})`,`f64`)
   }
   if (statement[0] in expr) return expr[statement[0]](statement) || ''
@@ -78,7 +80,7 @@ Object.assign(expr, {
     let list=[];
     for (let s of statements) s && list.push(expr(s));
     return op(
-      list.map(op => op + `(drop)`.repeat(op.type.length)).join('\n'),
+      list.map(op => op + `(drop)`.repeat(op.type.length-1)).join('\n'),
       list[list.length-1].type,
       {static:list[list.length-1].static}
     )
@@ -211,7 +213,7 @@ Object.assign(expr, {
 
     // x(a,b) = y
     if (a[0]==='()') {
-      let [,name,args] = a, body = b, inits = [';'], result, dfn = []
+      let [,name,args] = a, body = b, inits = [], result, dfn = []
 
       // functions defined within scope of other functions, `x()=(y(a)=a;)`
       if (locals) err('Declaring local function `' + name +'`: not allowed');
@@ -231,11 +233,12 @@ Object.assign(expr, {
       // detect optional / clamped args
       args = args.map(arg => {
         let name, init
+
         // x(a,b)
         if (typeof arg === 'string') name = arg
         // x(a=1,b=2), x(a=(1;2))
         else if (arg[0]==='=') [,name,init] = arg, inits.push(['?',['!=',name,name],['=',name,init]])
-        // x(x-<2)
+        // x(x-<2..3)
         else if (arg[0]==='-<') [,name,init] = arg, inits.push(['-<=',name,arg[2]])
 
         locals[name] = {arg:true}
@@ -243,22 +246,23 @@ Object.assign(expr, {
         dfn.push(`(param $${name} f64)`)
         return name
       })
-
+      body[1].splice(1,0,...inits) // prepend inits
       result = expr(body)
 
       // define init part - params, result
-      dfn.push(`(result ${result.type.join(' ')}`)
+      dfn.push(`(result ${result.type.join(' ')})`)
 
       // declare locals
       for (let name in locals) if (!locals[name].arg) dfn.push(`(local $${name} f64)`)
       locals = null
 
       globals[name] = {func:true, args};
+      if (exports) exports[name] = globals[name]
 
       // init body - expressions write themselves to body
-      return op(
-        `(func $${name} ${dfn.join(' ')}\n${res}\n(return))`
-      )
+      funcs[name] = `(func $${name} ${dfn.join(' ')}\n${result}\n(return))`
+
+      return
     }
 
     err('Unknown assignment', a)
@@ -333,39 +337,39 @@ Object.assign(expr, {
     if (a[0] === INT && a[1] === 0) [a,b]=[b,a]
 
     let aop = expr(a), bop = expr(b);
-    return `(i32.or ${asInt(aop)} ${asInt(bop)})`
+    return op(`(i32.or ${asInt(aop)} ${asInt(bop)})`,'i32')
   },
 
   // comparisons
   '<'([,a,b]) {
     let aop = expr(a), bop = expr(b)
-    if (aop.type[0] === 'i32' && bop.type[0] === 'i32') return `(i32.lt_s ${aop} ${bop})`
-    return `(f64.lt ${asFloat(aop)} ${asFloat(bop)})`
+    if (aop.type[0] === 'i32' && bop.type[0] === 'i32') return op(`(i32.lt_s ${aop} ${bop})`,'i32')
+    return op(`(f64.lt ${asFloat(aop)} ${asFloat(bop)})`,'i32')
   },
   '<='([,a,b]) {
     let aop = expr(a), bop = expr(b)
-    if (aop.type[0] === 'i32' && bop.type[0] === 'i32') return `(i32.le_s ${aop} ${bop})`
-    return `(f64.le ${asFloat(aop)} ${asFloat(bop)})`
+    if (aop.type[0] === 'i32' && bop.type[0] === 'i32') return op(`(i32.le_s ${aop} ${bop})`,'i32')
+    return op(`(f64.le ${asFloat(aop)} ${asFloat(bop)})`,'i32')
   },
   '>'([,a,b]) {
     let aop = expr(a), bop = expr(b)
-    if (aop.type[0] === 'i32' && bop.type[0] === 'i32') return `(i32.gt_s ${aop} ${bop})`
-    return `(f64.gt ${asFloat(aop)} ${asFloat(bop)})`
+    if (aop.type[0] === 'i32' && bop.type[0] === 'i32') return op(`(i32.gt_s ${aop} ${bop})`,'i32')
+    return op(`(f64.gt ${asFloat(aop)} ${asFloat(bop)})`,'i32')
   },
   '>='([,a,b]) {
     let aop = expr(a), bop = expr(b)
-    if (aop.type[0] === 'i32' && bop.type[0] === 'i32') return `(i32.ge_s ${aop} ${bop})`
-    return `(f64.ge ${asFloat(aop)} ${asFloat(bop)})`
+    if (aop.type[0] === 'i32' && bop.type[0] === 'i32') return op(`(i32.ge_s ${aop} ${bop})`,'i32')
+    return op(`(f64.ge ${asFloat(aop)} ${asFloat(bop)})`,'i32')
   },
   '=='([,a,b]) {
     let aop = expr(a), bop = expr(b)
-    if (aop.type[0] === 'i32' && bop.type[0] === 'i32') return `(i32.eq_s ${aop} ${bop})`
-    return `(f64.eq ${asFloat(aop)} ${asFloat(bop)})`
+    if (aop.type[0] === 'i32' && bop.type[0] === 'i32') return op(`(i32.eq_s ${aop} ${bop})`,'i32')
+    return op(`(f64.eq ${asFloat(aop)} ${asFloat(bop)})`,'i32')
   },
   '!='([,a,b]) {
     let aop = expr(a), bop = expr(b)
-    if (aop.type[0] === 'i32' && bop.type[0] === 'i32') return `(i32.ne_s ${aop} ${bop})`
-    return `(f64.ne ${asFloat(aop)} ${asFloat(bop)})`
+    if (aop.type[0] === 'i32' && bop.type[0] === 'i32') return op(`(i32.ne_s ${aop} ${bop})`,'i32')
+    return op(`(f64.ne ${asFloat(aop)} ${asFloat(bop)})`,'i32')
   },
 
   // logical - we put value twice to the stack and then just drop if not needed
@@ -385,7 +389,6 @@ Object.assign(expr, {
   '?'([,a,b]) {return expr['?:'](['?:',a,b,[FLOAT,0]])},
   '?:'([,a,b,c]) {
     if (!c) c=b, b=[FLOAT,0]; // parsing alias
-    console.log(a,b,c)
     let aop = expr(a), bop = expr(b), cop = expr(c)
     return op(`(if (result f64) ${aop.type[0]=='i32'?aop:`(f64.ne ${aop} (f64.const 0))`} (then ${asFloat(bop)}) (else ${asFloat(cop)}))`, 'f64')
   },
@@ -451,7 +454,7 @@ Object.assign(expr, {
 function define(name) {
   if (!locals) {
     if (!globals[name]) globals[name] = {var:true}
-    if (exports) exports[name] = globals[name]
+    if (!locals && exports) exports[name] = globals[name]
   }
   else {
     if (!locals[name]) locals[name] = {var:true}
@@ -485,16 +488,16 @@ function pick(count, input) {
     // (a,b,c) = d
     let {type} = input
     name = `$pick/${type}.${count}`
-    if (!pickers[name]) {
-      pickers[name] = `(func ${name} (param ${type}) (result ${(type+' ').repeat(count)}) ${`(local.get 0)`.repeat(count)} (return))`
+    if (!funcs[name]) {
+      funcs[name] = `(func ${name} (param ${type}) (result ${(type+' ').repeat(count)}) ${`(local.get 0)`.repeat(count)} (return))`
     }
     return op(`(call ${name} ${input})`, input.type, {static: input.static})
   }
 
   // N:M or 1:M picker
   name = `$pick/${input.type.join('.')}.${count}`
-  if (!pickers[name]) {
-    pickers[name] = `(func ${name} (param ${input.type.join(' ')}) (result ${input.type.slice(0,count).join(' ')}) ${input.type.slice(0,count).map((o,i) => `(local.get ${i})`).join('')} (return))`
+  if (!funcs[name]) {
+    funcs[name] = `(func ${name} (param ${input.type.join(' ')}) (result ${input.type.slice(0,count).join(' ')}) ${input.type.slice(0,count).map((o,i) => `(local.get ${i})`).join('')} (return))`
   }
 
   return op(`(call ${name} ${input})`, input.type.slice(0,count), {static: input.static})
