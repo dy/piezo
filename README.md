@@ -438,7 +438,8 @@ Targets browsers, [audio worklets](https://developer.mozilla.org/en-US/docs/Web/
 
 * _Common syntax_: familiar code, copy-pastable floatbeats.
 * _No-keywords_: safe var names, max minification, i18l code.
-* _Case-agnostic_: URL-safe, typo-proof.
+* _Case-agnostic_: changing case doesn't affect code, making it URL-safe, typo-proof.
+* _Space-agnistic_: changing spaces/newlines doesn't affect code, making it compressable.
 * _Subtle type inference_: type by-operator, not dedicated syntax.
 * _No OOP_: functions, stateful vars.
 * _No lambda funcs_: no unnecessary scope persistency.
