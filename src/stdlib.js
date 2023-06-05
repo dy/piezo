@@ -1,5 +1,3 @@
-import { FLOAT, FUNC } from "./const.js"
-
 // helpers
 export const std = {
   // signed min/max
@@ -16,12 +14,45 @@ export const std = {
     (else (local.get $rem))
   ))`,
 
-  "buf.len": `(func $buf.len (param i32) (result i32) (i32.load (i32.sub (local.get 0) (i32.const 8))))`,
-  "buf.store": `(func $buf.store (param $ptr i32) (param $idx i32) (param $val f64) (result f64) (f64.store (i32.add (local.get $ptr) (i32.shl (local.get $idx) (i32.const 3))) (local.get $val)) (local.get $val)(return))`
+
+  // memory & associated functions
+  "mem": `(memory (export "@memory") 1)(global $mem.size (mut i32) (i32.const 0))\n` +
+
+  // increase available memory, grow if necessary
+  `(func $mem.alloc (param i32)\n` +
+  `(global.set $mem.size (i32.add (local.get 0) (global.get $mem.size)))\n` +
+  // 2^13 is how many f64 fits into 64KiB memory page
+  `(if (i32.gt_s (global.get $mem.size) (i32.shl (memory.size) (i32.const 13))) (then (memory.grow (i32.const 1))(drop)))\n` +
+  `)\n` +
+
+  // write f64 value to memory at specified address
+  `(func $mem.store (param i32 f64)\n` +
+  `(f64.store (i32.shl (local.get 0) (i32.const 3)) (local.get 1))\n` +
+  `)`,
+
+
+  // create buffer referencing specific address & length
+  "buf.create":
+  `(func $buf.create (param i32 i32) (result f64)\n` +
+    `(f64.reinterpret_i64 (i64.or\n` +
+      // buffer address is int part of f64, safe up to i32 ints
+      `(i64.reinterpret_f64 (f64.convert_i32_u (i32.shl (local.get 0) (i32.const 3))))\n` +
+      // buffer length is last 24 bits of f64 - it doesn't affect address i32 part
+      `(i64.extend_i32_u (i32.and (i32.const 0x00ffffff) (local.get 1)))\n` +
+    `))\n` +
+  `(return))`,
+
+  // reads buffer length as last 24 bits of f64 number
+  "buf.len": `(func $buf.len (param f64) (result i32) (i32.wrap_i64 (i64.and (i64.const 0x0000000000ffffff) (i64.reinterpret_f64 (local.get 0)))))`,
+
+  // FIXME: check if memory is out of bounds
+  "buf.store": `(func $buf.store (param $buf f64) (param $idx i32) (param $val f64) (result f64)\n` +
+  `(f64.store (i32.add (i32.trunc_f64_u (local.get $buf)) (i32.shl (local.get $idx) (i32.const 3))) (local.get $val))\n` +
+  `(local.get $val)\n` +
+  `(return))`,
+
+  math: `(global pi f64 (f64.const 3.141592653589793))`
 }
 
-export const math = {
-  pi: ["(global pi f64 (f64.const 3.141592653589793))", FLOAT]
-}
 
 export default std

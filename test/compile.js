@@ -19,7 +19,10 @@ function clean (str) {
 // convert wast code to binary
 const wabt = await Wabt()
 function compileWat (code, importObj={}) {
-  code = '(func $log (import "imports" "log") (param i32))\n(func $logf (import "imports" "log") (param f64))\n' + code
+  code = '(func $i32.log (import "imports" "log") (param i32) (result i32))\n' +
+  '(func $f64.log (import "imports" "log") (param f64) (result f64))\n' +
+  '(func $i64.log (import "imports" "log") (param i64) (result i64))\n' +
+  code
   const wasmModule = wabt.parseWat('inline', code, {
     // simd: true,
     reference_types: true,
@@ -39,7 +42,7 @@ function compileWat (code, importObj={}) {
   return new WebAssembly.Instance(mod, {
     ...importObj,
     imports: {
-      log(a){ console.log(a) }
+      log(a){ console.log(a); return a }
     }
   })
 }
@@ -262,7 +265,7 @@ t('compile: arrays basic', t => {
   let wat = compile(`x = [1, 2, 3], y = [4,5,6,7]; x,y,xl=x[],yl=y[].`)
   // console.log(wat)
   let mod = compileWat(wat)
-  let {memory, x, y, xl, yl} = mod.exports
+  let {'@memory':memory, x, y, xl, yl} = mod.exports
   let xarr = new Float64Array(memory.buffer, x.value, 3)
   // let i32s = new Int32Array(memory.buffer, 0)
   is(xarr[0], 1,'x0')
@@ -337,18 +340,21 @@ t.skip('debugs', t => {
   const memory = new WebAssembly.Memory({ initial: 1 });
   const importObject = { env: { memory } };
   let module = compileWat(`
-  (func $pick/f64.f64.i32.3 (param f64 f64 i32) (result f64 f64 i32) (local.get 0)(local.get 1)(local.get 2) (return))
-(global $sampleRate.1 (mut f64) (f64.const 0))
-(global $pi2.1 (mut f64) (f64.const 0))
-(global $pi.1 (mut f64) (f64.const 0))
-(func $module/init
-(call $pick/f64.f64.i32.3 (f64.const 3.14) (f64.mul (f64.const 3.14) (f64.convert_i32_s (i32.const 2))) (i32.const 44100))
-(f64.convert_i32_s)(global.set $sampleRate.1)(global.set $pi2.1)(global.set $pi.1)(global.get $sampleRate.1)(global.get $pi2.1)(global.get $pi.1)(return)
+  (func $buf.len (param f64) (result i32) (i32.wrap_i64 (i64.and (i64.const 0x0000000000ffffff) (i64.reinterpret_f64 (local.get 0)))))
+(func $buf.create (param i32 i32) (result f64)
+(f64.reinterpret_i64 (i64.or
+(i64.reinterpret_f64 (f64.convert_i32_u (local.get 0)))
+(i64.extend_i32_u (i32.and (i32.const 0x00ffffff) (local.get 0)))
+))
+(return))
+(memory (export "@memory") 1)(global $mem.size (mut i32) (i32.const 0))
+(func $mem.alloc (param i32)
+(global.set $mem.size (i32.add (local.get 0) (global.get $mem.size)))
+(if (i32.gt_s (global.get $mem.size) (i32.shl (memory.size) (i32.const 13))) (then (memory.grow (i32.const 1))(drop) ))
 )
-(start $module/init)
-(export "pi.1" (global $pi.1))
-(export "pi2.1" (global $pi2.1))
-(export "sampleRate.1" (global $sampleRate.1))
+(func $mem.store (param i32 f64)
+(f64.store (i32.shl (local.get 0) (i32.const 3)) (local.get 1))
+)
   `, importObject)
 
   console.log(module.exports.x(1n))

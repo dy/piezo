@@ -4,10 +4,9 @@ import stdlib from "./stdlib.js"
 import {FLOAT,INT,RANGE,BUF,FUNC} from './const.js'
 import { parse as parseWat } from "watr";
 
-const F64_PER_PAGE = 8192;
 const MEM_STRIDE = 8; // bytes per f64
 
-let includes, globals, funcs, locals, memcount, loop, exports, block;
+let includes, globals, funcs, locals, loop, exports, block;
 
 export default function compile(node) {
   if (typeof node === 'string') node = parse(node)
@@ -18,7 +17,6 @@ export default function compile(node) {
   locals, // current fn local scope
   includes = [], // pieces to prepend
   funcs = {}, // defined picker functions
-  memcount = 0, // current used memory pointer (number of f64s)
   loop = 0, // current loop number
   block = Object.assign([''],{cur:0}), // current block count
   exports = null // items to export
@@ -33,16 +31,13 @@ export default function compile(node) {
   for (let name in globals)
     res = `(global $${name} (mut f64) (f64.const 0))\n` + res
 
-  // declare memories
-  if (memcount) res += `\n(memory (export "memory") ${Math.ceil(memcount / F64_PER_PAGE)})`
-
   // declare funcs
   for (let name in funcs)
     res = funcs[name] + '\n' + res
 
   // declare includes
   for (let include of includes)
-    res += `\n${stdlib[include]}`
+    res = stdlib[include] + '\n' + res
 
   // provide exports
   for (let name in exports)
@@ -122,47 +117,51 @@ Object.assign(expr, {
 
   // [1,2,3]
   '['([,inits]) {
-    if (!inits) inits = !inits ? [] : inits[0] !== ',' ? [inits] : inits.slice(1)
+    inits = !inits ? [] : inits[0] !== ',' ? [inits] : inits.slice(1)
 
-    let out = ``, members = 0
-    memcount += MEM_STRIDE // we unify memory stride to f64 steps to avoid js typed array buttheart
-    // second i32 stores array rotation info like a << 1
-    // FIXME: wouldn't it be easier to init static arrays via data section?
+    let out = ``, items = []
+
+    // we can't define via data section, since values can be calculable
     for (let init of inits) {
-      let idesc = getDesc(init)
-      if (idesc.type === INT || idesc.type === FLOAT)
-        out += `(f64.store (i32.const ${memcount + members++ * MEM_STRIDE}) ${expr(asFloat(init))}) `
-      else if (idesc.type === RANGE) {
+      if (init[0] === '..') {
         let [,min,max] = init
         // simple numeric range like [0..1]
         if (typeof max[1] === 'number') {
           // [..1] - no need for specific init
-          if (!min) members += max[1]
+          if (!min) items.length += max[1]
           // [1..3]
           // FIXME: this range may need specifying, like -1.2..2
-          else if (typeof min[1] === 'number') for (let v = min[1]; v <= max[1]; v++)
-              out += `(f64.store (i32.const ${memcount + members++ * MEM_STRIDE}) (f64.const ${v})) `
+          else if (typeof min[1] === 'number')
+            for (let v = min[1]; v <= max[1]; v++) items.push(op(`(f64.const ${v})`, 'f64'))
+          // FIXME
           else err('Unimplemented array initializer: computed range min value')
         }
+        // FIXME
         else err('Unimplemented array initializer: computed range', init)
       }
-      else err('Unimplemented array initializer',init)
+      else items.push(expr(init))
     }
-    // prepend length initializer
-    out = `(i32.store (i32.const ${memcount-MEM_STRIDE}) (i32.const ${members})) ` + out
-    out += `(i32.const ${memcount})`
-    memcount += members * MEM_STRIDE
+    // allocate required memory
+    inc('mem'), out += `(call $mem.alloc (i32.const ${items.length}))\n`
 
-    return out
+    // add initializers
+    for (let i = 0; i < items.length; i++)
+      if (items[i])
+        out += `(call $mem.store (i32.sub (global.get $mem.size) (i32.const ${items.length - i})) ${asFloat(items[i])})\n`
+
+    // create buffer reference as output
+    inc('buf.create')
+    out += `(call $buf.create (i32.sub (global.get $mem.size) (i32.const ${items.length})) (i32.const ${items.length}))`
+
+    return op(out,'f64',{buf:true})
   },
 
   // a[b] or a[]
   '[]'([,a,b]) {
     // a[]
     if (!b) {
-      let aDesc = getDesc(a);
-      if (aDesc.type !== BUF) err('Reading length of non-array', a);
-      return inc('buf.len'), expr(['()', 'buf.len', a])
+      let aop = expr(a)
+      return inc('buf.len'), op(`(call $buf.len ${aop})`,'i32')
     }
     err('Unimplemented prop access')
   },
@@ -487,7 +486,7 @@ function pick(count, input) {
     if (count === 1) return input
     // (a,b,c) = d
     let {type} = input
-    name = `$pick/${type}.${count}`
+    name = `$pick/${type}_${count}`
     if (!funcs[name]) {
       funcs[name] = `(func ${name} (param ${type}) (result ${(type+' ').repeat(count)}) ${`(local.get 0)`.repeat(count)} (return))`
     }
@@ -495,7 +494,7 @@ function pick(count, input) {
   }
 
   // N:M or 1:M picker
-  name = `$pick/${input.type.join('.')}.${count}`
+  name = `$pick/${input.type.join('_')}_${count}`
   if (!funcs[name]) {
     funcs[name] = `(func ${name} (param ${input.type.join(' ')}) (result ${input.type.slice(0,count).join(' ')}) ${input.type.slice(0,count).map((o,i) => `(local.get ${i})`).join('')} (return))`
   }
