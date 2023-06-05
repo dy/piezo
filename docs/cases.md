@@ -25,3 +25,5 @@
 * [ ] https://github.com/LinusU/pokemon-synthesizer
 * [ ] https://github.com/renzol2/fx
 * [ ] https://github.com/JoepVanlier/JSFX
+* [ ] https://github.com/survivejs/audio-katas
+* [ ] neural networklets

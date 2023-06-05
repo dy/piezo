@@ -136,8 +136,14 @@ t('parse: statements', t => {
 
 t('parse: conditions', t => {
   is(parse(`sign = a < 0 ? -1 : +1`), ['=','sign',['?:',['<','a',[INT,0]], ['-',[INT,1]], ['+',[INT,1]]]], 'inline ternary')
-  // is(parse('a > b ? ++b'), ['?:',['>','a','b'],['++','b']], 'if operator')
-  // is(parse('a > b ?: ++b'), ['?:', ['>','a','b'], ['++','b']], 'elvis operator (else if)')
+  is(parse('a > b ? ++b'), ['?',['>','a','b'], ['++','b']], 'if operator')
+  is(parse('a = b ? c'), ['=','a',['?','b','c']], 'if operator precedence')
+  is(parse('a ? b = c'), ['?','a',['=','b','c']], 'if operator precedence')
+  is(parse('a > b ?: ++b'), ['?:', ['>','a','b'], ['++','b']], 'elvis operator (else if)')
+  is(parse('a ?: b = c'), ['?:','a',['=','b','c']], 'elvis operator precedence')
+  is(parse('a = b ?: c'), ['=','a',['?:','b','c']], 'elvis operator precedence')
+  is(parse('a = b ? c : d'), ['=','a',['?:','b','c','d']], 'ternary precedence')
+  is(parse('a ? b = c : d'), ['?:','a',['=','b','c'],'d'], 'ternary precedence')
   // FIXME: confusable with a > -b
   // is(parse('a,b,c >- x ? a : b : c'), ['?:', ['>-', [',','a','b','c'], [':','a','b','c']]], 'switch operator')
   is(parse(`2+2 >= 4 ?        // multiline ternary

@@ -2,7 +2,6 @@
 
 import t, { is, not, ok, same, throws } from 'tst'
 import parse from '../src/parse.js'
-import analyse from '../src/analyse.js'
 import compile from '../src/compile.js'
 import Wabt from '../lib/wabt.js'
 // import Wabt from 'wabt'
@@ -20,7 +19,10 @@ function clean (str) {
 // convert wast code to binary
 const wabt = await Wabt()
 function compileWat (code, importObj={}) {
-  code = '(func $log (import "imports" "log") (param i32))\n(func $logf (import "imports" "log") (param f64))\n' + code
+  code = '(func $i32.log (import "imports" "log") (param i32) (result i32))\n' +
+  '(func $f64.log (import "imports" "log") (param f64) (result f64))\n' +
+  '(func $i64.log (import "imports" "log") (param i64) (result i64))\n' +
+  code
   const wasmModule = wabt.parseWat('inline', code, {
     // simd: true,
     reference_types: true,
@@ -40,7 +42,7 @@ function compileWat (code, importObj={}) {
   return new WebAssembly.Instance(mod, {
     ...importObj,
     imports: {
-      log(a){ console.log(a) }
+      log(a){ console.log(a); return a }
     }
   })
 }
@@ -86,6 +88,18 @@ t('compile: globals multiple', () => {
   is(mod.exports.b.value, -1)
 })
 
+t.todo('compile: export kinds', t => {
+
+  throws(() => analyse(parse(`x,y.;z`)), /export/i)
+  is(analyse(parse(`x.`)).export, {x:'global'})
+  is(analyse(parse(`x=1.`)).export, {x:'global'})
+  is(analyse(parse(`x,y.`)).export, {x:'global',y:'global'})
+  is(analyse(parse(`x,y,z.`)).export, {x:'global',y:'global',z:'global'})
+  is(analyse(parse(`x=1;x.`)).export, {x:'global'})
+  is(analyse(parse(`x=1,y=1;x,y.`)).export, {x:'global',y:'global'})
+  is(analyse(parse(`(x,y)=(1,1).`)).export, {x:'global',y:'global'})
+})
+
 t('compile: numbers negatives', t => {
   let wat = compile(`x=-1.`)
   let mod = compileWat(wat)
@@ -114,16 +128,22 @@ t('compile: numbers inc/dec', t => {
 
 t('compile: conditions or/and', t => {
   let wat, mod
-  wat = compile(`x=1;y=0;z=x||y.`)
+  wat = compile(`z=1||0.`)
   mod = compileWat(wat)
   is(mod.exports.z.value, 1)
-  wat = compile(`x=1.2;y=0.0;z=x||y.`)
+  wat = compile(`z=1.2||0.0.`)
   mod = compileWat(wat)
   is(mod.exports.z.value, 1.2)
-  wat = compile(`x=1.2;y=0.2;z=x&&y.`)
+  wat = compile(`z=1.2||0.`)
+  mod = compileWat(wat)
+  is(mod.exports.z.value, 1.2)
+  wat = compile(`z=1||0.0.`)
+  mod = compileWat(wat)
+  is(mod.exports.z.value, 1)
+  wat = compile(`z=1.2&&0.2.`)
   mod = compileWat(wat)
   is(mod.exports.z.value, 0.2)
-  wat = compile(`x=1;y=2;z=x&&y.`)
+  wat = compile(`z=1&&2.`)
   mod = compileWat(wat)
   is(mod.exports.z.value, 2)
 })
@@ -168,31 +188,39 @@ t('compile: conditions', t => {
   mod = compileWat(wat)
   is(mod.exports.c.value, 1)
 
-  wat = compile(`a=1;b=2;c=a&&b.`)
+  wat = compile(`a=1;b=2;a?c=b.`)
   mod = compileWat(wat)
   is(mod.exports.c.value, 2)
 
-  wat = compile(`a=0;b=2;c=a&&b.`)
+  wat = compile(`a=0;b=2;a?c=b.`)
   mod = compileWat(wat)
   is(mod.exports.c.value, 0)
 
-  wat = compile(`a=0.0;b=2.1;c=a&&b.`)
+  wat = compile(`a=0.0;b=2.1;a?c=b.`)
   mod = compileWat(wat)
   is(mod.exports.c.value, 0)
 
-  wat = compile(`a=0.1;b=2.1;c=a&&b.`)
+  wat = compile(`a=0.1;b=2.1;a?c=b.`)
   mod = compileWat(wat)
   is(mod.exports.c.value, 2.1)
 
-  wat = compile(`a=1;b=2;c=a||b.`)
+  wat = compile(`a=1;b=2;a?:c=b.`)
   mod = compileWat(wat)
-  is(mod.exports.c.value, 1)
+  is(mod.exports.c.value, 0)
 
-  wat = compile(`a=0;b=2;c=a||b.`)
+  wat = compile(`a=0;b=2;a?:c=b.`)
   mod = compileWat(wat)
   is(mod.exports.c.value, 2)
 
-  wat = compile(`a=0.0;b=2.1;c=a||b.`)
+  wat = compile(`a=0.0;b=2.1;a?:c=b.`)
+  mod = compileWat(wat)
+  is(mod.exports.c.value, 2.1)
+
+  wat = compile(`a=0.0;b=2.1;c=a?b.`)
+  mod = compileWat(wat)
+  is(mod.exports.c.value, 0)
+
+  wat = compile(`a=0.1;b=2.1;c=a?b.`)
   mod = compileWat(wat)
   is(mod.exports.c.value, 2.1)
 })
@@ -200,11 +228,6 @@ t('compile: conditions', t => {
 
 t('compile: function oneliners', t => {
   let wat, mod
-  // default
-  // wat = compile(`mult(a, b) -> a * b.`)
-  // mod = compileWat(wat);
-  // is(mod.exports.mult(2,4), 8)
-
   // no semi
   wat = compile(`mult(a, b=2) = a * b.`)
   mod = compileWat(wat)
@@ -242,7 +265,7 @@ t('compile: arrays basic', t => {
   let wat = compile(`x = [1, 2, 3], y = [4,5,6,7]; x,y,xl=x[],yl=y[].`)
   // console.log(wat)
   let mod = compileWat(wat)
-  let {memory, x, y, xl, yl} = mod.exports
+  let {'@memory':memory, x, y, xl, yl} = mod.exports
   let xarr = new Float64Array(memory.buffer, x.value, 3)
   // let i32s = new Int32Array(memory.buffer, 0)
   is(xarr[0], 1,'x0')
@@ -317,9 +340,21 @@ t.skip('debugs', t => {
   const memory = new WebAssembly.Memory({ initial: 1 });
   const importObject = { env: { memory } };
   let module = compileWat(`
-    (type $tuple (struct (field $id f32)))
-    (func (result (ref $tuple))
-      (struct.new $tuple (f32.const 0)))
+  (func $buf.len (param f64) (result i32) (i32.wrap_i64 (i64.and (i64.const 0x0000000000ffffff) (i64.reinterpret_f64 (local.get 0)))))
+(func $buf.create (param i32 i32) (result f64)
+(f64.reinterpret_i64 (i64.or
+(i64.reinterpret_f64 (f64.convert_i32_u (local.get 0)))
+(i64.extend_i32_u (i32.and (i32.const 0x00ffffff) (local.get 0)))
+))
+(return))
+(memory (export "@memory") 1)(global $mem.size (mut i32) (i32.const 0))
+(func $mem.alloc (param i32)
+(global.set $mem.size (i32.add (local.get 0) (global.get $mem.size)))
+(if (i32.gt_s (global.get $mem.size) (i32.shl (memory.size) (i32.const 13))) (then (memory.grow (i32.const 1))(drop) ))
+)
+(func $mem.store (param i32 f64)
+(f64.store (i32.shl (local.get 0) (i32.const 3)) (local.get 1))
+)
   `, importObject)
 
   console.log(module.exports.x(1n))

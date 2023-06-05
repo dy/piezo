@@ -42,7 +42,8 @@
 * [ ] more complex group conditionals: `a,b,c || d,e`, `a,b * c,d`
 * [x] ~~implement scopes as either tmp functions or blocks~~ -> just resolve variables
 * [x] Implement storing buffer items
-* [ ] Test nested scopes variables
+* [ ] Test nested scopes variables `(x=0;(y=1);y)`
+* [ ] Extend i32 to i64 whereever possible
 * [ ] Test optional arguments
 * [ ] Implement memory alloc fn
 * [ ] Test a,,c = d,e,f; a,b,c = d,,f

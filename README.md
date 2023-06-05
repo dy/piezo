@@ -31,14 +31,9 @@ fooBar123 == FooBar123;         \\ names are case-insensitive (lowcase encourage
 default=1, eval=fn, else=0;     \\ lino has no reserved words
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ numbers
-16, 0x10, 0b0;                  \\ int (dec, hex or binary form)
-16.0, .1, 1e3, 2e-3;            \\ floats
-true = 0b1, false = 0b0;        \\ hint: alias booleans
-
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ type cast
-1 * 2; 12 - 10;                 \\ ints persist type if possible
-1 / 3; 2 * 3.14;                \\ ints upgrade to floats via float operations
-3.14 | 0; 2.5 // 1;             \\ floats cast to ints in int operations
+16, 0x10, 0b0;                  \\ int, hex or binary
+16.0, .1, 1e3, 2e-3;            \\ float
+true = 0b1, false = 0b0;        \\ alias booleans
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ units
 1k = 1000; 1pi = 3.1415;        \\ define units
@@ -49,11 +44,11 @@ true = 0b1, false = 0b0;        \\ hint: alias booleans
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ standard operators
 + - * / % -- ++                 \\ arithmetical
 && || ! ?:                      \\ logical
-& | ^ ~ >> <<                   \\ binary
+& | ^ ~ >> <<                   \\ binary (for integer part of number)
 == != >= <=                     \\ comparisons
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ extended operators
-** // %%                        \\ pow, int (floor) division, unsigned mod (wraps negatives)
+** // %%                        \\ power, floor division, unsigned mod (wraps negatives)
 <| <|= #                        \\ for each, map, member
 =<                              \\ clamp
 []                              \\ prop, length
@@ -88,6 +83,8 @@ a, b, c;                        \\ groups are sugar, not tuple
 (a,b) = (c,d,e);                \\ (a=c, b=d);
 (a,b,c) = d;                    \\ (a=d, b=d, c=d);
 a = (b,c,d);                    \\ (a=b);
+a,,b = (c,d,e);                 \\ (a=c, d, b=e);
+a,b,c = (d,,e);                 \\ (a=d, b, c=e);
 a = b, c = d;                   \\ note: assignment precedence is higher: (a = b), (c = d)
 (a,b,c) = fn();                 \\ functions can return multiple values;
 
@@ -111,16 +108,18 @@ sign = a < 0 ? -1 : +1;         \\ inline ternary
 );
 a || b ? c;                     \\ if a or b then c
 a && b ?: c;                    \\ elvis: if not a and b then c
+a = b ? c;                      \\ if b then a = c (else a = 0)
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ functions
 double(n) = n*2;                \\ inline function
-triple(n=1) = (                 \\ optional args
-  n == 0 ? ^n;                  \\ return n
-  n*3                           \\ returns last value
+times(m=1,n=1) = (              \\ optional args
+  n == 0 ? ^0;                  \\ return n
+  m*n                           \\
 );
-triple();                       \\ 3
-triple(5);                      \\ 15
-triple(n: 10);                  \\ 30. named argument.
+times(3,2);                     \\ 6
+times(5);                       \\ 5. optional argument
+times(n: 10);                   \\ 10. named argument
+times(,11);                     \\ 11. skipped argument
 copy = triple;                  \\ capture function
 copy(n: 10);                    \\ also 30
 clamp(v =< 0..10) = v;          \\ clamp argument
@@ -442,6 +441,7 @@ Targets browsers, [audio worklets](https://developer.mozilla.org/en-US/docs/Web/
 * _Case-agnostic_: URL-safe, typo-proof.
 * _Subtle type inference_: type by-operator, not dedicated syntax.
 * _No OOP_: functions, stateful vars.
+* _No lambda funcs_: no unnecessary scope persistency.
 * _Groups_: multiple returns, multiple operands.
 * _No implicit globals_: wysiwyg.
 * _Ranges_: prevent blowing up values.
