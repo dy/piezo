@@ -1066,6 +1066,9 @@ Having wat files is more useful than direct compilation to binary form:
   + // is super-familiar and js/c-y
   - // is used in python for floor division, very handy: (a / b | 0) -> a//b
     - that is especially not just floor division but autoconverting to int, which is super handy!!
+      ? can that be resolved somehow?
+  + allows defer to be `\x++`.
+  + makes f#-compatible syntax highlight
 
   3. `\` or `\\`
     + mono-compatible
@@ -2370,6 +2373,7 @@ Having wat files is more useful than direct compilation to binary form:
       - not straight meaning
     * `x() = (//a; b,c; //d;)`
       - strong association with comment
+    * `x() = (*i=0;\i++;)`, `x()=(\a; b,c,; \d;)`, `x(a) = (\log(a); \a+=1; a)`
     * `x() = (/a; b,c; /d;)`, `x()=(*i=0;/i++;*phase=0;/phase+=t;)`, `x()=(/log(a))`
       + one-symbol
       + associates with reddit tags
@@ -2427,6 +2431,7 @@ Having wat files is more useful than direct compilation to binary form:
         ~ fixable-ish via precedence
         ~ loop has never defers (?)
         ? can we change loop to `?>`, so it means "until condition holds, defer code"
+      - a bit heavy, ruby-like, unfamiliar vibe
     * `x() = (*i=0;>>|i++)`
       + `skip forward`
       - too many symbols
@@ -2444,6 +2449,7 @@ Having wat files is more useful than direct compilation to binary form:
       + includes notion of "double", like double hash `//` in it
         ? is that why python uses # instead of // for comment?
       + associates with comment, something that comes "after"
+    * `x() = (*i=0;::i++;)`, `x()=(::a; b,c,; ::d;)`, `x(a) = (::log(a); ::a+=1; a)`
 
 ## [ ] Try-catch -> `x() ?= (a, b, c)` makes fn definition wrapped with try-catch
 
@@ -2562,7 +2568,7 @@ Having wat files is more useful than direct compilation to binary form:
 - not clear if `'oscillator'`, `'Oscillator'`, `oscillator` and `Oscillator` resolve to the same
 - can cause conflicts with "bad" names, like `pipe/arg`
 
-## [~] Ranges: how to organize in wasm level? -> let's try syntactic ranges and wait if we need ranges as primitives
+## [x] Ranges: how to organize in wasm level? -> let's try syntactic ranges only
 
 1. v128 as f64x2
   + stores
@@ -3188,7 +3194,7 @@ Having wat files is more useful than direct compilation to binary form:
     ? `list <| (*i=0, *prev; >i++, >prev=#;)`
       + !clever!
 
-## [ ] `list <| x` vs `a < 1 <| x` - how do we know left side type? -> lhs is always either `.. <| #` or `list <| #`
+## [x] `list <| x` vs `a < 1 <| x` - how do we know left side type? -> lhs is always either `.. <| #` or `list <| #`
 
   * type can be unknown, like `x(arg)=(arg <| ...)`
     ? do we run it until condition holds true?
@@ -3221,7 +3227,7 @@ Having wat files is more useful than direct compilation to binary form:
     ? `..(a ? >< : 0) <| a + 1`
     + refers to `..` in more looping sense!
 
-## [ ] How to represent array pointer in code? -> let's try f64
+## [x] How to represent array pointer in code? -> let's try f64
 
   ? ALT: Use multiple stack values?
     + allows returning arrays as a couple [ptr,length] instead of storing length in memory
