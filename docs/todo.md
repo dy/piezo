@@ -33,7 +33,7 @@
   + we don't test analyser anyways, it's not stable
   + simplifies parent state management
 * [x] use f64 everywhere
-* [ ] implement array pointer as float64
+* [x] implement array pointer as float64
 * [x] ~~`x=1; x=1.0` - add float dup~~
 * [x] arity of ops, for proper `(drop)` amount, eg. `a ? b;` has 0 items in stack;
 * [ ] implement new loop/pipe `<|`, `|>`
@@ -45,11 +45,10 @@
 * [ ] Test nested scopes variables `(x=0;(y=1);y)`
 * [ ] Extend i32 to i64 whereever possible
 * [ ] Test optional arguments
-* [ ] Implement memory alloc fn
 * [ ] Test a,,c = d,e,f; a,b,c = d,,f
 * [ ] Test if memory grows properly
 * [x] Simple loops
-* [ ] Track memory via runtime variable: check against array len/address
+* [x] Track memory via runtime variable: check against array len/address
 * [ ] Audio gain example
 * [ ] Sine gen example
 * [ ] All lang reference cases
@@ -57,6 +56,7 @@
 * [ ] Stub all wrong syntax error cases, like `++a=123;` etc - any operators on the lhs of `=` etc., all permutations
 * [ ] math: sin, cos, pow, mod etc - from mono https://github.com/stagas/mono
 * [ ] *state (global var per callsite?)
+* [ ] Readme examples
 
 ## 2
 

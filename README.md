@@ -1,14 +1,13 @@
 # 🎧 lino
 
-**Lino** (*li*ne *no*ise) is micro-language for sound design, processing and utilities. It features:
+**Lino** (*li*ne *no*ise) is ergonomic micro-language for sound design, processing and utilities.
 
-* Minimal JS-like syntax<span title="Common base from C, JS, Java, Python, Swift, Kotlin, Rust. No-keywords allows better minification and internationalization; Case-agnostic makes it URL-safe and typo-proof.">\*</span>.
-* Soft type inference<span title="Types are inferred by operations.">\*</span>.
-* Organic sugar.
-* Refined language patterns<span title="Pipes, deferring, stateful variables, ranges, units, tuples">\*</span>.
-* Smooth operator.
-
-It has static/linear memory and compiles to 0-runtime webassembly.
+* Minimal JS-like syntax
+* 0-types
+* Static/linear memory
+* Refined language patterns<span title="Pipes, deferring, stateful variables, ranges, units, tuples">\*</span>
+* Compiles to 0-runtime WASM
+* <small>Smooth operator and organic sugar</small>
 
 <!--[Motivation](./docs/motivation.md)  |  [Documentation](./docs/reference.md)  |  [Examples](./docs/examples.md).-->
 
@@ -50,11 +49,12 @@ true = 0b1, false = 0b0;        \\ alias booleans
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ extended operators
 ** // %%                        \\ power, floor division, unsigned mod (wraps negatives)
 <| <|= #                        \\ for each, map, member
-=<                              \\ clamp
+=< -<                           \\ clamp
+=/ -/                           \\ smoothstep
 []                              \\ prop, length
 * >                             \\ (unary) declare state, defer
 ^ ^^                            \\ continue/return, break/return
-@ .                             \\ import, end of program
+@ .                             \\ import, export/end
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ ranges
 1..10;                          \\ basic range
@@ -62,31 +62,29 @@ true = 0b1, false = 0b0;        \\ alias booleans
 10..1;                          \\ reverse range
 1.08..108.0;                    \\ float range
 (x-1)..(x+1);                   \\ calculated ranges
-1..2 + 2..3;                    \\ add ranges: 1..3
-1..3 - 2..;                     \\ subtract ranges: 1..2
 (-10..10)[];                    \\ span: 20
 x -< 0..10;                     \\ clamp(x, 0, 10)
 x -< ..10;                      \\ min(x, 10)
 x -< 0..;                       \\ max(0, x)
+x =< 0..10;                     \\ x = clamp(x, 0, 10)
 a,b,c = 0..2;                   \\ a==0, b==1, c==2
 x <= 0..10;                     \\ x is in 0..10 range
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ groups
-a, b, c;                        \\ groups are sugar, not tuple
+a, b, c;                        \\ groups are sugar, not primitive
 (a, b, c)++;                    \\ apply operation to multiple elements: (a++, b++, c++)
-(a, (b, c));                    \\ groups are always flat == (a, b, c)
+(a, (b, c));                    \\ always flat: (a, b, c)
 (a,b,c) = (d,e,f);              \\ assign: a=d, b=e, c=f
 (a,b) = (b,a);                  \\ swap: temp=a; a=b; b=temp;
-(a,b) + (c,d);                  \\ operations: (a+c, b+d)
+(a,b) + (c,d);                  \\ any ops act on members: (a+c, b+d)
 (a,b).x;                        \\ (a.x, b.x);
-(a,b).x();                      \\ (a.x(), b.x());
 (a,b) = (c,d,e);                \\ (a=c, b=d);
 (a,b,c) = d;                    \\ (a=d, b=d, c=d);
 a = (b,c,d);                    \\ (a=b);
-a,,b = (c,d,e);                 \\ (a=c, d, b=e);
-a,b,c = (d,,e);                 \\ (a=d, b, c=e);
-a = b, c = d;                   \\ note: assignment precedence is higher: (a = b), (c = d)
-(a,b,c) = fn();                 \\ functions can return multiple values;
+(a,,b) = (c,d,e);               \\ (a=c, d, b=e);
+(a,b,c) = (d,,e);               \\ (a=d, b, c=e);
+a = b, c = d;                   \\ assignment precedence: (a = b), (c = d)
+(a,b,c) = fn();                 \\ fn returns multiple values;
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ statements
 foo();                          \\ semi-colons at end of line are mandatory
