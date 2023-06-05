@@ -3338,7 +3338,7 @@ Having wat files is more useful than direct compilation to binary form:
     - fn args don't get ever-clamped, just once
 
 
-## [ ] mix, smoothstep operators
+## [ ] mix, smoothstep operators -> `-/` and `-/=` for smoothstep
 
   * `x -< a..b` defines clamping
   * `x -/ a..b` for smoothstep?
@@ -3346,6 +3346,7 @@ Having wat files is more useful than direct compilation to binary form:
     + compatible with clamping by meaning (one of integral)
       - x is clamped, but here x is mapped
   * `x ~/ a..b`
+    + allows `x -/ a..b` for lerp
   * `x ~< a..b`
   * `a..b -> x`
     - looks like function
@@ -3359,6 +3360,7 @@ Having wat files is more useful than direct compilation to binary form:
   * `x =/ a..b` for smoothstep
   * `x </ a..b` for smoothstep
   * `x /< a..b` for smoothstep
+  * `x -| a..b` for step?
 
 ## [ ] how do we represent infinity?
 
@@ -3370,12 +3372,12 @@ Having wat files is more useful than direct compilation to binary form:
   * `..[-1]`, `..[0]`
     + technically correct
 
-## [ ] non-inclusive range `0>..10` vs `0 > ..10`
+## [x] non-inclusive range `0>..10` vs `0 > ..10` -> don't use non-inclusive ranges
 
   - non-inclusive ranges can be organized as `min..(max-1)` for ints
     - or as `min..(max-.00001)` for floats
 
-## [ ] replace `x -< 0..10` with `x =< 0..10`?
+## [x] replace `x -< 0..10` with `x =< 0..10`? -> nah, too confusing indeed. use `-<`, `-<=` as established pattern
 
   ? do we ever need `clamp(x, 0, 10)`, opposed to `x = clamp(x, 0, 10)`?
     + it seems from examples we always `x = clamp(x, 0..10)`

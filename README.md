@@ -5,7 +5,7 @@
 * Minimal JS-like syntax
 * 0-types
 * Static/linear memory
-* Refined language patterns<span title="Pipes, deferring, stateful variables, ranges, units, tuples">\*</span>
+* Refined language patterns: stateful vars, units, ranges, groups, deferring
 * Compiles to 0-runtime WASM
 * <small>Smooth operator and organic sugar</small>
 
@@ -49,8 +49,8 @@ true = 0b1, false = 0b0;        \\ alias booleans
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ extended operators
 ** // %%                        \\ power, floor division, unsigned mod (wraps negatives)
 <| <|= #                        \\ for each, map, member
-=< -<                           \\ clamp
-=/ -/                           \\ smoothstep
+-< -<=                          \\ clamp
+-/ -/=                          \\ smoothstep
 []                              \\ prop, length
 * >                             \\ (unary) declare state, defer
 ^ ^^                            \\ continue/return, break/return
@@ -66,7 +66,7 @@ true = 0b1, false = 0b0;        \\ alias booleans
 x -< 0..10;                     \\ clamp(x, 0, 10)
 x -< ..10;                      \\ min(x, 10)
 x -< 0..;                       \\ max(0, x)
-x =< 0..10;                     \\ x = clamp(x, 0, 10)
+x -<= 0..10;                    \\ x = clamp(x, 0, 10)
 a,b,c = 0..2;                   \\ a==0, b==1, c==2
 x <= 0..10;                     \\ x is in 0..10 range
 
@@ -111,7 +111,7 @@ a = b ? c;                      \\ if b then a = c (else a = 0)
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ functions
 double(n) = n*2;                \\ inline function
 times(m=1,n=1) = (              \\ optional args
-  n == 0 ? ^0;                  \\ return n
+  n == 0 ? ^n;                  \\ return n
   m*n                           \\
 );
 times(3,2);                     \\ 6
@@ -120,7 +120,7 @@ times(n: 10);                   \\ 10. named argument
 times(,11);                     \\ 11. skipped argument
 copy = triple;                  \\ capture function
 copy(n: 10);                    \\ also 30
-clamp(v =< 0..10) = v;          \\ clamp argument
+clamp(v -< 0..10) = v;          \\ clamp argument
 x() = (1,2,3);                  \\ return group (multiple values)
 (a,b,c) = x();                  \\ assign to a group
 
@@ -176,7 +176,7 @@ Provides k-rate amplification for block of samples.
 ```
 gain(                               \\ define a function with block, volume arguments.
   block,                            \\ block type is inferred as buffer from pipe operation |=
-  volume =< 0..100.0                \\ volume is clamped to 0..100, type is inferred as float
+  volume -< 0..100.0                \\ volume is clamped to 0..100, type is inferred as float
 ) = (
   block <|= # * volume;             \\ map each sample via multiplying by value
 );
@@ -201,8 +201,8 @@ A-rate (per-sample) biquad filter processor.
 
 lpf(                                \\ per-sample processing function
   x0,                               \\ input sample value
-  freq = 100 =< 1..10k,             \\ filter frequency, float
-  Q = 1.0 =< 0.001..3.0             \\ quality factor, float
+  freq = 100 -< 1..10k,             \\ filter frequency, float
+  Q = 1.0 -< 0.001..3.0             \\ quality factor, float
 ) = (
   *(x1, y1, x2, y2) = 0;            \\ define filter state
   >(x1, x2) = (x0, x1);             \\ defer shifting state
@@ -249,7 +249,7 @@ adsr(x, a, d, (s, sv=1), r) = (   \\ optional group-argument
   *i = 0; >i++;                   \\ internal counter, increments after fn body
   t = i / 1s;
 
-  a =< 1ms..;                    \\ prevent click
+  a -< 1ms..;                    \\ prevent click
   total = a + d + s + r;
 
   y = t >= total ? 0 : (
@@ -264,7 +264,7 @@ adsr(x, a, d, (s, sv=1), r) = (   \\ optional group-argument
 );
 
 \\ curve effect
-curve(x, amt=1.82 =< 0..10) = (sign(x) * abs(x)) ** amt;
+curve(x, amt=1.82 -< 0..10) = (sign(x) * abs(x)) ** amt;
 
 \\ coin = triangle with pitch jump, produces block
 coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
