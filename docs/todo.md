@@ -1,4 +1,4 @@
-# plan
+## Stage 0
 
 * [x] make subscript generate lispy tree (wasm, wat, js, ast targets are possible)
   . we need not immediately compile, we need intermediary state to codegenerate after.
@@ -14,9 +14,11 @@
 
 * [x] Parser
 
+## Stage 1
+
 * [x] Add proper scope mechanism (streamline compiler)
 * [ ] case-insensitive
-* [ ] Replace `temp` with `wat/fn` includes:
+* [x] Replace `temp` with `wat/fn` includes:
   * [x] `and`/`or` must be implemented via stack, not tmp values nor function
   + helper functions naturally isolate temp scope variables () for storing (no names conflict)
   + [x] swizzling like `pick3(a,b,c,d)` (returns 3 arguments)
@@ -24,24 +26,29 @@
   + standardized non-standard operators
   + we keep analyzer code clean
   + inliner on optimizing stage can take care of everything else
-* [ ] merge analyzer into compile
+* [x] merge analyzer into compile
   + the difference between them is unclear, compiler can map expression results
   + compiler follows scopes anyways, easier to merge scope vars if needed
   + we use desc anyways from analyser all the time
   + we don't test analyser anyways, it's not stable
+  + simplifies parent state management
+* [x] use f64 everywhere
 * [ ] implement array pointer as float64
-* [ ] `x=1; x=1.0` - upgrade definition to float
-* [ ] count number of stack items in result, for proper `(drop)` amount, eg. `a ? b;` possibly has 0 items in stack;
+* [x] ~~`x=1; x=1.0` - add float dup~~
+* [x] arity of ops, for proper `(drop)` amount, eg. `a ? b;` has 0 items in stack;
 * [ ] implement new loop/pipe `<|`, `|>`
-* [ ] implement no-ptr buffer lengths: either i64 or 2 values in stack
-* [ ] refactor `pick(N,arg)` into `dup(arg,3)`
-* [ ] more complex group conditionals: `a,b,c || d,e`
-* [ ] implement scopes as either tmp functions or blocks
+* [x] implement no-ptr buffer lengths: either i64 or 2 values in stack
+* [x] ~~refactor `pick(N,arg)` into `dup(arg,3)`~~
+* [ ] more complex group conditionals: `a,b,c || d,e`, `a,b * c,d`
+* [x] ~~implement scopes as either tmp functions or blocks~~ -> just resolve variables
 * [x] Implement storing buffer items
 * [ ] Test nested scopes variables
 * [ ] Test optional arguments
 * [ ] Implement memory alloc fn
+* [ ] Test a,,c = d,e,f; a,b,c = d,,f
+* [ ] Test if memory grows properly
 * [x] Simple loops
+* [ ] Track memory via runtime variable: check against array len/address
 * [ ] Audio gain example
 * [ ] Sine gen example
 * [ ] All lang reference cases
@@ -49,6 +56,8 @@
 * [ ] Stub all wrong syntax error cases, like `++a=123;` etc - any operators on the lhs of `=` etc., all permutations
 * [ ] math: sin, cos, pow, mod etc - from mono https://github.com/stagas/mono
 * [ ] *state (global var per callsite?)
+
+## 2
 
 * [ ] Processing modules collection
 
@@ -64,6 +73,13 @@
 
 * [ ] Loudness meter for waveplay
 
+## 3
+
+* [ ] Web-audio-api
+* [ ] musi
+* [ ] latr
+* [ ] Neural audio effects
+* [ ] Essentia
 
 ## Test cases
 

@@ -1,6 +1,14 @@
 # lino
 
-**Lino** (*li*ne *no*ise) is micro-language for sound design, processing and utilities. It has minimal JS-like syntax<span title="Common base from C, JS, Java, Python, Swift, Kotlin, Rust. No-keywords allows better minification and internationalization; Case-agnostic makes it URL-safe and typo-proof.">\*</span>, subtle type inference<span title="Types are inferred from code hints like 0.0 vs 0 or by operations.">\*</span> and refined language patterns<span title="Pipes, deferring, stateful variables, ranges, units, tuples">\*</span>. It has linear no-GC memory and compiles to 0-runtime WASM bytecode for compactness, robustness and accessibility: browsers, [audio worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, VST, Rust, Python, Go, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) etc.
+**Lino** (*li*ne *no*ise) is micro-language for sound design, processing and utilities. It features:
+
+* Minimal JS-like syntax<span title="Common base from C, JS, Java, Python, Swift, Kotlin, Rust. No-keywords allows better minification and internationalization; Case-agnostic makes it URL-safe and typo-proof.">\*</span>.
+* Soft type inference<span title="Types are inferred by operations.">\*</span>.
+* Organic sugar.
+* Refined language patterns<span title="Pipes, deferring, stateful variables, ranges, units, tuples">\*</span>.
+* Smooth operator.
+
+It has static/linear memory and compiles to 0-runtime webassembly.
 
 <!--[Motivation](./docs/motivation.md)  |  [Documentation](./docs/reference.md)  |  [Examples](./docs/examples.md).-->
 
@@ -47,7 +55,7 @@ true = 0b1, false = 0b0;        \\ hint: alias booleans
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ extended operators
 ** // %%                        \\ pow, int (floor) division, unsigned mod (wraps negatives)
 <| <|= #                        \\ for each, map, member
--< -<=                          \\ clamp
+=<                              \\ clamp
 []                              \\ prop, length
 * >                             \\ (unary) declare state, defer
 ^ ^^                            \\ continue/return, break/return
@@ -58,7 +66,6 @@ true = 0b1, false = 0b0;        \\ hint: alias booleans
 1.., ..10, ..;                  \\ open ranges
 10..1;                          \\ reverse range
 1.08..108.0;                    \\ float range
-0>..10, 0..<10, 0>..<10;        \\ non-inclusive ranges
 (x-1)..(x+1);                   \\ calculated ranges
 1..2 + 2..3;                    \\ add ranges: 1..3
 1..3 - 2..;                     \\ subtract ranges: 1..2
@@ -66,8 +73,8 @@ true = 0b1, false = 0b0;        \\ hint: alias booleans
 x -< 0..10;                     \\ clamp(x, 0, 10)
 x -< ..10;                      \\ min(x, 10)
 x -< 0..;                       \\ max(0, x)
-x -<= 0..10;                    \\ x = clamp(x, 0, 10)
-a,b,c = 0..2;                   \\ ranges are sugar, not data type: a==0, b==1, c==2
+a,b,c = 0..2;                   \\ a==0, b==1, c==2
+x <= 0..10;                     \\ x is in 0..10 range
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ groups
 a, b, c;                        \\ groups are sugar, not tuple
@@ -116,7 +123,7 @@ triple(5);                      \\ 15
 triple(n: 10);                  \\ 30. named argument.
 copy = triple;                  \\ capture function
 copy(n: 10);                    \\ also 30
-clamp(v -< 0..10) = v;          \\ clamp argument
+clamp(v =< 0..10) = v;          \\ clamp argument
 x() = (1,2,3);                  \\ return group (multiple values)
 (a,b,c) = x();                  \\ assign to a group
 
@@ -172,7 +179,7 @@ Provides k-rate amplification for block of samples.
 ```
 gain(                               \\ define a function with block, volume arguments.
   block,                            \\ block type is inferred as buffer from pipe operation |=
-  volume -< 0..100.0                \\ volume is clamped to 0..100, type is inferred as float
+  volume =< 0..100.0                \\ volume is clamped to 0..100, type is inferred as float
 ) = (
   block <|= # * volume;             \\ map each sample via multiplying by value
 );
@@ -197,8 +204,8 @@ A-rate (per-sample) biquad filter processor.
 
 lpf(                                \\ per-sample processing function
   x0,                               \\ input sample value
-  freq = 100 -< 1..10k,             \\ filter frequency, float
-  Q = 1.0 -< 0.001..3.0             \\ quality factor, float
+  freq = 100 =< 1..10k,             \\ filter frequency, float
+  Q = 1.0 =< 0.001..3.0             \\ quality factor, float
 ) = (
   *(x1, y1, x2, y2) = 0;            \\ define filter state
   >(x1, x2) = (x0, x1);             \\ defer shifting state
@@ -245,7 +252,7 @@ adsr(x, a, d, (s, sv=1), r) = (   \\ optional group-argument
   *i = 0; >i++;                   \\ internal counter, increments after fn body
   t = i / 1s;
 
-  a -<= 1ms..;                    \\ prevent click
+  a =< 1ms..;                    \\ prevent click
   total = a + d + s + r;
 
   y = t >= total ? 0 : (
@@ -260,7 +267,7 @@ adsr(x, a, d, (s, sv=1), r) = (   \\ optional group-argument
 );
 
 \\ curve effect
-curve(x, amt=1.82 -< 0..10) = (sign(x) * abs(x)) ** amt;
+curve(x, amt=1.82 =< 0..10) = (sign(x) * abs(x)) ** amt;
 
 \\ coin = triangle with pitch jump, produces block
 coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
@@ -426,7 +433,7 @@ NOTE: indexOf can be done as `string | (x,i) -> (x == "l" ? i)`
 JavaScript and _Web Audio API_ is not suitable for sound purposes – it has unpredictable pauses, glitches and so on. It better be handled in worklet with WASM code.
 
 _Lino_ is intended to be low-level static language with minimal JS-like syntax. Inspired by [_mono_](https://github.com/stagas/mono), _zzfx_, _bytebeat_, _[hxos](https://github.com/stagas/hxos)_, [_min_](https://github.com/r-lyeh/min) etc.
-
+Targets browsers, [audio worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, VST, Rust, Python, Go, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) etc.
 
 ### Principles
 

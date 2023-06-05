@@ -106,7 +106,7 @@ nary('&&', PREC_AND)
 binary('=', PREC_ASSIGN, true)
 binary('+=', PREC_ASSIGN, true)
 binary('-=', PREC_ASSIGN, true)
-binary('-<=', PREC_ASSIGN, true)
+// binary('-<=', PREC_ASSIGN, true)
 binary('<|=', PREC_ASSIGN, true)
 binary('**', PREC_POW, true)
 

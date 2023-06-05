@@ -2855,7 +2855,7 @@ Having wat files is more useful than direct compilation to binary form:
       ? can we work that around?
   - harder for optimizers
 
-## [ ] How to detect optional params -> static-time decorating
+## [x] How to detect optional params -> comparing `a!=a` is not a biggie
 
   * If we enforce function arguments always be f64 we can detect it via NaN
     - unnecessarily slows down fn calls
@@ -3295,3 +3295,72 @@ Having wat files is more useful than direct compilation to binary form:
 ## [ ] Changing variables type `x=1;x=1.0;` -> upgrade type to float if it's ever assigned
 
   * that's problematic via wasm, since it enforces variable type: would be wrong to cast float to int
+  ? upgrade type definition to float if it's ever assigned to
+  ? declare float alias variable at the moment of finding upgrade
+    + allows merging analyser into 1-pass compiler
+    + retains precision
+
+## [x] Limited variables `x-<0..100; x=1000;` -> nah
+  + allows static tracking of value
+  + compatible with arguments limiting
+  - we don't have explicit var declaration
+    * so `x-<..100` is confusable with just single clamp operation.
+    - fn args don't get ever-clamped, just once
+
+
+## [ ] mix, smoothstep operators
+
+  * `x -< a..b` defines clamping
+  * `x -/ a..b` for smoothstep?
+    + reminds `_/`
+    + compatible with clamping by meaning (one of integral)
+      - x is clamped, but here x is mapped
+  * `x ~/ a..b`
+  * `x ~< a..b`
+  * `a..b -> x`
+    - looks like function
+  * can be done via external lib
+  * `x >< a..b` for mix?
+  * `x =< a..b` for mix?
+    - what's infinity then?
+  * `x / a..b` for smoothstep?
+  * `x <= a..b`
+    - can be used to compare ranges
+  * `x =/ a..b` for smoothstep
+  * `x </ a..b` for smoothstep
+  * `x /< a..b` for smoothstep
+
+## [ ] how do we represent infinity?
+
+  * `oo`
+  * `~~`
+  * `-/-`
+  * `<>`
+  * `><`
+  * `..[-1]`, `..[0]`
+    + technically correct
+
+## [ ] non-inclusive range `0>..10` vs `0 > ..10`
+
+  - non-inclusive ranges can be organized as `min..(max-1)` for ints
+    - or as `min..(max-.00001)` for floats
+
+## [ ] replace `x -< 0..10` with `x =< 0..10`?
+
+  ? do we ever need `clamp(x, 0, 10)`, opposed to `x = clamp(x, 0, 10)`?
+    + it seems from examples we always `x = clamp(x, 0..10)`
+  + it's similar to `-<` but more specific
+  + for fn definition `x =< 0..10` is more precise what's going on there (value is clamped to range)
+  + `=<` consists of standard understandable characters
+    - the order is messed up, the pattern is `-<` + `=`
+      ~+ it doesn't necessarily match `+=` or `*=`: we don't modify the value, we completely rewrite/map it
+  + it's 2 chars vs 3
+  ? how do we indicate clamp or min/max?
+    * `x <= ..10`
+    ? keep `x -< ..10` ?
+  ?+ kind-of enables `=/` for smoothstep?
+    ? then `x =/ 0..10` maps x to smooth range, `x -/ 0..10` returns value from smooth range
+      * `x = x -/ 0..10`, `x =/ 0..10`
+  - seems that's confusable: `a <= b..c` vs `a =< b..c`
+
+## [ ] Should we make dot part of name, eg. `x.1`, `x.2`?
