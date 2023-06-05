@@ -129,7 +129,7 @@ a() = ( *i=0; i++ );            \\ stateful variable - persist value between fn 
 a(), a();                       \\ 0, 1
 b() = (
   *i = [..4];                   \\ local memory of 4 items
-  >i = i[-1,1..];               \\ defer memory shift, called after fn body
+  /i = i[-1,1..];               \\ defer memory shift, called after fn body
   i.0 = i.1+1;                  \\ write previous value i.1 to current value i.0
   i.0                           \\ return i.0
 );
@@ -205,8 +205,8 @@ lpf(                                \\ per-sample processing function
   Q = 1.0 -< 0.001..3.0             \\ quality factor, float
 ) = (
   *(x1, y1, x2, y2) = 0;            \\ define filter state
-  >(x1, x2) = (x0, x1);             \\ defer shifting state
-  >(y1, y2) = (y0, y1);
+  /(x1, x2) = (x0, x1);             \\ defer shifting state
+  /(y1, y2) = (y0, y1);
 
   \\ lpf formula
   w = 2pi * freq / 1s;
@@ -246,7 +246,7 @@ oscillator = [
 
 // applies adsr curve to sequence of samples
 adsr(x, a, d, (s, sv=1), r) = (   \\ optional group-argument
-  *i = 0; >i++;                   \\ internal counter, increments after fn body
+  *i = 0; /i++;                   \\ internal counter, increments after fn body
   t = i / 1s;
 
   a -< 1ms..;                    \\ prevent click
@@ -269,7 +269,7 @@ curve(x, amt=1.82 -< 0..10) = (sign(x) * abs(x)) ** amt;
 \\ coin = triangle with pitch jump, produces block
 coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
   out=[..1024];                   \\ output block of 1024 samples
-  *i=0; >i++;
+  *i=0; /i++;
   *phase = 0;                     \\ current phase
   t = i / 1s;
   >phase += (freq + (t > delay ? jump : 0)) * 2pi / 1s;
