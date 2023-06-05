@@ -2358,7 +2358,7 @@ Having wat files is more useful than direct compilation to binary form:
   Top Back Center - TBC
   Top Back Right - TBR
 
-## [x] Defer -> `x(a) = (>log(a); >a+=1; a)`
+## [ ] Defer -> `x(a) = (>log(a); >a+=1; a)`
 
   + like golang defer execution runs item after function return
   + allows separating return value from increments needed after function
@@ -2367,6 +2367,7 @@ Having wat files is more useful than direct compilation to binary form:
     + no conceptual/syntax/mental layer over operator
     - no nice definition of variable state and its change
     - noisy code of creating result holder var, performing state update, returning result
+    + kind of natural
   * symbols: `>>, ||, ~>, //, \\, >-, >>|, <|, <!`,
     * `x()=(@(a);b,c;@(d))`
       - brings `@` into local scope
@@ -2374,6 +2375,9 @@ Having wat files is more useful than direct compilation to binary form:
     * `x() = (//a; b,c; //d;)`
       - strong association with comment
     * `x() = (*i=0;\i++;)`, `x()=(\a; b,c,; \d;)`, `x(a) = (\log(a); \a+=1; a)`
+      - a bit too heavy by meaning
+      - takes away cool `\\` as comments
+    * `x() = (*i=0;**i++;)`, `x()=(**a; b,c,; **d;)`, `x(a) = (**log(a); **a+=1; a)`
     * `x() = (/a; b,c; /d;)`, `x()=(*i=0;/i++;*phase=0;/phase+=t;)`, `x()=(/log(a))`
       + one-symbol
       + associates with reddit tags
@@ -2450,6 +2454,16 @@ Having wat files is more useful than direct compilation to binary form:
         ? is that why python uses # instead of // for comment?
       + associates with comment, something that comes "after"
     * `x() = (*i=0;::i++;)`, `x()=(::a; b,c,; ::d;)`, `x(a) = (::log(a); ::a+=1; a)`
+      - noisy
+    * `x() = (*i=0;:i++;)`, `x()=(:a; b,c,; :d;)`, `x(a) = (:log(a); :a+=1; a)`
+      + 1-character only
+      + kind-of matches meaning of labels in JS
+      - a bit clumsy
+    * `x() = (*i=0;^:i++;)`, `x()=(^:a; b,c,; ^:d;)`, `x(a) = (^:log(a); ^:a+=1; a)`
+      + means "after return"
+      - colon is not nice here
+    * `x() = (*i=0;.i++;)`, `x()=(.a; b,c,; .d;)`, `x(a) = (.log(a); .a+=1; a)`
+      - not easy to find-select
 
 ## [ ] Try-catch -> `x() ?= (a, b, c)` makes fn definition wrapped with try-catch
 
