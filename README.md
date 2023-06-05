@@ -1,4 +1,4 @@
-# lino
+# 🎧 lino
 
 **Lino** (*li*ne *no*ise) is micro-language for sound design, processing and utilities. It features:
 
