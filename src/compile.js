@@ -75,7 +75,7 @@ Object.assign(expr, {
     let list=[];
     for (let s of statements) s && list.push(expr(s));
     return op(
-      list.map(op => op + `(drop)`.repeat(op.type.length-1)).join('\n'),
+      list.map((op,i) => op + `(drop)`.repeat(i===list.length-1 ? 0 : op.type.length)).join('\n'),
       list[list.length-1].type,
       {static:list[list.length-1].static}
     )
@@ -84,7 +84,7 @@ Object.assign(expr, {
   ','([,...statements]){
     let list=[];
     for (let s of statements) list.push(expr(s));
-    return op(list.join(' '), list.flatMap(op=>op.type), {static:list.every(op=>op.static)})
+    return op(list.join('\n'), list.flatMap(op=>op.type), {static:list.every(op=>op.static)})
   },
 
   '('([,body]){
@@ -141,17 +141,17 @@ Object.assign(expr, {
       }
       else items.push(expr(init))
     }
-    // allocate required memory
-    inc('mem'), out += `(call $mem.alloc (i32.const ${items.length}))\n`
+    // allocate required memory (in bytes, not f64s)
+    inc('mem'), out += `(call $mem.alloc (i32.const ${items.length << 3}))\n`
 
     // add initializers
     for (let i = 0; i < items.length; i++)
       if (items[i])
-        out += `(call $mem.store (i32.sub (global.get $mem.size) (i32.const ${items.length - i})) ${asFloat(items[i])})\n`
+        out += `(f64.store (i32.sub (global.get $mem.size) (i32.const ${(items.length - i) << 3})) ${asFloat(items[i])})\n`
 
     // create buffer reference as output
     inc('buf.create')
-    out += `(call $buf.create (i32.sub (global.get $mem.size) (i32.const ${items.length})) (i32.const ${items.length}))`
+    out += `(call $buf.create (i32.sub (global.get $mem.size) (i32.const ${items.length << 3})) (i32.const ${items.length}))`
 
     return op(out,'f64',{buf:true})
   },
@@ -176,9 +176,8 @@ Object.assign(expr, {
 
       // FIXME: add static optimization here for property - to avoid calling i32.modwrap if idx is known
       // FIXME: another static optimization: if length is known in advance (likely yes) - make static modwrap
-      // FIXME: validate if ptr is real buffer and not fake, statically?;
 
-      return inc('buf.store'),inc('i32.modwrap'), op(`(call $buf.store ${expr(buf)} ${asInt(expr(idx))} ${expr(b)})`, 'f64')
+      return inc('buf.store'), inc('i32.modwrap'), op(`(call $buf.store ${expr(buf)} ${asInt(expr(idx))} ${asFloat(expr(b))})`, 'f64')
     }
 
     // a = b,  a = (b,c),   a = (b;c,d)

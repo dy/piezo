@@ -298,7 +298,7 @@ t('compile: arrays from range', t => {
   is(yl.value,4,'ylen')
 })
 
-t.only('compile: arrays write', t => {
+t('compile: arrays write', t => {
   let wat = compile(`x = [..3]; x[0]=1; x.1=2; x[-1]=x[]; x.`)
   // console.log(wat)
   let mod = compileWat(wat)
@@ -307,6 +307,7 @@ t.only('compile: arrays write', t => {
   is(xarr[0], 1,'x0')
   is(xarr[1], 2,'x1')
   is(xarr[2], 3,'x2')
+
 })
 
 t.todo('compile: arrays rotate', t => {
@@ -341,20 +342,36 @@ t.skip('debugs', t => {
   const importObject = { env: { memory } };
   let module = compileWat(`
   (func $buf.len (param f64) (result i32) (i32.wrap_i64 (i64.and (i64.const 0x0000000000ffffff) (i64.reinterpret_f64 (local.get 0)))))
-(func $buf.create (param i32 i32) (result f64)
-(f64.reinterpret_i64 (i64.or
-(i64.reinterpret_f64 (f64.convert_i32_u (local.get 0)))
-(i64.extend_i32_u (i32.and (i32.const 0x00ffffff) (local.get 0)))
-))
-(return))
-(memory (export "@memory") 1)(global $mem.size (mut i32) (i32.const 0))
-(func $mem.alloc (param i32)
-(global.set $mem.size (i32.add (local.get 0) (global.get $mem.size)))
-(if (i32.gt_s (global.get $mem.size) (i32.shl (memory.size) (i32.const 13))) (then (memory.grow (i32.const 1))(drop) ))
-)
-(func $mem.store (param i32 f64)
-(f64.store (i32.shl (local.get 0) (i32.const 3)) (local.get 1))
-)
+  (func $i32.modwrap (param i32 i32) (result i32) (local $rem i32)
+    (local.set $rem (i32.rem_s (local.get 0) (local.get 1)))
+    (if (result i32) (i32.and (local.get $rem) (i32.const 0x80000000))
+      (then (i32.add (local.get 1) (local.get $rem)))
+      (else (local.get $rem))
+    ))
+  (func $buf.store (param $buf f64) (param $idx i32) (param $val f64) (result f64)
+  (f64.store (i32.add (i32.trunc_f64_u (local.get $buf)) (i32.shl (local.get $idx) (i32.const 3))) (local.get $val))
+  (local.get $val)
+  (return))
+  (func $buf.create (param i32 i32) (result f64)
+  (f64.reinterpret_i64 (i64.or
+  (i64.reinterpret_f64 (f64.convert_i32_u (local.get 0)))
+  (i64.extend_i32_u (i32.and (i32.const 0x00ffffff) (local.get 1)))
+  ))
+  (return))
+  (memory (export "@memory") 1)(global $mem.size (mut i32) (i32.const 0))
+  (func $mem.alloc (param i32)
+  (global.set $mem.size (i32.add (local.get 0) (global.get $mem.size)))
+  (if (i32.gt_s (global.get $mem.size) (i32.shl (memory.size) (i32.const 16))) (then (memory.grow (i32.const 1))(drop)))
+  )
+  (global $x (mut f64) (f64.const 0))
+  (func $module/init
+  (global.set $x (call $mem.alloc (i32.const 24))
+  (call $buf.create (i32.sub (global.get $mem.size) (i32.const 24)) (i32.const 3)))(global.get $x)(drop)
+  (call $buf.store (global.get $x) (i32.const 0) (i32.const 1))(drop)
+  (global.get $x)
+  (return))
+  (start $module/init)
+  (export "x" (global $x))
   `, importObject)
 
   console.log(module.exports.x(1n))

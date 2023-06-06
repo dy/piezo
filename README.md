@@ -140,10 +140,11 @@ m = [1,2,3,4];                  \\ create buffer of 4 items
 m = [..1000];                   \\ create buffer of 1000 items
 m = [l:2, r:4, c:6];            \\ create with position aliases
 m = [n[1..3, 5, 6..]];          \\ create copy from indicated subrange
-m = [1, 2..4, ..10, n];         \\ create from mixed definition (buffer is always flat)
-m.0, m.1, m.2, m.3;             \\ read item by static index (0-based)
-m[0], m[1], m[-1];              \\ read by dynamic index, negative for last element
-m[1..2];                        \\ read multiple values
+m = [1, 2..4, ..10, last:n];    \\ create from mixed definition (buffer is always flat)
+(first, last) = (m.0, m.last);  \\ read by static index / alias
+(first, last) = (m[0], m[-1]);  \\ read by dynamic index
+(second, third) = m[1..2];      \\ read multiple values
+(first, last:c) = m[..];        \\ read all
 m[];                            \\ get length
 m[0] = 1;                       \\ write single value
 m[1..] = (7,8);                 \\ write multiple values from specified index
@@ -163,8 +164,8 @@ items <| a(#) <| b(#);          \\ chain iterations
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ import, export
 @./path/to/module#x,y,z;        \\ any file can be imported directly
-@math#pi,sin,max;               \\ or defined via import-maps.json
-x, y, z                         \\ last statement ending with . exports members
+@math.pi,sin,max;               \\ or defined via import-maps.json
+x, y, z.                        \\ last statement ending with . exports members
 ```
 
 ## Examples

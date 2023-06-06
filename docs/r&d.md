@@ -3315,6 +3315,7 @@ Having wat files is more useful than direct compilation to binary form:
     - we can do infinite slices, storing all of them as ids is impossible
 
 ## [ ] Prohibit dynamic arrays `a()=(x=[1,2,3])`?
+
   + ensures static memory: doesn't grow cept comprehension
   -? we can track & dispose them by the end of function call ourselves...
     * if array is returned the ref is lost
@@ -3332,17 +3333,50 @@ Having wat files is more useful than direct compilation to binary form:
   -> Just create new array and push members to it, increasing array's length. We suggest there's only one dynamic array at-a-time created, so it's safe to increase length on creating time.
     -> Or better just write length after the array is created, eg. somewhere in dynamic `$alloc` method.
 
-## [ ] Import into function scope?
+## [x] Import into function scope? -> no, at least use `@math.pi` as direct tokens
 
   * `saw() = (@math#pi; pi*2+...)`
   + allows avoiding conflicts
 
-## [ ] Overdeclaring local variables
+## [ ] Import JS things?
+
+  * Must look more like a native object
+  + `@math.pi` can be directly mapped as `(import "math" "pi")`
+  + allows hiding particular file mechanics, making imports fully JS-thing
+    + makes musi, latr and others just wasm libraries for lino, they can be written in any form/language, even JS
+    + makes `#` part of var names
+    + allows avoiding quotes
+
+## [ ] Directly call imported items as `@math.pi`?
+
+  + so js does.
+  + nicely separates namespace
+  ~ so to import into a namespace we'd need to `(pi, sin, cos) = @math`
+    - not fully compatible with buffers, eg. `(a,b,c) = [c:1,2,3]` takes sequence
+    - not compatible with the way groups work: `(a,b,c) = x` assigns `a=x,b=x,c=x`
+    ~ it'd be `(pi,sin,cos) = @math[..]`
+      - confusable with lists still
+    ? `{pi,sin,cos} = @math[..]`
+      + makes sense as sets/enums
+      - introduces whole sets concept
+    ? `(pi,sin,cos) = @math.*`
+      - introduces blobs, meaning is similar to `[..]`
+    - it is sort of shadowing, which we don't welcome.
+    ? Maybe we should just prohibit destructuring imports? Like, everything is very explicit and self-contained?
+      ? destructuring of internals must be also possible: `(ABC, CDE) = @musi.chord`
+  + makes `@` part of name with special meaning
+
+## [ ] Should we make dot part of name, eg. `x.1`, `x.2`?
+
+  - likely no, since we use it in `@math.pi`
+
+## [x] Overdeclaring local variables -> shadowing is not nice anyways
 
   * `(x=1; (x=2;))` - `x` in both scopes is the same variable, so that we can't declare `x` within nested scope this way.
   * that means there's one global namespace
+  * shadowing variables in JS is not nice practice anyways `let x = 0; if () { let x = 1; } `
 
-## [ ] Changing variables type `x=1;x=1.0;` -> vars are always float
+## [x] Changing variables type `x=1;x=1.0;` -> vars are always f64
 
   * that's problematic via wasm, since it enforces variable type: would be wrong to cast float to int
   ? upgrade type definition to float if it's ever assigned to
@@ -3356,7 +3390,6 @@ Having wat files is more useful than direct compilation to binary form:
   - we don't have explicit var declaration
     * so `x-<..100` is confusable with just single clamp operation.
     - fn args don't get ever-clamped, just once
-
 
 ## [ ] mix, smoothstep operators -> `-/` and `-/=` for smoothstep
 
@@ -3414,5 +3447,3 @@ Having wat files is more useful than direct compilation to binary form:
     ? then `x =/ 0..10` maps x to smooth range, `x -/ 0..10` returns value from smooth range
       * `x = x -/ 0..10`, `x =/ 0..10`
   - seems that's confusable: `a <= b..c` vs `a =< b..c`
-
-## [ ] Should we make dot part of name, eg. `x.1`, `x.2`?
