@@ -201,6 +201,8 @@ t('parse: loops', t => {
   is(parse('i<3 <| x[i]=++i'), [
     '<|', ['<','i',[INT,3]], ['=',['[]','x','i'],['++','i']]
   ], '<| precedence vs =')
+
+  is(parse('a<|#'),['<|','a','#'])
 })
 
 t('parse: functions', () => {

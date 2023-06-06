@@ -1,10 +1,8 @@
 // compile source/ast/ir to WAST
 import parse from "./parse.js"
 import stdlib from "./stdlib.js"
-import {FLOAT,INT,RANGE,BUF,FUNC} from './const.js'
+import {FLOAT,INT} from './const.js'
 import { parse as parseWat } from "watr";
-
-const MEM_STRIDE = 8; // bytes per f64
 
 let includes, globals, funcs, locals, loop, exports, block;
 
@@ -28,8 +26,9 @@ export default function compile(node) {
   if (init) res = `(func $module/init\n${init}\n(return))\n(start $module/init)`
 
   // declare variables
+  // NOTE: it sets functions as global variables
   for (let name in globals)
-    res = `(global $${name} (mut f64) (f64.const 0))\n` + res
+    res = `(global $${name} (mut ${globals[name].type}) (${globals[name].type}.const 0))\n` + res
 
   // declare funcs
   for (let name in funcs)
@@ -56,7 +55,7 @@ function expr(statement) {
   // FIXME: funcs may need returning something meaningful
   if (typeof statement === 'string') {
     // just x,y; or a=x; where x is undefined
-    statement += block.slice(0,block.cur).join('.')
+    statement = name(statement)
     if (!locals?.[statement] && !globals[statement]) define(statement);
     if (!locals && exports) exports[statement] = globals[statement]
     return op(`(${locals?.[statement]?'local':'global'}.get $${statement})`,`f64`)
@@ -179,13 +178,12 @@ Object.assign(expr, {
       // FIXME: add static optimization here for property - to avoid calling i32.modwrap if idx is known
       // FIXME: another static optimization: if length is known in advance (likely yes) - make static modwrap
 
-      return inc('buf.store'), inc('i32.modwrap'), op(`(call $buf.store ${expr(buf)} ${asInt(expr(idx))} ${asFloat(expr(b))})`, 'f64')
+      return inc('buf.write'), inc('i32.modwrap'), op(`(call $buf.write ${expr(buf)} ${asInt(expr(idx))} ${asFloat(expr(b))})`, 'f64')
     }
 
     // a = b,  a = (b,c),   a = (b;c,d)
     if (typeof a === 'string') {
-      a += block.slice(0,block.cur).join('.') // prevent scope clash
-      define(a)
+      a = name(a), define(a)
       return op(locals ? `(local.tee $${a} ${pick(1,asFloat(expr(b)))})` : `(global.set $${a} ${pick(1,asFloat(expr(b)))})(global.get $${a})`, 'f64')
     }
 
@@ -194,7 +192,7 @@ Object.assign(expr, {
       let [,...outputs] = a, inputs = pick(outputs.length,expr(b))
 
       // define/provide exports
-      for (let name of outputs) define(name+block.slice(0,block.cur).join('.'))
+      for (let n of outputs) define(name(n))
 
       // (a,b,c)=(c,d) -> (a,b)=(c,d)
       if (inputs.type.length > 1) outputs = outputs.slice(0, inputs.type.length)
@@ -203,9 +201,9 @@ Object.assign(expr, {
       return op(
         inputs + '\n'+
         outputs.map((n,i)=> (
-          n+=block.slice(0,block.cur).join('.'), `${inputs.type[i] === 'i32' ? `(f64.convert_i32_s)` : ''}(${globals[n]?`global`:`local`}.set $${n})`
+          n=name(n), `${inputs.type[i] === 'i32' ? `(f64.convert_i32_s)` : ''}(${globals[n]?`global`:`local`}.set $${n})`
         )).reverse().join('') +
-        outputs.reverse().map(n=>(n+=block.slice(0,block.cur).join('.'),`(${globals[n]?'global':'local'}.get $${n})`)).join(''),
+        outputs.reverse().map(n=>(n=name(n),`(${globals[n]?'global':'local'}.get $${n})`)).join(''),
         Array(outputs.length).fill(`f64`)
       )
     }
@@ -252,10 +250,10 @@ Object.assign(expr, {
       dfn.push(`(result ${result.type.join(' ')})`)
 
       // declare locals
-      for (let name in locals) if (!locals[name].arg) dfn.push(`(local $${name} f64)`)
+      for (let name in locals) if (!locals[name].arg) dfn.push(`(local $${name} ${locals[name].type})`)
       locals = null
 
-      globals[name] = {func:true, args};
+      globals[name] = {func:true, args, type:'i32'}; // NOTE: we set type to i32 as preliminary pointer to function (must be in a table)
       if (exports) exports[name] = globals[name]
 
       // init body - expressions write themselves to body
@@ -269,19 +267,42 @@ Object.assign(expr, {
 
   // a <| b
   '<|'([,a,b]) {
-    throw 'Unimplemented'
-    // console.log("TODO: loops", a, b)
+    console.log("TODO: loops", a, b)
     loop++
+
+    let from, to, next
+
+    // lhs can be range
+    if (a[0]==='..') {
+      // i = from; to; while (i < to) {# = i; ...; i++}
+      let [,min,max] = a
+      from = expr(min), to = expr(max), next = index
+    }
+    // or list
+    else {
+      let aop = expr(a)
+      // i = 0; to=buf[]; while (i < to) {# = buf[i]; ...; i++}
+      inc('buf.len'), inc('buf.read')
+      from = `(i32.const 0)`, to = `(call $buf.len ${a})`, next = `(call $buf.read ${aop} ${index})`
+    }
+
+    define(`loop${loop}.index`), define(`loop${loop}.item`), define(`loop${loop}.end`)
+
     let res =
-    `(loop $loop${loop} (result i32)\n` +
-    `  (if (result i32) ${expr(a)}\n` +
-    `    (then\n` +
-    `      ${expr(b)}\n` +
-    `      (br $loop${loop})\n` +
-    `    )\n` +
-    `    (else (i32.const 0))\n` +
-    `  )\n` +
+    `(local.set $loop${loop}.index ${from})\n` +
+    `(local.set $loop${loop}.end ${to})\n` +
+    `(loop $loop.${loop} (result f64)\n` +
+      `(local.set $loop${loop}.item ${next})`
+      `(if (result f64) ${expr(a)}\n` +
+        `(then\n` +
+        `${expr(b)}\n` +
+        `(br $loop${loop})\n` +
+        `)\n` +
+        `(else (i32.const 0))\n` +
+      `)\n` +
+      `(local.set $loop${loop}.index (i32.add (local.get $loop${loop}.index) (i32.const 1)))`
     `)\n`
+
     loop--
     return res
   },
@@ -450,14 +471,21 @@ Object.assign(expr, {
 })
 
 // define variable in current scope, export if necessary
-function define(name) {
+function define(name, type='f64') {
   if (!locals) {
-    if (!globals[name]) globals[name] = {var:true}
+    if (!globals[name]) globals[name] = {var:true, type}
     if (!locals && exports) exports[name] = globals[name]
   }
   else {
-    if (!locals[name]) locals[name] = {var:true}
+    if (!locals[name]) locals[name] = {var:true, type}
   }
+}
+
+// resolve var name without scope clash
+function name(str) {
+  // NOTE: this reserves # for loop member
+  // if (loop && str=='#') return `loop${loop}.item`;
+  return str + block.slice(0,block.cur).join('.');
 }
 
 // wrap expression to float, if needed
@@ -514,6 +542,7 @@ function op(str, type, info={}) {
   return Object.assign(str, {type, ...info})
 }
 
+// show error meaningfully
 export function err(msg, node={}) {
   // Promise.resolve().then(() => {
     throw Error((msg || 'Bad syntax') + ' `' + node.toString() + '`' )

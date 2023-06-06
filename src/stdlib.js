@@ -37,13 +37,20 @@ export const std = {
   // reads buffer length as last 24 bits of f64 number
   "buf.len": `(func $buf.len (param f64) (result i32) (i32.wrap_i64 (i64.and (i64.const 0x0000000000ffffff) (i64.reinterpret_f64 (local.get 0)))))`,
 
-  // writes $val into buffer, $idx reflects position in buffer, not address
-  "buf.store": `(func $buf.store (param $buf f64) (param $idx i32) (param $val f64) (result f64)\n` +
-  // if idx < 0 idx = idx %% buf[]
+  // buf.write(buf, pos, val): writes $val into buffer, $idx is position in buffer, not address.
+  "buf.write": `(func $buf.write (param f64 i32 f64) (result f64)\n` +
+  // wrap negative idx: if idx < 0 idx = idx %% buf[]
   `(if (i32.lt_s (local.get 1) (i32.const 0)) (then (local.set 1 (call $i32.modwrap (local.get 1) (call $buf.len (local.get 0))))))\n` +
-  `(f64.store (i32.add (i32.trunc_f64_u (local.get $buf)) (i32.shl (local.get $idx) (i32.const 3))) (local.get $val))\n` +
-  `(local.get $val)\n` +
+  `(f64.store (i32.add (i32.trunc_f64_u (local.get 0)) (i32.shl (local.get 1) (i32.const 3))) (local.get 2))\n` +
+  `(local.get 2)\n` +
   `(return))`,
+
+  // buf.read(buf, pos): reads value at position from buffer
+  "buf.read": `(func $buf.read (param f64 i32)\n` +
+  // wrap negative idx
+  `(if (i32.lt_s (local.get 1) (i32.const 0)) (then (local.set 1 (call $i32.modwrap (local.get 1) (call $buf.len (local.get 0))))))\n` +
+  `(f64.load (i32.add (i32.trunc_f64_u (local.get 0)) (i32.shl (local.get 1) (i32.const 3))))\n` +
+  `)`,
 
   math: `(global pi f64 (f64.const 3.141592653589793))`
 }

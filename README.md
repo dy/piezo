@@ -5,7 +5,7 @@
 * Minimal JS-like syntax
 * 0-types
 * Static/linear memory
-* Refined language patterns: stateful vars, units, ranges, groups
+* Refined language patterns: ranges, groups, stateful vars, units
 * Compiles to 0-runtime WASM
 * <small>Smooth operator and organic sugar</small>
 
@@ -152,7 +152,7 @@ m[1,2] = m[2,1];                \\ rearrange items
 m[0..] = m[-1..0];              \\ reverse order
 m[..] = m[1..,0];               \\ rotate memory left
 
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ loops
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ iterators
 [a, b, c] <| x(#);              \\ for each item # call x(item)
 10..1 <| (                      \\ iterate range
   # < 3 ? ^^;                   \\ ^^ breaks loop

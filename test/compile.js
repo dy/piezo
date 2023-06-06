@@ -310,7 +310,7 @@ t('compile: buffer simple write', t => {
 
 })
 
-t.todo('compile: arrays rotate', t => {
+t.todo('compile: buffer rotate', t => {
   let wat = compile(`x = [1, 2, 3]. x << 1.`)
   // console.log(wat)
   let mod = compileWat(wat)
@@ -348,7 +348,7 @@ t.skip('debugs', t => {
       (then (i32.add (local.get 1) (local.get $rem)))
       (else (local.get $rem))
     ))
-  (func $buf.store (param $buf f64) (param $idx i32) (param $val f64) (result f64)
+  (func $buf.write (param $buf f64) (param $idx i32) (param $val f64) (result f64)
   (f64.store (i32.add (i32.trunc_f64_u (local.get $buf)) (i32.shl (local.get $idx) (i32.const 3))) (local.get $val))
   (local.get $val)
   (return))
@@ -367,7 +367,7 @@ t.skip('debugs', t => {
   (func $module/init
   (global.set $x (call $mem.alloc (i32.const 24))
   (call $buf.create (i32.sub (global.get $mem.size) (i32.const 24)) (i32.const 3)))(global.get $x)(drop)
-  (call $buf.store (global.get $x) (i32.const 0) (i32.const 1))(drop)
+  (call $buf.write (global.get $x) (i32.const 0) (i32.const 1))(drop)
   (global.get $x)
   (return))
   (start $module/init)
@@ -392,8 +392,8 @@ t('compile: variable type inference', t => {
   x = compileWat(compile(`x;x=[];x.`)).exports.x // late-arr type
 })
 
-t('compile: loops basic', t => {
-  let wat = compile(`x=[..3]; i=0; i<3 |> x[i]=i++; x.`)
+t.todo('compile: loops basic', t => {
+  let wat = compile(`x=[..3]; 0..2 <| x[#]=#+1; x.`)
   let mod = compileWat(wat)
   let {memory, x} = mod.exports
 

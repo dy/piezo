@@ -3447,3 +3447,12 @@ Having wat files is more useful than direct compilation to binary form:
     ? then `x =/ 0..10` maps x to smooth range, `x -/ 0..10` returns value from smooth range
       * `x = x -/ 0..10`, `x =/ 0..10`
   - seems that's confusable: `a <= b..c` vs `a =< b..c`
+
+## [ ] Loop member as #:
+  - `for(i=0;i<len;i++) for(j=0;j<len;j++)` - how to refer to parent loop placeholder?
+  - `#` reserves a keyword - smelly from code perspective
+
+## [ ] Function references: use i32?
+
+  + we can hold both $x global and $x function name
+  + i32 can automatically mean function reference
