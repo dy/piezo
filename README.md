@@ -5,7 +5,7 @@
 * Minimal JS-like syntax
 * 0-types
 * Static/linear memory
-* Refined language patterns: stateful vars, units, ranges, groups, deferring
+* Refined language patterns: stateful vars, units, ranges, groups
 * Compiles to 0-runtime WASM
 * <small>Smooth operator and organic sugar</small>
 
@@ -443,7 +443,7 @@ Targets browsers, [audio worklets](https:\\developer.mozilla.org/en-US/docs/Web/
 * _No-keywords_: safe var names, max minification, i18l code.
 * _Case-agnostic_: changing case doesn't affect code, making it URL-safe, typo-proof.
 * _Space-agnistic_: changing spaces/newlines doesn't affect code, making it compressable.
-* _Subtle type inference_: type by-operator, not dedicated syntax.
+* _Type inference_: type is defined by operator, not via dedicated syntax.
 * _No OOP_: functions, stateful vars.
 * _No lambda funcs_: no unnecessary scope persistency.
 * _Groups_: multiple returns, multiple operands.
