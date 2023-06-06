@@ -178,8 +178,7 @@ Object.assign(expr, {
       // FIXME: another static optimization: if length is known in advance (likely yes) - make static modwrap
       // FIXME: validate if ptr is real buffer and not fake, statically?;
 
-      // FIXME: pass length modwrapped here
-      return inc('buf.store'), expr(['()','buf.store', [',', buf, ['%%', asInt(idx), ['[]',buf]], asFloat(b)]])
+      return inc('buf.store'),inc('i32.modwrap'), op(`(call $buf.store ${expr(buf)} ${asInt(expr(idx))} ${expr(b)})`, 'f64')
     }
 
     // a = b,  a = (b,c),   a = (b;c,d)

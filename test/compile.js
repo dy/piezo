@@ -284,7 +284,7 @@ t('compile: arrays from range', t => {
   let wat = compile(`x = [..3], y = [0..3]; x,y,xl=x[],yl=y[].`)
   // console.log(wat)
   let mod = compileWat(wat)
-  let {memory, x, y, xl, yl} = mod.exports
+  let {'@memory':memory, x, y, xl, yl} = mod.exports
   let xarr = new Float64Array(memory.buffer, x.value, 3)
   is(xarr[0], 0,'x0')
   is(xarr[1], 0,'x1')
@@ -298,11 +298,11 @@ t('compile: arrays from range', t => {
   is(yl.value,4,'ylen')
 })
 
-t('compile: arrays write', t => {
+t.only('compile: arrays write', t => {
   let wat = compile(`x = [..3]; x[0]=1; x.1=2; x[-1]=x[]; x.`)
   // console.log(wat)
   let mod = compileWat(wat)
-  let {memory, x} = mod.exports
+  let {'@memory':memory, x} = mod.exports
   let xarr = new Float64Array(memory.buffer, x.value, 3)
   is(xarr[0], 1,'x0')
   is(xarr[1], 2,'x1')

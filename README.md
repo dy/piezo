@@ -129,8 +129,8 @@ a() = ( *i=0; i++ );            \\ stateful variable - persist value between fn 
 a(), a();                       \\ 0, 1
 b() = (
   *i = [..4];                   \\ local memory of 4 items
-  .i = i[-1,1..];               \\ defer memory shift, called after fn body
   i.0 = i.1+1;                  \\ write previous value i.1 to current value i.0
+  i[..] = i[-1,1..];            \\ shift memory
   i.0                           \\ return i.0
 );
 b(), b(), b();                  \\ 1, 2, 3
@@ -149,7 +149,7 @@ m[0] = 1;                       \\ write single value
 m[1..] = (7,8);                 \\ write multiple values from specified index
 m[1,2] = m[2,1];                \\ rearrange items
 m[0..] = m[-1..0];              \\ reverse order
-m = m[1..,0];                   \\ rotate memory left
+m[..] = m[1..,0];               \\ rotate memory left
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ loops
 [a, b, c] <| x(#);              \\ for each item # call x(item)
@@ -205,8 +205,6 @@ lpf(                                \\ per-sample processing function
   Q = 1.0 -< 0.001..3.0             \\ quality factor, float
 ) = (
   *(x1, y1, x2, y2) = 0;            \\ define filter state
-  :(x1, x2) = (x0, x1);             \\ defer shifting state
-  :(y1, y2) = (y0, y1);
 
   \\ lpf formula
   w = 2pi * freq / 1s;
@@ -219,6 +217,10 @@ lpf(                                \\ per-sample processing function
   (b0, b1, b2, a1, a2) *= 1.0 / a0;
 
   y0 = b0*x0 + b1*x1 + b2*x2 - a1*y1 - a2*y2;
+
+  (x1, x2) = (x0, x1);              \\ shift state
+  (y1, y2) = (y0, y1);
+
   y0                                \\ return y0
 );
 
@@ -246,10 +248,10 @@ oscillator = [
 
 \\ applies adsr curve to sequence of samples
 adsr(x, a, d, (s, sv=1), r) = (   \\ optional group-argument
-  *i = 0; :i++;                   \\ internal counter, increments after fn body
+  *i = 0;                         \\ internal counter, increments after fn body
   t = i / 1s;
 
-  a -< 1ms..;                    \\ prevent click
+  a -<= 1ms..;                    \\ prevent click
   total = a + d + s + r;
 
   y = t >= total ? 0 : (
@@ -260,6 +262,7 @@ adsr(x, a, d, (s, sv=1), r) = (   \\ optional group-argument
     sv :                          \\ sustain volume
     (total - t)/r * sv
   ) * x;
+  i++;
   y
 );
 
@@ -269,14 +272,16 @@ curve(x, amt=1.82 -< 0..10) = (sign(x) * abs(x)) ** amt;
 \\ coin = triangle with pitch jump, produces block
 coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
   out=[..1024];                   \\ output block of 1024 samples
-  *i=0; :i++;
+  *i=0;
   *phase = 0;                     \\ current phase
   t = i / 1s;
-  :phase += (freq + (t > delay ? jump : 0)) * 2pi / 1s;
 
   out <|= oscillator[shape](phase)
       <| adsr(#, 0, 0, .06, .24)
       <| curve(#, 1.82)
+
+  i++
+  phase += (freq + (t > delay ? jump : 0)) * 2pi / 1s;
 ).
 ```
 
