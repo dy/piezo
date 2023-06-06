@@ -14,7 +14,6 @@ export const std = {
     `(then (i32.add (local.get 1) (local.get $rem))) (else (local.get $rem))\n` +
   `))`,
 
-
   // memory & associated functions
   "mem": `(memory (export "@memory") 1)(global $mem.size (mut i32) (i32.const 0))\n` +
   // increase available memory to N bytes, grow if necessary.

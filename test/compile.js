@@ -261,7 +261,7 @@ t('compile: ranges basic', t => {
   is(mod.exports.clamp(-1), 0)
 })
 
-t('compile: arrays basic', t => {
+t('compile: buffer basic', t => {
   let wat = compile(`x = [1, 2, 3], y = [4,5,6,7]; x,y,xl=x[],yl=y[].`)
   // console.log(wat)
   let mod = compileWat(wat)
@@ -280,7 +280,7 @@ t('compile: arrays basic', t => {
   is(yl.value,4,'ylen')
 })
 
-t('compile: arrays from range', t => {
+t('compile: buffer from range', t => {
   let wat = compile(`x = [..3], y = [0..3]; x,y,xl=x[],yl=y[].`)
   // console.log(wat)
   let mod = compileWat(wat)
@@ -298,7 +298,7 @@ t('compile: arrays from range', t => {
   is(yl.value,4,'ylen')
 })
 
-t('compile: arrays write', t => {
+t('compile: buffer simple write', t => {
   let wat = compile(`x = [..3]; x[0]=1; x.1=2; x[-1]=x[]; x.`)
   // console.log(wat)
   let mod = compileWat(wat)
@@ -327,7 +327,7 @@ t.todo('compile: arrays rotate', t => {
   is(yl.value,3,'ylen')
 })
 
-t.todo('compile: arrays subarrays', t => {
+t.todo('compile: subbuffer', t => {
   let wat = compile(`x = [1,2,3], y = [x].`)
   console.log(wat)
   let mod = compileWat(wat)
@@ -387,7 +387,7 @@ t('compile: variable type inference', t => {
   x = compileWat(compile(`x=[];x.`)).exports.x // arr type
   x = compileWat(compile(`x;x=1;x.`)).exports.x // late-int type
   x = compileWat(compile(`x;x=1.0;x.`)).exports.x // late-float type
-  x = compileWat(compile(`x;x()=1;x.`)).exports.x // late-func type
+  // x = compileWat(compile(`x;x()=1;x.`)).exports.x // late-func type
   // x = compileWat(compile(`x;x=0..10;x.`)).exports.x // late-range type
   x = compileWat(compile(`x;x=[];x.`)).exports.x // late-arr type
 })

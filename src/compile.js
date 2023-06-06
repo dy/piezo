@@ -44,7 +44,7 @@ export default function compile(node) {
     res += `\n(export "${name}" (${exports[name].func ? 'func' : 'global'} $${name}))`
 
   console.log(res)
-  console.log(...parseWat(res))
+  // console.log(...parseWat(res))
 
   return res
 }
@@ -57,7 +57,7 @@ function expr(statement) {
   if (typeof statement === 'string') {
     // just x,y; or a=x; where x is undefined
     statement += block.slice(0,block.cur).join('.')
-    if (!locals?.[statement] && !globals[statement]) err('Undefined variable ' + statement);
+    if (!locals?.[statement] && !globals[statement]) define(statement);
     if (!locals && exports) exports[statement] = globals[statement]
     return op(`(${locals?.[statement]?'local':'global'}.get $${statement})`,`f64`)
   }
@@ -74,6 +74,7 @@ Object.assign(expr, {
   ';'([,...statements]){
     let list=[];
     for (let s of statements) s && list.push(expr(s));
+    list = list.filter(Boolean)
     return op(
       list.map((op,i) => op + `(drop)`.repeat(i===list.length-1 ? 0 : op.type.length)).join('\n'),
       list[list.length-1].type,
@@ -84,6 +85,7 @@ Object.assign(expr, {
   ','([,...statements]){
     let list=[];
     for (let s of statements) list.push(expr(s));
+    list = list.filter(Boolean)
     return op(list.join('\n'), list.flatMap(op=>op.type), {static:list.every(op=>op.static)})
   },
 
