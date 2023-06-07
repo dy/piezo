@@ -54,6 +54,7 @@ true = 0b1, false = 0b0;        \\ alias booleans
 1.., ..10, ..;                  \\ open ranges
 10..1;                          \\ reverse range
 1.08..108.0;                    \\ float range
+0.<10;                          \\ exclusive right
 (x-1)..(x+1);                   \\ calculated ranges
 (-10..10)[];                    \\ span: 20
 x -< 0..10;                     \\ clamp(x, 0, 10)
@@ -90,13 +91,13 @@ foo();                          \\ semi-colons at end of line are mandatory
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ conditions
 sign = a < 0 ? -1 : +1;         \\ inline ternary
 (2+2 >= 4) ?                    \\ multiline ternary
-  log("Math works!")
+  log("Math works!")            \\
 : "a" < "b" ?                   \\ else if
-  log("Sort strings")
+  log("Sort strings")           \\
 : (                             \\ else
-  log("Get ready");
-  log("Last chance")
-);
+  log("Get ready");             \\
+  log("Last chance")            \\
+);                              \\
 a || b ? c;                     \\ if a or b then c
 a && b ?: c;                    \\ elvis: if not a and b then c
 a = b ? c;                      \\ if b then a = c (else a = 0)
@@ -106,7 +107,7 @@ double(n) = n*2;                \\ inline function
 times(m=1,n=1) = (              \\ optional args
   n == 0 ? ^n;                  \\ return n
   m*n                           \\
-);
+);                              \\
 times(3,2);                     \\ 6
 times(5);                       \\ 5. optional argument
 times(n: 10);                   \\ 10. named argument
@@ -120,12 +121,12 @@ x() = (1,2,3);                  \\ return group (multiple values)
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ stateful variables
 a() = ( *i=0; i++ );            \\ stateful variable - persist value between fn calls
 a(), a();                       \\ 0, 1
-b() = (
+b() = (                         \\
   *i = [..4];                   \\ local memory of 4 items
   i.0 = i.1+1;                  \\ write previous value i.1 to current value i.0
   i[..] = i[-1,1..];            \\ shift memory
   i.0                           \\ return i.0
-);
+);                              \\
 b(), b(), b();                  \\ 1, 2, 3
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ buffers
@@ -150,10 +151,11 @@ m[..] = m[1..,0];               \\ rotate memory left
 10..1 <| (                      \\ iterate range
   # < 3 ? ^^;                   \\ ^^ breaks loop
   # < 5 ? ^;                    \\ ^ continues loop
-);
+);                              \\
 0.. <| # >= 3 ? ^^ : log(#);    \\ while idx < 3 log(idx)
 [1..10 <| # * 2];               \\ list comprehension
 items <| a(#) <| b(#);          \\ chain iterations
+items <| (..# <| a(##));        \\ nest iterations, ## for sub-items
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ import, export
 @./path/to/module#x,y,z;        \\ any file can be imported directly
