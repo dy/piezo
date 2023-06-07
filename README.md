@@ -1,13 +1,6 @@
 # 🎧 lino
 
-**Lino** (*li*ne *no*ise) is ergonomic micro-language for sound design, processing and utilities.
-
-* Minimal JS-like syntax
-* 0-types
-* Static/linear memory
-* Refined language patterns: ranges, groups, stateful vars, units
-* Compiles to 0-runtime WASM
-* <small>Smooth operator and organic sugar</small>
+**Lino** (*li*ne *no*ise) is ergonomic micro-language for sound design, processing and utilities. It has minimal C/JS-like syntax, refined language patterns (ranges, groups, stateful vars, units), static/linear memory and compiles to 0-runtime WASM. It's also asbestos-free, has smooth operator and organic sugar.
 
 <!--[Motivation](./docs/motivation.md)  |  [Documentation](./docs/reference.md)  |  [Examples](./docs/examples.md).-->
 
