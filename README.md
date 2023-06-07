@@ -84,7 +84,8 @@ a = b, c = d;                   \\ assignment precedence: (a = b), (c = d)
 foo();                          \\ semi-colons at end of line are mandatory
 (c = a + b; c);                 \\ parens define block, return last element
 (a = b+1; a,b,c);               \\ block can return group
-(a ? ^b ; c);                   \\ return/break operator can preliminarily return value
+(a ? ^b ; c);                   \\ return value
+(a ? (b ? ^^c) : d);            \\ break 2 scopes
 (a;b;);                         \\ note: returns null, if semicolon is last within block
 (a=1; a=1.0);                   \\ a is upgraded to float
 
@@ -148,19 +149,19 @@ m[..] = m[1..,0];               \\ rotate memory left
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ iterators
 [a, b, c] <| x(#);              \\ for each item # call x(item)
-10..1 <| (                      \\ iterate range
-  # < 3 ? ^^;                   \\ ^^ breaks loop
-  # < 5 ? ^;                    \\ ^ continues loop
-);                              \\
-0.. <| # >= 3 ? ^^ : log(#);    \\ while idx < 3 log(idx)
+(10..1 <| (                     \\ iterate range
+  # < 3 ? ^^;                   \\ ^^ break
+  # < 5 ? ^;                    \\ ^ continue
+));                             \\
+(0.. <| (# >= 3 ? ^^; log(#))); \\ while idx < 3 log(idx)
 [1..10 <| # * 2];               \\ list comprehension
 items <| a(#) <| b(#);          \\ chain iterations
-items <| (..# <| a(##));        \\ nest iterations, ## for sub-items
+items <| (..# <| a(##));        \\ ## are items in nested iterations
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ import, export
-@./path/to/module#x,y,z;        \\ any file can be imported directly
-@math.pi,sin,max;               \\ or defined via import-maps.json
-x, y, z.                        \\ last statement ending with . exports members
+1pi = @math.pi;                 \\ use imported value
+(sin,pi) = @math.(sin,pi);      \\ import members
+x, y, z.                        \\ exports members
 ```
 
 ## Examples
