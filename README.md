@@ -428,7 +428,7 @@ NOTE: indexOf can be done as `string | (x,i) -> (x == "l" ? i)`
 
 JavaScript and _Web Audio API_ is not suitable for audio purposes – it has unpredictable pauses, glitches and so on. It's better handled in worklet with WASM. Also, audio processing generally doesn't have cross-platform solution, many environments lack audio features.
 
-_Lino_ intends to fill that gap, providing low-level reliable static-memory layer for efficient processing. It targets browsers, [audio worklets](https:\\developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, VST, Rust, Python, Go, [embedded systems](https:\\github.com/bytecodealliance/wasm-micro-runtime) etc. Inspired by [_mono_](https:\\github.com/stagas/mono), _zzfx_, _bytebeat_, _[hxos](https:\\github.com/stagas/hxos)_, [_min_](https:\\github.com/r-lyeh/min) etc.
+_Lino_ fills that gap, providing efficient, resilient & accessible layer. It targets browsers, [audio worklets](https:\\developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, VST, Rust, Python, Go, [embedded systems](https:\\github.com/bytecodealliance/wasm-micro-runtime) etc. Inspired by [_mono_](https:\\github.com/stagas/mono), _zzfx_, _bytebeat_, _[hxos](https:\\github.com/stagas/hxos)_, [_min_](https:\\github.com/r-lyeh/min) etc.
 
 ### Principles
 
