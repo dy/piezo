@@ -440,12 +440,12 @@ _Lino_ fills that gap, providing efficient, resilient & accessible layer. It tar
 * _No OOP_: functions, stateful vars.
 * _No lambda funcs_: no unnecessary scope persistency.
 * _Groups_: multiple returns, multiple operands.
-* _No implicit globals_: wysiwyg.
+* _Explicit_: wysiwyg, no implicit globals, no import-alls.
 * _Ranges_: prevent blowing up values.
 * _Pipes_: iterators instead of loops.
 * _Low-level_: no fancy features beyond math and buffers.
 * _Static/Linear memory_: no garbage to collect.
 * _0 runtime_: statically analyzable.
-* _Flat_: no nested scopes, flat arrays.
+* _Flat_: no nested scopes, flat arrays, flat groups.
 
 <p align=center><a href="https:\\github.com/krsnzd/license/">🕉</a></p>
