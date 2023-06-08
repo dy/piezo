@@ -146,7 +146,7 @@ Having wat files is more useful than direct compilation to binary form:
   + better indicator of fn primitive
   ? batch output: `~() -> 1` vs `() -> ~1` vs `() ~> 1`
 
-## [x] Ranges: f(x: 0..100=100, y:0..100, p:0.001..5, shape:(tri|sin|tan)=sin)
+## [x] Ranges: f(x <= 0..100=100, y <= 0..100, p <= 0.001..5, shape<=(tri,sin,tan)=sin)
 
   * ~~`f(x=100 in 0..100, y=1 in 0..100, z in 1..100, p in 0.001..5) = ...`~~
     - conflicts with no-keywords policy
@@ -154,7 +154,7 @@ Having wat files is more useful than direct compilation to binary form:
   * ~~! Swift: non-inclusive range is 0..<100~~
     - see exclusive ranges research, confusable with `0.. < 100`
 
-  * `f(x{0..100} = 100, y{0..100} = 1, z{1..100}, p{0.001..5}, shape{sin,tri,tan}=sin )`
+  * ~~`f(x{0..100} = 100, y{0..100} = 1, z{1..100}, p{0.001..5}, shape{sin,tri,tan}=sin )`~~
     + matches set definition
     - missing operator
     + allows defining limited variables `a{0..100} = b`
@@ -175,13 +175,13 @@ Having wat files is more useful than direct compilation to binary form:
     + less characters than ~=
 
   * `f(x = 100: 0..100, y: 0..100 = 1, z: 1..100, p: 0.001..5, shape: (tri, sin, tan) = sin)`
-    + `:` is a bit more standard type definition
-    - doesn't play well after value.
+    + `:` is standard type definition
+    - doesn't play well after value `x=100:0..100`
       ~ feature of variable/argument
-    + better fits for loops: `i: 0..100 ?.. i*2` vs `i ~ 0..100 ?.. i*2`
-      - nah, inverting ?: as :? can lead to hell.
     - interferes with named arguments
-      + they can be overvalued
+    - calculation-wise can be too heavy, compared to one-time clamp
+    - has different precedence with `=`
+    - has possible conflict with ternary
 
   * ~~`f(x = 100 ~= 0..100, y ~= 0..100 = 1, z ~= 1..100, p ~= 0.001..5, shape ~= (tri, sin, tan) = sin)`~~
     + matches Ruby's regex-search operator, inversed
@@ -204,7 +204,7 @@ Having wat files is more useful than direct compilation to binary form:
     - false match with reduce/loop operator
       ~ not anymore a problem if we make loop/reducer `<|` and `|>`
     + by rearranging loop/reducer it's not more at conflict
-    - a bit indirect
+    - a bit too far meaning, indirect. `-<` is more like fork, mb switch or etc
 
   * ~~`f(x = 100 <- 0..100, y <- 0..100 = 1, z <- 1..100, p <- 0.001..5, shape <- (tri, sin, tan) = sin)`~~
     + literally elixir/haskel/erlang/R/Scala's list comprehension assigner
@@ -222,8 +222,10 @@ Having wat files is more useful than direct compilation to binary form:
   * `f(x = 100 <= 0..100, y <= 0..100 = 1, z <= 1..100, p <= 0.001..5, shape <= (tri, sin, tan) = sin)`
     + very natural & known operator `<=`
     + matches `element of` notation `<-`
+    + no ordering problem with `<=` and `=`
+    + frees `:` for technical needs, like import or named args
 
-  * `f(x = 100 -| 0..100, y -| 0..100 = 1, z -| 1..100, p -| 0.001..5, shape -| (tri, sin, tan) = sin)`
+  * ~~`f(x = 100 -| 0..100, y -| 0..100 = 1, z -| 1..100, p -| 0.001..5, shape -| (tri, sin, tan) = sin)`~~
     - looks too much like table separators
 
 ## [x] Enums → try avoiding explicit notation
@@ -3505,7 +3507,7 @@ Having wat files is more useful than direct compilation to binary form:
   * ruby's `0...10`?
     - `0.. .10`
 
-## [x] replace `x -< 0..10` with `x =< 0..10`? -> no, clamp is `x <? 0..10`
+## [x] replace `x -< 0..10` with `x =< 0..10`? -> clamp is `x <? 0..10`
 
   ? do we ever need `clamp(x, 0, 10)`, opposed to `x = clamp(x, 0, 10)`?
     + it seems from examples we always `x = clamp(x, 0..10)`
@@ -3523,13 +3525,15 @@ Having wat files is more useful than direct compilation to binary form:
       * `x = x -/ 0..10`, `x =/ 0..10`
   - seems that's confusable: `a <= b..c` vs `a =< b..c`
 
-## [ ] Limited variables `x:0..100; x = 1000;` -> likely yes, good for arguments as well
+## [x] Limited variables `x:0..100; x = 1000;` -> nah, perf-unwise
 
   + allows static tracking of value
   + compatible with arguments limiting
   - we don't have explicit clamp operator
     ?+ can easily `x > 10 ? 10 : x`
       ? can max be `x >? 10`
+  - can be unexpected meaning
+  - can slow down calculations, since performs runtime checks on every write
 
 ## [ ] Function references: use i32?
 

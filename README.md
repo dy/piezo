@@ -76,9 +76,8 @@ a = b ? c;                      \\ if b then a = c (else a = 0)
 10..1;                          \\ reverse range
 1.08..108.0;                    \\ float range
 (x-1)..(x+1);                   \\ calculated ranges
-x: 0..10;                       \\ limit x to a range
 x <= 0..10;                     \\ is x in 0..10 range?
-x <? 0..10;                     \\ max(min(x, 10), 0)
+x <? 0..10;                     \\ clamp: max(min(x, 10), 0)
 a,b,c = 0..2;                   \\ a==0, b==1, c==2
 (-10..10)[];                    \\ span is 20
 
@@ -106,10 +105,11 @@ times(m=1,n=1) = (              \\ optional args
 );                              \\
 times(3,2);                     \\ 6
 times(5);                       \\ 5. optional argument
+times(n: 10);                   \\ 10. named argument
 times(,11);                     \\ 11. skipped argument
 copy = triple;                  \\ capture function
 copy(10);                       \\ also 30
-clamp(v: 0..10) = v;            \\ limit argument to a range
+clamp(v <= 0..10) = v;          \\ limit argument to a range
 x() = (1,2,3);                  \\ return group (multiple values)
 (a,b,c) = x();                  \\ assign to a group
 
@@ -152,8 +152,8 @@ items <| a(#) <| b(#);          \\ chain iterations
 items <| (..# <| a(##));        \\ ## is nested iteration item
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ import, export
-1pi = @math.pi;                 \\ use imported value
-(sin, pi) = @math[..];          \\ import members
+1pi = @math.pi;                 \\ use imported member directly
+@math:sin,pi,cos;               \\ import members
 x, y, z.                        \\ exports members
 ```
 
@@ -189,7 +189,7 @@ Provides k-rate amplification for block of samples.
 ```
 gain(                               \\ define a function with block, volume arguments.
   block,                            \\ block is a list argument
-  volume: 0..100                    \\ volume is limited to 0..100 range
+  volume <= 0..100                  \\ volume is limited to 0..100 range
 ) = (
   block <|= # * volume;             \\ map each sample via multiplying by value
 );
@@ -206,7 +206,7 @@ gain.                               \\ export gain function
 A-rate (per-sample) biquad filter processor.
 
 ```
-@math#pi,cos,sin;                   \\ import pi, sin, cos from math
+@math: pi,cos,sin;                  \\ import pi, sin, cos from math
 
 1pi = pi;                           \\ define pi units
 1s = 44100;                         \\ define time units in samples
@@ -214,8 +214,8 @@ A-rate (per-sample) biquad filter processor.
 
 lpf(                                \\ per-sample processing function
   x0,                               \\ input sample value
-  freq: 1..10k = 100,               \\ filter frequency, float
-  Q: 0.001..3.0 = 1.0               \\ quality factor, float
+  freq <= 1..10k = 100,             \\ filter frequency, float
+  Q <= 0.001..3.0 = 1.0             \\ quality factor, float
 ) = (
   *(x1, y1, x2, y2) = 0;            \\ define filter state
 
@@ -247,7 +247,7 @@ lpf.                                \\ export lpf function, end program
 Generates ZZFX's [coin sound](https:\\codepen.io/KilledByAPixel/full/BaowKzv) `zzfx(...[,,1675,,.06,.24,1,1.82,,,837,.06])`.
 
 ```
-@math#pi,abs,sin,round;
+@math: pi,abs,sin,round;
 
 1pi = pi;
 1s = 44100;
@@ -285,7 +285,7 @@ adsr(
 );
 
 \\ curve effect
-curve(x, amt:0..10=1.82) = (sign(x) * abs(x)) ** amt;
+curve(x, amt<=0..10=1.82) = (sign(x) * abs(x)) ** amt;
 
 \\ coin = triangle with pitch jump, produces block
 coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
