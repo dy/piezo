@@ -35,7 +35,7 @@ true = 0b1, false = 0b0;        \\ alias booleans
 . []                            \\ member access
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ extended operators
-** // %%                        \\ power, floor division, unsigned mod (wraps negatives)
+** // %%                        \\ power, floor div, unsigned mod (wraps negatives)
 <? <?= ..                       \\ clamp/min/max, range
 <| <|= #                        \\ each, map, member
 *                               \\ stateful variable
@@ -45,12 +45,12 @@ true = 0b1, false = 0b0;        \\ alias booleans
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ variables
 foo=1, bar=2.0;                 \\ declare vars
 Ab_C_F#, $0, Δx, _;             \\ names permit alnum, unicodes, #, _, $
-fooBar123 == FooBar123;         \\ names are case-insensitive (lowcase encouraged!)
+fooBar123 == FooBar123;         \\ names are case-insensitive
 default=1, eval=fn, else=0;     \\ lino has no reserved words
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ statements
 foo();                          \\ semi-colons at end of line are mandatory
-(c = a + b; c);                 \\ parens define scope, returns last element
+(c = a + b; c);                 \\ parens define scope, return last element
 (a = b+1; a,b,c);               \\ scope can return multiple values
 (a ? ^b ; c);                   \\ preliminary return value
 (a ? (b ? ^^c) : d);            \\ break 2 scopes
@@ -84,7 +84,7 @@ a,b,c = 0..2;                   \\ a==0, b==1, c==2
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ groups
 a, b, c;                        \\ groups are sugar, not primitive
-(a, b, c)++;                    \\ apply operation to multiple elements: (a++, b++, c++)
+(a, b, c)++;                    \\ inc multiple elements: (a++, b++, c++)
 (a, (b, c));                    \\ always flat: (a, b, c)
 (a,b,c) = (d,e,f);              \\ assign: a=d, b=e, c=f
 (a,b) = (b,a);                  \\ swap: temp=a; a=b; b=temp;
@@ -114,11 +114,11 @@ x() = (1,2,3);                  \\ return group (multiple values)
 (a,b,c) = x();                  \\ assign to a group
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ stateful variables
-a() = ( *i=0; i++ );            \\ stateful variable - persist value between fn calls
+a() = ( *i=0; i++ );            \\ i persists value between a calls
 a(), a();                       \\ 0, 1
 b() = (                         \\
   *i[4];                        \\ local memory of 4 items
-  i.1 = i.2 + 1;                \\ write previous value i.1 to current value i.0
+  i.1 = i.2 + 1;                \\ write previous i.2 to current i.1
   i[1..] = i[-1,0..];           \\ shift memory
   i.1                           \\ return current item
 );                              \\
@@ -131,7 +131,7 @@ m[1..] = n[1..3, 5, 6..];       \\ create copy of subrange
 m[1..] = (1, 2..4, n[..]);      \\ create from mixed definition
 m[1..] = 1..4 <| # * 2;         \\ list comprehension
 first = m.1;                    \\ get by static index (1-based)
-(first, last) = (m[1], m[-1]);  \\ get by dynamic index (wraps negatives)
+(first, last) = (m[1], m[-1]);  \\ get by dynamic index
 (second, third) = m[2..];       \\ get multiple values
 length = m[];                   \\ get length
 m[1] = 1;                       \\ set value
@@ -149,7 +149,7 @@ m[..] = m[2..,1];               \\ rotate items
 x[0..10] <|= # * 2;             \\ map part of list
 (0.. <| (# >= 3 ? ^^; log(#))); \\ while idx < 3 log(idx)
 items <| a(#) <| b(#);          \\ chain iterations
-items <| (..# <| a(##));        \\ ## are items in nested iterations
+items <| (..# <| a(##));        \\ ## is nested iteration item
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ import, export
 1pi = @math.pi;                 \\ use imported value
