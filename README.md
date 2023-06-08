@@ -262,7 +262,7 @@ oscillator[..] = (
 \\ applies adsr curve to sequence of samples
 adsr(
   x,
-  a:1ms..,                        \\ prevent click
+  a <= 1ms..,                     \\ prevent click
   d,
   (s, sv=1),                      \\ optional group-argument
   r
