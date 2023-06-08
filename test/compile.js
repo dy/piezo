@@ -393,7 +393,7 @@ t('compile: variable type inference', t => {
 })
 
 t.todo('compile: loops basic', t => {
-  let wat = compile(`x=[..3]; 0..2 <| x[#]=#+1; x.`)
+  let wat = compile(`x=[1..3]; 0..2 <| x[#]=#+1; x.`)
   let mod = compileWat(wat)
   let {memory, x} = mod.exports
 

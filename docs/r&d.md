@@ -67,6 +67,19 @@
    + file can be named literally mono.lisa
    - already exists: https://github.com/Somainer/lisa-lang
 
+## [ ] Free (nice) operators
+
+  * `|>`
+  * `<>`, `><`
+  * `::`
+  * `-<`, `=<`, `~<`
+  * `-/`, `=/`, `~/`
+  * `-|`, `=|`, `~|`
+  * `-\`, `=\`, `~\`
+  * `->`, `=>`, `~>`
+  * `''`, `""`
+  * `?=`, `~=`
+
 ## [x] WAT, WASM? All targets
 
 Having wat files is more useful than direct compilation to binary form:
@@ -133,16 +146,18 @@ Having wat files is more useful than direct compilation to binary form:
   + better indicator of fn primitive
   ? batch output: `~() -> 1` vs `() -> ~1` vs `() ~> 1`
 
-## [x] Ranges: f(x=100-<0..100, y-<0..100, p-<0.001..5, shape-<{tri,sin,tan}=sin)
+## [x] Ranges: f(x: 0..100=100, y:0..100, p:0.001..5, shape:(tri|sin|tan)=sin)
 
-  * `f(x=100 in 0..100, y=1 in 0..100, z in 1..100, p in 0.001..5) = ...`
+  * ~~`f(x=100 in 0..100, y=1 in 0..100, z in 1..100, p in 0.001..5) = ...`~~
     - conflicts with no-keywords policy
 
-  * ! Swift: non-inclusive range is 0..<100
+  * ~~! Swift: non-inclusive range is 0..<100~~
+    - see exclusive ranges research, confusable with `0.. < 100`
 
   * `f(x{0..100} = 100, y{0..100} = 1, z{1..100}, p{0.001..5}, shape{sin,tri,tan}=sin )`
-    +  matches set definition
+    + matches set definition
     - missing operator
+    + allows defining limited variables `a{0..100} = b`
 
   * `f(x = 100 ~ 0..100, y ~ 0..100 = 1, z ~ 1..100, p ~ 0.001..5, shape ~ (tri, sin, tan) = sin)`
     + swift has ~= operator checking if value is within range
@@ -162,16 +177,20 @@ Having wat files is more useful than direct compilation to binary form:
   * `f(x = 100: 0..100, y: 0..100 = 1, z: 1..100, p: 0.001..5, shape: (tri, sin, tan) = sin)`
     + `:` is a bit more standard type definition
     - doesn't play well after value.
+      ~ feature of variable/argument
     + better fits for loops: `i: 0..100 ?.. i*2` vs `i ~ 0..100 ?.. i*2`
       - nah, inverting ?: as :? can lead to hell.
+    - interferes with named arguments
+      + they can be overvalued
 
-  * `f(x = 100 ~= 0..100, y ~= 0..100 = 1, z ~= 1..100, p ~= 0.001..5, shape ~= (tri, sin, tan) = sin)`
+  * ~~`f(x = 100 ~= 0..100, y ~= 0..100 = 1, z ~= 1..100, p ~= 0.001..5, shape ~= (tri, sin, tan) = sin)`~~
     + matches Ruby's regex-search operator, inversed
     + matches "equals" as "clamp"
     - isn't interchangable with `=`, has different meaning
     → too much `=` noise - not clear associativity; `~` shows better contrast.
+    - `~=` means `a = ~a`
 
-  * `f(x = 100 ~ {0..100}, y ~ {0..100} = 1, z ~ {1..100}, p ~ {0.001..5}, shape ~ {tri, sin, tan} = sin)`
+  * ~~`f(x = 100 ~ {0..100}, y ~ {0..100} = 1, z ~ {1..100}, p ~ {0.001..5}, shape ~ {tri, sin, tan} = sin)`~~
     + less digit-y as above
     - a bit redundant
     + allows sets
@@ -185,11 +204,27 @@ Having wat files is more useful than direct compilation to binary form:
     - false match with reduce/loop operator
       ~ not anymore a problem if we make loop/reducer `<|` and `|>`
     + by rearranging loop/reducer it's not more at conflict
+    - a bit indirect
 
-  * `f(x = 100 <- 0..100, y <- 0..100 = 1, z <- 1..100, p <- 0.001..5, shape <- (tri, sin, tan) = sin)`
+  * ~~`f(x = 100 <- 0..100, y <- 0..100 = 1, z <- 1..100, p <- 0.001..5, shape <- (tri, sin, tan) = sin)`~~
     + literally elixir/haskel/erlang/R/Scala's list comprehension assigner
     + stands in-place for "in" operator
     + similar to -<
+    - `100 < -0..100`
+
+  * `f(x = 100 =< 0..100, y =< 0..100 = 1, z =< 1..100)`
+    - interferes with `=`, see below reasoning
+
+  * `f(x = 100 >< 0..100, y >< 0..100 = 1, z >< 1..100, p >< 0.001..5, shape >< (tri, sin, tan) = sin)`
+  * `f(x = 100 <> 0..100, y <> 0..100 = 1, z <> 1..100, p <> 0.001..5, shape <> (tri, sin, tan) = sin)`
+  * `f(x = 100 <0..100>, y <0..100> = 1, z <1..100>, p <0.001..5>, shape <(tri, sin, tan)> = sin)`
+
+  * `f(x = 100 <= 0..100, y <= 0..100 = 1, z <= 1..100, p <= 0.001..5, shape <= (tri, sin, tan) = sin)`
+    + very natural & known operator `<=`
+    + matches `element of` notation `<-`
+
+  * `f(x = 100 -| 0..100, y -| 0..100 = 1, z -| 1..100, p -| 0.001..5, shape -| (tri, sin, tan) = sin)`
+    - looks too much like table separators
 
 ## [x] Enums → try avoiding explicit notation
 
@@ -237,7 +272,7 @@ Having wat files is more useful than direct compilation to binary form:
 ## [x] Numbers: float64 by default, unless it's statically inferrable as int32, like ++, +-1 etc ops only
   * Boolean operators turn float64 into int64
 
-## [x] ~~Pipes: → | with anon functions~~ transform ternary `list | x -> a(x) | x -> b(x)`
+## [x] ~~Pipes: → | with anon functions~~ ~~transform ternary `list | x -> a(x) | x -> b(x)`~~ no pipes for now - chain of loops instead `x <| # * 0.6 + reverb(#) * 0.4 <| `
 
   1. Placeholder as `x | #*0.6 + reverb() * 0.4`, `source | lp($, frq, Q)`?
     ? can there be multiple args to pipe operator? `a,b |` runs 2 pipes, not multiarg.
@@ -776,7 +811,7 @@ Having wat files is more useful than direct compilation to binary form:
   * Also it can create references to a variable in memory.
   * We use arrays for that purpose, therefore we don't need pointers syntax replica.
 
-## [x] Named array items → yes, useful and organic replacement for object structs
+## [x] Named array items → ~~yes, useful and organic replacement for object structs~~ -> nah, not clear how with `x[10]` notation
 
   * named properties in arrays? `[1,2,3,a:4,b:5]`
     ~ reminds typescript named tuples
@@ -788,7 +823,7 @@ Having wat files is more useful than direct compilation to binary form:
   - conflicting convention: we don't really use labels anywhere (we use variables instead)
   - it kind-of enforces lambdas, which we want to avoid also.
 
-## [ ] If `a ? b`, elvis: `a ?: b`?
+## [x] If `a ? b`, elvis: `a ?: b`? -> yes, for now it's the best option
   * ~ equivalent to a ? #0 : b
   + organic extension of ternary `a ? b`, `a ?: b`.
   - weirdly confusing, as if very important part is lost. Maybe just introduce elvis `a>b ? a=1` → `a<=b ?: a=1`
@@ -812,6 +847,7 @@ Having wat files is more useful than direct compilation to binary form:
   * can be done via external lib
 
 ## [x] Loops: ~~`i <- 0..10 <| a + i`, `i <- list <| a`, `[x <- 1,2,3 <| x*2]`~~ `0..10 | i -> a + i`
+
   * `for i in 0..10 (a,b,c)`, `for i in src a;`
   * alternatively as elixir does: `item <- 0..10 a,b,c`
     + also erlang list comprehension is similar: `[x*2 || x <- [1,2,3]]`
@@ -1029,7 +1065,7 @@ Having wat files is more useful than direct compilation to binary form:
     + enables if-else as `1,0 >- x ? true : false;`
       . `1 >- x ? true`;
 
-## [x] What if we swap `-<` with `<-`, as `x in y` and `x of y`? Let's try
+## [x] What if we swap `-<` with `<-`, as `x in y` and `x of y`? -> no, `x<-y` is `x< -y`
   + `a |> b -> c` becomes symmetrical with `c <- b <| a`
   + `c <- b` is more conventional for `a of b`
   + `x -< 0..10` is nicer for range indication limit and for clamp
@@ -2514,329 +2550,336 @@ Having wat files is more useful than direct compilation to binary form:
 
 ## [ ] Case-insensitive variable names? -> let's try case-insensitive
 
-0. Case-insensitive
+  0. Case-insensitive
 
-+ https://twitter.com/bloomofthehours/status/1491797450595528713?s=20&t=1aJpwIDrbNhIjwIohsvxiw
-+ reduces use of camelcase convention
-- `AbB` vs `ABb` can be different chords, but lino mixes them up together
-- `X1` and `x1` can be different things in math
-  ~ can be solved as eg. `x1` and `_x1` or `@x1`
-- `sampleRate` becomes `samplerate` - can be confusing
-  ~ doesn't have to lowcase
-- export naming requirement: `'AbB': AbB, 'sampleRate': sampleRate.`?
-  ~ can take exact name though
-  + lowcase-enforced export is kind of cool, `exports.samplerate`
-- not much conventional, only MySQL and other oldies
-+ solves problem mentioned by despawnerer (`dateRange` vs `daterange`)
-+ lowcase is typographycally more expressive
-+ code is robust to changing case, eg. as url string
-- `1Ms` vs `1ms` is critical
-  ~ not sure it's good idea to designate such meaning to capitalization
-  ~ `1Ms` is super-unlikely, for bytes can use `1mb` - it's never millibyte
-+ `#@$_` alleviate case-insensitivity
-- Strings don't allow code to be case-change robust.
-  * we either discard strings or make it (half) case-sensitive
-- Atoms may require case-sensitivity, eg. for error messages
+  + https://twitter.com/bloomofthehours/status/1491797450595528713?s=20&t=1aJpwIDrbNhIjwIohsvxiw
+  + reduces use of camelcase convention
+  - `AbB` vs `ABb` can be different chords, but lino mixes them up together
+  - `X1` and `x1` can be different things in math
+    ~ can be solved as eg. `x1` and `_x1` or `@x1`
+  - `sampleRate` becomes `samplerate` - can be confusing
+    ~ doesn't have to lowcase
+  - export naming requirement: `'AbB': AbB, 'sampleRate': sampleRate.`?
+    ~ can take exact name though
+    + lowcase-enforced export is kind of cool, `exports.samplerate`
+  - not much conventional, only MySQL and other oldies
+  + solves problem mentioned by despawnerer (`dateRange` vs `daterange`)
+  + lowcase is typographycally more expressive
+  + code is robust to changing case, eg. as url string
+  - `1Ms` vs `1ms` is critical
+    ~ not sure it's good idea to designate such meaning to capitalization
+    ~ `1Ms` is super-unlikely, for bytes can use `1mb` - it's never millibyte
+  + `#@$_` alleviate case-insensitivity
+  - Strings don't allow code to be case-change robust.
+    * we either discard strings or make it (half) case-sensitive
+  - Atoms may require case-sensitivity, eg. for error messages
 
-0.5 Capfirst-sensitive, (`Abc` == `ABc`) != (`aBC` == `abc`)
+  0.5 Capfirst-sensitive, (`Abc` == `ABc`) != (`aBC` == `abc`)
 
-+ fixes problem of math/class capfirst difference (math `X1` vs `x1`, `Oscillator` vs `oscillator`)
-+ fixes problem of despawnerer's `fullName` == `fullname`
-+ capfirst is typographycally meaningful
-+ can fix problem of units size
-- code is not robust to case-insensitive environments
-- import looks like `@math#Pi` still
-- doesn't solve constants issue, `PI` vs `pi` - would be cool to have `pi`
+  + fixes problem of math/class capfirst difference (math `X1` vs `x1`, `Oscillator` vs `oscillator`)
+  + fixes problem of despawnerer's `fullName` == `fullname`
+  + capfirst is typographycally meaningful
+  + can fix problem of units size
+  - code is not robust to case-insensitive environments
+  - import looks like `@math#Pi` still
+  - doesn't solve constants issue, `PI` vs `pi` - would be cool to have `pi`
 
-1. Case-sensitive
+  1. Case-sensitive
 
-+ Enables extra room for naming, eg. `Oscillator` creates oscillator vs `oscillator` is instance
-+ Doesn't create exports naming conflict: `foo_bar` is non-js export name, like `samplerate`
-+ More conventional: JS, C, Python
-- Possible problem mentioned by despawnerer: `fullName` vs `fullname`.
-~ MySQL is fine being case-insensitive
-- import becomes case-sensitive `@math#pi` vs `@math#PI`
-- upcase consts are ugly
-  ~ can be replaced with units
-- less meaning to atoms
+  + Enables extra room for naming, eg. `Oscillator` creates oscillator vs `oscillator` is instance
+  + Doesn't create exports naming conflict: `foo_bar` is non-js export name, like `samplerate`
+  + More conventional: JS, C, Python
+  - Possible problem mentioned by despawnerer: `fullName` vs `fullname`.
+  ~ MySQL is fine being case-insensitive
+  - import becomes case-sensitive `@math#pi` vs `@math#PI`
+  - upcase consts are ugly
+    ~ can be replaced with units
+  - less meaning to atoms
 
-? Maybe keep it case-insensitive, but match case by-export?
+  ? Maybe keep it case-insensitive, but match case by-export?
 
-2. Export operator `'a': a, 'sampleRate': sampleRate.`
-+ Explicit export
-+ Reverence to erlang and natural languages
-+ Extra use & meaning of atoms
-+ Quotes make nicer indicator of case-sensitivity
-+ Solves problem of default exporting `0..10` or `() -> x`
-- redundancy: case can be figured out from name directly
-- some conflict with function return
-~- we can use `^` operator for that purpose: `^sampleRate;`
-  ? Can we use `.` postfix as indicator of procedure / void return? nah.
-- must be last, therefore redundant, since last expression is already exported.
-  ~ nah - export and return are different operations
+  2. Export operator `'a': a, 'sampleRate': sampleRate.`
+  + Explicit export
+  + Reverence to erlang and natural languages
+  + Extra use & meaning of atoms
+  + Quotes make nicer indicator of case-sensitivity
+  + Solves problem of default exporting `0..10` or `() -> x`
+  - redundancy: case can be figured out from name directly
+  - some conflict with function return
+  ~- we can use `^` operator for that purpose: `^sampleRate;`
+    ? Can we use `.` postfix as indicator of procedure / void return? nah.
+  - must be last, therefore redundant, since last expression is already exported.
+    ~ nah - export and return are different operations
 
-3. Use atoms as case-sensitive variable names
-+ enables quote-less imports `@math#pi` and `@'math#PI'`
-  + `#` is part of variable name anyways
-- `'Oscillator'()` is unusual construct...
-- not clear if `'oscillator'`, `'Oscillator'`, `oscillator` and `Oscillator` resolve to the same
-- can cause conflicts with "bad" names, like `pipe/arg`
+  3. Use atoms as case-sensitive variable names
+  + enables quote-less imports `@math#pi` and `@'math#PI'`
+    + `#` is part of variable name anyways
+  - `'Oscillator'()` is unusual construct...
+  - not clear if `'oscillator'`, `'Oscillator'`, `oscillator` and `Oscillator` resolve to the same
+  - can cause conflicts with "bad" names, like `pipe/arg`
 
 ## [x] Ranges: how to organize in wasm level? -> let's try syntactic ranges only
 
-1. v128 as f64x2
-  + stores
-  - need to read vector item
-  - exporting isn't allowed
-  + exporting is possible
+  1. v128 as f64x2
+    + stores
+    - need to read vector item
+    - exporting isn't allowed
+    + exporting is possible
 
-2. 2 spots in memory
-  - need to manage memory
-  - need to read from memory
-  ~+ exportable as pointer?
-  + easy from use-case point
+  2. 2 spots in memory
+    - need to manage memory
+    - need to read from memory
+    ~+ exportable as pointer?
+    + easy from use-case point
 
-3. function returning 2 values
-  + exportable
-  + best fit for the use-case
-  - extra call
-  - can possibly be not the best fit for clamp/etc, will force creating temp variables or calling twice.
+  3. function returning 2 values
+    + exportable
+    + best fit for the use-case
+    - extra call
+    - can possibly be not the best fit for clamp/etc, will force creating temp variables or calling twice.
 
-4. immediate values
-  - impossible to export
-  + fastest & direct
+  4. immediate values
+    - impossible to export
+    + fastest & direct
 
-4.5 ranges as syntax sugar, not data type
-  ? do we ever need saved/exported ranges?.
-  + allows fast direct static ranges easily
-  + removes tacky problems: ranges combination, min/max reading (since they're immediately available)
+  4.5 ranges as syntax sugar, not data type
+    ? do we ever need saved/exported ranges?.
+    + allows fast direct static ranges easily
+    + removes tacky problems: ranges combination, min/max reading (since they're immediately available)
 
 ## [x] Drop ints and use only f64? -> let's try to use only f64 for variables
 
-+ waay less code
-+ no type conversion question, since values are floats always
-+ no type detection issue
-+ f64 stores more ints than i32 (up to i52)
-- no compatibility with bytebeat
-- no meaningful shift/binary operations
-  ? can we perform binary ops in terms of int parts of floats?
-    ~+ i32 can be result of operation, eg. `a|b`
-      * then we can track it similar to `static` property
-      * eg. `(a|b)^c` doesn't convert back-forth between f64-i32 and only does binaries
-    + we anyways track number of args from operation, so we can track their types or have flag detector in getDesc
-+ less cognitive load for users:
-  + less to learn from readme
-  + less care about types
-+ solves problem of variable reassignment, eg. `x=1;x=1.0`: we have only one type and don't wreck our brain.
-+ we reserve i32 for internal tasks only
-+ makes easy to store variables in memory
--> ok, so variables are always f64, but calc results can be any, so we only extend i32 to f64 in assignment or fn return
+  + waay less code
+  + no type conversion question, since values are floats always
+  + no type detection issue
+  + f64 stores more ints than i32 (up to i52)
+  - no compatibility with bytebeat
+  - no meaningful shift/binary operations
+    ? can we perform binary ops in terms of int parts of floats?
+      ~+ i32 can be result of operation, eg. `a|b`
+        * then we can track it similar to `static` property
+        * eg. `(a|b)^c` doesn't convert back-forth between f64-i32 and only does binaries
+      + we anyways track number of args from operation, so we can track their types or have flag detector in getDesc
+  + less cognitive load for users:
+    + less to learn from readme
+    + less care about types
+  + solves problem of variable reassignment, eg. `x=1;x=1.0`: we have only one type and don't wreck our brain.
+  + we reserve i32 for internal tasks only
+  + makes easy to store variables in memory
+  -> ok, so variables are always f64, but calc results can be any, so we only extend i32 to f64 in assignment or fn return
 
 ## [x] How to pass int to a function? -> we force ints into floats every so often
 
-1. Detect i32 from default value `x(i=1)=(...)`
-  - default value can be calculable, not primitive, eg. `x(a,b=a)=(...)`
-  - floats downgrade to ints in external calls `x(5.4)`
-  - we need to track fn signatures to perform calls
-2. Enforce float args, `x(i)=(...)`
-  + f64 covers i32 range anyways, so even binary patterns can be preserved
-  - some tax of converting i32 to float, that's it
+  1. Detect i32 from default value `x(i=1)=(...)`
+    - default value can be calculable, not primitive, eg. `x(a,b=a)=(...)`
+    - floats downgrade to ints in external calls `x(5.4)`
+    - we need to track fn signatures to perform calls
+  2. Enforce float args, `x(i)=(...)`
+    + f64 covers i32 range anyways, so even binary patterns can be preserved
+    - some tax of converting i32 to float, that's it
 
 ## [x] Use f32 instead of f64 -> keep f64
 
-+ it makes arrays have same stride for storing diffent types
-  - not necessarily good, since there's no meaningful way to export such arrays and also we have to track member types
-+ solves issue of endianness of float64 arrays - no way from to read via Float64Array, need to use DataView
-  - fake issue, works fine
-+ enough for majority sound purposes
-  - not really, mistakes accumulate
-+ more cross-platform compatible
+  + it makes arrays have same stride for storing diffent types
+    - not necessarily good, since there's no meaningful way to export such arrays and also we have to track member types
+  + solves issue of endianness of float64 arrays - no way from to read via Float64Array, need to use DataView
+    - fake issue, works fine
+  + enough for majority sound purposes
+    - not really, mistakes accumulate
+  + more cross-platform compatible
   - not really
 
 ## [x] Comma operator precedence: a,b=c,d -> let's use more familiar flowy JS style a=1, b=2
 
-1. a,b=c,d -> (a,b)=(c,d)
+  1. a,b=c,d -> (a,b)=(c,d)
 
-+ python style
-+ allows shothand nice swaps
-- problem with fn arguments parsing `(a=1,b=2) => `
+  + python style
+  + allows shothand nice swaps
+  - problem with fn arguments parsing `(a=1,b=2) => `
 
-2. a,b=c,d -> (a),(b=c),(d)
+  2. a,b=c,d -> (a),(b=c),(d)
 
-+ js style
-+ more fluent imho
-+ allows function arguments
-- forces group-assign be parenthesized (a,b,c) = (d, e, f)
-+ allows comma-style operations sequence, rather than python-like meaning, eg a++, b+=2, c=4,
+  + js style
+  + more fluent imho
+  + allows function arguments
+  - forces group-assign be parenthesized (a,b,c) = (d, e, f)
+  + allows comma-style operations sequence, rather than python-like meaning, eg a++, b+=2, c=4,
 
 ## [x] Should var scope be defined by parens `(x=1;(y=2;);y)` or by function? -> we should use parens as scope, but create scope only if new vars are defined there
 
-1. By parens: `y==undefined`
+  1. By parens: `y==undefined`
 
-+ see "scope or not to scope"
-+ universal scope definition, just referential to parent scope
-+ allows cleaner namespace, no name contamination
-+ allows easier namespaces
-- harder to implement
-+ streamlines scopes mechanism
-+ allows merging globalParse & localParse mechanism, we just have to properly detect variables.
+  + see "scope or not to scope"
+  + universal scope definition, just referential to parent scope
+  + allows cleaner namespace, no name contamination
+  + allows easier namespaces
+  - harder to implement
+  + streamlines scopes mechanism
+  + allows merging globalParse & localParse mechanism, we just have to properly detect variables.
 
-2. By function: `y==2`
-+ closer to webassembly
-- less usefulness
+  2. By function: `y==2`
+  + closer to webassembly
+  - less usefulness
 
 ## [x] IR: nested scopes, each scope has own toString() method -> yes, good clean uniform approach
 
-+ unifies returning structure
-+ differentiates scopes with same interface
+  + unifies returning structure
+  + differentiates scopes with same interface
 
 ## [x] How to solve problem of array `length` in scope definition - it can't be used as variable name? -> use .scope
 
-* it's not just .length - it's any array methods
+  * it's not just .length - it's any array methods
 
-1. Catch any set of variable with that name and map to some other name
-- too many modifications in code
-+ fastest
+  1. Catch any set of variable with that name and map to some other name
+  - too many modifications in code
+  + fastest
 
-2. Extend array class with own class and redefine that property
+  2. Extend array class with own class and redefine that property
 
-3. Use proxy to intercept access to .length
+  3. Use proxy to intercept access to .length
 
-4. Inherit from array as `Object.create(arr)`
-+ we inherit anyways
+  4. Inherit from array as `Object.create(arr)`
+  + we inherit anyways
 
-5. Inherit from array as `Object.create(Array.prototype)`
-- 10 times slower than direct array
+  5. Inherit from array as `Object.create(Array.prototype)`
+  - 10 times slower than direct array
 
-6. Just store in `scope.var`
-+ fastest
-+ no pollution
-+ allows other subscopes, like import, export, args etc
-- doesn't do direct inheritance
-  + enhances inheritance by maintaining pure object
+  6. Just store in `scope.var`
+  + fastest
+  + no pollution
+  + allows other subscopes, like import, export, args etc
+  - doesn't do direct inheritance
+    + enhances inheritance by maintaining pure object
 
-7. Store `node.scope` as vars.
+  7. Store `node.scope` as vars.
 
 ## [x] Remove desugaring or keep? -> remove, make desugaring in analyser
 
-- desugaring solves initially
-+ removing is shorter
-+ desugaring can be done in-place
-+ it can be helpful to maintain parentheses, since parens define scope
-+ good for parens opening, not always scope is needed
+  - desugaring solves initially
+  + removing is shorter
+  + desugaring can be done in-place
+  + it can be helpful to maintain parentheses, since parens define scope
+  + good for parens opening, not always scope is needed
 
 ## [x] Dynamic arrays, eg. `a->[1,a,2]` -> wait for structs generally, currently try memory pointers approach
 
-1. Alloc memory every return
-- needs somehow freeing memory, gc or manually
-  - there doesn't seem to exist a reliable gc way, still would need manual run
-- harder for user to read values back: dealing with typed arrays, need to know $memory naming
+  1. Alloc memory every return
+  - needs somehow freeing memory, gc or manually
+    - there doesn't seem to exist a reliable gc way, still would need manual run
+  - harder for user to read values back: dealing with typed arrays, need to know $memory naming
 
-2. Reuse memory by callsite
-- Subsequent call erases memory
-- Makes some conflict with stateful memory `*[10]a = [1,2,3]`, since that's almost identical by meaning except for auto-sliding
+  2. Reuse memory by callsite
+  - Subsequent call erases memory
+  - Makes some conflict with stateful memory `*[10]a = [1,2,3]`, since that's almost identical by meaning except for auto-sliding
 
-3. Use multiple returns
-+ Perfect user api
-+ No memory collection issues
-- Limited to 1000 items
-  ~ can be fine-ish for low-latency sounds
-- Compiles to bloated unrolled code
-+ Limits lino to static (fixed-size) toy language
-- arrays make no point then
+  3. Use multiple returns
+  + Perfect user api
+  + No memory collection issues
+  - Limited to 1000 items
+    ~ can be fine-ish for low-latency sounds
+  - Compiles to bloated unrolled code
+  + Limits lino to static (fixed-size) toy language
+  - arrays make no point then
 
-4. Use wasm gc structs
-+ standard way
-+ perfect user api
-- not supported by anyone cept flagged chrome
-  - chance it will ever be implemented is very small, since it super-complicates gc
-  - gc: seems to undermine the point of wasm
+  4. Use wasm gc structs
+  + standard way
+  + perfect user api
+  - not supported by anyone cept flagged chrome
+    - chance it will ever be implemented is very small, since it super-complicates gc
+    - gc: seems to undermine the point of wasm
 
-5. Prohibit dynamic arrays allocation: only global (exported) arrays
-+ Maintains the old-school spirit of work with memory
-+ That's good practice for DSP
-- That's inconsistent language API
+  5. Prohibit dynamic arrays allocation: only global (exported) arrays
+  + Maintains the old-school spirit of work with memory
+  + That's good practice for DSP
+  - That's inconsistent language API
 
-6. Prohibit arrays generally, in favor of work with memory
-+ No need to add them until needed
-+ Direct work with memory is more apparent
-~ `x -> *[3]=(1,2,3)` returns internal fn memory, apparently
-+! we can redefine `<<` and `>>` for memory as shift operators, so that it's more apparent
-  * `*[3]x; x << 1;` - shift left, `*[3]x; x >> 1;` - shift right
-~? what's the difference between `([12]x) -> x` and `(*[12]x) -> x`
-  * `*[123]x` allocates memory, whereas `[12]x` indicates reference to existing memory
-    ? does that mean we can do `[123]x = memoryPtr`?
-      ? whould we let creating at any offset then, eg `[123,6]x = memoryPtr`
-+ that makes undefined-length arrays more attainable: `([]x)` means function can take any memory pointer
-  * and we can track allocated memories, easiest way is to have length be `ptr-1`.
-! we can define `|=` operator as `x |= x -> x*2` which transforms array in-place
-  + `y = x | x -> x*2` maps x memory to y
-? whad does `([]x) -> x | mult` return?
-  ? temporary internal representation of mapped x items?
-  ? or function itself becomes a macro, so that once applied somewhere else it just "unfolds"?
-  -> the semantics is similar to loop, what does `i < 10 <| i * 2` mean? By itself it returns group, but if forwarded into `[]` it populates memory
+  6. Prohibit arrays generally, in favor of work with memory
+  + No need to add them until needed
+  + Direct work with memory is more apparent
+  ~ `x -> *[3]=(1,2,3)` returns internal fn memory, apparently
+  +! we can redefine `<<` and `>>` for memory as shift operators, so that it's more apparent
+    * `*[3]x; x << 1;` - shift left, `*[3]x; x >> 1;` - shift right
+  ~? what's the difference between `([12]x) -> x` and `(*[12]x) -> x`
+    * `*[123]x` allocates memory, whereas `[12]x` indicates reference to existing memory
+      ? does that mean we can do `[123]x = memoryPtr`?
+        ? whould we let creating at any offset then, eg `[123,6]x = memoryPtr`
+  + that makes undefined-length arrays more attainable: `([]x)` means function can take any memory pointer
+    * and we can track allocated memories, easiest way is to have length be `ptr-1`.
+  ! we can define `|=` operator as `x |= x -> x*2` which transforms array in-place
+    + `y = x | x -> x*2` maps x memory to y
+  ? whad does `([]x) -> x | mult` return?
+    ? temporary internal representation of mapped x items?
+    ? or function itself becomes a macro, so that once applied somewhere else it just "unfolds"?
+    -> the semantics is similar to loop, what does `i < 10 <| i * 2` mean? By itself it returns group, but if forwarded into `[]` it populates memory
 
-6.1 Make global `*[10]a` a memory reference.
-+ Generally `*` points to memory
-+ It's logically static - doesn't depend on callsite
-+ Array here can be replaced with group, denoting init values
+  6.1 Make global `*[10]a` a memory reference.
+  + Generally `*` points to memory
+  + It's logically static - doesn't depend on callsite
+  + Array here can be replaced with group, denoting init values
 
-6.2 What difference does it make creating array as `*[3]a = [1,2,3]` vs `[3]a = [1,2,3]` vs `*[1,2,3]`?
+  6.2 What difference does it make creating array as `*[3]a = [1,2,3]` vs `[3]a = [1,2,3]` vs `*[1,2,3]`?
 
-* `*[]` can save into callstack, `[]` can just directly allocate.
+  * `*[]` can save into callstack, `[]` can just directly allocate.
   - direct allocation requires disposal which we want to avoid.
     ? wait for structs?
 
-## [x] 1-based index vs 0-based index -> use 0-based since time starts with 0
+## [ ] 1-based index vs 0-based index ->
 
-* See ref https://www.reddit.com/r/ProgrammingLanguages/comments/t86ebp/thoughts_on_1based_indexing/
-. `a[1]` is first element (obvious), but not conventional
-. `1..n` is common math notation
-. `a[-1]` is considered the last element conventionally, like 1st from the end.
-. `a[len]` with 0-indexing is expected to be `a[0]`
-* From https://www.jsoftware.com/papers/indexorigin.htm there's clearer arguments pro-0:
-. We're born at 0 age, time starts with 0 seconds, year 2000 is 1st year of 2-nd millenium, so index indicates the starting _position_ in a sequence, whereas 1-based index indicates number of an element.
+  * 1-based
+    * See ref https://www.reddit.com/r/ProgrammingLanguages/comments/t86ebp/thoughts_on_1based_indexing/
+    + `a[1]` is first element (obvious), but not conventional
+    + `1..n` is common math notation
+    + `a[-1]` is considered the last element conventionally, like 1st from the end.
+    + `a[len]` with 0-indexing is expected to be `a[0]`
+  * 0-based
+    + super conventional
+    * From https://www.jsoftware.com/papers/indexorigin.htm there's clearer arguments pro-0:
+    + We're born at 0 age, time starts with 0 seconds, year 2000 is 1st year of 2-nd millenium, so index indicates the starting _position_ in a sequence, whereas 1-based index indicates number of an element.
+      - but that's still first year, although it goes from 0 to 1
+      . so it's a question either we choose offset as index or number as index
+    + wraps `a[-1]` organically to last element
+    - `x[1024]` creates an array of `1025` items
 
 ## [x] Allocate memory: `*[size]x = (1,2,3)` vs `[12]x = [1,2,3]` -> use arrays x = [1,2,3]
 
-1. `*[size]x = (1,2,3)`
+  1. `*[size]x = (1,2,3)`
 
-+ allows to skip arrays for at least first time
-+ enables `x << 2` operator for shifting memory value
-  ~ although `x+1` can work ostensibly too
-- adds extra meaning to `*` from _stateful_ to _saved_.
-- there's no easy way to create in-place memory fragment: to pass memory, it needs `*[]x=(1,2,3,4)` which is weird
-  ? can we create in-place memory fragment as `[1,2,3,4]`
-    . but then we can't create `*[size]x = (1,2,3)` as easily, since just `*[12]x` doesn't allocate anything (it should).
+  + allows to skip arrays for at least first time
+  + enables `x << 2` operator for shifting memory value
+    ~ although `x+1` can work ostensibly too
+  - adds extra meaning to `*` from _stateful_ to _saved_.
+  - there's no easy way to create in-place memory fragment: to pass memory, it needs `*[]x=(1,2,3,4)` which is weird
+    ? can we create in-place memory fragment as `[1,2,3,4]`
+      . but then we can't create `*[size]x = (1,2,3)` as easily, since just `*[12]x` doesn't allocate anything (it should).
 
-2. `[12]x = [1,2,3]`
+  2. `[12]x = [1,2,3]`
 
-+ more natural convention
-- no way to deallocate, unless we find something like `~x`.
--> requires some GC mechanism
+  + more natural convention
+  - no way to deallocate, unless we find something like `~x`.
+  -> requires some GC mechanism
 
-3. `x = [1,2,3]`, `(x)->{}`, `*x = [..3s]` - don't introduce memory prefix
+  3. `x = [1,2,3]`, `(x)->{}`, `*x = [..3s]` - don't introduce memory prefix
 
-+ compatible with language logic: no separate notation for types, including array
-+ memory block can be statically analyzed by most of the cases via usage/call semantics
-  + eg. `a[1]`, `a.1` etc.
-    ~+ we prohibit `i = (1,2,3)` then in favor of `i[0..3] = (1,2,3)`
-+ similar to JS
-- external API requires defining array block via function or something, can't just pass region of memory
-  ~ seems we're going to need dynamic allocation due to the following factors:
-    * external API must define mem length somehow
-    * length operator `a[]` should be meaningful dynamically
-    * list comprehension, loop or fold can produce any-length lists
-    * we're anyways exporting memory under some technical name
-  ~ gotta need to implement `free` function as well or even an operator for that. `~x`?
-    + reminds of markdown's ~~x~~.
-    + that's syntax for C++ destructors
-    + binary ops applied to arrays obtain new meaning -that's nice
+  + compatible with language logic: no separate notation for types, including array
+  + memory block can be statically analyzed by most of the cases via usage/call semantics
+    + eg. `a[1]`, `a.1` etc.
+      ~+ we prohibit `i = (1,2,3)` then in favor of `i[0..3] = (1,2,3)`
+  + similar to JS
+  - external API requires defining array block via function or something, can't just pass region of memory
+    ~ seems we're going to need dynamic allocation due to the following factors:
+      * external API must define mem length somehow
+      * length operator `a[]` should be meaningful dynamically
+      * list comprehension, loop or fold can produce any-length lists
+      * we're anyways exporting memory under some technical name
+    ~ gotta need to implement `free` function as well or even an operator for that. `~x`?
+      + reminds of markdown's ~~x~~.
+      + that's syntax for C++ destructors
+      + binary ops applied to arrays obtain new meaning -that's nice
 
-4. Via stdlib fully, `x = alloc(1,2,3)`,
-  - no syntax support
-  - no type checking
-  - hard to write values
+  4. Via stdlib fully, `x = alloc(1,2,3)`,
+    - no syntax support
+    - no type checking
+    - hard to write values
 
 ## [x] Compiler: expressions return type -> use side-effects?
 
@@ -2915,298 +2958,315 @@ Having wat files is more useful than direct compilation to binary form:
 
 ## [x] Precedence hurdle: |, (<|, |>), (=, +=) -> let's make `| ->` a ternary and keep `|` precedence as is
 
-* it seems loop/fold, assign and BOR must be right-assoc same-precedence operator
-* otherwise there are tradeoffs like `i<|x[i] = 1` or `a=b | c` or `a <| b|c |> d`
-* NOTE: assign has += *= etc, also it's right assoc whereas loops are not.
+  * it seems loop/fold, assign and BOR must be right-assoc same-precedence operator
+  * otherwise there are tradeoffs like `i<|x[i] = 1` or `a=b | c` or `a <| b|c |> d`
+  * NOTE: assign has += *= etc, also it's right assoc whereas loops are not.
 
-* `a | b <| c`
-  * `a|b <| c` or `a | b <| c`
-* `a <| b | c`
-  * `a<|b | c` or `a <| b | c`: `|` <= `<|`, lassoc
-* `a | b = c`
-  ?
-* `a = b | c`
-  * `a = b|c`: `|` >= `=`, rassoc
-  * `a=b | c`
-    - can break existing common binary expressions, but other tradeoff is worse
-  * `a=b <| c`, since `|` == `<|`
-    + pretty meaningful too
-* `a <| b[i] = c`
-  * `a <| b[i]=c` : `=` >= `<|`, rassoc
-  * `a<|b[i] = c`
-    - left side is meaningless here
-* `a = b <| c`
-  ? `a=b <| c`
+  * `a | b <| c`
+    * `a|b <| c` or `a | b <| c`
+  * `a <| b | c`
+    * `a<|b | c` or `a <| b | c`: `|` <= `<|`, lassoc
+  * `a | b = c`
+    ?
+  * `a = b | c`
+    * `a = b|c`: `|` >= `=`, rassoc
+    * `a=b | c`
+      - can break existing common binary expressions, but other tradeoff is worse
+    * `a=b <| c`, since `|` == `<|`
+      + pretty meaningful too
+  * `a <| b[i] = c`
+    * `a <| b[i]=c` : `=` >= `<|`, rassoc
+    * `a<|b[i] = c`
+      - left side is meaningless here
+  * `a = b <| c`
+    ? `a=b <| c`
 
-* Ideal: `a <| b = c = d | e = f` -> `(a <| (b=c=d)) | (e=f)`
-  * `=` > `<|`, `<|` == `=`
+  * Ideal: `a <| b = c = d | e = f` -> `(a <| (b=c=d)) | (e=f)`
+    * `=` > `<|`, `<|` == `=`
 
-?! can we make pipe rassoc same level as =, and `<|`, `|>` - lassoc?
-  * seems it just needs special token parser
--> we can reduce problem only to `a=b|c`, so that pipe operator requires explicit `(a=b)|c`,
-  but the rest works fine
+  ?! can we make pipe rassoc same level as =, and `<|`, `|>` - lassoc?
+    * seems it just needs special token parser
+  -> we can reduce problem only to `a=b|c`, so that pipe operator requires explicit `(a=b)|c`,
+    but the rest works fine
 
 ## [x] how to include `a=b|c` expression? (a=b)|c doesn't make sense. -> ~~let's guess standard | precedence, and expect pipes to be properly wrapped~~ let's make `| ->` a ternary operator and keep `|` precedence
 
-? what's heuristic behind this?
+  ? what's heuristic behind this?
 
-* assignment lhs?
-  - can be `a <| b = c | d`
+  * assignment lhs?
+    - can be `a <| b = c | d`
 
 ## [x] Arrays: rotate or not rotate? -> rotate via memcpy ops
 
-* Rotate: `list << 1`, `list >> 2`
-  + Allows explicit ring buffers
-  + Allows explicit memory buffers
-  + If we implement memory buffers somehow else, we still need to store offset, not shift actual memory
-  + Offset param is possibly fastest way to implement it
-  + It makes use of i32 spot
-  - It's slower on access, since it must apply extra memory read / sum operator
-  - If we export such array, the memory becomes useless to read
-    ? We may not need to care about exact rotation, array can have meaning as a chunk
-  - There's no way to read the shifted amount by user
-  ? Do we ever need rotating more than just 1 step?
-  ? Do we ever need rotating right, rather than left?
-  ? Do we ever need non-rotating memory in function body?
-  - Rotate can be done as `a = a[1..,0]`
-    ~ very costly
-  - It can be implemented relatively safely by user, without perf penality and more explicitly
-    . `a[offset + 1]; offset++`
-    + since we already rotate index access via modwrap
-    - prohibits static indexes like `x.0`, `x.1`
+  * Rotate: `list << 1`, `list >> 2`
+    + Allows explicit ring buffers
+    + Allows explicit memory buffers
+    + If we implement memory buffers somehow else, we still need to store offset, not shift actual memory
+    + Offset param is possibly fastest way to implement it
+    + It makes use of i32 spot
+    - It's slower on access, since it must apply extra memory read / sum operator
+    - If we export such array, the memory becomes useless to read
+      ? We may not need to care about exact rotation, array can have meaning as a chunk
+    - There's no way to read the shifted amount by user
+    ? Do we ever need rotating more than just 1 step?
+    ? Do we ever need rotating right, rather than left?
+    ? Do we ever need non-rotating memory in function body?
+    - Rotate can be done as `a = a[1..,0]`
+      ~ very costly
+    - It can be implemented relatively safely by user, without perf penality and more explicitly
+      . `a[offset + 1]; offset++`
+      + since we already rotate index access via modwrap
+      - prohibits static indexes like `x.0`, `x.1`
 
-  ?! note: we can use `@i++, @p++` directives to indicate that phase is incremented after the fn call
+    ?! note: we can use `@i++, @p++` directives to indicate that phase is incremented after the fn call
 
-* Rotate as `/ a = [1..,0];` via memory copy ops
-  ? how efficient is that?
+  * Rotate as `/ a = [1..,0];` via memory copy ops
+    ? how efficient is that?
 
 
 ## [x] Arrays: neg-index access or no? -> let's try modwrap
 
-+ handy & complacent with slicing
-- suboptimal performance, since enforces (idx % len) operation = reading array length
-  - especially tacky to call included `wat/i32.modwrap` function
-- mod is not exactly right: out-of-limit write must not rotate to the beginning
-  * the only meaningful range is -len..len, everything else must return null or NaN or alike
-+ we kind-of need idx checker function if we're going to implement ring buffer
-+ modwrap operator is for that purpose...
+  + handy & complacent with slicing
+  - suboptimal performance, since enforces (idx % len) operation = reading array length
+    - especially tacky to call included `wat/i32.modwrap` function
+  - mod is not exactly right: out-of-limit write must not rotate to the beginning
+    * the only meaningful range is -len..len, everything else must return null or NaN or alike
+  + we kind-of need idx checker function if we're going to implement ring buffer
+  + modwrap operator is for that purpose...
 
 ## [x] Scope resolution -> functions have no nested scopes and declared at the top level
 
-* Would be nice to make all variables local
-  + less noise in code, + local.tee available
-* Same time functions need to have nested scopes, so common scope is global
-  + allows storing tmp variables in local scope
-* Dynamic anonymous functions may need to have applied scope & access to global
-  ~ Ideally we'd need dynamic vars creation, like `global $fnX/varX`
-* Alternatively, we can just inline any functions defined within functions
-  - not always possible, like in recursion case, which is main use-case
-    ~- maybe possible - via block or loop?
+  * Would be nice to make all variables local
+    + less noise in code, + local.tee available
+  * Same time functions need to have nested scopes, so common scope is global
+    + allows storing tmp variables in local scope
+  * Dynamic anonymous functions may need to have applied scope & access to global
+    ~ Ideally we'd need dynamic vars creation, like `global $fnX/varX`
+  * Alternatively, we can just inline any functions defined within functions
+    - not always possible, like in recursion case, which is main use-case
+      ~- maybe possible - via block or loop?
 
 ## [x] Make functions `f(x)=x` separate from mappers `f=x->x`? -> yes, let's separate
 
-+ We don't support anonymous functions anyways `x -> y -> z`
-  * with `x(a,b) = (a * b)` it's impossible to create anonymous function
-+ We make it explicit that mapper is just syntactic sugar for iterator/fold, whereas function is runtime (exportable) construct
-+ We solve compiler code inconsistency of passing `name` param to `->` expr.
-+ `double(n) = n*2;` is shorter than `double = n -> n*2`
-+ it's classic math notation for functions
-+ it's compatible with mono
-+ limits clamping more meaningfully
-+ make more sense returning multiple values rather than mapper
-+ mapper doesn't need to look fn-like `list | x,i -> i` (no need for scopes)
-+ mapper visually belongs to synax better, than designating it with function meaning
-?- some conflict/issue with storing functions in a table, eg `osc=[sin:x->x,tri:x->x]`
-  * likely can be `osc=[sin(x)=...x,tri(x)=...x]`
-+ resolves the issue of scope (above): no need to make all vars global since no scope recursion
+  + We don't support anonymous functions anyways `x -> y -> z`
+    * with `x(a,b) = (a * b)` it's impossible to create anonymous function
+  + We make it explicit that mapper is just syntactic sugar for iterator/fold, whereas function is runtime (exportable) construct
+  + We solve compiler code inconsistency of passing `name` param to `->` expr.
+  + `double(n) = n*2;` is shorter than `double = n -> n*2`
+  + it's classic math notation for functions
+  + it's compatible with mono
+  + limits clamping more meaningfully
+  + make more sense returning multiple values rather than mapper
+  + mapper doesn't need to look fn-like `list | x,i -> i` (no need for scopes)
+  + mapper visually belongs to synax better, than designating it with function meaning
+  ?- some conflict/issue with storing functions in a table, eg `osc=[sin:x->x,tri:x->x]`
+    * likely can be `osc=[sin(x)=...x,tri(x)=...x]`
+  + resolves the issue of scope (above): no need to make all vars global since no scope recursion
 
 ## [x] Replace `<|`, `|`, `|>`? -> ~~Let's try `::` for loop/generator and `list -> item ::` for extended loop/tranformer~~ let's use `<|` for loop/pipe, `#` for member placeholder, `a <|= b <| c` for writing out iteration results
 
-+ Less problems with overloading `|`
-+ Fold operator is likely not as useful
-+ `|` and `|>` require fake function, which is whole mental concept
-+ These things can be solved via single simple loop
-+ One loop operator is way less cognitive load, than the plaiade of `<|`, `|`, `|>`, `->`
+  + Less problems with overloading `|`
+  + Fold operator is likely not as useful
+  + `|` and `|>` require fake function, which is whole mental concept
+  + These things can be solved via single simple loop
+  + One loop operator is way less cognitive load, than the plaiade of `<|`, `|`, `|>`, `->`
 
-? how to do "in" operator, ie. `item <- list <> operator`? -> `list :: it * 2`
-  ? `list -> item <> (item * 2)`
-  ? `list -> item :: (item * 2)`
-    - that operator `list -> item` has no meaning by itself
-  ? `list :: x -> x*2`
-    - confusion with function mappers, which is not
-    + c-like pattern `list::item -> item*2`, meaning for each item
-    * loop as `a < 3 -> a++`
-  ? `list -> item :: item * 2`
-    + also c-like pattern
-    + loop as `a < 3 :: a++`
-    + list comprehension thing, reversed
-  ? `item -< list :: (item * 2)`
-    - wrong meaning to clamp operator
-  ? `list ~ item :: (item * 2)`
-  ? `item ~ list :: (item * 2)`
-    - `lpf(x, freq, Q) = (x ~ xi,i :: x[i] = lpf(xi, freq, Q)).` looks unwieldy, compared to
-      `lpf(x, freq, Q) = (x |= x -> lpf(x, freq, Q)).`
-  ? `list ~> item :: (item * 2)`
-  ? `list :item: (item * 2)`
-    - `list : item : (item * 2)`
-  ? `list :: (@ * 2)` - special character for item
-  ? `list :: (& * 2)`
-    + almost like pipe by meaning
-  ? `list :: # * 2`
-    + it's the shortest possible notation
-    * `list :: ^^ # & #`
-  ? `list#item :: item * 2`
-    + very similar to `@path#item`
-    - makes `#` an operator
-    - `list # item :: item * 2` is not as obvious
-  ? `item @ list :: item * 2`
-    ?+ maybe combine with `pi,sin @ 'math'`
+  ? how to do "in" operator, ie. `item <- list <> operator`? -> `list :: it * 2`
+    ? `list -> item <> (item * 2)`
+    ? `list -> item :: (item * 2)`
+      - that operator `list -> item` has no meaning by itself
+    ? `list :: x -> x*2`
+      - confusion with function mappers, which is not
+      + c-like pattern `list::item -> item*2`, meaning for each item
+      * loop as `a < 3 -> a++`
+    ? `list -> item :: item * 2`
+      + also c-like pattern
+      + loop as `a < 3 :: a++`
+      + list comprehension thing, reversed
+    ? `item -< list :: (item * 2)`
+      - wrong meaning to clamp operator
+    ? `list ~ item :: (item * 2)`
+    ? `item ~ list :: (item * 2)`
+      - `lpf(x, freq, Q) = (x ~ xi,i :: x[i] = lpf(xi, freq, Q)).` looks unwieldy, compared to
+        `lpf(x, freq, Q) = (x |= x -> lpf(x, freq, Q)).`
+    ? `list ~> item :: (item * 2)`
+    ? `list :item: (item * 2)`
+      - `list : item : (item * 2)`
+    ? `list :: (@ * 2)` - special character for item
+    ? `list :: (& * 2)`
+      + almost like pipe by meaning
+    ? `list :: # * 2`
+      + it's the shortest possible notation
+      * `list :: ^^ # & #`
+    ? `list#item :: item * 2`
+      + very similar to `@path#item`
+      - makes `#` an operator
+      - `list # item :: item * 2` is not as obvious
+    ? `item @ list :: item * 2`
+      ?+ maybe combine with `pi,sin @ 'math'`
 
-? what's the operator character? -> `::`
-  * `<>`? `(while i<500 i++)` -> `(i < 500 <> i++)`
-    + diamond is used in flowchart and condition
-    - `<>` associates with not-equal from other languages
-  * `::`? `(while i<500 i++)` -> `(i < 500 :: i++)`
-    + ruby-like iteration
-    + better for list comprehensions (classical-ish)
-    + lightweight feeling
-    - doesn't associate with producing/mapping, more just iteration
-      +? maybe we don't need production meaning as much, since we rarely produce new arrays
-        + list comprehension can be non-trivial to implement, since requires dynamic memory allocation and prone to memory overflow errors
-    + allows `::=` operator, modifying list in-place, eg. `[1..100] ::= # * 2` or `[1..100] ::= & * 2`
-    - it's not really pipe-able `out ::= gen() :: filter(#) :: amplify(#)`
-      . with pipe that's `out = out |> gen() |> filter(#) |> amplify(#)`
-        - doesn't look nice as self-assign `out |>= gen() |> filter(#) |> amp(#)`
-  * `~>`? `(while i<500 i++)` -> `(i < 500 ~> i++)`
-    + meaning iteration
-    + associates with producing more
+  ? what's the operator character? -> `::`
+    * `<>`? `(while i<500 i++)` -> `(i < 500 <> i++)`
+      + diamond is used in flowchart and condition
+      - `<>` associates with not-equal from other languages
+    * `::`? `(while i<500 i++)` -> `(i < 500 :: i++)`
+      + ruby-like iteration
+      + better for list comprehensions (classical-ish)
+      + lightweight feeling
+      - doesn't associate with producing/mapping, more just iteration
+        +? maybe we don't need production meaning as much, since we rarely produce new arrays
+          + list comprehension can be non-trivial to implement, since requires dynamic memory allocation and prone to memory overflow errors
+      + allows `::=` operator, modifying list in-place, eg. `[1..100] ::= # * 2` or `[1..100] ::= & * 2`
+      - it's not really pipe-able `out ::= gen() :: filter(#) :: amplify(#)`
+        . with pipe that's `out = out |> gen() |> filter(#) |> amplify(#)`
+          - doesn't look nice as self-assign `out |>= gen() |> filter(#) |> amp(#)`
+    * `~>`? `(while i<500 i++)` -> `(i < 500 ~> i++)`
+      + meaning iteration
+      + associates with producing more
 
-? how to implement in-place modifier, like `x |= x -> abc` -> `a ::= & * 2`
+  ? how to implement in-place modifier, like `x |= x -> abc` -> `a ::= & * 2`
 
-? what's the best character for placeholder?
-  * `list :: #*2`
-    + `#` is almost perfect for topic/reference, associates with `#`th item
-      - needs prohibiting variables starting from # though
-        - which is problematic for mono buffers `#tri = [..1s] ::= tri(@ * 2)`
-  * `list :: &*2`
-    + & is almost-character, feels more like an id
-    - has weird connotation as binary
-    - makes `list :: ^^&&&` a valid construct, ugh
-    - there's too much meaning for `&` character as `&`, `&&` already
-  * `list :: @ * 2`
-    + relatively safe
-    + associates with id / character quite a bit
-    + is not overused by other meanings, except for import
-    - conflicts with import
-  * `list :: ~ * 2`
-    + hints at "iteratee"
-  * `list :: () * 2`
-  * `list :: . * 2`
+  ? what's the best character for placeholder?
+    * `list :: #*2`
+      + `#` is almost perfect for topic/reference, associates with `#`th item
+        - needs prohibiting variables starting from # though
+          - which is problematic for mono buffers `#tri = [..1s] ::= tri(@ * 2)`
+    * `list :: &*2`
+      + & is almost-character, feels more like an id
+      - has weird connotation as binary
+      - makes `list :: ^^&&&` a valid construct, ugh
+      - there's too much meaning for `&` character as `&`, `&&` already
+    * `list :: @ * 2`
+      + relatively safe
+      + associates with id / character quite a bit
+      + is not overused by other meanings, except for import
+      - conflicts with import
+    * `list :: ~ * 2`
+      + hints at "iteratee"
+    * `list :: () * 2`
+    * `list :: . * 2`
 
-? ALT: `a < 10 |> i++`, `list | item -> item*2`, pipe as `list |= i -> i * 2 | i -> filter(i)`?
-  + keeps the notion of "producing"
-  + less mental load, `|>` and `| i ->` are similar
-  + turns `a | b -> c` into a ternary (that's it)
-    - somewhat parsing problem, it's problematic to have `|` of different precedence
-  + keeps notion of diamond (flow loops) and vertical bar (pipe)
-  + makes nice meaning to pipes `gen() | i -> filter(i) | i -> amp(i)`
-  + makes meaning for `|=` as `out |= i -> i`
-  + no topic operator problem
-  + resolves `|` precedence problem
-  ~- `|>` is confusable with pipe - it has little to do with pipe...
-    ~+ it acts more as generator producing items (no need for intermediary `i`)
-  - overwrite-generating `out = out |> sin(phase) | x -> adsr(x,a,d,s,r) |...` converts into
-    `out |>= sin(phase) | x -> adsr()`, which is heavy operator `|>=`
-    ~ would be easier to have `out ::= sin(phase)`?
-    ~ likely relatively rare
-  -~ overloading `|` (although resolvable, is not clean still)
-  -? `list |> x` - how do we make difference with this and `a < 10 |> i++`? List is always truthy
-    ? should we just make `|>` always for condition as the left part, ie. only `while` loop?
-      + that would solve `|>=` operator problem
-      - generators would become transforms `out |= _ -> sin()`
-  ? should we make `a < 2 -> a++`
-    - nah, non-argument meaning for `->` is not nice
-  ~- blocks potential space for anonymous functions
+  ? ALT: `a < 10 |> i++`, `list | item -> item*2`, pipe as `list |= i -> i * 2 | i -> filter(i)`?
+    + keeps the notion of "producing"
+    + less mental load, `|>` and `| i ->` are similar
+    + turns `a | b -> c` into a ternary (that's it)
+      - somewhat parsing problem, it's problematic to have `|` of different precedence
+    + keeps notion of diamond (flow loops) and vertical bar (pipe)
+    + makes nice meaning to pipes `gen() | i -> filter(i) | i -> amp(i)`
+    + makes meaning for `|=` as `out |= i -> i`
+    + no topic operator problem
+    + resolves `|` precedence problem
+    ~- `|>` is confusable with pipe - it has little to do with pipe...
+      ~+ it acts more as generator producing items (no need for intermediary `i`)
+    - overwrite-generating `out = out |> sin(phase) | x -> adsr(x,a,d,s,r) |...` converts into
+      `out |>= sin(phase) | x -> adsr()`, which is heavy operator `|>=`
+      ~ would be easier to have `out ::= sin(phase)`?
+      ~ likely relatively rare
+    -~ overloading `|` (although resolvable, is not clean still)
+    -? `list |> x` - how do we make difference with this and `a < 10 |> i++`? List is always truthy
+      ? should we just make `|>` always for condition as the left part, ie. only `while` loop?
+        + that would solve `|>=` operator problem
+        - generators would become transforms `out |= _ -> sin()`
+    ? should we make `a < 2 -> a++`
+      - nah, non-argument meaning for `->` is not nice
+    ~- blocks potential space for anonymous functions
 
-? ALT: `list -> item :: item*2`, `a < 2 :: a++`, `list -> item ::= item*2 -> item :: filter(item)`
-  + combines nicely list comprehension, for..in and while
-  + known list comprehension pattern, avoids association with functors / lambdas
-  + frees `|`
-  ? modify list in place `list ::= item -> item * 2` doesn't make sense
-    ?+ `list -> item ::= item * 2`
-      ?- but then `list ::= gen()` skips member, generally member picking must be optional-ish operation
-    + allows generating naturally as `list ::= a*b`, so that no `item` is needed
-  ? pipes `list -> item :: filter(item) -> filteredItem :: gain(item)`
-    + always returns a list
-    - a bit lengthy and unpredictable
-    ? should we prohibit pipes for explicity? `(list -> item :: filter(item)) -> item :: gain(item)`
-  - a bit haskelly feeling, somewhat chunky, no pipes :(
-  - `list -> item, i ::= item * 2` is not the most meaningful, unlike `list |= item, i -> item * 2`
-    + pipes reinforce mention of anonymous functions that we try to avoid
-  + `list -> item` and `a < b` are good left-hand part of a loop, indicating that the right part is repeatable
-  + `:` has a bit more to do from branching in `?:`
-  + No op overloading problems
-  + No mention of fake anonymous functions
-  + No conflict with `a | >b`
-  + Leaves `|>` operator for something meaningful
-  - a bit cryptic and non-intuitive things like `[0, .1, ...] -> x :: lpf(x, 108, 5)`, `out ::= oscillator[shape](phase) -> x :: adsr(x, 0, 0, .06, .24) -> x :: curve(x, 1.82);`
-  - reminds some crazy wasm spec `blocktype ::= 0x40       => [] -> []`
+  ? ALT: `list -> item :: item*2`, `a < 2 :: a++`, `list -> item ::= item*2 -> item :: filter(item)`
+    + combines nicely list comprehension, for..in and while
+    + known list comprehension pattern, avoids association with functors / lambdas
+    + frees `|`
+    ? modify list in place `list ::= item -> item * 2` doesn't make sense
+      ?+ `list -> item ::= item * 2`
+        ?- but then `list ::= gen()` skips member, generally member picking must be optional-ish operation
+      + allows generating naturally as `list ::= a*b`, so that no `item` is needed
+    ? pipes `list -> item :: filter(item) -> filteredItem :: gain(item)`
+      + always returns a list
+      - a bit lengthy and unpredictable
+      ? should we prohibit pipes for explicity? `(list -> item :: filter(item)) -> item :: gain(item)`
+    - a bit haskelly feeling, somewhat chunky, no pipes :(
+    - `list -> item, i ::= item * 2` is not the most meaningful, unlike `list |= item, i -> item * 2`
+      + pipes reinforce mention of anonymous functions that we try to avoid
+    + `list -> item` and `a < b` are good left-hand part of a loop, indicating that the right part is repeatable
+    + `:` has a bit more to do from branching in `?:`
+    + No op overloading problems
+    + No mention of fake anonymous functions
+    + No conflict with `a | >b`
+    + Leaves `|>` operator for something meaningful
+    - a bit cryptic and non-intuitive things like `[0, .1, ...] -> x :: lpf(x, 108, 5)`, `out ::= oscillator[shape](phase) -> x :: adsr(x, 0, 0, .06, .24) -> x :: curve(x, 1.82);`
+    - reminds some crazy wasm spec `blocktype ::= 0x40       => [] -> []`
 
-? ALT: `list | & * 2 | filter(&)`, `a < 2 | a++`, `list |= & * 2`
-  + the most minimal syntax
-  + classical look
-  + member picking problem is resolved: it's optional
-  - too short syntax for item iterators, it's more about pipe operator
-    ~ see below
-  - overloading `|` is not very wanted effect
-  - having rhs as code is not very wanted effect, it "wants to be" in a function body
-  - placeholder doesn't allow `idx` as second variable
-  ? can we replace `|` with just a bit more elaborate, eg.
-    * `a < 2 |: a++`, `list |: # * 2 |: filter(#)`, `list |:= # * 2`
-    * `a < 2 |> a++`, `list |> # * 2 |> filter(#)`, `list |>= # * 2`
-    * `a < 2 <| a++`, `list <| # * 2 <| filter(#)`, `list <|= # * 2`
+  ? ALT: `list | & * 2 | filter(&)`, `a < 2 | a++`, `list |= & * 2`
+    + the most minimal syntax
+    + classical look
+    + member picking problem is resolved: it's optional
+    - too short syntax for item iterators, it's more about pipe operator
+      ~ see below
+    - overloading `|` is not very wanted effect
+    - having rhs as code is not very wanted effect, it "wants to be" in a function body
+    - placeholder doesn't allow `idx` as second variable
+    ? can we replace `|` with just a bit more elaborate, eg.
+      * `a < 2 |: a++`, `list |: # * 2 |: filter(#)`, `list |:= # * 2`
+      * `a < 2 |> a++`, `list |> # * 2 |> filter(#)`, `list |>= # * 2`
+      * `a < 2 <| a++`, `list <| # * 2 <| filter(#)`, `list <|= # * 2`
 
-? ALT: `list <| # * 2 <| filter(#)`, `a < 2 <| a++`, `list = list <| # * 2`
-  + `<|` is graphically meaningful for loop
-  + `#` is meaningful for member
-    - reserves that keyword, can't simply use in var names
-      ~ kind of fine to redefine that for local scope
-        - we don't redefine variables in scopes, we only assign values to them
-          ~ kind of not the biggest evil
-      ~ we can limit `#` to be used in var names as part, never by itself
-    ? `.`, has almost same meaning & benefints
-      * `list <| . * 2 <| filter(.)`, `a < 2 <| a++`, `list <|= . * 2`
-      - will make export as last statement
-        + which can be actually good & less noise & compatible with function return, it's unnecessary decorum there
-      - conflicts with ranges as `list <| ...1` - is that `.. .1` or `. .. 1`?
-  + keeps spirit of pipes, more meaningfully
-  + no mandatory member
-  + innovative & hereditary same time
-  + very compact
-  - problem with mapping `list <|= # * 2` - too heavy for map operator
-    + quite nice directional meaning btw, like arrow points that the result is rewritten by-element
-    ? do directly as `list = list <| # * 2`
-      - it's not obvious that we assign iterator result (group or last member) to initial variable
-        ?+ why not obvious? quite obvious
-    ? should we consider `list[..] = list <| #` instead?
-      + keeps pipe untouched
-      + introduce all-range operator (cool!)
-      + matches lists reassignment
-      + makes iterator meaningful in terms of returning result of pipe
-      - not obvious that _last_ pipe member is written back, not _first_
-    ? should we encourage `list <| ... <| list[i] = #` as result of pipe
-    ? should we just make `#` writable as `list <| # = result`
-      + very laconic
-      + !clever
-      + can modify list on the fly
-      + allows short operators as `list <| # *= volume`
-      - saving last value in pipe is weird `list <| #*2 <| filter(#) <| #=#`
-      - we can iterate via range `0.. <| # = 1` - assignment doesn't make sense here
-    ? should we direct pipe somewhere at the end?
-      `list <| #*2 <| filter(#) |> list`
-  ? how do we indicate index?
-    ? `list <| (*i=0, *prev; >i++, >prev=#;)`
-      + !clever!
+  ? ALT: `list <| # * 2 <| filter(#)`, `a < 2 <| a++`, `list = list <| # * 2`
+    + `<|` is graphically meaningful for loop
+    + `#` is meaningful for member
+      - reserves that keyword, can't simply use in var names, also smells from code perspective
+        ~ kind of fine to redefine that for local scope
+          - we don't redefine variables in scopes, we only assign values to them
+            ~ kind of not the biggest evil
+        ~ we can limit `#` to be used in var names as part, never by itself
+      ? `.`, has almost same meaning & benefints
+        * `list <| . * 2 <| filter(.)`, `a < 2 <| a++`, `list <|= . * 2`
+        - will make export as last statement
+          + which can be actually good & less noise & compatible with function return, it's unnecessary decorum there
+        - conflicts with ranges as `list <| ...1` - is that `.. .1` or `. .. 1`?
+    -? `for i, j` - how to refer to parent loop placeholder?
+      ? `#`, `##`, `###`?
+        + follows `^`, `^^`, `^^^` paren breaking logic
+        + matches markdowns
+    + keeps spirit of pipes, more meaningfully
+    + no mandatory member
+    + innovative & hereditary same time
+    + very compact
+    - problem with mapping `list <|= # * 2` - too heavy for map operator
+      + quite nice directional meaning btw, like arrow points that the result is rewritten by-element
+      ? do directly as `list = list <| # * 2`
+        - it's not obvious that we assign iterator result (group or last member) to initial variable
+          ?+ why not obvious? quite obvious
+      ? should we consider `list[..] = list <| #` instead?
+        + keeps pipe untouched
+        + introduce all-range operator (cool!)
+        + matches lists reassignment
+        + makes iterator meaningful in terms of returning result of pipe
+        - not obvious that _last_ pipe member is written back, not _first_
+      ? should we encourage `list <| ... <| list[i] = #` as result of pipe
+      ? should we just make `#` writable as `list <| # = result`
+        + very laconic
+        + !clever
+        + can modify list on the fly
+        + allows short operators as `list <| # *= volume`
+        - saving last value in pipe is weird `list <| #*2 <| filter(#) <| #=#`
+        - we can iterate via range `0.. <| # = 1` - assignment doesn't make sense here
+      ? should we direct pipe somewhere at the end?
+        `list <| #*2 <| filter(#) |> list`
+    ? how do we indicate index?
+      ? `list <| (*i=0, *prev; >i++, >prev=#;)`
+        + !clever!
+        - requires stateful varis per-block, not per-function
+
+  ? ALT: `(list:x <| x * 2):x <| filter(x)`, `a < 2 <| a++`, `list:x <|= x * 2`
+    - doesn't allow nice chaining
+    + most compact way to write element of list
+    - conflicts with named fn arguments
+
+  ? ALT: `list <> # * 2 <> filter(#)`, `a < 2 <> a++`, `list = list <> # * 2`
+    - doesn't have pipy look
+
+  ? ALT: `list |> # * 2 |> filter(#)`, `a < 2 |> a++`, `list = list |> # * 2`
+    + natural pipe symbol
+    - `a |>= # * 2` is unwieldy
 
 ## [x] `list <| x` vs `a < 1 <| x` - how do we know left side type? -> lhs is always either `.. <| #` or `list <| #`
 
@@ -3347,6 +3407,11 @@ Having wat files is more useful than direct compilation to binary form:
     + makes `#` part of var names
     + allows avoiding quotes
 
+## [ ] Should we make memory importable, instead of exportable?
+
+  + naturally enables shared memory
+  ? can help with question of naming memory?
+
 ## [ ] Directly call imported items as `@math.pi`?
 
   + so js does.
@@ -3364,6 +3429,7 @@ Having wat files is more useful than direct compilation to binary form:
     - it is sort of shadowing, which we don't welcome.
     ? Maybe we should just prohibit destructuring imports? Like, everything is very explicit and self-contained?
       ? destructuring of internals must be also possible: `(ABC, CDE) = @musi.chord`
+    ? What if `(pi, sin, cos) <= @math`?
   + makes `@` part of name with special meaning
 
 ## [ ] Should we make dot part of name, eg. `x.1`, `x.2`?
@@ -3383,13 +3449,6 @@ Having wat files is more useful than direct compilation to binary form:
   ? declare float alias variable at the moment of finding upgrade
     + allows merging analyser into 1-pass compiler
     + retains precision
-
-## [x] Limited variables `x-<0..100; x=1000;` -> nah
-  + allows static tracking of value
-  + compatible with arguments limiting
-  - we don't have explicit var declaration
-    * so `x-<..100` is confusable with just single clamp operation.
-    - fn args don't get ever-clamped, just once
 
 ## [ ] mix, smoothstep operators -> `-/` and `-/=` for smoothstep
 
@@ -3425,12 +3484,28 @@ Having wat files is more useful than direct compilation to binary form:
   * `..[-1]`, `..[0]`
     + technically correct
 
-## [x] non-inclusive range `0>..10` vs `0 > ..10` -> don't use non-inclusive ranges
+## [x] exclusive / non-inclusive range: how? -> don't use exclusive range
 
-  - non-inclusive ranges can be organized as `min..(max-1)` for ints
-    - or as `min..(max-.00001)` for floats
+  * `0..<10`, `0<..10`
+    - `0 > ..10`, `0.. < 10`
+  * `min..(max-1)` for ints, `min..(max-.00001)` for floats, so basically no exclusive ranges
+    + problem solved
+  * generally exclusives in langs are right `0..<10` or `0...10`, not making separate left `0>..10`
+  * we can only have `0 .< 10` or `0 .> 10`
+    ?- `x <> 0 .< 10` vs `x <> 0..<10`
+    + have logic as `==` becomes `!=`, so `..` becomes `.<`
+    + more laconic kind of
+  * inclusive as `0..=10`, `0..10` is exclusive
+    - `=` has wrong association, there must be `<`
+    + `Rust` has that
+    + open-right range seems to be ubiquotous & mathematically standard
+    - clamp is weird: `x -< 0..=10` -  very unnatural
+  * inclusive as `0...10`, exclusive as `0..<10`?
+    - too lengthy
+  * ruby's `0...10`?
+    - `0.. .10`
 
-## [x] replace `x -< 0..10` with `x =< 0..10`? -> nah, too confusing indeed. use `-<`, `-<=` as established pattern
+## [x] replace `x -< 0..10` with `x =< 0..10`? -> no, clamp is `x <? 0..10`
 
   ? do we ever need `clamp(x, 0, 10)`, opposed to `x = clamp(x, 0, 10)`?
     + it seems from examples we always `x = clamp(x, 0..10)`
@@ -3448,11 +3523,72 @@ Having wat files is more useful than direct compilation to binary form:
       * `x = x -/ 0..10`, `x =/ 0..10`
   - seems that's confusable: `a <= b..c` vs `a =< b..c`
 
-## [ ] Loop member as #:
-  - `for(i=0;i<len;i++) for(j=0;j<len;j++)` - how to refer to parent loop placeholder?
-  - `#` reserves a keyword - smelly from code perspective
+## [ ] Limited variables `x:0..100; x = 1000;` -> likely yes, good for arguments as well
+
+  + allows static tracking of value
+  + compatible with arguments limiting
+  - we don't have explicit clamp operator
+    ?+ can easily `x > 10 ? 10 : x`
+      ? can max be `x >? 10`
 
 ## [ ] Function references: use i32?
 
   + we can hold both $x global and $x function name
   + i32 can automatically mean function reference
+
+## [ ] Use v128 of i64 for rational numbers?
+
+  + Converts back to f64 on export
+  + Gives extreme precision/dimension
+
+## [x] min, max, clamp as `a <? 0..100`?
+
+  * `a |< ..10`, `a >| 10` for
+  * can be solved via clamp operator `a <> ..10`, `a <> 10..`
+    - adds confusion as `a < >..10`
+  * `a >? 10`, `a <? 10`
+    + meaningful shortened `a > 10 ? 10 : a`, `a < 10 ? 10 : a`
+    ? logically clamp is `a > 10 ? 10 : a < 0 ? 0 : a` -> `a <?> 0..10` or `a >?< 0..10` or `a <>? 0..10`
+      * or `a <? 10 >? 0` -> `a <? 0..10` meaning within, or less than
+      + `a >? 0..10` means outside, not clear though which side
+
+## [x] Create empty array - how? -> forget `[..10]`, use `x[0..10]` directly
+
+  * `[..10]`
+    - not clear if that's 10 members from 1 to 10 or
+    - confusing, since range starts with minus-infinity
+
+  * `[0..10 <| 0]`
+    + very explicit
+    - verbose
+
+  * `[0..10]` creates empty array
+    - not how range maps to group
+
+  * `[15]x` creates `x` as array
+    + gives static indication of var/argument as list.
+    - sabotages whole concept of `x = [1,2,3]` as `[]x = (1,2,3)`
+      + which can be nice since can replace concept of buffers with just lists
+      + this avoids `m = [n[1..3, 5, 6..]]` as `m[] = n[1..3, 4, 6..]`
+    - introduces new operator
+
+  * `x[0..6];`
+    + same as just declaring variable, but immediately declares a list
+    + removes the whole syntax concept of `[a,b,c]`
+    - discards position aliases
+      ? can be done as `x[2,-1] = (third:3, last:-1); x.third; x.last;`
+      ? alt: `x[third:2, last:-1] = (3,-1); x.last`
+        + then `(third, last) = x[..];`
+    - `x[2..4]` doesn't make any sense for initializing buffers
+      ~+ can just refer to items to prefill, eg. `x[5] = 0` or `x[2..3] = 4,5`
+    - `x[4]` creates buffer of 5 items
+      ? unless we make 1-based indexing
+    + if we drop named args/array members we can save `:` operator for later uses
+      ?! can be used for clamp or var range indication? like type definition but more meaningful
+    + solves issue of table of funcs definition: `funcs[..] = (a()=(), b()=())`
+    - iteration is available as `x <| #` and `x[..] <| #`
+      ~+ first case it's list iteration, second case it's group iteration
+    - declaring fn argument `gain(out[])` vs `gain(out[1024])` vs `gain(out)` - not clear the difference
+      ~ `x(out[])` is meaningless,
+      ~? `x(out[3])` creates array of 3 if arg is not provided
+    + reduces the necessity of 0-based indexing since list becomes a bit more hi-level thing
