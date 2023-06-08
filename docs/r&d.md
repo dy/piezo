@@ -1,71 +1,71 @@
 ## [x] name -> lino
 
-* soufn, sofn, sofun, so-fun, funzo, zfun
-* sound-fu, zound-fu, zo-fu
-* sonfu
-* zzfu, sone-fu
-* sone, sones, sonx, sounx, sonez, sonz, sounz
-   + sone-script (sonscript)
-* sonnes, sonn, sounes
-   + is sonnes (sounds in french), sones, sonne in German
-* sonra?
-   + feminine
-   + ra sound (Radha)
-   + mystical aspect, like spect
-* sondr, sounder? sounr? soonr?
-* sonl? sonal?
-   + sona language
-   + soun
-* sond?
-* sonescript?
-   + like sanskrit
-   + sound script
-* sonscript?
-  + son is common root for sound
-  + (sonata, song, sone, )
-  + .son extension is ok: reverb.son
-  + sanskrit (lamish but ok teaches humbleness)
-  + le son
-  + sonr naturally grows as IDE
-  - son is confusing with a person
-  - weak association with sound
-  ~ script has association with javascript, or roots from that (assemblyscript etc) - to mind that point.
-  → if we root from assembly, it has more sense to call sont
-* soneslang?
-* solr? solo? soloscript? solos?
-* sound-fun
-   + like "sounds fun" phrase.
+  * soufn, sofn, sofun, so-fun, funzo, zfun
+  * sound-fu, zound-fu, zo-fu
+  * sonfu
+  * zzfu, sone-fu
+  * sone, sones, sonx, sounx, sonez, sonz, sounz
+    + sone-script (sonscript)
+  * sonnes, sonn, sounes
+    + is sonnes (sounds in french), sones, sonne in German
+  * sonra?
+    + feminine
+    + ra sound (Radha)
+    + mystical aspect, like spect
+  * sondr, sounder? sounr? soonr?
+  * sonl? sonal?
+    + sona language
+    + soun
+  * sond?
+  * sonescript?
+    + like sanskrit
+    + sound script
+  * sonscript?
+    + son is common root for sound
+    + (sonata, song, sone, )
+    + .son extension is ok: reverb.son
+    + sanskrit (lamish but ok teaches humbleness)
+    + le son
+    + sonr naturally grows as IDE
+    - son is confusing with a person
+    - weak association with sound
+    ~ script has association with javascript, or roots from that (assemblyscript etc) - to mind that point.
+    → if we root from assembly, it has more sense to call sont
+  * soneslang?
+  * solr? solo? soloscript? solos?
+  * sound-fun
+    + like "sounds fun" phrase.
 
-* sonf?
-   + sound-functions
-   + sound-fun
-   + sound-fu
-   + sound-formulas
+  * sonf?
+    + sound-functions
+    + sound-fun
+    + sound-fu
+    + sound-formulas
 
-* sonr?
-   . maybe we should just keep name: it is short, clear, keeps .son files, playground
+  * sonr?
+    . maybe we should just keep name: it is short, clear, keeps .son files, playground
 
-* soun?
-   + short from sound
-   +~ soul
-   +~ sone
-   +~ sour
+  * soun?
+    + short from sound
+    +~ soul
+    +~ sone
+    +~ sour
 
-* line noise (lino)
-   + sonlang can be more generic than just sound: any linear signals
-   + looks like line noise
-   + produces line noise
-   + matches `mono`
-   + lino is beginning of "linotype"
-   - .son extension is missing
-      + .lin extension is pretty cool too, like flax
+  * line noise (lino)
+    + sonlang can be more generic than just sound: any linear signals
+    + looks like line noise
+    + produces line noise
+    + matches `mono`
+    + lino is beginning of "linotype"
+    - .son extension is missing
+        + .lin extension is pretty cool too, like flax
 
-* lisa
-   ~+ like lino
-   + mono -> lisa
-   + reminds Julia lang
-   + file can be named literally mono.lisa
-   - already exists: https://github.com/Somainer/lisa-lang
+  * lisa
+    ~+ like lino
+    + mono -> lisa
+    + reminds Julia lang
+    + file can be named literally mono.lisa
+    - already exists: https://github.com/Somainer/lisa-lang
 
 ## [ ] Free (nice) operators
 
@@ -1128,7 +1128,6 @@ Having wat files is more useful than direct compilation to binary form:
     - unwanted association with mult/div
     - pair-operators are heavy
 
-
 ## [x] Groups: basic operations -> syntax sugar
 
   * `a,b = b,a`
@@ -1410,7 +1409,6 @@ Having wat files is more useful than direct compilation to binary form:
   ? Can we avoid that by providing OUTPUT_PTR?
     - not really. We should pass output pointer and size to detect channels.
   →  + not necessarily. If we follow array method (see above), we can return pointer to first element of array, but 0 element indicates its length, so we can easily grab length from pointer.
-
 
 ## [x] Clauses/function overload: → optional, but can select by argument type (pointer vs value)
   + (input, aParam, kParam) signature handles any-channels input
@@ -1815,6 +1813,9 @@ Having wat files is more useful than direct compilation to binary form:
 ## [x] Latr: alloc, array etc.
   * latr can provide alloc and other common helpers
   - not latr but std. Latr is generic synthesis/science
+  * Lino Audio Testing Routines
+  * Lino Audio Toolkit ... R?
+  * Laboratory Transformator
 
 ## [x] Array/string length → `arr[]` for length is the most natural
   * Ref https://en.wikipedia.org/wiki/Comparison_of_programming_languages_(array)
@@ -2070,12 +2071,6 @@ Having wat files is more useful than direct compilation to binary form:
   + it takes less space and less computation
   + it is easier serializable
 
-### [x] sonscript → sontree → Wattree → wasm
-
-  + also allows sontree → jstree, just a set of transforms
-  * maybe we may need generalizing transformers
-
-
 ## [x] How to differentiate a-param from k-param argument -> no fn overloading
 
   * There's no way to differentiate gain(channels, aParam) and gain(channels, kParam).
@@ -2147,7 +2142,6 @@ Having wat files is more useful than direct compilation to binary form:
   2) hot swapping code in the worklet as it is playing and reusing memory state from the previous compile. If there's a delay/note/reverb tail playing from the previous compilation, and i compile a change, the new instance should inherit all the memory/buffers from the previous one, not start from zero. I have to be able to make changes without affecting the sound that is playing (too much). It won't be possible for 100% of the cases, but if the compiler can match the previous buffers with the new one then it should reuse them.
   3) parser/compiler errors with line/col/symbol/token information so they can be displayed inline in the editor while the user is typing, so they see what they're doing wrong. They don't need to be extremely descriptive, but at least showing the right symbol position i.e what to draw red.
   4) a way to export certain parameters into UI elements arbitrarily and with minimal effort. Right now in mono i've introduced a . prefix operator in the arguments so f(a, b, c) if i do f(a, .b, c) then i immediately get a knob for 'b' with that simple addition of the . prefix. That helps me a lot as a producer to not have to go elsewhere to define these and to try new things. The '.b' also becomes hoverable and can change with the wheel, but there's also a UI knob and they're associated, when you hover one, both light up. The idea is that once you export the controls like that, you can hide the editor and that can be a standalone effect/instrument with those controls it pulls from the code. You want another thing to tweak? Simply jump into the code and add a . next to the parameter and save. When there will be dozens of instruments and effects in the screen playing you need to be able to quickly do these things so you don't kill the flow. The flow must never be killed. That's the most important feature. You should be dancing all your way through from start to end while making a track without any gap of having to stop and take closer look at code or something isn't playing right or there are audible glitches etc. So first and foremost it is a party tool. You need to be able to party with it or it's worth nothing.
-
 
 ## [x] Tape machines -> try using array with shift, no need for explicit tape machines
 
@@ -2825,20 +2819,22 @@ Having wat files is more useful than direct compilation to binary form:
   - direct allocation requires disposal which we want to avoid.
     ? wait for structs?
 
-## [ ] 1-based index vs 0-based index ->
+## [x] 1-based index vs 0-based index -> 1-based seems very natural
 
   * 1-based
     * See ref https://www.reddit.com/r/ProgrammingLanguages/comments/t86ebp/thoughts_on_1based_indexing/
-    + `a[1]` is first element (obvious), but not conventional
+    - not very conventional
+    + `a[1]` is first element (obvious)
     + `1..n` is common math notation
     + `a[-1]` is considered the last element conventionally, like 1st from the end.
-    + `a[len]` with 0-indexing is expected to be `a[0]`
+    + `a[2]` as list creation corresponds to length of a
+    + `-1..1` range more obviously indicates reverse operation, since `0` has no meaning as index otherwise than that
   * 0-based
-    + super conventional
+    + very conventional
     * From https://www.jsoftware.com/papers/indexorigin.htm there's clearer arguments pro-0:
     + We're born at 0 age, time starts with 0 seconds, year 2000 is 1st year of 2-nd millenium, so index indicates the starting _position_ in a sequence, whereas 1-based index indicates number of an element.
       - but that's still first year, although it goes from 0 to 1
-      . so it's a question either we choose offset as index or number as index
+      . so it's a question either we choose offset as index or index as index
     + wraps `a[-1]` organically to last element
     - `x[1024]` creates an array of `1025` items
 
@@ -3024,7 +3020,6 @@ Having wat files is more useful than direct compilation to binary form:
 
   * Rotate as `/ a = [1..,0];` via memory copy ops
     ? how efficient is that?
-
 
 ## [x] Arrays: neg-index access or no? -> let's try modwrap
 
@@ -3400,7 +3395,7 @@ Having wat files is more useful than direct compilation to binary form:
   * `saw() = (@math#pi; pi*2+...)`
   + allows avoiding conflicts
 
-## [ ] Import JS things?
+## [x] Import JS things? -> yes, import only JS things, WASM has no import mechanisms
 
   * Must look more like a native object
   + `@math.pi` can be directly mapped as `(import "math" "pi")`
@@ -3414,7 +3409,7 @@ Having wat files is more useful than direct compilation to binary form:
   + naturally enables shared memory
   ? can help with question of naming memory?
 
-## [ ] Directly call imported items as `@math.pi`?
+## [x] Directly call imported items as `@math.pi`? -> yes, both with destructuring as `@math:x,y,z`
 
   + so js does.
   + nicely separates namespace
@@ -3539,6 +3534,8 @@ Having wat files is more useful than direct compilation to binary form:
 
   + we can hold both $x global and $x function name
   + i32 can automatically mean function reference
+  + allows storing funcs in lists
+    - we'd need to use NaNs with non-canonical form
 
 ## [ ] Use v128 of i64 for rational numbers?
 
@@ -3556,7 +3553,7 @@ Having wat files is more useful than direct compilation to binary form:
       * or `a <? 10 >? 0` -> `a <? 0..10` meaning within, or less than
       + `a >? 0..10` means outside, not clear though which side
 
-## [x] Create empty array - how? -> forget `[..10]`, use `x[0..10]` directly
+## [x] Create empty array - how? -> use `x[10]`, ie. immediate "write" - same as regular variables
 
   * `[..10]`
     - not clear if that's 10 members from 1 to 10 or
@@ -3576,7 +3573,7 @@ Having wat files is more useful than direct compilation to binary form:
       + this avoids `m = [n[1..3, 5, 6..]]` as `m[] = n[1..3, 4, 6..]`
     - introduces new operator
 
-  * `x[0..6];`
+  ** `x[0..6];`
     + same as just declaring variable, but immediately declares a list
     + removes the whole syntax concept of `[a,b,c]`
     - discards position aliases
@@ -3595,4 +3592,33 @@ Having wat files is more useful than direct compilation to binary form:
     - declaring fn argument `gain(out[])` vs `gain(out[1024])` vs `gain(out)` - not clear the difference
       ~ `x(out[])` is meaningless,
       ~? `x(out[3])` creates array of 3 if arg is not provided
+        ? alt: it writes argument to 3rd position in `out` local variable
     + reduces the necessity of 0-based indexing since list becomes a bit more hi-level thing
+
+## [x] Should we keep immediate list notation? -> yes, let's keep
+
+  + Allows passing memory area directly `gain([1,2,3])`
+  + Enables nested lists for tree structures, unlike groups `[1,2,[3,4,[5]]]`
+  + Looks more natural
+
+## [ ] Make func args identical with group destructuring?
+
+  * `(a[..10], b=2, c<=4, (d,e)) = (e:12, x[..])`
+  * `fn(a[..10])=(); fn(1..10)`
+    + factually defines infinite arguments
+  * `fn(a,,b,c)=(); fn(a,,b,c)`
+    + defines arguments to skip
+  + removes questions, merges pattern
+
+## [x] How to create sublist from existing list? -> @latr.sublist
+
+  * `x[] = y[1,2..3]`
+    - syntactically creates copy of y
+    - writes to x's length, which is weird
+
+  * `x[10]; y = x + 3;`
+    + mathematically correct
+    + keeps proper offset
+    - may need to have special fn to change length, since uses reinterpreting
+
+  * `x[10]; y = @latr.sublist(x, len: 3, start: 2)`

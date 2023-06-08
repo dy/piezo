@@ -99,7 +99,7 @@ a = b, c = d;                   \\ assignment precedence: (a = b), (c = d)
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ functions
 double(n) = n*2;                \\ inline function
-times(m=1,n=1) = (              \\ optional args
+times(m = 1, n <= 1..) = (      \\ optional, clamped args
   n == 0 ? ^n;                  \\ return n
   m*n                           \\
 );                              \\
@@ -109,9 +109,8 @@ times(n: 10);                   \\ 10. named argument
 times(,11);                     \\ 11. skipped argument
 copy = triple;                  \\ capture function
 copy(10);                       \\ also 30
-clamp(v <= 0..10) = v;          \\ limit argument to a range
-x() = (1,2,3);                  \\ return group (multiple values)
-(a,b,c) = x();                  \\ assign to a group
+x() = (1,2,3);                  \\ return multiple values
+(a,b,c) = x();                  \\ destructure returns
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ stateful variables
 a() = ( *i=0; i++ );            \\ i persists value between a calls
@@ -119,26 +118,30 @@ a(), a();                       \\ 0, 1
 b() = (                         \\
   *i[4];                        \\ local memory of 4 items
   i.1 = i.2 + 1;                \\ write previous i.2 to current i.1
-  i[1..] = i[-1,0..];           \\ shift memory
+  i[1..] = i[-1,1..];           \\ shift memory
   i.1                           \\ return current item
 );                              \\
 b(), b(), b();                  \\ 1, 2, 3
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ lists
-m[10];                          \\ create empty list of 10 members
-m[1..3] = (1,2,3,4);            \\ create prefilled list
-m[1..] = n[1..3, 5, 6..];       \\ create copy of subrange
-m[1..] = (1, 2..4, n[..]);      \\ create from mixed definition
-m[1..] = 1..4 <| # * 2;         \\ list comprehension
-first = m.1;                    \\ get by static index (1-based)
+m[10];                          \\ create empty list of 10, same as m[1..10]
+m = [1,2,3,4];                  \\ create list with 4 values
+m = [l:2, r:4, c:6];            \\ create with position aliases
+m = [n[..]];                    \\ create copy of n
+m = [1, 2..4, last:5];          \\ create from mixed definition
+m = [1, [2, 3, [4]]];           \\ create nested lists (tree)
+m = [1..4 <| # * 2];            \\ create from list comprehension
+(first, last) = (m.1, m.last);  \\ get by static index (1-based) / alias
 (first, last) = (m[1], m[-1]);  \\ get by dynamic index
 (second, third) = m[2..];       \\ get multiple values
+(first, last:c) = m[..];        \\ get all
 length = m[];                   \\ get length
 m[1] = 1;                       \\ set value
-m[1..] = (7,8);                 \\ set multiple values at offset
-m[1,2] = m[2,1];                \\ rearrange items
+m[2..] = (1, 2..4, n[1..3]);    \\ set multiple values from offset 2
+m[1..] = 1..4 <| # * 2;         \\ set via iteration
+m[1,2] = m[2,1];                \\ rearrange
 m[1..] = m[-1..1];              \\ reverse order
-m[..] = m[2..,1];               \\ rotate items
+m[1..] = m[2..,1];              \\ rotate items
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ iteration
 (a, b, c) <| x(#);              \\ for each item # call x(item)
@@ -194,7 +197,7 @@ gain(                               \\ define a function with block, volume argu
   block <|= # * volume;             \\ map each sample via multiplying by value
 );
 
-gain(0..5 <| # * 0.1 , 2);          \\ 0, .2, .4, .6, .8, 1
+gain([0..5 <| # * 0.1], 2);         \\ 0, .2, .4, .6, .8, 1
 
 gain.                               \\ export gain function
 ```
@@ -253,11 +256,11 @@ Generates ZZFX's [coin sound](https:\\codepen.io/KilledByAPixel/full/BaowKzv) `z
 1s = 44100;
 1ms = 1s / 1000;
 
-\\ define waveform generators table
-oscillator[..] = (
+\\ define waveform generators
+oscillator = [
   saw(phase) = (1 - 4 * abs( round(phase/2pi) - phase/2pi )),
   sine(phase) = sin(phase)
-);
+];
 
 \\ applies adsr curve to sequence of samples
 adsr(
