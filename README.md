@@ -37,9 +37,9 @@ true = 0b1, false = 0b0;        \\ alias booleans
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ extended operators
 ** // %%                        \\ power, floor div, unsigned mod (wraps negatives)
 <? <?= ..                       \\ clamp/min/max, range
-<| <|= #                        \\ each, map, member
+<| <|= # ##                     \\ each, map, member
 *                               \\ stateful variable
-^ ^^                            \\ break/return
+^ ^^ ^^^                        \\ break/return scopes
 @ .                             \\ import, export
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ variables
@@ -54,7 +54,6 @@ foo();                          \\ semi-colons at end of line are mandatory
 (a = b+1; a,b,c);               \\ scope can return multiple values
 (a ? ^b ; c);                   \\ preliminary return value
 (a ? (b ? ^^c) : d);            \\ break 2 scopes
-(a=1; a=1.0);                   \\ a is upgraded to float
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ conditions
 sign = a < 0 ? -1 : +1;         \\ inline ternary
