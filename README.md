@@ -80,11 +80,11 @@ x <? 0..10;                     \\ max(min(x, 10), 0)
 a,b,c = 0..2;                   \\ a==0, b==1, c==2
 (-10..10)[];                    \\ span is 20
 
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ groups
-a, b, c;                        \\ groups are sugar, not primitive
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ multiple values
+a, b=1, c=2;                    \\ define multiple
 (a, b, c)++;                    \\ inc multiple elements: (a++, b++, c++)
 (a, (b, c));                    \\ always flat: (a, b, c)
-(a,b,c) = (d,e,f);              \\ assign: a=d, b=e, c=f
+(a,b,c) = (d,e,f);              \\ assign multiple: a=d, b=e, c=f
 (a,b) = (b,a);                  \\ swap: temp=a; a=b; b=temp;
 (a,b) + (c,d);                  \\ any ops act on members: (a+c, b+d)
 (a,b).x;                        \\ (a.x, b.x);
