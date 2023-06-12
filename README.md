@@ -76,7 +76,7 @@ a = b ? c;                      \\ if b then a = c (else a = 0)
 1.08..108.0;                    \\ float range
 (x-1)..(x+1);                   \\ calculated ranges
 x <= 0..10;                     \\ is x in 0..10 range?
-x <? 0..10;                     \\ clamp: max(min(x, 10), 0)
+x <? 0..10;                     \\ max(min(x, 10), 0)
 a,b,c = 0..2;                   \\ a==0, b==1, c==2
 (-10..10)[];                    \\ span is 20
 
