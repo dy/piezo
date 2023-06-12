@@ -97,10 +97,10 @@ a = b, c = d;                   \\ assignment precedence: (a = b), (c = d)
 (a,b,c) = fn();                 \\ fn returns multiple values;
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ functions
-double(n) = n*2;                \\ inline function
+double(n) = n*2;                \\ define function
 times(m = 1, n <= 1..) = (      \\ optional, clamped args
-  n == 0 ? ^n;                  \\ return n
-  m*n                           \\
+  n == 0 ? ^n;                  \\ early return
+  m*n                           \\ default return
 );                              \\
 times(3,2);                     \\ 6
 times(5);                       \\ 5. optional argument
@@ -108,11 +108,11 @@ times(n: 10);                   \\ 10. named argument
 times(,11);                     \\ 11. skipped argument
 copy = triple;                  \\ capture function
 copy(10);                       \\ also 30
-x() = (1,2,3);                  \\ return multiple values
-(a,b,c) = x();                  \\ destructure returns
+swap(x,y) = (y,x);              \\ return multiple values
+(a,b) = swap(b,a);              \\ destructure returns
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ stateful variables
-a() = ( *i=0; i++ );            \\ i persists value between a calls
+a() = ( *i=0; i++ );            \\ i persists value between calls
 a(), a();                       \\ 0, 1
 b() = (                         \\
   *i[4];                        \\ local memory of 4 items
@@ -143,20 +143,21 @@ m[1..] = m[-1..1];              \\ reverse order
 m[1..] = m[2..,1];              \\ rotate items
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ iteration
-(a, b, c) <| x(#);              \\ for each item # call x(item)
+(a, b, c) <| x(#);              \\ for each item # do x(item)
 (10..1 <| (                     \\ iterate range
   # < 3 ? ^^;                   \\ ^^ break
   # < 5 ? ^;                    \\ ^ continue
 ));                             \\
-x[0..10] <|= # * 2;             \\ map part of list
 (0.. <| (# >= 3 ? ^^; log(#))); \\ while idx < 3 log(idx)
+items <| # ** 2;                \\ iterate list
 items <| a(#) <| b(#);          \\ chain iterations
 items <| (..# <| a(##));        \\ ## is nested iteration item
+x[0..10] <|= # * 2;             \\ rewrite items
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ import, export
-1pi = @math.pi;                 \\ use imported member directly
-@math:sin,pi,cos;               \\ import members
-x, y, z.                        \\ exports members
+@math:sin,pi,cos;               \\ import (into global scope)
+1pi = @math.pi;                 \\ or use imported member directly
+x, y, z.                        \\ export (from global scope)
 ```
 
 <!--
