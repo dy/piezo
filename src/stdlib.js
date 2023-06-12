@@ -15,15 +15,17 @@ export const std = {
   `))`,
 
   // memory & associated functions
-  "mem": `(memory (export "@memory") 1)(global $mem.size (mut i32) (i32.const 0))\n` +
-  // increase available memory to N bytes, grow if necessary.
-  `(func $mem.alloc (param i32)\n` +
-  `(global.set $mem.size (i32.add (local.get 0) (global.get $mem.size)))\n` +
-  // 2^13 is how many f64 fits into 64KiB memory page
-  `(if (i32.gt_s (global.get $mem.size) (i32.shl (memory.size) (i32.const 16))) (then (memory.grow (i32.const 1))(drop)))\n` +
-  `)`,
+  "mem": `(memory (export "__memory") 1)(global $mem.size (mut i32) (i32.const 0))\n` +
+  // increase available memory to N bytes, grow if necessary; return ptr to allocated block
+  `(func $mem.alloc (param i32) (result i32) (local i32)\n` +
+    `(local.set 1 (global.get $mem.size))\n`+
+    `(global.set $mem.size (i32.add (local.get 0) (local.get 1)))\n` +
+    // 2^13 is how many f64 fits into 64KiB memory page
+    `(if (i32.gt_s (local.get 1) (i32.shl (memory.size) (i32.const 16))) (then (memory.grow (i32.const 1))(drop)))\n` +
+    `(local.get 1)\n` +
+  `(return))`,
 
-  // create buffer referencing specific address & length (address is in bytes)
+  // create buffer pointer at specific mem address & length (address is in bytes)
   "buf.create":
   `(func $buf.create (param i32 i32) (result f64)\n` +
     `(f64.reinterpret_i64 (i64.or\n` +
@@ -39,10 +41,10 @@ export const std = {
 
   // buf.write(buf, pos, val): writes $val into buffer, $idx is position in buffer, not address.
   "buf.write": `(func $buf.write (param f64 i32 f64) (result f64)\n` +
-  // wrap negative idx: if idx < 0 idx = idx %% buf[]
-  `(if (i32.lt_s (local.get 1) (i32.const 0)) (then (local.set 1 (call $i32.modwrap (local.get 1) (call $buf.len (local.get 0))))))\n` +
-  `(f64.store (i32.add (i32.trunc_f64_u (local.get 0)) (i32.shl (local.get 1) (i32.const 3))) (local.get 2))\n` +
-  `(local.get 2)\n` +
+    // wrap negative idx: if idx < 0 idx = idx %% buf[]
+    `(if (i32.lt_s (local.get 1) (i32.const 0)) (then (local.set 1 (call $i32.modwrap (local.get 1) (call $buf.len (local.get 0))))))\n` +
+    `(f64.store (i32.add (i32.trunc_f64_u (local.get 0)) (i32.shl (local.get 1) (i32.const 3))) (local.get 2))\n` +
+    `(local.get 2)\n` +
   `(return))`,
 
   // buf.read(buf, pos): reads value at position from buffer

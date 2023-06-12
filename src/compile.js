@@ -4,18 +4,20 @@ import stdlib from "./stdlib.js"
 import {FLOAT,INT} from './const.js'
 import { parse as parseWat } from "watr";
 
-let includes, globals, funcs, locals, loop, exports, block;
+let includes, globals, funcs, locals, loop, buf, exports, block;
+const _tmp = Symbol('tmp')
 
 export default function compile(node) {
   if (typeof node === 'string') node = parse(node)
   console.log('compile', node)
 
   // init compiling context
-  globals = {}, // global scope (as name props)
+  globals = {[_tmp]:[]}, // global scope (as name props)
   locals, // current fn local scope
   includes = [], // pieces to prepend
   funcs = {}, // defined picker functions
   loop = 0, // current loop number
+  buf = 0, // current array init number
   block = Object.assign([''],{cur:0}), // current block count
   exports = null // items to export
 
@@ -23,7 +25,11 @@ export default function compile(node) {
   let init = expr(node), res = ``
 
   // run globals init, if needed
-  if (init) res = `(func $module/init\n${init}\n(return))\n(start $module/init)`
+  if (init) res = `(func $module/init\n` +
+    globals[_tmp].map((tmp)=>`(local ${tmp})`).join('') + '\n' +
+    `${init}\n` +
+    `(return))\n` +
+  `(start $module/init)`
 
   // declare variables
   // NOTE: it sets functions as global variables
@@ -36,7 +42,7 @@ export default function compile(node) {
 
   // declare includes
   for (let include of includes)
-    res = stdlib[include] + '\n' + res
+    if (stdlib[include]) res = stdlib[include] + '\n' + res; else err('Unknown include `' + include + '`')
 
   // provide exports
   for (let name in exports)
@@ -143,16 +149,17 @@ Object.assign(expr, {
       else items.push(expr(init))
     }
     // allocate required memory (in bytes, not f64s)
-    inc('mem'), out += `(call $mem.alloc (i32.const ${items.length << 3}))\n`
+    let bufAddr = tmp('buf', 'i32');
+    inc('mem'), out += `(local.set ${bufAddr} (call $mem.alloc (i32.const ${items.length << 3})))\n`
 
     // add initializers
     for (let i = 0; i < items.length; i++)
       if (items[i])
-        out += `(f64.store (i32.sub (global.get $mem.size) (i32.const ${(items.length - i) << 3})) ${asFloat(items[i])})\n`
+        out += `(f64.store (i32.add (local.get ${bufAddr}) (i32.const ${i << 3})) ${asFloat(items[i])})\n`
 
     // create buffer reference as output
     inc('buf.create')
-    out += `(call $buf.create (i32.sub (global.get $mem.size) (i32.const ${items.length << 3})) (i32.const ${items.length}))`
+    out += `(call $buf.create (local.get ${bufAddr}) (i32.const ${items.length}))`
 
     return op(out,'f64',{buf:true})
   },
@@ -197,13 +204,13 @@ Object.assign(expr, {
       // (a,b,c)=(c,d) -> (a,b)=(c,d)
       if (inputs.type.length > 1) outputs = outputs.slice(0, inputs.type.length)
 
-      // set as `(i32.const 1)(i32.const 2)(local.set 0)(local.set 1)`
+      // set as `(i32.const 1)(i32.const 2)(local.set 1)(local.set 0)`
       return op(
         inputs + '\n'+
         outputs.map((n,i)=> (
           n=name(n), `${inputs.type[i] === 'i32' ? `(f64.convert_i32_s)` : ''}(${globals[n]?`global`:`local`}.set $${n})`
         )).reverse().join('') +
-        outputs.reverse().map(n=>(n=name(n),`(${globals[n]?'global':'local'}.get $${n})`)).join(''),
+        outputs.map(n=>(n=name(n),`(${globals[n]?'global':'local'}.get $${n})`)).join(''),
         Array(outputs.length).fill(`f64`)
       )
     }
@@ -218,7 +225,7 @@ Object.assign(expr, {
       // FIXME: maybe it's ok to redeclare function? then we'd need to use table
       if (globals[name]) err('Redefining function `' + name + '`: not allowed');
 
-      locals = {}
+      locals = {[_tmp]:[]}
 
       // normalize body to (a;b;) form
       body = body[0]==='(' ? body : ['(',body]
@@ -246,11 +253,15 @@ Object.assign(expr, {
       body[1].splice(1,0,...inits) // prepend inits
       result = expr(body)
 
-      // define init part - params, result
+      // define result, comes after (param) before (local)
       dfn.push(`(result ${result.type.join(' ')})`)
 
       // declare locals
       for (let name in locals) if (!locals[name].arg) dfn.push(`(local $${name} ${locals[name].type})`)
+
+      // declare tmps
+      dfn.push(locals[_tmp].map((tmp)=>`(local ${tmp})`).join(''))
+
       locals = null
 
       globals[name] = {func:true, args, type:'i32'}; // NOTE: we set type to i32 as preliminary pointer to function (must be in a table)
@@ -270,37 +281,47 @@ Object.assign(expr, {
     console.log("TODO: loops", a, b)
     loop++
 
-    let from, to, next
+    let from, to, next, params
 
-    // lhs can be range
+    // a..b <| #
     if (a[0]==='..') {
       // i = from; to; while (i < to) {# = i; ...; i++}
       let [,min,max] = a
-      from = expr(min), to = expr(max), next = index
+      from = expr(min), to = expr(max), next = `$loop${loop}.index`, params = ``
     }
-    // or list
     else {
       let aop = expr(a)
-      // i = 0; to=buf[]; while (i < to) {# = buf[i]; ...; i++}
-      inc('buf.len'), inc('buf.read')
-      from = `(i32.const 0)`, to = `(call $buf.len ${a})`, next = `(call $buf.read ${aop} ${index})`
+      // (...;a,b,c)
+      // FIXME: generally group may have more than 1k members, so we ought to use comprehension-like method
+      if (aop.type.length > 1) {
+        // i=0; to=types.length; while (i < to) {# = stack.pop(); ...; i++}
+        from = `(i32.const 0)`, to = `(i32.const ${aop.type.length})`, next = `$loop${loop}.index`
+        params = `(param ${aop.type.join(' ')})`
+      }
+      // list <| #
+      else {
+        // i = 0; to=buf[]; while (i < to) {# = buf[i]; ...; i++}
+        inc('buf.len'), inc('buf.read')
+        from = `(i32.const 0)`, to = `(call $buf.len ${aop})`, next = `(call $buf.read ${aop} $loop${loop}.index)`
+        params = ``
+      }
     }
 
-    define(`loop${loop}.index`), define(`loop${loop}.item`), define(`loop${loop}.end`)
+    let idx = tmp('idx','i32'), item = tmp('item','f64'), end = tmp('end','i32')
 
     let res =
-    `(local.set $loop${loop}.index ${from})\n` +
-    `(local.set $loop${loop}.end ${to})\n` +
-    `(loop $loop.${loop} (result f64)\n` +
-      `(local.set $loop${loop}.item ${next})`
-      `(if (result f64) ${expr(a)}\n` +
+    `(local.set ${idx} ${from})\n` +
+    `(local.set ${end} ${to})\n` +
+    `(loop $loop${loop} ${params} (result f64)\n` +
+      `(local.set ${item} ${next})`
+      `(if (result f64)\n` +
         `(then\n` +
-        `${expr(b)}\n` +
-        `(br $loop${loop})\n` +
+          `${expr(b)}\n` +
+          `(br $loop${loop})\n` +
         `)\n` +
-        `(else (i32.const 0))\n` +
+        `(else (f64.const 0))\n` +
       `)\n` +
-      `(local.set $loop${loop}.index (i32.add (local.get $loop${loop}.index) (i32.const 1)))`
+      `(local.set ${idx} (i32.add (local.get ${idx}) (i32.const 1)))`
     `)\n`
 
     loop--
@@ -481,6 +502,14 @@ function define(name, type='f64') {
   }
 }
 
+// define temp variable, always in local scopr
+function tmp(name, type='f64') {
+  let len = (locals || globals)[_tmp].length || ''
+  name = `$tmp${len}.${name}`
+  ;(locals || globals)[_tmp].push(`${name} ${type}`)
+  return name
+}
+
 // resolve var name without scope clash
 function name(str) {
   // NOTE: this reserves # for loop member
@@ -496,6 +525,7 @@ function asFloat(o) {
 // cast expr to int
 function asInt(o) {
   if (o.type[0] === 'i32') return o
+  // return op(`(i32.trunc_sat_f64_s ${o})`, 'i32')
   return op(`(i32.trunc_f64_s ${o})`, 'i32')
 }
 

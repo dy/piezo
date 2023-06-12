@@ -19,7 +19,10 @@ function clean (str) {
 // convert wast code to binary
 const wabt = await Wabt()
 function compileWat (code, importObj={}) {
-  code = '(func $i32.log (import "imports" "log") (param i32) (result i32))\n' +
+  code =
+  '(func $i32.log (import "imports" "log") (param i32) (result i32))\n' +
+  '(func $i32.log2 (import "imports" "log") (param i32 i32) (result i32 i32))\n' +
+  '(func $i32.log3 (import "imports" "log") (param i32 i32 i32) (result i32 i32 i32))\n' +
   '(func $f64.log (import "imports" "log") (param f64) (result f64))\n' +
   '(func $i64.log (import "imports" "log") (param i64) (result i64))\n' +
   code
@@ -42,7 +45,7 @@ function compileWat (code, importObj={}) {
   return new WebAssembly.Instance(mod, {
     ...importObj,
     imports: {
-      log(a){ console.log(a); return a }
+      log(...args){ console.log(...args); return args }
     }
   })
 }
@@ -261,11 +264,11 @@ t('compile: ranges basic', t => {
   is(mod.exports.clamp(-1), 0)
 })
 
-t('compile: buffer basic', t => {
+t('compile: list basic', t => {
   let wat = compile(`x = [1, 2, 3], y = [4,5,6,7]; x,y,xl=x[],yl=y[].`)
   // console.log(wat)
   let mod = compileWat(wat)
-  let {'@memory':memory, x, y, xl, yl} = mod.exports
+  let {__memory:memory, x, y, xl, yl} = mod.exports
   let xarr = new Float64Array(memory.buffer, x.value, 3)
   // let i32s = new Int32Array(memory.buffer, 0)
   is(xarr[0], 1,'x0')
@@ -280,11 +283,11 @@ t('compile: buffer basic', t => {
   is(yl.value,4,'ylen')
 })
 
-t('compile: buffer from range', t => {
+t('compile: list from range', t => {
   let wat = compile(`x = [..3], y = [0..3]; x,y,xl=x[],yl=y[].`)
   // console.log(wat)
   let mod = compileWat(wat)
-  let {'@memory':memory, x, y, xl, yl} = mod.exports
+  let {__memory:memory, x, y, xl, yl} = mod.exports
   let xarr = new Float64Array(memory.buffer, x.value, 3)
   is(xarr[0], 0,'x0')
   is(xarr[1], 0,'x1')
@@ -298,11 +301,17 @@ t('compile: buffer from range', t => {
   is(yl.value,4,'ylen')
 })
 
-t('compile: buffer simple write', t => {
+t.todo('compile: list nested')
+
+t.todo('compile: list comprehension')
+
+t.todo('compile: list nested comprehension')
+
+t('compile: list simple write', t => {
   let wat = compile(`x = [..3]; x[0]=1; x.1=2; x[-1]=x[]; x.`)
   // console.log(wat)
   let mod = compileWat(wat)
-  let {'@memory':memory, x} = mod.exports
+  let {__memory:memory, x} = mod.exports
   let xarr = new Float64Array(memory.buffer, x.value, 3)
   is(xarr[0], 1,'x0')
   is(xarr[1], 2,'x1')
@@ -310,7 +319,7 @@ t('compile: buffer simple write', t => {
 
 })
 
-t.todo('compile: buffer rotate', t => {
+t.todo('compile: list wrap index', t => {
   let wat = compile(`x = [1, 2, 3]. x << 1.`)
   // console.log(wat)
   let mod = compileWat(wat)
@@ -327,7 +336,7 @@ t.todo('compile: buffer rotate', t => {
   is(yl.value,3,'ylen')
 })
 
-t.todo('compile: subbuffer', t => {
+t.todo('compile: sublist', t => {
   let wat = compile(`x = [1,2,3], y = [x].`)
   console.log(wat)
   let mod = compileWat(wat)
@@ -341,40 +350,19 @@ t.skip('debugs', t => {
   const memory = new WebAssembly.Memory({ initial: 1 });
   const importObject = { env: { memory } };
   let module = compileWat(`
-  (func $buf.len (param f64) (result i32) (i32.wrap_i64 (i64.and (i64.const 0x0000000000ffffff) (i64.reinterpret_f64 (local.get 0)))))
-  (func $i32.modwrap (param i32 i32) (result i32) (local $rem i32)
-    (local.set $rem (i32.rem_s (local.get 0) (local.get 1)))
-    (if (result i32) (i32.and (local.get $rem) (i32.const 0x80000000))
-      (then (i32.add (local.get 1) (local.get $rem)))
-      (else (local.get $rem))
-    ))
-  (func $buf.write (param $buf f64) (param $idx i32) (param $val f64) (result f64)
-  (f64.store (i32.add (i32.trunc_f64_u (local.get $buf)) (i32.shl (local.get $idx) (i32.const 3))) (local.get $val))
-  (local.get $val)
-  (return))
-  (func $buf.create (param i32 i32) (result f64)
-  (f64.reinterpret_i64 (i64.or
-  (i64.reinterpret_f64 (f64.convert_i32_u (local.get 0)))
-  (i64.extend_i32_u (i32.and (i32.const 0x00ffffff) (local.get 1)))
-  ))
-  (return))
-  (memory (export "@memory") 1)(global $mem.size (mut i32) (i32.const 0))
-  (func $mem.alloc (param i32)
-  (global.set $mem.size (i32.add (local.get 0) (global.get $mem.size)))
-  (if (i32.gt_s (global.get $mem.size) (i32.shl (memory.size) (i32.const 16))) (then (memory.grow (i32.const 1))(drop)))
-  )
-  (global $x (mut f64) (f64.const 0))
   (func $module/init
-  (global.set $x (call $mem.alloc (i32.const 24))
-  (call $buf.create (i32.sub (global.get $mem.size) (i32.const 24)) (i32.const 3)))(global.get $x)(drop)
-  (call $buf.write (global.get $x) (i32.const 0) (i32.const 1))(drop)
-  (global.get $x)
-  (return))
+    (local i32 i32 i32)
+    (i32.const 1)
+    (i32.const 2)
+    (i32.const 3)
+    (local.set 0)(local.set 1)(local.set 2)
+    (call $i32.log3 (local.get 0) (local.get 1) (local.get 2))
+    (drop)(drop)(drop)
+  )
   (start $module/init)
-  (export "x" (global $x))
   `, importObject)
 
-  console.log(module.exports.x(1n))
+  // console.log(module.exports.x(1n))
 })
 
 t('compile: variable type inference', t => {
