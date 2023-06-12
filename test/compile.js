@@ -301,11 +301,17 @@ t('compile: list from range', t => {
   is(yl.value,4,'ylen')
 })
 
-t.todo('compile: list nested')
+t.todo('compile: list nested', t => {
+  let wat = compile(`x = [1, [2, [3]]]`)
+})
 
-t.todo('compile: list comprehension')
+t.todo('compile: list comprehension', t => {
+  let wat = compile(`x = [1..3 <| # * 2]`)
+})
 
-t.todo('compile: list nested comprehension')
+t.todo('compile: list nested comprehension', t => {
+  let wat = compile(`x = [1..3 <| [0..# <| ## * 2]]`)
+})
 
 t('compile: list simple write', t => {
   let wat = compile(`x = [..3]; x[0]=1; x.1=2; x[-1]=x[]; x.`)
@@ -380,7 +386,7 @@ t('compile: variable type inference', t => {
   x = compileWat(compile(`x;x=[];x.`)).exports.x // late-arr type
 })
 
-t.todo('compile: loops basic', t => {
+t.only('compile: loops basic', t => {
   let wat = compile(`x=[1..3]; 0..2 <| x[#]=#+1; x.`)
   let mod = compileWat(wat)
   let {memory, x} = mod.exports

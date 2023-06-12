@@ -80,6 +80,7 @@ Object.assign(expr, {
     let list=[];
     for (let s of statements) s && list.push(expr(s));
     list = list.filter(Boolean)
+
     return op(
       list.map((op,i) => op + `(drop)`.repeat(i===list.length-1 ? 0 : op.type.length)).join('\n'),
       list[list.length-1].type,
@@ -185,7 +186,7 @@ Object.assign(expr, {
       // FIXME: add static optimization here for property - to avoid calling i32.modwrap if idx is known
       // FIXME: another static optimization: if length is known in advance (likely yes) - make static modwrap
 
-      return inc('buf.write'), inc('i32.modwrap'), op(`(call $buf.write ${expr(buf)} ${asInt(expr(idx))} ${asFloat(expr(b))})`, 'f64')
+      return inc('buf.len'), inc('buf.write'), inc('i32.modwrap'), op(`(call $buf.write ${expr(buf)} ${asInt(expr(idx))} ${asFloat(expr(b))})`, 'f64')
     }
 
     // a = b,  a = (b,c),   a = (b;c,d)
@@ -281,51 +282,62 @@ Object.assign(expr, {
     console.log("TODO: loops", a, b)
     loop++
 
-    let from, to, next, params
+    let from, to, next, params, prepare
+    let idx = tmp('idx','i32'), item = tmp('item','f64'), end = tmp('end','i32')
 
     // a..b <| #
     if (a[0]==='..') {
       // i = from; to; while (i < to) {# = i; ...; i++}
       let [,min,max] = a
-      from = expr(min), to = expr(max), next = `$loop${loop}.index`, params = ``
+      from = asInt(expr(min)), to = asInt(expr(max)), next = `(f64.convert_i32_s (local.get ${idx}))`, params = ``, prepare = ``
     }
     else {
       let aop = expr(a)
       // (...;a,b,c)
-      // FIXME: generally group may have more than 1k members, so we ought to use comprehension-like method
+      // we create tmp list for this group and iterate over it, then after loop we dump it into stack and free memory
       if (aop.type.length > 1) {
         // i=0; to=types.length; while (i < to) {# = stack.pop(); ...; i++}
-        from = `(i32.const 0)`, to = `(i32.const ${aop.type.length})`, next = `$loop${loop}.index`
+        // FIXME: create temp list here instead from arguments
+        from = `(i32.const 0)`, to = `(i32.const ${aop.type.length})`
+        next = `(f64.load (i32.add (global.get $mem.size) (local.get ${idx})))`
         params = `(param ${aop.type.join(' ')})`
+        // push args into heap
+        for (let i = 0; i < aop.type.length; i++) {
+          let t = aop.type[aop.type.length - i - 1]
+          prepare += `${t==='f64'?'(f64.convert_i32_s)':'()'}(f64.store (i32.add (global.get $mem.size) (i32.const ${i << 3})))`
+        }
+      }
+      // (0..10 <| a ? ^b : c)
+      else if (aop.dynamic) {
+        err('Unimplemented: dynamic loop arguments')
+        // FIXME: must be reading from heap: heap can just be a list also
       }
       // list <| #
       else {
         // i = 0; to=buf[]; while (i < to) {# = buf[i]; ...; i++}
         inc('buf.len'), inc('buf.read')
-        from = `(i32.const 0)`, to = `(call $buf.len ${aop})`, next = `(call $buf.read ${aop} $loop${loop}.index)`
+        from = `(i32.const 0)`, to = `(call $buf.len ${aop})`, next = `(call $buf.read ${aop} ${idx})`
         params = ``
       }
     }
-
-    let idx = tmp('idx','i32'), item = tmp('item','f64'), end = tmp('end','i32')
 
     let res =
     `(local.set ${idx} ${from})\n` +
     `(local.set ${end} ${to})\n` +
     `(loop $loop${loop} ${params} (result f64)\n` +
-      `(local.set ${item} ${next})`
-      `(if (result f64)\n` +
+      `(local.set ${item} ${next})\n` +
+      `(if (result f64) (i32.le_s (local.get ${idx}) (local.get ${end}))\n` +
         `(then\n` +
           `${expr(b)}\n` +
           `(br $loop${loop})\n` +
         `)\n` +
         `(else (f64.const 0))\n` +
       `)\n` +
-      `(local.set ${idx} (i32.add (local.get ${idx}) (i32.const 1)))`
+      `(local.set ${idx} (i32.add (local.get ${idx}) (i32.const 1)))` +
     `)\n`
 
     loop--
-    return res
+    return op(res,'f64',{dynamic:true})
   },
 
   '-'([,a,b]) {
@@ -534,7 +546,7 @@ function inc(name) {
   if (!includes.includes(name)) includes.push(name)
 }
 
-// pick N input args into stack, like (a,b,c) -> (a,b)
+// pick N input args back into stack, like (a,b,c) -> (a,b)
 function pick(count, input) {
   let name
 
@@ -559,6 +571,7 @@ function pick(count, input) {
 
   return op(`(call ${name} ${input})`, input.type.slice(0,count), {static: input.static})
 }
+
 
 // create op result
 // holds number of returns (ops)

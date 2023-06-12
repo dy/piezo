@@ -14,8 +14,9 @@ export const std = {
     `(then (i32.add (local.get 1) (local.get $rem))) (else (local.get $rem))\n` +
   `))`,
 
-  // memory & associated functions
+  // static memory & associated functions
   "mem": `(memory (export "__memory") 1)(global $mem.size (mut i32) (i32.const 0))\n` +
+
   // increase available memory to N bytes, grow if necessary; return ptr to allocated block
   `(func $mem.alloc (param i32) (result i32) (local i32)\n` +
     `(local.set 1 (global.get $mem.size))\n`+
@@ -24,6 +25,11 @@ export const std = {
     `(if (i32.gt_s (local.get 1) (i32.shl (memory.size) (i32.const 16))) (then (memory.grow (i32.const 1))(drop)))\n` +
     `(local.get 1)\n` +
   `(return))`,
+
+  // heap is dynamic memory for temporary holding vars etc.
+  // FIXME: ideally must use separate memory, once multiple memories become available
+  "heap.alloc": `(func $heap.alloc (param i32) (result i32) (return))`,
+  "heap.free": `(func $heap.free (param i32) (result i32))`,
 
   // create buffer pointer at specific mem address & length (address is in bytes)
   "buf.create":
