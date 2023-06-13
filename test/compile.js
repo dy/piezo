@@ -250,15 +250,15 @@ t('compile: function oneliners', t => {
 })
 
 t('compile: ranges basic', t => {
-  let wat = compile(`x = 11 -< 0..10.`)
+  let wat = compile(`x = 11 <? 0..10.`)
   let mod = compileWat(wat)
   is(mod.exports.x.value, 10)
 
-  wat = compile(`x = 0 -< 1..10.`)
+  wat = compile(`x = 0 <? 1..10.`)
   mod = compileWat(wat)
   is(mod.exports.x.value, 1)
 
-  wat = compile(`clamp(x) = (x -< 0..10).`)
+  wat = compile(`clamp(x) = (x <? 0..10).`)
   mod = compileWat(wat)
   is(mod.exports.clamp(11), 10)
   is(mod.exports.clamp(-1), 0)
@@ -386,10 +386,10 @@ t('compile: variable type inference', t => {
   x = compileWat(compile(`x;x=[];x.`)).exports.x // late-arr type
 })
 
-t.only('compile: loops basic', t => {
+t('compile: loops basic', t => {
   let wat = compile(`x=[1..3]; 0..2 <| x[#]=#+1; x.`)
   let mod = compileWat(wat)
-  let {memory, x} = mod.exports
+  let {__memory:memory, x} = mod.exports
 
   let arr = new Float64Array(memory.buffer, x.value, 3)
 
@@ -437,7 +437,7 @@ t('compile: simple pipe', t => {
 t.todo('compile: audio-gain', t => {
   let wat = compile(`
   blockSize = 1024;
-  gain = ([blockSize]data, volume -< 0..1000) -> [data | x -> x * volume];
+  gain = ([blockSize]data, volume <? 0..1000) -> [data | x -> x * volume];
   `)
   let mod = compileWat(wat)
   let {gain} = mod.exports
@@ -445,7 +445,7 @@ t.todo('compile: audio-gain', t => {
 
   // let wat = compile(`
   //   blockSize = 1024;
-  //   gain = ([2, blockSize]data, volume -< 0..1000) -> [data | ch -> (ch | x -> x * volume)];
+  //   gain = ([2, blockSize]data, volume <? 0..1000) -> [data | ch -> (ch | x -> x * volume)];
   // `)
 })
 

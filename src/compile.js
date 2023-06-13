@@ -243,8 +243,8 @@ Object.assign(expr, {
         if (typeof arg === 'string') name = arg
         // x(a=1,b=2), x(a=(1;2))
         else if (arg[0]==='=') [,name,init] = arg, inits.push(['?',['!=',name,name],['=',name,init]])
-        // x(x-<2..3)
-        else if (arg[0]==='-<') [,name,init] = arg, inits.push(['-<=',name,arg[2]])
+        // x(x<?2..3)
+        else if (arg[0]==='<?') [,name,init] = arg, inits.push(['<?=',name,arg[2]])
 
         locals[name] = {arg:true}
 
@@ -283,7 +283,7 @@ Object.assign(expr, {
     loop++
 
     let from, to, next, params, prepare
-    let idx = tmp('idx','i32'), item = tmp('item','f64'), end = tmp('end','i32')
+    let idx = tmp('idx','i32'), item = define('#'.repeat(loop),'f64'), end = tmp('end','i32')
 
     // a..b <| #
     if (a[0]==='..') {
@@ -329,12 +329,12 @@ Object.assign(expr, {
       `(if (result f64) (i32.le_s (local.get ${idx}) (local.get ${end}))\n` +
         `(then\n` +
           `${expr(b)}\n` +
+          `(local.set ${idx} (i32.add (local.get ${idx}) (i32.const 1)))` +
+          `(call $i32.log (local.get ${idx}))` +
           `(br $loop${loop})\n` +
         `)\n` +
         `(else (f64.const 0))\n` +
-      `)\n` +
-      `(local.set ${idx} (i32.add (local.get ${idx}) (i32.const 1)))` +
-    `)\n`
+      `))\n`
 
     loop--
     return op(res,'f64',{dynamic:true})
@@ -446,22 +446,22 @@ Object.assign(expr, {
     return op(`(if (result f64) ${aop.type[0]=='i32'?aop:`(f64.ne ${aop} (f64.const 0))`} (then ${asFloat(bop)}) (else ${asFloat(cop)}))`, 'f64')
   },
 
-  // a -< range - clamp a to indicated range
-  '-<'([,a,b]) {
+  // a <? range - clamp a to indicated range
+  '<?'([,a,b]) {
     if (b[0] !== '..') err('Non-range passed as right side of clamp operator')
     let [,min,max] = b, aop = expr(a), minop = min && expr(min), maxop = max && expr(max)
 
-    // a -< 0..
+    // a <? 0..
     if (!max) {
       if (aop.type[0] === 'i32' && minop.type[0] === 'i32') return inc('i32.smax'), op(`(call $i32.max ${aop} ${minop})`,'i32')
       return op(`(f64.max ${asFloat(aop)} ${asFloat(minop)})`, 'f64')
     }
-    // a -< ..10
+    // a <? ..10
     if (!min) {
       if (aop.type[0] === 'i32' && maxop.type[0] === 'i32') return inc('i32.smin'), op(`(call $i32.min ${aop} ${maxop})`,'i32')
       return op(`(f64.min ${asFloat(aop)} ${asFloat(maxop)})`, 'f64')
     }
-    // a -< 0..10
+    // a <? 0..10
     if (aop.type == 'i32' && minop.type == 'i32' && maxop.type == 'i32') {
       return inc('i32.smax'),inc('i32.smin'), op(`(call $i32.smax (call $i32.smin ${aop} ${maxop}) ${minop})`,'i32')
     }
@@ -504,6 +504,7 @@ Object.assign(expr, {
 })
 
 // define variable in current scope, export if necessary
+// FIXME: make it work same way as tmp: taking normal var name, returning situational var name
 function define(name, type='f64') {
   if (!locals) {
     if (!globals[name]) globals[name] = {var:true, type}
@@ -512,6 +513,7 @@ function define(name, type='f64') {
   else {
     if (!locals[name]) locals[name] = {var:true, type}
   }
+  return name
 }
 
 // define temp variable, always in local scopr

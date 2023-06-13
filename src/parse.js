@@ -24,7 +24,7 @@ PREC_BAND=15,
 PREC_EQ=16,
 PREC_COMP=17,
 PREC_SHIFT=18,
-PREC_CLAMP=19, // pre-arithmetical: a+b*c -< 10; BUT a < b-<c, a << b-<c
+PREC_CLAMP=19, // pre-arithmetical: a+b*c <? 10; BUT a < b<?c, a << b<?c
 PREC_SUM=20,
 PREC_RANGE=22, // +a .. -b, a**2 .. b**3, a*2 .. b*3; BUT a + 2..b + 3
 PREC_MULT=23,
@@ -106,7 +106,7 @@ nary('&&', PREC_AND)
 binary('=', PREC_ASSIGN, true)
 binary('+=', PREC_ASSIGN, true)
 binary('-=', PREC_ASSIGN, true)
-// binary('-<=', PREC_ASSIGN, true)
+binary('<?=', PREC_ASSIGN, true)
 binary('<|=', PREC_ASSIGN, true)
 binary('**', PREC_POW, true)
 
@@ -128,7 +128,7 @@ binary('>>', PREC_SHIFT)
 binary('>>>', PREC_SHIFT)
 binary('<<', PREC_SHIFT)
 
-binary('-<', PREC_CLAMP) // a -< b
+binary('<?', PREC_CLAMP) // a <? b
 binary('<|', PREC_LOOP)
 
 // unaries

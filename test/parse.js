@@ -60,10 +60,10 @@ t('parse: standard operators', t => {
 })
 
 t('parse: clamp operator', t => {
-  is(parse('x -< 0..10;'), [';',['-<', 'x', ['..', [INT,0], [INT,10]]]], 'clamp(x, 0, 10)')
-  is(parse('x -< ..10;'), [';',['-<', 'x', ['..',undefined,[INT,10]]]], 'min(x, 10)')
-  is(parse('x -< 0..;'), [';',['-<', 'x', ['..',[INT,0],undefined]]], 'max(0, x)')
-  is(parse('x -<= 0..10;'), [';',['-<=', 'x', ['..',[INT,0],[INT,10]]]], 'x = clamp(x, 0, 10)')
+  is(parse('x <? 0..10;'), [';',['<?', 'x', ['..', [INT,0], [INT,10]]]], 'clamp(x, 0, 10)')
+  is(parse('x <? ..10;'), [';',['<?', 'x', ['..',undefined,[INT,10]]]], 'min(x, 10)')
+  is(parse('x <? 0..;'), [';',['<?', 'x', ['..',[INT,0],undefined]]], 'max(0, x)')
+  is(parse('x <?= 0..10;'), [';',['<?=', 'x', ['..',[INT,0],[INT,10]]]], 'x = clamp(x, 0, 10)')
 })
 
 t('parse: length operator', t => {
@@ -216,7 +216,7 @@ t('parse: functions', () => {
   is(parse('triple(n: 10)'), ['()','triple',[':','n',[INT,10]]],                '30. named argument.')
   is(parse('copy = triple'), ['=','copy','triple'],                'capture function')
   is(parse('copy(10)'), ['()','copy',[INT,10]],                     'also 30')
-  is(parse('clamp(v -< 0..10) = v'), ['=',['()','clamp',['-<','v',['..',[INT,0],[INT,10]]]],'v'],    'clamp argument')
+  is(parse('clamp(v <? 0..10) = v'), ['=',['()','clamp',['<?','v',['..',[INT,0],[INT,10]]]],'v'],    'clamp argument')
   is(parse('x() = (1,2,3)'), ['=',['()','x'],['(',[',',[INT,1],[INT,2],[INT,3]]]],              'return group (multiple values)')
   // is(parse('mul = ([]in, amp) -> in*amp'), ['=','mul',['->',['(',[',',['[','','in'],'amp']],['*','in','amp']]],  'list argument')
   // is(parse('mul = ([8]in, amp) -> in*amp'), ['=','mul',['->',['(',[',',['[',[INT,8],'in'],'amp']],['*','in','amp']]], 'sublist argument')
