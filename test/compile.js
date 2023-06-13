@@ -393,10 +393,9 @@ t('compile: loops basic', t => {
 
   let arr = new Float64Array(memory.buffer, x.value, 3)
 
-  is(arr[0], 0)
-  is(arr[1], 1)
-  is(arr[2], 2)
-  not(arr[3], 3)
+  is(arr[0], 1)
+  is(arr[1], 2)
+  is(arr[2], 3)
 })
 
 t('compile: loop in loop', t => {

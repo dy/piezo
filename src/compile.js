@@ -149,16 +149,16 @@ Object.assign(expr, {
     }
     // allocate required memory (in bytes, not f64s)
     let bufAddr = tmp('buf', 'i32');
-    inc('mem'), out += `(local.set ${bufAddr} (call $mem.alloc (i32.const ${items.length << 3})))\n`
+    inc('mem'), out += `(local.set $${bufAddr} (call $mem.alloc (i32.const ${items.length << 3})))\n`
 
     // add initializers
     for (let i = 0; i < items.length; i++)
       if (items[i])
-        out += `(f64.store (i32.add (local.get ${bufAddr}) (i32.const ${i << 3})) ${asFloat(items[i])})\n`
+        out += `(f64.store (i32.add (local.get $${bufAddr}) (i32.const ${i << 3})) ${asFloat(items[i])})\n`
 
     // create buffer reference as output
     inc('buf.create')
-    out += `(call $buf.create (local.get ${bufAddr}) (i32.const ${items.length}))`
+    out += `(call $buf.create (local.get $${bufAddr}) (i32.const ${items.length}))`
 
     return op(out,'f64',{buf:true})
   },
@@ -274,7 +274,6 @@ Object.assign(expr, {
 
   // a <| b
   '<|'([,a,b]) {
-    console.log("TODO: loops", a, b)
     loop++
 
     let from, to, next, params, prepare
@@ -284,7 +283,7 @@ Object.assign(expr, {
     if (a[0]==='..') {
       // i = from; to; while (i < to) {# = i; ...; i++}
       let [,min,max] = a
-      from = asInt(expr(min)), to = asInt(expr(max)), next = `(f64.convert_i32_s (local.get ${idx}))`, params = ``, prepare = ``
+      from = asInt(expr(min)), to = asInt(expr(max)), next = `(f64.convert_i32_s (local.get $${idx}))`, params = ``, prepare = ``
     }
     else {
       let aop = expr(a)
@@ -294,7 +293,7 @@ Object.assign(expr, {
         // i=0; to=types.length; while (i < to) {# = stack.pop(); ...; i++}
         // FIXME: create temp list here instead from arguments
         from = `(i32.const 0)`, to = `(i32.const ${aop.type.length})`
-        next = `(f64.load (i32.add (global.get $mem.size) (local.get ${idx})))`
+        next = `(f64.load (i32.add (global.get $mem.size) (local.get $${idx})))`
         params = `(param ${aop.type.join(' ')})`
         // push args into heap
         for (let i = 0; i < aop.type.length; i++) {
@@ -311,21 +310,21 @@ Object.assign(expr, {
       else {
         // i = 0; to=buf[]; while (i < to) {# = buf[i]; ...; i++}
         inc('buf.len'), inc('buf.read')
-        from = `(i32.const 0)`, to = `(call $buf.len ${aop})`, next = `(call $buf.read ${aop} ${idx})`
-        params = ``
+        from = `(i32.const 0)`, to = `(call $buf.len ${aop})`, next = `(call $buf.read ${aop} (local.get $${idx}))`
+        params = ``, prepare = ``
       }
     }
 
-    let res =
-    `(local.set ${idx} ${from})\n` +
-    `(local.set ${end} ${to})\n` +
+    let res = prepare + `\n` +
+    `(local.set $${idx} ${from})\n` +
+    `(local.set $${end} ${to})\n` +
     `(loop $loop${loop} ${params} (result f64)\n` +
-      `(local.set ${item} ${next})\n` +
-      `(if (result f64) (i32.le_s (local.get ${idx}) (local.get ${end}))\n` +
+      `(${locals?.[item] ? 'local':'global'}.set $${item} ${next})\n` +
+      `(if (result f64) (i32.le_s (local.get $${idx}) (local.get $${end}))\n` +
         `(then\n` +
           `${expr(b)}\n` +
-          `(local.set ${idx} (i32.add (local.get ${idx}) (i32.const 1)))` +
-          `(call $i32.log (local.get ${idx}))` +
+          `(local.set $${idx} (i32.add (local.get $${idx}) (i32.const 1)))` +
+          // `(call $f64.log (global.get $${item}))` +
           `(br $loop${loop})\n` +
         `)\n` +
         `(else (f64.const 0))\n` +
@@ -515,8 +514,8 @@ function define(name, type='f64') {
 // define temp variable, always in local scope; returns tmp var name
 function tmp(name, type='f64') {
   let len = (locals || globals)[_tmp].length || ''
-  name = `$tmp${len}.${name}`
-  ;(locals || globals)[_tmp].push(`${name} ${type}`)
+  name = `tmp${len}.${name}`
+  ;(locals || globals)[_tmp].push(`$${name} ${type}`)
   return name
 }
 
