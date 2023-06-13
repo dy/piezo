@@ -36,7 +36,7 @@
 * [x] implement array pointer as float64
 * [x] ~~`x=1; x=1.0` - add float dup~~
 * [x] arity of ops, for proper `(drop)` amount, eg. `a ? b;` has 0 items in stack;
-* [ ] implement new loop/pipe `<|`, `|>`
+* [ ] implement new loops
 * [x] implement no-ptr buffer lengths: either i64 or 2 values in stack
 * [x] ~~refactor `pick(N,arg)` into `dup(arg,3)`~~
 * [ ] more complex group conditionals: `a,b,c || d,e`, `a,b * c,d`

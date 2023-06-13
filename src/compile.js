@@ -61,9 +61,7 @@ function expr(statement) {
   // FIXME: funcs may need returning something meaningful
   if (typeof statement === 'string') {
     // just x,y; or a=x; where x is undefined
-    statement = name(statement)
-    if (!locals?.[statement] && !globals[statement]) define(statement);
-    if (!locals && exports) exports[statement] = globals[statement]
+    statement = define(statement);
     return op(`(${locals?.[statement]?'local':'global'}.get $${statement})`,`f64`)
   }
   if (statement[0] in expr) return expr[statement[0]](statement) || ''
@@ -191,16 +189,13 @@ Object.assign(expr, {
 
     // a = b,  a = (b,c),   a = (b;c,d)
     if (typeof a === 'string') {
-      a = name(a), define(a)
+      a = define(a)
       return op(locals ? `(local.tee $${a} ${pick(1,asFloat(expr(b)))})` : `(global.set $${a} ${pick(1,asFloat(expr(b)))})(global.get $${a})`, 'f64')
     }
 
     // (a,b) = ...
     if (a[0]===',') {
       let [,...outputs] = a, inputs = pick(outputs.length,expr(b))
-
-      // define/provide exports
-      for (let n of outputs) define(name(n))
 
       // (a,b,c)=(c,d) -> (a,b)=(c,d)
       if (inputs.type.length > 1) outputs = outputs.slice(0, inputs.type.length)
@@ -209,9 +204,9 @@ Object.assign(expr, {
       return op(
         inputs + '\n'+
         outputs.map((n,i)=> (
-          n=name(n), `${inputs.type[i] === 'i32' ? `(f64.convert_i32_s)` : ''}(${globals[n]?`global`:`local`}.set $${n})`
+          n=define(n), `${inputs.type[i] === 'i32' ? `(f64.convert_i32_s)` : ''}(${globals[n]?`global`:`local`}.set $${n})`
         )).reverse().join('') +
-        outputs.map(n=>(n=name(n),`(${globals[n]?'global':'local'}.get $${n})`)).join(''),
+        outputs.map(n=>(n=define(n), `(${globals[n]?'global':'local'}.get $${n})`)).join(''),
         Array(outputs.length).fill(`f64`)
       )
     }
@@ -503,9 +498,10 @@ Object.assign(expr, {
   },
 })
 
-// define variable in current scope, export if necessary
-// FIXME: make it work same way as tmp: taking normal var name, returning situational var name
+// define variable in current scope, export if necessary; returns resolved name
 function define(name, type='f64') {
+  name += block.slice(0,block.cur).join('.');
+
   if (!locals) {
     if (!globals[name]) globals[name] = {var:true, type}
     if (!locals && exports) exports[name] = globals[name]
@@ -516,19 +512,12 @@ function define(name, type='f64') {
   return name
 }
 
-// define temp variable, always in local scopr
+// define temp variable, always in local scope; returns tmp var name
 function tmp(name, type='f64') {
   let len = (locals || globals)[_tmp].length || ''
   name = `$tmp${len}.${name}`
   ;(locals || globals)[_tmp].push(`${name} ${type}`)
   return name
-}
-
-// resolve var name without scope clash
-function name(str) {
-  // NOTE: this reserves # for loop member
-  // if (loop && str=='#') return `loop${loop}.item`;
-  return str + block.slice(0,block.cur).join('.');
 }
 
 // wrap expression to float, if needed
