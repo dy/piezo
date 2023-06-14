@@ -276,33 +276,37 @@ Object.assign(expr, {
   '<|'([,a,b]) {
     loop++
 
-    let from, to, next, params, prepare
+    let from, to, next, params, pre
     let idx = tmp('idx','i32'), item = define('#'.repeat(loop),'f64'), end = tmp('end','i32')
 
     // a..b <| #
     if (a[0]==='..') {
       // i = from; to; while (i < to) {# = i; ...; i++}
       let [,min,max] = a
-      from = asInt(expr(min)), to = asInt(expr(max)), next = `(f64.convert_i32_s (local.get $${idx}))`, params = ``, prepare = ``
+      from = asInt(expr(min)), to = asInt(expr(max)), next = `(f64.convert_i32_s (local.get $${idx}))`, params = ``, pre = ``
     }
     else {
       let aop = expr(a)
       // (...;a,b,c)
-      // we create tmp list for this group and iterate over it, then after loop we dump it into stack and free memory
       if (aop.type.length > 1) {
+        // we create tmp list for this group and iterate over it, then after loop we dump it into stack and free memory
         // i=0; to=types.length; while (i < to) {# = stack.pop(); ...; i++}
-        // FIXME: create temp list here instead from arguments
         from = `(i32.const 0)`, to = `(i32.const ${aop.type.length})`
-        next = `(f64.load (i32.add (global.get $mem.size) (local.get $${idx})))`
-        params = `(param ${aop.type.join(' ')})`
+        next = `(f64.load (i32.add (global.get $heap.ptr) (local.get $${idx})))`
+        params = ``
         // push args into heap
+        // FIXME: should we use $heap.push3() function?
         for (let i = 0; i < aop.type.length; i++) {
           let t = aop.type[aop.type.length - i - 1]
-          prepare += `${t==='f64'?'(f64.convert_i32_s)':'()'}(f64.store (i32.add (global.get $mem.size) (i32.const ${i << 3})))`
+          pre += `${t==='f64'?'(f64.convert_i32_s)':'()'}(f64.store (i32.add (global.get $heap.ptr) (i32.const ${i << 3})))`
         }
       }
       // (0..10 <| a ? ^b : c)
       else if (aop.dynamic) {
+        // dynamic args are already in heap
+        from = `(i32.const 0)`, to = `(global.get $heap.size)`
+        next = `(f64.load (i32.add (global.get $heap.ptr) (local.get $${idx})))`
+        params = ``
         err('Unimplemented: dynamic loop arguments')
         // FIXME: must be reading from heap: heap can just be a list also
       }
@@ -311,11 +315,11 @@ Object.assign(expr, {
         // i = 0; to=buf[]; while (i < to) {# = buf[i]; ...; i++}
         inc('buf.len'), inc('buf.read')
         from = `(i32.const 0)`, to = `(call $buf.len ${aop})`, next = `(call $buf.read ${aop} (local.get $${idx}))`
-        params = ``, prepare = ``
+        params = ``, pre = ``
       }
     }
 
-    let res = prepare + `\n` +
+    let res = `${pre}\n` +
     `(local.set $${idx} ${from})\n` +
     `(local.set $${end} ${to})\n` +
     `(loop $loop${loop} ${params} (result f64)\n` +
@@ -323,12 +327,14 @@ Object.assign(expr, {
       `(if (result f64) (i32.le_s (local.get $${idx}) (local.get $${end}))\n` +
         `(then\n` +
           `${expr(b)}\n` +
+          // save result to heap, if required
+          // save ? `(f64.store (i32.add (global.get $heap.ptr) (local.get $${idx}))` : `` +
           `(local.set $${idx} (i32.add (local.get $${idx}) (i32.const 1)))` +
           // `(call $f64.log (global.get $${item}))` +
           `(br $loop${loop})\n` +
         `)\n` +
         `(else (f64.const 0))\n` +
-      `))\n`
+    `))\n`
 
     loop--
     return op(res,'f64',{dynamic:true})

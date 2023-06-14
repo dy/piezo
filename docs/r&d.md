@@ -3384,11 +3384,30 @@ Having wat files is more useful than direct compilation to binary form:
 
   * The size of final list is unknown in advance. It requires dynamic-size mem allocation.
   ? Can we detect size in advance somehow?
-  ? We can reserve memory slot for dynamic ops and perform various stuff there
-    * we may need it anyways for memory swiggling ops
-  ? Alternatively we can create large-dynamic slot for the time of creation, then dispose unused after init
-  -> Just create new array and push members to it, increasing array's length. We suggest there's only one dynamic array at-a-time created, so it's safe to increase length on creating time.
+
+  1. We can reserve memory slot for dynamic ops and perform various stuff there
+  2. Alternatively we can create large-dynamic slot for the time of array init, then dispose unused after init
+  3. Just create new array and push members to it, increasing array's length. We suggest there's only one dynamic array at-a-time created, so it's safe to increase length on creating time.
     -> Or better just write length after the array is created, eg. somewhere in dynamic `$alloc` method.
+
+## [ ] Should loops return multiple arguments? How to maintain the heap?
+
+  + allows `fn(list <| # * 2)`
+  + allows `[(a,b,c) <| # * 2]`
+  - internal lists `list <| (0..# <| 2)` becomes problematic to create in memory
+
+  * ALT: We don't make loops return multiple arguments and just one (last argument)
+    + solves issue of dynamic args
+    + compatible-ish with JS
+    + removes question of dynamic members type
+    - list comprehension is unavailable
+    - we may possibly need heap for other things besides loops, like `m[2..] = (3,4,5)`
+
+  * ALT: it might be possible to maintain nested multiple results
+    * we use heap area to avoid clash with static arrays
+    * when we're generating dynamic args, we save heap start address and len variables
+    * when we've finished generating multiple args - we either copy them / send to stack and discard heap
+    * we continue previous heap
 
 ## [x] Import into function scope? -> no, at least use `@math.pi` as direct tokens
 
