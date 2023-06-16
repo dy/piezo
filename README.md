@@ -70,8 +70,9 @@ a && b ?: c;                    \\ elvis: if not a and b then c
 a = b ? c;                      \\ if b then a = c (else a = 0)
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ ranges
-1..10;                          \\ basic range from 1 to 10
-1.., ..10, ..;                  \\ open ranges
+0..10;                          \\ from 1 to 9 (10 exclusive)
+0..+10;                         \\ from 1 to 10 (10 inclusive)
+0.., ..10, ..;                  \\ open ranges
 10..1;                          \\ reverse range
 1.08..108.0;                    \\ float range
 (x-1)..(x+1);                   \\ calculated ranges
@@ -115,32 +116,32 @@ swap(x,y) = (y,x);              \\ return multiple values
 a() = ( *i=0; i++ );            \\ i persists value between calls
 a(), a();                       \\ 0, 1
 b() = (                         \\
-  *i[4];                        \\ local memory of 4 items
+  *i=[..4];                     \\ local memory of 4 items
   i.1 = i.2 + 1;                \\ write previous i.2 to current i.1
-  i[1..] = i[-1,1..];           \\ shift memory
+  i[0..] = i[-1,0..];           \\ shift memory
   i.1                           \\ return current item
 );                              \\
 b(), b(), b();                  \\ 1, 2, 3
 
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ lists
-m[10];                          \\ create empty list of 10, same as m[1..10]
-m = [1,2,3,4];                  \\ create list with 4 values
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ arrays
+m = [..10];                     \\ create empty array of 10 values
+m = [1,2,3,4];                  \\ create array with 4 values
 m = [l:2, r:4, c:6];            \\ create with position aliases
 m = [n[..]];                    \\ create copy of n
 m = [1, 2..4, last:5];          \\ create from mixed definition
-m = [1, [2, 3, [4]]];           \\ create nested lists (tree)
-m = [1..4 <| # * 2];            \\ create from list comprehension
-(first, last) = (m.1, m.last);  \\ get by static index (1-based) / alias
-(first, last) = (m[1], m[-1]);  \\ get by dynamic index
-(second, third) = m[2..];       \\ get multiple values
+m = [1, [2, 3, [4]]];           \\ create nested arrays (tree)
+m = [0..4 <| # * 2];            \\ create from array comprehension
+(first, last) = (m.0, m.last);  \\ get by static index / alias
+(first, last) = (m[0], m[-1]);  \\ get by dynamic index
+(second, third) = m[1..];       \\ get multiple values
 (first, last:c) = m[..];        \\ get all
 length = m[];                   \\ get length
-m[1] = 1;                       \\ set value
+m[0] = 1;                       \\ set value
 m[2..] = (1, 2..4, n[1..3]);    \\ set multiple values from offset 2
-m[1..] = 1..4 <| # * 2;         \\ set via iteration
+m[0..] = 0..4 <| # * 2;         \\ set via iteration
 m[1,2] = m[2,1];                \\ rearrange
-m[1..] = m[-1..1];              \\ reverse order
-m[1..] = m[2..,1];              \\ rotate items
+m[0..] = m[-1..0];              \\ reverse order
+m[0..] = m[2..,1];              \\ rotate items
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ iteration
 (a, b, c) <| x(#);              \\ for each item # do x(item)

@@ -2819,7 +2819,7 @@ Having wat files is more useful than direct compilation to binary form:
   - direct allocation requires disposal which we want to avoid.
     ? wait for structs?
 
-## [x] 1-based index vs 0-based index -> 1-based seems very natural
+## [x] 1-based index vs 0-based index -> stick to 0-based
 
   * 1-based
     * See ref https://www.reddit.com/r/ProgrammingLanguages/comments/t86ebp/thoughts_on_1based_indexing/
@@ -2827,8 +2827,11 @@ Having wat files is more useful than direct compilation to binary form:
     + `a[1]` is first element (obvious)
     + `1..n` is common math notation
     + `a[-1]` is considered the last element conventionally, like 1st from the end.
+      - same matches 0-based
     + `a[2]` as list creation corresponds to length of a
+      - we don't create list like that - that's just accessing member
     + `-1..1` range more obviously indicates reverse operation, since `0` has no meaning as index otherwise than that
+      ~ `0..-1` is kind of fine too
   * 0-based
     + very conventional
     * From https://www.jsoftware.com/papers/indexorigin.htm there's clearer arguments pro-0:
@@ -2837,6 +2840,8 @@ Having wat files is more useful than direct compilation to binary form:
       . so it's a question either we choose offset as index or index as index
     + wraps `a[-1]` organically to last element
     - `x[1024]` creates an array of `1025` items
+      + we create array as `[..1024]` or `[0..1024]` - which is 1024 members with exclusive lists, not as member reading
+
 
 ## [x] Allocate memory: `*[size]x = (1,2,3)` vs `[12]x = [1,2,3]` -> use arrays x = [1,2,3]
 
@@ -3405,9 +3410,41 @@ Having wat files is more useful than direct compilation to binary form:
 
   * ALT: it might be possible to maintain nested multiple results
     * we use heap area to avoid clash with static arrays
+      * we cannot merge heap and memory, because if internal dynamic array is finished, it must be put in static memory
+      * besides multiple memory proposal allows to fix it nicely
     * when we're generating dynamic args, we save heap start address and len variables
     * when we've finished generating multiple args - we either copy them / send to stack and discard heap
     * we continue previous heap
+
+## [ ] Heap strategy: tail or head
+
+  * Head: `[ Heap | Static... ]`
+    + easier offsets (no need to track beginning of heap)
+    - overflow risk: silently rewrites static memory
+      - checking boundaries on each write would be expensive
+    - fixed-length heap
+
+  * Tail: `[ Static... | Heap... ]`
+    + heap overflow throws error automatically
+    + no risk of rewriting static memory
+    + we allocate static memory in blocks, so heap can be eg. at the beginning of the next page, so we move it only when static memory grows
+      - needs memcpy to be called for heap
+        + heap is small, so memcpy should be fine
+    - heap is still fixed size
+      ~+ check can be added to simply grow memory once heap limit is reached
+        ~ that check can happen per-heap alloc, so that we ensure max length per allocation, not total heap size
+
+  * Dynamic head: `[ Heap... | Static... ]`
+    - memcpy static once heap grows
+      + heap grows rarely, unlike static, since it's more like tetris - once arr is filled it destroys
+    - requires hard heap limit
+
+  ? do we actually need growing memory?
+    + limited memory ensures portability
+    - we can't limit it to some huge block by default, we need it to be able to grow to some extent
+    + max array length is limited by-design to i24, which is 16M of els (f64s), which is 2048 pages of memory
+      - so it's an overkill for simple tiny programs to limit to such huge numbers
+      + same time it's good point to generally limit memory
 
 ## [x] Import into function scope? -> no, at least use `@math.pi` as direct tokens
 
@@ -3500,12 +3537,17 @@ Having wat files is more useful than direct compilation to binary form:
   * `..[-1]`, `..[0]`
     + technically correct
 
-## [x] exclusive / non-inclusive range: how? -> don't use exclusive range
+## [x] exclusive / non-inclusive range: how? -> use `0..10` as exclusive, `0..+10` as inclusive
 
   * `0..<10`, `0<..10`
     - `0 > ..10`, `0.. < 10`
   * `min..(max-1)` for ints, `min..(max-.00001)` for floats, so basically no exclusive ranges
     + problem solved
+    - width of int range is screwed up
+  * exclusive ranges only
+    + solves problem of range width:
+      * take `1..2`, so `2-1` as floats gives 1 which is correct width, but gives `2` as integers which is wrong
+    + initializing array as `[..10]` creates `10` elements this way from `0..9` inclusive
   * generally exclusives in langs are right `0..<10` or `0...10`, not making separate left `0>..10`
   * we can only have `0 .< 10` or `0 .> 10`
     ?- `x <> 0 .< 10` vs `x <> 0..<10`
@@ -3520,6 +3562,9 @@ Having wat files is more useful than direct compilation to binary form:
     - too lengthy
   * ruby's `0...10`?
     - `0.. .10`
+  * `0..+10` for inclusive range, `0..10` for exclusive
+    + `+` has no meaning as operator anyways
+
 
 ## [x] replace `x -< 0..10` with `x =< 0..10`? -> clamp is `x <? 0..10`
 
@@ -3554,7 +3599,7 @@ Having wat files is more useful than direct compilation to binary form:
   + we can hold both $x global and $x function name
   + i32 can automatically mean function reference
   + allows storing funcs in lists
-    - we'd need to use NaNs with non-canonical form
+    - we'd need to use NaNs with non-canonical form as list members
 
 ## [ ] Use v128 of i64 for rational numbers?
 
@@ -3575,14 +3620,18 @@ Having wat files is more useful than direct compilation to binary form:
 ## [x] Create empty array - how? -> use `x[10]`, ie. immediate "write" - same as regular variables
 
   * `[..10]`
-    - not clear if that's 10 members from 1 to 10 or
+    - not clear if that's 10 members from 1 to 10 or 0 to 10 or what
+      ~+ with enforced 1-idx convention it doen't make sense to have anything below 1
     - confusing, since range starts with minus-infinity
+    + a bit hacky = non-main way to create blank list, ie. values can be heap-y
 
-  * `[0..10 <| 0]`
+  * `[1..10 <| 0]`
     + very explicit
     - verbose
+    + protects from not-zero values
+    - requires initializer
 
-  * `[0..10]` creates empty array
+  * `[0..10]` creates empty array instead of raising seq
     - not how range maps to group
 
   * `[15]x` creates `x` as array
@@ -3590,7 +3639,10 @@ Having wat files is more useful than direct compilation to binary form:
     - sabotages whole concept of `x = [1,2,3]` as `[]x = (1,2,3)`
       + which can be nice since can replace concept of buffers with just lists
       + this avoids `m = [n[1..3, 5, 6..]]` as `m[] = n[1..3, 4, 6..]`
+      - nah, `[1,2,3]` is too nice to avoid
     - introduces new operator
+      * (set length? a bit weird/unclear outside of declaration, eg. `[10]x = (1,2,3)`, `x = [10]y, [10]x = [1,2,3];`)
+    + returns newly created array, not array property
 
   ** `x[0..6];`
     + same as just declaring variable, but immediately declares a list
@@ -3613,6 +3665,10 @@ Having wat files is more useful than direct compilation to binary form:
       ~? `x(out[3])` creates array of 3 if arg is not provided
         ? alt: it writes argument to 3rd position in `out` local variable
     + reduces the necessity of 0-based indexing since list becomes a bit more hi-level thing
+    - inconsistent: expected to return an array reference, but returns value of an array instead
+      - so that if we want to return just created array, we'd need to `x[10];x;`
+    - creates not very nice condition in code of property access.
+    - enforces 1-based index for list elements
 
 ## [x] Should we keep immediate list notation? -> yes, let's keep
 

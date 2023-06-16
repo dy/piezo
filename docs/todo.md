@@ -36,12 +36,15 @@
 * [x] implement array pointer as float64
 * [x] ~~`x=1; x=1.0` - add float dup~~
 * [x] arity of ops, for proper `(drop)` amount, eg. `a ? b;` has 0 items in stack;
+* [ ] init static arrays via `data` section, do `init` only for calc values
 * [ ] implement new loops
 * [x] implement no-ptr buffer lengths: either i64 or 2 values in stack
 * [x] ~~refactor `pick(N,arg)` into `dup(arg,3)`~~
 * [ ] more complex group conditionals: `a,b,c || d,e`, `a,b * c,d`
 * [x] ~~implement scopes as either tmp functions or blocks~~ -> just resolve variables
 * [x] Implement storing buffer items
+* [ ] Make all `local.set` / `global.set` a `set(name, value)` function: we don't need to know about tmp/define etc.
+  * [ ] Think if we need to expose fully-js API for building wasm code, similar to wasmati
 * [ ] Test nested scopes variables `(x=0;(y=1);y)`
 * [ ] Extend i32 to i64 whereever possible
 * [ ] Test optional arguments
@@ -60,6 +63,7 @@
 
 ## 2
 
+* [ ] extend internal arrays as separate `addr` and `len` variables: speeds up perf, allows enhanced precision
 * [ ] Processing modules collection
 
 * [ ] Demo page in style of assembly AI with wavefont marquee player
