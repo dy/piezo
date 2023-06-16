@@ -26,7 +26,7 @@ export default function compile(node) {
 
   // run globals init, if needed
   if (init) res = `(func $module/init\n` +
-    globals[_tmp].map((tmp)=>`(local ${tmp})`).join('') + '\n' +
+    globals[_tmp].map((tmp)=>`(local ${tmp})`).join('') +
     `${init}\n` +
     `(return))\n` +
   `(start $module/init)`
@@ -125,7 +125,7 @@ Object.assign(expr, {
   '['([,inits]) {
     inits = !inits ? [] : inits[0] !== ',' ? [inits] : inits.slice(1)
 
-    let out = ``, items = []
+    let out = ``, els = [], len = [] // el initializers & length constituents
 
     // we can't define via data section, since values can be calculable
     for (let init of inits) {
@@ -134,43 +134,56 @@ Object.assign(expr, {
         // simple numeric range like [0..1]
         if (typeof max[1] === 'number') {
           // [..1] - no need for specific init
-          if (!min) items.length += max[1]
+          if (!min) els.length += max[1]
           // [1..3]
           // FIXME: this range may need specifying, like -1.2..2
           else if (typeof min[1] === 'number')
-            for (let v = min[1]; v <= max[1]; v++) items.push(op(`(f64.const ${v})`, 'f64'))
+            for (let v = min[1]; v <= max[1]; v++) els.push(op(`(f64.const ${v})`, 'f64'))
           // FIXME
           else err('Unimplemented array initializer: computed range min value')
         }
         // FIXME
         else err('Unimplemented array initializer: computed range', init)
       }
-      else items.push(expr(init))
+      else els.push(expr(init))
     }
+    inc('mem'), inc('buf.new'), inc('buf.set'), inc('buf.ref'), inc('i32.modwrap'), inc('buf.len')
+
     // allocate required memory (in bytes, not f64s)
-    let bufAddr = tmp('buf', 'i32');
-    inc('mem'), out += `(local.set $${bufAddr} (call $mem.alloc (i32.const ${items.length << 3})))\n`
+    out += `(call $buf.new (i32.const ${els.length}))\n`
 
     // add initializers
-    for (let i = 0; i < items.length; i++)
-      if (items[i])
-        out += `(f64.store (i32.add (local.get $${bufAddr}) (i32.const ${i << 3})) ${asFloat(items[i])})\n`
-
-    // create buffer reference as output
-    inc('buf.create')
-    out += `(call $buf.create (local.get $${bufAddr}) (i32.const ${items.length}))`
+    for (let i = 0; i < els.length; i++)
+      if (els[i]) out += `(call $buf.set (i32.const ${i}) ${asFloat(els[i])})\n`
 
     return op(out,'f64',{buf:true})
   },
 
   // a[b] or a[]
   '[]'([,a,b]) {
-    // a[]
-    if (!b) {
-      let aop = expr(a)
-      return inc('buf.len'), op(`(call $buf.len ${aop})`,'i32')
-    }
-    err('Unimplemented prop access')
+    inc('mem')
+
+    // // a[10], a[n] - create an array of defined length
+    // if (typeof a === 'string') {
+    //   a = varName(a)
+    //   // define array, if it doesn't exist
+    //   if (!locals?.[a] && !globals[a]) {
+    //     define(a)
+    //     // x[] - returns 0
+    //     if (!b) return op(`(i32.const 0)`, 'i32')
+
+    //     inc('buf.new'), inc('buf.ref')
+
+    //     // a[10] - initializes array variable of defined size
+    //     return op(`(${locals ? 'local' : 'global'}.set $${a} (call $buf.new ${expr(b)}))(f64.const 0)`)
+    //   }
+    // }
+
+    // a[] - length
+    if (!b) return inc('buf.len'), op(`(call $buf.len ${expr(a)})`,'i32')
+
+    // a[b] - regular access
+    return inc('buf.get'), op(`(call $buf.get ${expr(a)} ${expr(b)})`)
   },
 
   '='([,a,b]) {
@@ -184,7 +197,7 @@ Object.assign(expr, {
       // FIXME: add static optimization here for property - to avoid calling i32.modwrap if idx is known
       // FIXME: another static optimization: if length is known in advance (likely yes) - make static modwrap
 
-      return inc('buf.len'), inc('buf.write'), inc('i32.modwrap'), op(`(call $buf.write ${expr(buf)} ${asInt(expr(idx))} ${asFloat(expr(b))})`, 'f64')
+      return inc('buf.len'), inc('buf.tee'), inc('i32.modwrap'), op(`(call $buf.tee ${expr(buf)} ${asInt(expr(idx))} ${asFloat(expr(b))})`, 'f64')
     }
 
     // a = b,  a = (b,c),   a = (b;c,d)
@@ -240,17 +253,19 @@ Object.assign(expr, {
         else if (arg[0]==='=') [,name,init] = arg, inits.push(['?',['!=',name,name],['=',name,init]])
         // x(x<?2..3)
         else if (arg[0]==='<?') [,name,init] = arg, inits.push(['<?=',name,arg[2]])
+        else err('Unknown function argument')
 
         locals[name] = {arg:true}
 
         dfn.push(`(param $${name} f64)`)
         return name
       })
+
       body[1].splice(1,0,...inits) // prepend inits
       result = expr(body)
 
       // define result, comes after (param) before (local)
-      dfn.push(`(result ${result.type.join(' ')})`)
+      if (result.type.length) dfn.push(`(result ${result.type.join(' ')})`)
 
       // declare locals
       for (let name in locals) if (!locals[name].arg) dfn.push(`(local $${name} ${locals[name].type})`)
@@ -313,8 +328,8 @@ Object.assign(expr, {
       // list <| #
       else {
         // i = 0; to=buf[]; while (i < to) {# = buf[i]; ...; i++}
-        inc('buf.len'), inc('buf.read')
-        from = `(i32.const 0)`, to = `(call $buf.len ${aop})`, next = `(call $buf.read ${aop} (local.get $${idx}))`
+        inc('buf.len'), inc('buf.get')
+        from = `(i32.const 0)`, to = `(call $buf.len ${aop})`, next = `(call $buf.get ${aop} (local.get $${idx}))`
         params = ``, pre = ``
       }
     }
@@ -468,7 +483,6 @@ Object.assign(expr, {
     return op(`(f64.max (f64.min ${asFloat(aop)} ${asFloat(maxop)}) ${asFloat(minop)})`, 'f64')
   },
 
-
   // @ 'math#sin', @ 'path/to/lib'
   '@'([,path]) {
     if (locals) err('Import must be in global scope')
@@ -503,10 +517,13 @@ Object.assign(expr, {
   },
 })
 
+function varName(name) {
+  return name + block.slice(0,block.cur).join('.');
+}
+
 // define variable in current scope, export if necessary; returns resolved name
 function define(name, type='f64') {
-  name += block.slice(0,block.cur).join('.');
-
+  name = varName(name)
   if (!locals) {
     if (!globals[name]) globals[name] = {var:true, type}
     if (!locals && exports) exports[name] = globals[name]
@@ -518,6 +535,7 @@ function define(name, type='f64') {
 }
 
 // define temp variable, always in local scope; returns tmp var name
+// FIXME: possibly can turn it into `define`
 function tmp(name, type='f64') {
   let len = (locals || globals)[_tmp].length || ''
   name = `tmp${len}.${name}`

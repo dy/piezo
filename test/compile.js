@@ -228,7 +228,6 @@ t('compile: conditions', t => {
   is(mod.exports.c.value, 2.1)
 })
 
-
 t('compile: function oneliners', t => {
   let wat, mod
   // no semi
@@ -247,6 +246,41 @@ t('compile: function oneliners', t => {
 
   mod = compileWat(compile(` mult(a, b) = (b; a * b;). `))
   is(mod.exports.mult(2,4), 8)
+})
+
+
+t.skip('debugs', t => {
+  const memory = new WebAssembly.Memory({ initial: 1 });
+  const importObject = { env: { memory } };
+  let module = compileWat(`
+  (func $module/init
+    (local i32 i32 i32)
+    (i32.const 1)
+    (i32.const 2)
+    (i32.const 3)
+    (local.set 0)(local.set 1)(local.set 2)
+    (call $i32.log3 (local.get 0) (local.get 1) (local.get 2))
+    (drop)(drop)(drop)
+  )
+  (start $module/init)
+  `, importObject)
+
+  // console.log(module.exports.x(1n))
+})
+
+t('compile: misc vars', t => {
+  let wat,x;
+  x = compileWat(compile(`x;x.`)).exports.x // unknown type falls to f64
+  x = compileWat(compile(`x=1;x.`)).exports.x // int type
+  x = compileWat(compile(`x=1.0;x.`)).exports.x // float type
+  x = compileWat(compile(`x()=1;x.`)).exports.x // func type
+  // x = compileWat(compile(`x=0..10;x.`)).exports.x // range type
+  x = compileWat(compile(`x=[];x.`)).exports.x // arr type
+  x = compileWat(compile(`x;x=1;x.`)).exports.x // late-int type
+  x = compileWat(compile(`x;x=1.0;x.`)).exports.x // late-float type
+  // x = compileWat(compile(`x;x()=1;x.`)).exports.x // late-func type
+  // x = compileWat(compile(`x;x=0..10;x.`)).exports.x // late-range type
+  x = compileWat(compile(`x;x=[];x.`)).exports.x // late-arr type
 })
 
 t('compile: ranges basic', t => {
@@ -284,7 +318,8 @@ t('compile: list basic', t => {
 })
 
 t('compile: list from range', t => {
-  let wat = compile(`x = [..3], y = [0..3]; x,y,xl=x[],yl=y[].`)
+  let wat = compile(`x=[..3], y=[0..3]; x,y,xl=x[],yl=y[].`)
+  // let wat = compile(`x=[..3], y=[0..3], z=[y[1]..y[3], 4..5, 2..-2]; x,y,z,xl=x[],yl=y[].`)
   // console.log(wat)
   let mod = compileWat(wat)
   let {__memory:memory, x, y, xl, yl} = mod.exports
@@ -299,10 +334,38 @@ t('compile: list from range', t => {
   is(yarr[2], 2,'y2')
   is(yarr[3], 3,'y3')
   is(yl.value,4,'ylen')
+  // let zarr = new Float64Array(memory.buffer, z.value, 4)
+  // is(zarr[0], 0,'z0')
+  // is(zarr[1], 1,'z1')
+  // is(zarr[2], 2,'z2')
+  // is(zarr[3], 4,'z3')
+  // is(zarr[4], 5,'z3')
+  // is(zarr[5], 2,'z3')
+  // is(zarr[6], 1,'z3')
+  // is(zarr[7], 0,'z3')
+  // is(zarr[8], -1,'z3')
+  // is(zarr[9], -2,'z3')
 })
 
-t.todo('compile: list nested', t => {
-  let wat = compile(`x = [1, [2, [3]]]`)
+t.todo('compile: lists nested static', t => {
+  let wat = compile(`x=[1, y=[2, z=[3]]], w=[1,2], xl=x[], yl=y[], zl=z[], wl=w[].`)
+  // console.log(wat)
+  let mod = compileWat(wat)
+  let {__memory:memory, x, y, z, xl, yl, zl, w, wl} = mod.exports
+  let xarr = new Float64Array(memory.buffer, x.value, 3)
+  is(xarr[0], 1,'x0')
+  is(xarr[1], y.value,'x1')
+  is(xl.value, 2,'xlen')
+  let yarr = new Float64Array(memory.buffer, y.value, 3)
+  is(yarr[0], 2,'y0')
+  is(yarr[1], z.value,'y1')
+  is(yl.value, 2,'ylen')
+  let zarr = new Float64Array(memory.buffer, z.value, 3)
+  is(zarr[0], 3,'z0')
+  is(zl.value, 1,'zlen')
+  let warr = new Float64Array(memory.buffer, w.value, 3)
+  is(warr[0], 3,'w0')
+  is(wl.value, 1,'wlen')
 })
 
 t.todo('compile: list comprehension', t => {
@@ -344,46 +407,18 @@ t.todo('compile: list wrap index', t => {
 
 t.todo('compile: sublist', t => {
   let wat = compile(`x = [1,2,3], y = [x].`)
-  console.log(wat)
   let mod = compileWat(wat)
-  let {memory, x} = mod.exports
+  let {__memory:memory, x} = mod.exports
   let arr = new Float64Array(memory.buffer, 0, 2), ptr = x.value
   is(arr[ptr], 1)
   is(arr[ptr+1], 2)
 })
 
-t.skip('debugs', t => {
-  const memory = new WebAssembly.Memory({ initial: 1 });
-  const importObject = { env: { memory } };
-  let module = compileWat(`
-  (func $module/init
-    (local i32 i32 i32)
-    (i32.const 1)
-    (i32.const 2)
-    (i32.const 3)
-    (local.set 0)(local.set 1)(local.set 2)
-    (call $i32.log3 (local.get 0) (local.get 1) (local.get 2))
-    (drop)(drop)(drop)
-  )
-  (start $module/init)
-  `, importObject)
+t.todo('compile: memory grow', t => {
+  let wat = compile(`grow()=[..10].`)
+  let mod = compileWat(wat)
+  let {__memory:memory, grow} = mod.exports
 
-  // console.log(module.exports.x(1n))
-})
-
-t('compile: variable type inference', t => {
-  let wat,x;
-  x = compileWat(compile(`x;x.`)).exports.x // unknown type falls to f64
-  x = compileWat(compile(`x=1;x.`)).exports.x // int type
-  x = compileWat(compile(`x=1.0;x.`)).exports.x // float type
-  x = compileWat(compile(`x()=1;x.`)).exports.x // func type
-  // x = compileWat(compile(`x=0..10;x.`)).exports.x // range type
-  x = compileWat(compile(`x=[];x.`)).exports.x // arr type
-  x = compileWat(compile(`x;x=1;x.`)).exports.x // late-int type
-  x = compileWat(compile(`x;x=1.0;x.`)).exports.x // late-float type
-  // x = compileWat(compile(`x;x()=1;x.`)).exports.x // late-func type
-  // x = compileWat(compile(`x;x=0..10;x.`)).exports.x // late-range type
-  x = compileWat(compile(`x;x=[];x.`)).exports.x // late-arr type
 })
 
 t('compile: loops basic', t => {
