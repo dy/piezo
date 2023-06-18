@@ -37,9 +37,9 @@ true = 0b1, false = 0b0;        \\ alias booleans
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ extended operators
 ** // %%                        \\ power, floor div, unsigned mod (wraps negatives)
 <? <?= ..                       \\ clamp/min/max, range
-<| <|= # ##                     \\ each, map, member
+<| <|= |> ->                    \\ for each, map, reduce
 *                               \\ stateful variable
-^ ^^ ^^^                        \\ break/return scopes
+^ ^^                            \\ continue, break
 @ .                             \\ import, export
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ variables
@@ -52,7 +52,7 @@ default=1, eval=fn, else=0;     \\ lino has no reserved words
 foo();                          \\ semi-colons at end of line are mandatory
 (c = a + b; c);                 \\ parens define scope, return last element
 (a = b+1; a,b,c);               \\ scope can return multiple values
-(a ? ^b ; c);                   \\ preliminary return value
+(a ? ^b ; c);                   \\ early return b
 (a ? (b ? ^^c) : d);            \\ break 2 scopes
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ conditions
@@ -124,13 +124,14 @@ b() = (                         \\
 b(), b(), b();                  \\ 1, 2, 3
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ arrays
-m = [..10];                     \\ create empty array of 10 values
+m = [..10];                     \\ create empty array of 10
+m = [..10 <| 0];                \\ create array of 10 zeros
 m = [1,2,3,4];                  \\ create array with 4 values
 m = [l:2, r:4, c:6];            \\ create with position aliases
 m = [n[..]];                    \\ create copy of n
 m = [1, 2..4, last:5];          \\ create from mixed definition
 m = [1, [2, 3, [4]]];           \\ create nested arrays (tree)
-m = [0..4 <| # * 2];            \\ create from array comprehension
+m = [0..4 <| i: i * 2];       \\ create from array comprehension
 (first, last) = (m.0, m.last);  \\ get by static index / alias
 (first, last) = (m[0], m[-1]);  \\ get by dynamic index
 (second, third) = m[1..];       \\ get multiple values
@@ -138,22 +139,26 @@ m = [0..4 <| # * 2];            \\ create from array comprehension
 length = m[];                   \\ get length
 m[0] = 1;                       \\ set value
 m[2..] = (1, 2..4, n[1..3]);    \\ set multiple values from offset 2
-m[0..] = 0..4 <| # * 2;         \\ set via iteration
+m[0..] = 0..4 <| x -> x * 2     \\ set via iteration
 m[1,2] = m[2,1];                \\ rearrange
 m[0..] = m[-1..0];              \\ reverse order
-m[0..] = m[2..,1];              \\ rotate items
+m[0..] = m[1..,0];              \\ rotate
 
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ iteration
-(a, b, c) <| x(#);              \\ for each item # do x(item)
-(10..1 <| (                     \\ iterate range
-  # < 3 ? ^^;                   \\ ^^ break
-  # < 5 ? ^;                    \\ ^ continue
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ loop, map, reduce
+(a, b, c) <| i -> x(i);         \\ for each item i do x(item)
+(10..1 <| i : (                \\ iterate range
+  i < 3 ? ^^;                   \\ ^^ break
+  i < 5 ? ^;                    \\ ^ continue
 ));                             \\
-(0.. <| (# >= 3 ? ^^; log(#))); \\ while idx < 3 log(idx)
-items <| # ** 2;                \\ iterate list
-items <| a(#) <| b(#);          \\ chain iterations
-items <| (..# <| a(##));        \\ ## is nested iteration item
-x[0..10] <|= # * 2;             \\ rewrite items
+(0.. <| i -> (i>3 ? ^^; x(i))); \\ while idx <= 3 do x(i)
+items <| i -> i ** 2;           \\ iterate list
+items <| x -> a(x)              \\ chain
+      <| y -> b(y);             \\
+items <| x -> (                 \\ nest iterations
+  ..x <| y -> a(x,y)            \\
+);                              \\
+x[3..5] <|= x -> x * 2;         \\ rewrite items in subrange
+list |> (x, sum) -> sum + x;    \\ reduce list, range or items
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ import, export
 @math:sin,pi,cos;               \\ import (into global scope)
@@ -195,10 +200,10 @@ gain(                               \\ define a function with block, volume argu
   block,                            \\ block is a list argument
   volume <= 0..100                  \\ volume is limited to 0..100 range
 ) = (
-  block <|= # * volume;             \\ map each sample via multiplying by value
+  block <|= x -> x * volume;        \\ map each sample by multiplying by value
 );
 
-gain([0..5 <| # * 0.1], 2);         \\ 0, .2, .4, .6, .8, 1
+gain([0..5 <| x -> x * 0.1], 2);    \\ 0, .2, .4, .6, .8, 1
 
 gain.                               \\ export gain function
 ```
@@ -241,7 +246,7 @@ lpf(                                \\ per-sample processing function
   y0                                \\ return y0
 );
 
-\\ (0, .1, .3) <| lpf(#, 108, 5)
+\\ (0, .1, .3) <| x -> lpf(x, 108, 5)
 
 lpf.                                \\ export lpf function, end program
 ```
@@ -299,8 +304,8 @@ coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
   t = i / 1s;
 
   out <|= oscillator[shape](phase)
-      <| adsr(#, 0, 0, .06, .24)
-      <| curve(#, 1.82)
+      <| x -> adsr(x, 0, 0, .06, .24)
+      <| x -> curve(x, 1.82)
 
   i++
   phase += (freq + (t > delay ? jump : 0)) * 2pi / 1s;
@@ -410,23 +415,23 @@ lino source.li > compiled.wasm
 ```
 -->
 
-From JS:
-
 ```js
 import * as lino from 'lino'
 
-\\ create wasm arrayBuffer
-const buffer = lino.compile(`mult(x,y) = x*y; mult.`)
+// create wasm arrayBuffer
+const buffer = lino.compile(`mult(x,y) = x*y; arr=[1,2,3];  mult, arr.`)
 
-\\ create wasm instance
+// create wasm instance
 const module = new WebAssembly.Module(buffer)
 const instance = new WebAssembly.Instance(module)
 
-\\ use API
-const {mult} = instance.exports
-mult(108,2) \\ 216
-```
+// use API
+const {mult, arr, __memory} = instance.exports
+mult(108,2) // 216
 
+// arrays are exposed as reference to memory
+const arrValues = new Float64Array(__memory, arr.value, 3)
+```
 
 
 

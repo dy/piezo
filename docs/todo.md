@@ -60,6 +60,9 @@
 * [ ] math: sin, cos, pow, mod etc - from mono https://github.com/stagas/mono
 * [ ] *state (global var per callsite?)
 * [ ] Readme examples
+* [ ] Dispose references to immediate arrays `[1,2,3]` if not saved anywhere
+  * [ ] Can be also disposed once variable is out of reach
+    * [ ] Need detection when vars are out of reach
 
 ## 2
 

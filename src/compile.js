@@ -4,32 +4,40 @@ import stdlib from "./stdlib.js"
 import {FLOAT,INT} from './const.js'
 import { parse as parseWat } from "watr";
 
-let includes, globals, funcs, locals, loop, buf, exports, block;
+let includes, globals, funcs, locals, loop, buf, exports, block, heap;
+
 const _tmp = Symbol('tmp')
+
+// limit of memory is defined as: (max array length i24) / (number of f64 per memory page i13)
+const MAX_MEMORY = 2048
 
 export default function compile(node) {
   if (typeof node === 'string') node = parse(node)
   console.log('compile', node)
 
   // init compiling context
+  // FIXME: make temp vars just part of local scope
   globals = {[_tmp]:[]}, // global scope (as name props)
   locals, // current fn local scope
   includes = [], // pieces to prepend
-  funcs = {}, // defined picker functions
+  funcs = {}, // defined user and util functions
   loop = 0, // current loop number
   buf = 0, // current array init number
   block = Object.assign([''],{cur:0}), // current block count
   exports = null // items to export
+  heap = 0 // increase heap size depending on max statically detected array size (number of pages)
 
   // run global in start function
   let init = expr(node), res = ``
 
   // run globals init, if needed
-  if (init) res = `(func $module/init\n` +
+  if (init) res = `(func $init.main\n` +
     globals[_tmp].map((tmp)=>`(local ${tmp})`).join('') +
     `${init}\n` +
     `(return))\n` +
-  `(start $module/init)`
+  `(start $init.main)\n`
+
+  if (heap) out += `(memory (export "__memory") ${heap} ${MAX_MEMORY})(global $mem (mut i32) (i32.const ${heap<<16}))(global $heap (mut i32) (i32.const 0))\n`
 
   // declare variables
   // NOTE: it sets functions as global variables
@@ -125,36 +133,49 @@ Object.assign(expr, {
   '['([,inits]) {
     inits = !inits ? [] : inits[0] !== ',' ? [inits] : inits.slice(1)
 
-    let out = ``, els = [], len = [] // el initializers & length constituents
-
-    // we can't define via data section, since values can be calculable
-    for (let init of inits) {
-      if (init[0] === '..') {
-        let [,min,max] = init
-        // simple numeric range like [0..1]
-        if (typeof max[1] === 'number') {
-          // [..1] - no need for specific init
-          if (!min) els.length += max[1]
-          // [1..3]
-          // FIXME: this range may need specifying, like -1.2..2
-          else if (typeof min[1] === 'number')
-            for (let v = min[1]; v <= max[1]; v++) els.push(op(`(f64.const ${v})`, 'f64'))
-          // FIXME
-          else err('Unimplemented array initializer: computed range min value')
-        }
-        // FIXME
-        else err('Unimplemented array initializer: computed range', init)
-      }
-      else els.push(expr(init))
-    }
     inc('mem'), inc('buf.new'), inc('buf.set'), inc('buf.ref'), inc('i32.modwrap'), inc('buf.len')
 
-    // allocate required memory (in bytes, not f64s)
-    out += `(call $buf.new (i32.const ${els.length}))\n`
+    // create new buffer pointer from heap
+    // let out = `(call $buf.new (i32.const 0))` // (f64.convert_i32_s (global.get $heap))
+    // save heap pointer here
+    let start = tmp('arr'), len = tmp('arr.len')
+    // let out = `(local.set $${start} (global.get $heap))`
+    let out = `(i32.const 0)`
 
-    // add initializers
-    for (let i = 0; i < els.length; i++)
-      if (els[i]) out += `(call $buf.set (i32.const ${i}) ${asFloat(els[i])})\n`
+    // TODO: if inits don't contain compited ranges or comprehension, we can init memory directly via data section
+
+    // we can't define via data section, since values can be calculable
+    // TODO: put values into heap
+    for (let init of inits) {
+      // [a..b], [..b]
+      if (init[0] === '..') {
+        let [,min,max] = init
+        if (!max) err('Arrays cannot be constructed from right-open ranges, TODO passed')
+
+        // simple numeric range like [..1]
+        if (!min && typeof max[1] === 'number') {
+          // [..1] - no need for specific init
+          out += `(i32.add (i32.const ${max[1]}))`
+        }
+        else {
+          // create range in memory starting from heap ptr
+          out += `(i32.add (call $range (global.get $heap) ${expr(min)} ${expr(max)}))`
+        }
+      }
+      else if (init[0] === '<|') {
+        let lop = loop(init, true)
+        out += lop;
+        // TODO: comprehension - puts loop results into heap
+      }
+      // [x*2]
+      // FIXME: this can be done via (data) section for static arrays
+      else out += `(f64.store (global.get $heap) ${expr(init)})(i32.add (i32.const 1))`
+    }
+
+    // move buffer to static memory: references static address, deallocates heap tail
+    out += `(local.set ${len})`
+    out += `(memory.copy (i32.sub (local.get $heap)))`
+    out += `(call $mem.alloc (i32.shl (i32.const 3)))`
 
     return op(out,'f64',{buf:true})
   },
@@ -289,70 +310,12 @@ Object.assign(expr, {
 
   // a <| b
   '<|'([,a,b]) {
-    loop++
+    return op(loop(a,b,false),'f64',{dynamic:true})
+  },
 
-    let from, to, next, params, pre
-    let idx = tmp('idx','i32'), item = define('#'.repeat(loop),'f64'), end = tmp('end','i32')
+  // a |> (b,c)->d
+  '|>'([,a,b]) {
 
-    // a..b <| #
-    if (a[0]==='..') {
-      // i = from; to; while (i < to) {# = i; ...; i++}
-      let [,min,max] = a
-      from = asInt(expr(min)), to = asInt(expr(max)), next = `(f64.convert_i32_s (local.get $${idx}))`, params = ``, pre = ``
-    }
-    else {
-      let aop = expr(a)
-      // (...;a,b,c)
-      if (aop.type.length > 1) {
-        // we create tmp list for this group and iterate over it, then after loop we dump it into stack and free memory
-        // i=0; to=types.length; while (i < to) {# = stack.pop(); ...; i++}
-        from = `(i32.const 0)`, to = `(i32.const ${aop.type.length})`
-        next = `(f64.load (i32.add (global.get $heap.ptr) (local.get $${idx})))`
-        params = ``
-        // push args into heap
-        // FIXME: should we use $heap.push3() function?
-        for (let i = 0; i < aop.type.length; i++) {
-          let t = aop.type[aop.type.length - i - 1]
-          pre += `${t==='f64'?'(f64.convert_i32_s)':'()'}(f64.store (i32.add (global.get $heap.ptr) (i32.const ${i << 3})))`
-        }
-      }
-      // (0..10 <| a ? ^b : c)
-      else if (aop.dynamic) {
-        // dynamic args are already in heap
-        from = `(i32.const 0)`, to = `(global.get $heap.size)`
-        next = `(f64.load (i32.add (global.get $heap.ptr) (local.get $${idx})))`
-        params = ``
-        err('Unimplemented: dynamic loop arguments')
-        // FIXME: must be reading from heap: heap can just be a list also
-      }
-      // list <| #
-      else {
-        // i = 0; to=buf[]; while (i < to) {# = buf[i]; ...; i++}
-        inc('buf.len'), inc('buf.get')
-        from = `(i32.const 0)`, to = `(call $buf.len ${aop})`, next = `(call $buf.get ${aop} (local.get $${idx}))`
-        params = ``, pre = ``
-      }
-    }
-
-    let res = `${pre}\n` +
-    `(local.set $${idx} ${from})\n` +
-    `(local.set $${end} ${to})\n` +
-    `(loop $loop${loop} ${params} (result f64)\n` +
-      `(${locals?.[item] ? 'local':'global'}.set $${item} ${next})\n` +
-      `(if (result f64) (i32.le_s (local.get $${idx}) (local.get $${end}))\n` +
-        `(then\n` +
-          `${expr(b)}\n` +
-          // save result to heap, if required
-          // save ? `(f64.store (i32.add (global.get $heap.ptr) (local.get $${idx}))` : `` +
-          `(local.set $${idx} (i32.add (local.get $${idx}) (i32.const 1)))` +
-          // `(call $f64.log (global.get $${item}))` +
-          `(br $loop${loop})\n` +
-        `)\n` +
-        `(else (f64.const 0))\n` +
-    `))\n`
-
-    loop--
-    return op(res,'f64',{dynamic:true})
   },
 
   '-'([,a,b]) {
@@ -543,6 +506,86 @@ function tmp(name, type='f64') {
   return name
 }
 
+// return loop expression, possibly with saving results to heap
+function loop(node, save=false) {
+  // // [.. <| x -> x]
+  // if (init[2][0] === '->') {
+
+  // }
+  // // [.. <| expr]
+  // else {
+
+  // }
+
+
+  loop++
+
+  let from, to, next, params, pre
+  let idx = tmp('idx','i32'), item = define('#'.repeat(loop),'f64'), end = tmp('end','i32')
+
+  // a..b <| ...
+  if (a[0]==='..') {
+    // i = from; to; while (i < to) {# = i; ...; i++}
+    let [,min,max] = a
+    from = asInt(expr(min)), to = asInt(expr(max)), next = `(f64.convert_i32_s (local.get $${idx}))`, params = ``, pre = ``
+  }
+  // list <| ...
+  else {
+    let aop = expr(a)
+    // (a,b,c) <| ...
+    if (aop.type.length > 1) {
+      // we create tmp list for this group and iterate over it, then after loop we dump it into stack and free memory
+      // i=0; to=types.length; while (i < to) {# = stack.pop(); ...; i++}
+      from = `(i32.const 0)`, to = `(i32.const ${aop.type.length})`
+      next = `(f64.load (i32.add (global.get $heap.ptr) (local.get $${idx})))`
+      params = ``
+      // push args into heap
+      // FIXME: should we use $heap.push3() function?
+      for (let i = 0; i < aop.type.length; i++) {
+        let t = aop.type[aop.type.length - i - 1]
+        pre += `${t==='f64'?'(f64.convert_i32_s)':'()'}(f64.store (i32.add (global.get $heap.ptr) (i32.const ${i << 3})))`
+      }
+    }
+    // (0..10 <| a ? ^b : c) <| ...
+    else if (aop.dynamic) {
+      // dynamic args are already in heap
+      from = `(i32.const 0)`, to = `(global.get $heap.size)`
+      next = `(f64.load (i32.add (global.get $heap.ptr) (local.get $${idx})))`
+      params = ``
+      err('Unimplemented: dynamic loop arguments')
+      // FIXME: must be reading from heap: heap can just be a list also
+    }
+    // list <| ...
+    else {
+      // i = 0; to=buf[]; while (i < to) {# = buf[i]; ...; i++}
+      inc('buf.len'), inc('buf.get')
+      from = `(i32.const 0)`, to = `(call $buf.len ${aop})`, next = `(call $buf.get ${aop} (local.get $${idx}))`
+      params = ``, pre = ``
+    }
+  }
+
+  let res = `${pre}\n` +
+  `(local.set $${idx} ${from})\n` +
+  `(local.set $${end} ${to})\n` +
+  `(loop $loop${loop} ${params} (result f64)\n` +
+    `(${locals?.[item] ? 'local':'global'}.set $${item} ${next})\n` +
+    `(if (result f64) (i32.le_s (local.get $${idx}) (local.get $${end}))\n` +
+      `(then\n` +
+        `${expr(b)}\n` +
+        // save result to heap, if required
+        // save ? `(f64.store (i32.add (global.get $heap.ptr) (local.get $${idx}))` : `` +
+        `(local.set $${idx} (i32.add (local.get $${idx}) (i32.const 1)))` +
+        // `(call $f64.log (global.get $${item}))` +
+        `(br $loop${loop})\n` +
+      `)\n` +
+      `(else (f64.const 0))\n` +
+  `))\n`
+
+  loop--
+
+  return res
+}
+
 // wrap expression to float, if needed
 function asFloat(o) {
   if (o.type[0] === 'f64') return o
@@ -564,7 +607,7 @@ function inc(name) {
 function pick(count, input) {
   let name
 
-  // if result of expression is 1 element, eg. (a,b,c) = d - we duplicate it
+  // if expression is 1 element, eg. (a,b,c) = d - we duplicate it to stack
   if (input.type.length === 1) {
     // a = b - skip picking
     if (count === 1) return input
@@ -577,7 +620,7 @@ function pick(count, input) {
     return op(`(call ${name} ${input})`, input.type, {static: input.static})
   }
 
-  // N:M or 1:M picker
+  // N:M or 1:M picker - trims stack to n els
   name = `$pick/${input.type.join('_')}_${count}`
   if (!funcs[name]) {
     funcs[name] = `(func ${name} (param ${input.type.join(' ')}) (result ${input.type.slice(0,count).join(' ')}) ${input.type.slice(0,count).map((o,i) => `(local.get ${i})`).join('')} (return))`
@@ -585,7 +628,6 @@ function pick(count, input) {
 
   return op(`(call ${name} ${input})`, input.type.slice(0,count), {static: input.static})
 }
-
 
 // create op result
 // holds number of returns (ops)

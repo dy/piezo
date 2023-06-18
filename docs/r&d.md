@@ -3065,7 +3065,7 @@ Having wat files is more useful than direct compilation to binary form:
     * likely can be `osc=[sin(x)=...x,tri(x)=...x]`
   + resolves the issue of scope (above): no need to make all vars global since no scope recursion
 
-## [x] Replace `<|`, `|`, `|>`? -> ~~Let's try `::` for loop/generator and `list -> item ::` for extended loop/tranformer~~ let's use `<|` for loop/pipe, `#` for member placeholder, `a <|= b <| c` for writing out iteration results
+## [x] Replace `<|`, `|`, `|>`? -> ~~Let's try `::` for loop/generator and `list -> item ::` for extended loop/tranformer~~ let's use `<|`, `|>` for map/reduce, ~~`#` for member placeholder~~, `x -> x*2` for mapping function
 
   + Less problems with overloading `|`
   + Fold operator is likely not as useful
@@ -3253,10 +3253,11 @@ Having wat files is more useful than direct compilation to binary form:
         - we can iterate via range `0.. <| # = 1` - assignment doesn't make sense here
       ? should we direct pipe somewhere at the end?
         `list <| #*2 <| filter(#) |> list`
-    ? how do we indicate index?
+    ?- how do we indicate index?
       ? `list <| (*i=0, *prev; >i++, >prev=#;)`
         + !clever!
         - requires stateful varis per-block, not per-function
+    - no intuitive way to make reducers `a..b |> #0 + #1` ?
 
   ? ALT: `(list:x <| x * 2):x <| filter(x)`, `a < 2 <| a++`, `list:x <|= x * 2`
     - doesn't allow nice chaining
@@ -3269,6 +3270,24 @@ Having wat files is more useful than direct compilation to binary form:
   ? ALT: `list |> # * 2 |> filter(#)`, `a < 2 |> a++`, `list = list |> # * 2`
     + natural pipe symbol
     - `a |>= # * 2` is unwieldy
+
+  ? ALT: `list -> x <| x * 2 -> y <| y * 2`, `list -> x <|= x * 2`
+    - same cons as `list -> x :: x * 2`
+    + allows chains `list->a <| a*2 ->b <| b*2`
+      - chains are not easy to read
+      - haskely construct
+    + allows detecting iteration procedure
+
+  ? ALT: `list <| (x, i) -> x * 2 <| y -> y * 2`
+    + very natural reference to mappers
+    + allows optimized reducer op as `0..10 |> (cur, sum) -> sum + cur`
+    + no namespace pollution
+    + allows internal vars as `list <| x -> 0..x |> (y, sum) -> y + sum`
+    + familiar chaining
+    ?+ `0..10 <| 0` enables just filling with single value, like `[0..100 <| 0]`
+    + assignment/map as `list <|= x -> x * 2`
+    + indicates item index naturally
+    + a bit more neatural break/continue
 
 ## [x] `list <| x` vs `a < 1 <| x` - how do we know left side type? -> lhs is always either `.. <| #` or `list <| #`
 
@@ -3416,13 +3435,26 @@ Having wat files is more useful than direct compilation to binary form:
     * when we've finished generating multiple args - we either copy them / send to stack and discard heap
     * we continue previous heap
 
-## [ ] Heap strategy: tail or head
+## [x] Heap strategy: tail or head -> let's use head with compile-time heap size detection: heap is just static array in memory
 
   * Head: `[ Heap | Static... ]`
     + easier offsets (no need to track beginning of heap)
     - overflow risk: silently rewrites static memory
       - checking boundaries on each write would be expensive
+        ~ that's risk only for comprehensions: we can check limits in `range_alloc`, `alloc` or
+          + list comprehension can know max input length in advance, except for open ranges like `0..` or `..`
+            + we'd anyways do something like that to prevent infinite loops
+          ~ so heap size would need to be detected compile-time
+        ~? ~~we can flush heap into static memory by parts, no need to wait for overflow~~
+          + that allows smaller heap size and no need for customization
+            - that makes code generation problematic and verbose (multipart case)
+            - internal arrays mess up sequential heap
     - fixed-length heap
+      ~+ it's fixed anyways in most of the cases, we can do 48000 something (6-10 pages)
+    + no need to maintain heap base offset, since it's always 0
+    + no need to displace heap all the time: it seems if we create dynamic array we'd copy heap O(n) times - crazy
+    + gives better values for array refs - we can just ignore values `< HEAP_SIZE` in iterators, so that userland floats like 10.000012 don't make any point
+    + gives nicer calc for mem.alloc - no need to discount heap - mem pointer can reserve heap as "first static array" lol
 
   * Tail: `[ Static... | Heap... ]`
     + heap overflow throws error automatically
@@ -3431,13 +3463,13 @@ Having wat files is more useful than direct compilation to binary form:
       - needs memcpy to be called for heap
         + heap is small, so memcpy should be fine
     - heap is still fixed size
-      ~+ check can be added to simply grow memory once heap limit is reached
+      ~+ check can be added to simply grow available heap once heap limit is reached
         ~ that check can happen per-heap alloc, so that we ensure max length per allocation, not total heap size
 
   * Dynamic head: `[ Heap... | Static... ]`
     - memcpy static once heap grows
       + heap grows rarely, unlike static, since it's more like tetris - once arr is filled it destroys
-    - requires hard heap limit
+    - requires hard heap limit anyways to prevent infinities
 
   ? do we actually need growing memory?
     + limited memory ensures portability

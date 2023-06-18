@@ -317,9 +317,8 @@ t('compile: list basic', t => {
   is(yl.value,4,'ylen')
 })
 
-t('compile: list from range', t => {
+t('compile: list from static range', t => {
   let wat = compile(`x=[..3], y=[0..3]; x,y,xl=x[],yl=y[].`)
-  // let wat = compile(`x=[..3], y=[0..3], z=[y[1]..y[3], 4..5, 2..-2]; x,y,z,xl=x[],yl=y[].`)
   // console.log(wat)
   let mod = compileWat(wat)
   let {__memory:memory, x, y, xl, yl} = mod.exports
@@ -334,17 +333,26 @@ t('compile: list from range', t => {
   is(yarr[2], 2,'y2')
   is(yarr[3], 3,'y3')
   is(yl.value,4,'ylen')
-  // let zarr = new Float64Array(memory.buffer, z.value, 4)
-  // is(zarr[0], 0,'z0')
-  // is(zarr[1], 1,'z1')
-  // is(zarr[2], 2,'z2')
-  // is(zarr[3], 4,'z3')
-  // is(zarr[4], 5,'z3')
-  // is(zarr[5], 2,'z3')
-  // is(zarr[6], 1,'z3')
-  // is(zarr[7], 0,'z3')
-  // is(zarr[8], -1,'z3')
-  // is(zarr[9], -2,'z3')
+})
+
+t.only('compile: list from dynamic range', t => {
+  let wat = compile(`a=3, x=[..a], xl=x[].`)
+  // , y=[1, x[0]..x[2], 2..-2]; x,y, xl=x[],yl=y[].`)
+  // console.log(wat)
+  let mod = compileWat(wat)
+  let {__memory:memory, x, y, xl, yl} = mod.exports
+  let xarr = new Float64Array(memory.buffer, x.value, 3)
+  is(xarr[0], 0,'x0')
+  is(xarr[1], 0,'x1')
+  is(xarr[2], 0,'x2')
+  is(xl.value,3,'xlen')
+})
+
+t.todo('compile: lists from invalid ranges', t => {
+  let wat = compile(`x=[2..]`)
+      wat = compile(`x=[..]`)
+      wat = compile(`x=[..-2]`)
+      wat = compile(`x=[..-2]`)
 })
 
 t.todo('compile: lists nested static', t => {

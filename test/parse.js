@@ -110,7 +110,7 @@ t('parse: lists', t => {
   is(parse('list = [1, 2, 3]'), ['=','list',['[',[',',[INT,1],[INT,2],[INT,3]]]],'list from elements')
   is(parse('list = [l:2, r:4]'), ['=','list',['[',[',',[':','l',[INT,2]], [':','r',[INT,4]]]]],'list with aliases')
   is(parse('[0..10]'), ['[',['..',[INT,0],[INT,10]]],'list from range')
-  is(parse('[0..8 <| #*2]'), ['[',['<|', ['..',[INT,0],[INT,8]], ['*', '#', [INT, 2]]]],'list comprehension')
+  is(parse('[0..8 <| x -> x*2]'), ['[',['<|', ['..',[INT,0],[INT,8]], ['->','x',['*', 'x', [INT, 2]]]]],'list comprehension')
   // is(parse('[2]list = list1'), ['=',['[',[INT,2],'list'],'list1'], '(sub)list of fixed size')
   is(parse('list.0, list.1'), [',',['.','list','0'],['.','list','1']],'short index access notation')
   is(parse('list.l = 2'), ['=',['.','list','l'], [INT, 2]],'alias index access')
@@ -167,7 +167,6 @@ t('parse: loops', t => {
 
   // NOTE: loop is meaningful backwards, ie. (a<|(b=c=d<|e=f))
   // is(parse(`a <| b = c = d <| e = f`), ['<|', 'a', ['<|', ['=','b',['=','c','d']], ['=', 'e', 'f']]], 'equals' )
-  // NOTE: we make guess unscoped pipes are less frequent / important case than assign BOR
   is(parse('a <| b = c | d'),['<|','a',['=','b',['|','c','d']]], 'a <| b | c')
   is(parse('a = b | c'), ['=','a',['|','b','c']], `a = b | c`)
   is(parse('a <| b | c'),['<|','a',['|','b','c']], 'a <| b | c')
@@ -202,7 +201,7 @@ t('parse: loops', t => {
     '<|', ['<','i',[INT,3]], ['=',['[]','x','i'],['++','i']]
   ], '<| precedence vs =')
 
-  is(parse('a<|#'),['<|','a','#'])
+  is(parse('a<|x->x'),['<|',['->', 'x','x']])
 })
 
 t('parse: functions', () => {

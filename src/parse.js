@@ -12,7 +12,7 @@ const PREC_SEMI=1,
 PREC_EXPORT=2,
 PREC_SEQUENCE=3, //  a, b==c, d,   a, b>=c, d,   a | b,c | d,   a?b:c , d
 PREC_DEFER=4,
-PREC_LOOP=5, // <|
+PREC_LOOP=5, // <| |>
 PREC_LABEL=7, // a:b = 2,  a:b, b:c,   a: b&c
 PREC_IF=8,    // a ? b=c
 PREC_ASSIGN=8,  // a=b, c=d,  a = b||c,  a = b | c,   a = b&c
@@ -129,7 +129,9 @@ binary('>>>', PREC_SHIFT)
 binary('<<', PREC_SHIFT)
 
 binary('<?', PREC_CLAMP) // a <? b
-binary('<|', PREC_LOOP)
+nary('<|', PREC_LOOP)
+binary('|>', PREC_LOOP)
+binary('->', PREC_LABEL)
 
 // unaries
 unary('+', PREC_UNARY)
@@ -143,14 +145,12 @@ token('--', PREC_UNARY, a => a && ['+',['--',a],[INT,1]])
 
 unary('^', PREC_TOKEN) // continue with value: ^ a
 token('^', PREC_TOKEN, a => !a && !expr(PREC_TOKEN) && ['^']) // continue: ^
-unary('^^', PREC_TOKEN) // break with balue: ^ a
+unary('^^', PREC_TOKEN) // break with value: ^ a
 token('^^', PREC_TOKEN, a => !a && !expr(PREC_TOKEN) && ['^^']) // return value: ^ a
 
 // a..b, ..b, a..
 token('..', PREC_RANGE, a => ['..', a, expr(PREC_RANGE)])
-token('>..', PREC_RANGE, a => ['>..', a, expr(PREC_RANGE)])
-token('>..<', PREC_RANGE, a => ['>..<', a, expr(PREC_RANGE)])
-token('..<', PREC_RANGE, a => ['..<', a, expr(PREC_RANGE)])
+token('..+', PREC_RANGE, a => ['..+', a, expr(PREC_RANGE)])
 
 // a.b
 // NOTE: we don't parse expression to avoid 0..1 recognizing as 0[.1]
