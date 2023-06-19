@@ -3569,7 +3569,7 @@ Having wat files is more useful than direct compilation to binary form:
   * `..[-1]`, `..[0]`
     + technically correct
 
-## [x] exclusive / non-inclusive range: how? -> use `0..10` as exclusive, `0..=10` as inclusive
+## [x] exclusive / non-inclusive range: how? -> use `0..10` as exclusive (by default), `0..=10` as inclusive (waiting if needed)
 
   * `0..<10`, `0<..10`
     - `0 > ..10`, `0.. < 10`
@@ -3580,6 +3580,8 @@ Having wat files is more useful than direct compilation to binary form:
     + solves problem of range width:
       * take `1..2`, so `2-1` as floats gives 1 which is correct width, but gives `2` as integers which is wrong
     + initializing array as `[..10]` creates `10` elements this way from `0..9` inclusive
+    + inclusivity is a matter of `<=` or `<`
+    + no questions with the way `range()`, `clamp()` works
   * generally exclusives in langs are right `0..<10` or `0...10`, not making separate left `0>..10`
   * we can only have `0 .< 10` or `0 .> 10`
     ?- `x <> 0 .< 10` vs `x <> 0..<10`
@@ -3592,6 +3594,7 @@ Having wat files is more useful than direct compilation to binary form:
     - clamp is weird: `x <? 0..=10` - very unnatural
       ~ `x <=? 0..10` ?
       ~ or we can keep clamping to normal values `x <? 0..10` and keep range "exclusive" only for range constructor
+    + follows the logic of `<` and `<=`
   * inclusive as `0...10`, exclusive as `0..<10`?
     - too lengthy
   * ruby's `0...10`?
