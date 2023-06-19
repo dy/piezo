@@ -436,26 +436,24 @@ const arrValues = new Float64Array(__memory, arr.value, 3)
 
 ## Motivation
 
-JavaScript and _Web Audio API_ is not suitable for audio purposes – it has unpredictable pauses, glitches and so on. It's better handled in worklet with WASM. Also, audio processing generally doesn't have cross-platform solution, many environments lack audio features.
+JavaScript and _Web Audio API_ is not suitable for audio purposes – it has unpredictable pauses, glitches and so on. It's better handled in worklet with WASM. Besides, audio/signal processing generally doesn't have cross-platform solution, many environments lack audio features.
 
-_Lino_ fills that gap, providing efficient, resilient & accessible layer. It targets browsers, [audio worklets](https:\\developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, VST, Rust, Python, Go, [embedded systems](https:\\github.com/bytecodealliance/wasm-micro-runtime) etc. Inspired by [_mono_](https:\\github.com/stagas/mono), _zzfx_, _bytebeat_, _[hxos](https:\\github.com/stagas/hxos)_, [_min_](https:\\github.com/r-lyeh/min) etc.
+_Lino_ fills that gap, providing robust low-level layer for audio/DSP. It targets browsers, [audio worklets](https:\\developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, VST, Rust, Python, Go, [embedded systems](https:\\github.com/bytecodealliance/wasm-micro-runtime) etc. Inspired by [_mono_](https:\\github.com/stagas/mono), _zzfx_, _bytebeat_, _[hxos](https:\\github.com/stagas/hxos)_, [_min_](https:\\github.com/r-lyeh/min) etc.
 
 ### Principles
 
-* _Common syntax_: familiar code, copy-pastable floatbeats.
-* _No-keywords_: safe var names, max minification, i18l code.
-* _Case-agnostic_: changing case doesn't affect code, making it URL-safe, typo-proof.
-* _Space-agnistic_: changing spaces/newlines doesn't affect code, making it compressable.
-* _Type inference_: type is defined by operator, not via dedicated syntax.
-* _No OOP_: functions, stateful vars.
-* _No lambda funcs_: no unnecessary scope persistency.
+* _Common syntax_: already familiar code, copy-pastable floatbeats.
+* _No-keywords_: no learning curve - word means variable, symbol means operator. Also trily i18l code.
+* _Case-agnostic_: changing case doesn't break code, which is URL-safe & typo-proof (`sampleRate` vs `samplerate`).
+* _Space-agnistic_: spaces/newlines can be removed, eg. for compression.
+* _0 types_: type is internal feature, let user focus on processing logic, not language.
+* _0 runtime_: statically analyzable, no lamda functions, no OOP, no heavy structures.
 * _Groups_: multiple returns, multiple operands.
 * _Explicit_: wysiwyg, no implicit globals, no import-alls.
-* _Ranges_: prevent blowing up values.
-* _Pipes_: iterators instead of loops.
+* _Ranges_: prevent blowing up arguments.
+* _Pipes_: map/reduce instead of loops.
 * _Low-level_: no fancy features beyond math and buffers.
-* _Static/Linear memory_: no garbage to collect.
-* _0 runtime_: statically analyzable.
+* _Static/Linear memory_: no garbage to collect, only 1-page heap.
 * _Flat_: no nested scopes, flat arrays, flat groups.
 
 <p align=center><a href="https:\\github.com/krsnzd/license/">🕉</a></p>
