@@ -71,7 +71,7 @@ a = b ? c;                      \\ if b then a = c (else a = 0)
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ ranges
 0..10;                          \\ from 1 to 9 (10 exclusive)
-0..+10;                         \\ from 1 to 10 (10 inclusive)
+0..=10;                         \\ from 1 to 10 (10 inclusive)
 0.., ..10, ..;                  \\ open ranges
 10..1;                          \\ reverse range
 1.08..108.0;                    \\ float range

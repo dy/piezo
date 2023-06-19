@@ -150,7 +150,7 @@ token('^^', PREC_TOKEN, a => !a && !expr(PREC_TOKEN) && ['^^']) // return value:
 
 // a..b, ..b, a..
 token('..', PREC_RANGE, a => ['..', a, expr(PREC_RANGE)])
-token('..+', PREC_RANGE, a => ['..+', a, expr(PREC_RANGE)])
+token('..=', PREC_RANGE, a => ['..=', a, expr(PREC_RANGE)])
 
 // a.b
 // NOTE: we don't parse expression to avoid 0..1 recognizing as 0[.1]

@@ -47,7 +47,7 @@ t('parse: ranges', t => {
   is(parse('1.., ..10'), [',',['..',[INT,1],,], ['..',,[INT,10]]], 'open ranges')
   is(parse('10..1'), ['..',[INT,10],[INT,1]], 'reverse-direction range')
   is(parse('1.08..108.0'), ['..',[FLOAT,1.08],[FLOAT,108]], 'float range')
-  is(parse('0>..10, 0..<10, 0>..<10'), [',',['>..', [INT,0], [INT,10]],['..<',[INT,0],[INT,10]],['>..<',[INT,0],[INT,10]]], 'non-inclusive ranges')
+  // is(parse('0>..10, 0..<10, 0>..<10'), [',',['>..', [INT,0], [INT,10]],['..<',[INT,0],[INT,10]],['>..<',[INT,0],[INT,10]]], 'non-inclusive ranges')
   is(parse('(x-1)..(x+1)'), ['..', ['(',['-','x',[INT,1]]], ['(',['+','x',[INT,1]]]], 'calculated ranges')
   is(parse('(-10..10)[]'), ['[]',['(', ['..',['-',[INT,10]], [INT,10]]]], 'length (20)')
 })
@@ -171,16 +171,16 @@ t('parse: loops', t => {
   is(parse('a = b | c'), ['=','a',['|','b','c']], `a = b | c`)
   is(parse('a <| b | c'),['<|','a',['|','b','c']], 'a <| b | c')
   is(parse('a <| b = c'),['<|','a',['=','b','c']], `a <| b = c`)
-  is(parse('a <| b | c <| d'),['<|',['<|','a',['|','b','c']],'d'], 'a <| b | c <| d')
-  is(parse('c <| d <| e'),['<|',['<|','c','d'],'e'], 'c <| d <| e')
+  is(parse('a <| b | c <| d'),['<|','a',['|','b','c'],'d'], 'a <| b | c <| d')
+  is(parse('c <| d <| e'),['<|','c','d','e'], 'c <| d <| e')
   is(parse('a -= b += c'), ['-=','a',['+=','b','c']])
   is(parse('a <| b = c'), ['<|','a',['=','b','c']])
   is(parse('a?b:c <| d'), ['<|',['?:','a','b','c'],'d'])
   is(parse('a , b<|c'),[',','a',['<|','b','c']])
   is(parse('b<|c, d'),[',',['<|','b','c'],'d'])
-  is(parse('a <| b | c | c <| d'),['<|',['<|','a',['|',['|','b','c'],'c']],'d'], 'a <| b | c | c <| d')
+  is(parse('a <| b | c | c <| d'),['<|','a',['|',['|','b','c'],'c'],'d'], 'a <| b | c | c <| d')
   is(parse('x <| x | y'),['<|','x',['|','x','y']], 'pipe seq2')
-  is(parse('c <| d <| e | f'),['<|',['<|','c','d'],['|','e','f']], 'loop seq')
+  is(parse('c <| d <| e | f'),['<|','c','d',['|','e','f']], 'loop seq')
   is(parse(`a <| b = c = d | e = f`), ['<|','a',['=','b',['=','c',['=',['|','d','e'],'f']]]], 'equals' )
 
   is(parse('s[] < 50 <| (s += ", hi")'),['<|',['<',['[]','s'],[INT,50]],['(',['+=','s',['"',', hi']]]], 'inline loop: `while (s.length < 50) do (s += ", hi)"`')
@@ -201,7 +201,8 @@ t('parse: loops', t => {
     '<|', ['<','i',[INT,3]], ['=',['[]','x','i'],['++','i']]
   ], '<| precedence vs =')
 
-  is(parse('a<|x->x'),['<|',['->', 'x','x']])
+  is(parse('a<|x->x'),['<|','a',['->', 'x','x']])
+  is(parse('a<|x->x<|y->y'),['<|','a',['->', 'x','x'],['->','y','y']])
 })
 
 t('parse: functions', () => {

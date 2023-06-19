@@ -4,7 +4,7 @@ import stdlib from "./stdlib.js"
 import {FLOAT,INT} from './const.js'
 import { parse as parseWat } from "watr";
 
-let includes, globals, funcs, locals, loop, buf, exports, block, heap;
+let includes, globals, funcs, locals, loopc, exports, block, heap;
 
 const _tmp = Symbol('tmp')
 
@@ -21,45 +21,44 @@ export default function compile(node) {
   locals, // current fn local scope
   includes = [], // pieces to prepend
   funcs = {}, // defined user and util functions
-  loop = 0, // current loop number
-  buf = 0, // current array init number
+  loopc = 0, // current loop number
   block = Object.assign([''],{cur:0}), // current block count
   exports = null // items to export
-  heap = 0 // increase heap size depending on max statically detected array size (number of pages)
+  heap = 0 // heap size as number of pages (detected from max static array size)
 
   // run global in start function
-  let init = expr(node), res = ``
+  let init = expr(node), out = ``
 
   // run globals init, if needed
-  if (init) res = `(func $init.main\n` +
+  if (init) out = `(func $__main\n` +
     globals[_tmp].map((tmp)=>`(local ${tmp})`).join('') +
     `${init}\n` +
     `(return))\n` +
-  `(start $init.main)\n`
+  `(start $__main)\n`
 
-  if (heap) out += `(memory (export "__memory") ${heap} ${MAX_MEMORY})(global $mem (mut i32) (i32.const ${heap<<16}))(global $heap (mut i32) (i32.const 0))\n`
+  if (heap) out += `(memory (export "__memory") ${heap} ${MAX_MEMORY})(global $mem (mut i32) (i32.const ${heap<<16}))\n`
 
   // declare variables
   // NOTE: it sets functions as global variables
   for (let name in globals)
-    res = `(global $${name} (mut ${globals[name].type}) (${globals[name].type}.const 0))\n` + res
+    out = `(global $${name} (mut ${globals[name].type}) (${globals[name].type}.const 0))\n` + out
 
   // declare funcs
   for (let name in funcs)
-    res = funcs[name] + '\n' + res
+    out = funcs[name] + '\n' + out
 
   // declare includes
   for (let include of includes)
-    if (stdlib[include]) res = stdlib[include] + '\n' + res; else err('Unknown include `' + include + '`')
+    if (stdlib[include]) out = stdlib[include] + '\n' + out; else err('Unknown include `' + include + '`')
 
   // provide exports
   for (let name in exports)
-    res += `\n(export "${name}" (${exports[name].func ? 'func' : 'global'} $${name}))`
+    out += `\n(export "${name}" (${exports[name].func ? 'func' : 'global'} $${name}))`
 
-  console.log(res)
-  // console.log(...parseWat(res))
+  console.log(out)
+  // console.log(...parseWat(out))
 
-  return res
+  return out
 }
 
 // processess global statements, returns nothing, only modifies globals, inits, out, memory
@@ -131,59 +130,17 @@ Object.assign(expr, {
 
   // [1,2,3]
   '['([,inits]) {
+    // NOTE: this expects heap pointer in stack
     inits = !inits ? [] : inits[0] !== ',' ? [inits] : inits.slice(1)
 
-    inc('mem'), inc('buf.new'), inc('buf.set'), inc('buf.ref'), inc('i32.modwrap'), inc('buf.len')
+    inc('malloc'), inc('ref')
 
-    // create new buffer pointer from heap
-    // let out = `(call $buf.new (i32.const 0))` // (f64.convert_i32_s (global.get $heap))
-    // save heap pointer here
-    let start = tmp('arr'), len = tmp('arr.len')
-    // let out = `(local.set $${start} (global.get $heap))`
-    let out = `(i32.const 0)`
-
-    // TODO: if inits don't contain compited ranges or comprehension, we can init memory directly via data section
-
-    // we can't define via data section, since values can be calculable
-    // TODO: put values into heap
-    for (let init of inits) {
-      // [a..b], [..b]
-      if (init[0] === '..') {
-        let [,min,max] = init
-        if (!max) err('Arrays cannot be constructed from right-open ranges, TODO passed')
-
-        // simple numeric range like [..1]
-        if (!min && typeof max[1] === 'number') {
-          // [..1] - no need for specific init
-          out += `(i32.add (i32.const ${max[1]}))`
-        }
-        else {
-          // create range in memory starting from heap ptr
-          out += `(i32.add (call $range (global.get $heap) ${expr(min)} ${expr(max)}))`
-        }
-      }
-      else if (init[0] === '<|') {
-        let lop = loop(init, true)
-        out += lop;
-        // TODO: comprehension - puts loop results into heap
-      }
-      // [x*2]
-      // FIXME: this can be done via (data) section for static arrays
-      else out += `(f64.store (global.get $heap) ${expr(init)})(i32.add (i32.const 1))`
-    }
-
-    // move buffer to static memory: references static address, deallocates heap tail
-    out += `(local.set ${len})`
-    out += `(memory.copy (i32.sub (local.get $heap)))`
-    out += `(call $mem.alloc (i32.shl (i32.const 3)))`
-
-    return op(out,'f64',{buf:true})
+    // return buffer initializer
+    return buf(inits)
   },
 
   // a[b] or a[]
   '[]'([,a,b]) {
-    inc('mem')
-
     // // a[10], a[n] - create an array of defined length
     // if (typeof a === 'string') {
     //   a = varName(a)
@@ -193,7 +150,7 @@ Object.assign(expr, {
     //     // x[] - returns 0
     //     if (!b) return op(`(i32.const 0)`, 'i32')
 
-    //     inc('buf.new'), inc('buf.ref')
+    //     inc('buf.new'), inc('ref')
 
     //     // a[10] - initializes array variable of defined size
     //     return op(`(${locals ? 'local' : 'global'}.set $${a} (call $buf.new ${expr(b)}))(f64.const 0)`)
@@ -201,7 +158,7 @@ Object.assign(expr, {
     // }
 
     // a[] - length
-    if (!b) return inc('buf.len'), op(`(call $buf.len ${expr(a)})`,'i32')
+    if (!b) return inc('ref.len'), op(`(call $ref.len ${expr(a)})`,'i32')
 
     // a[b] - regular access
     return inc('buf.get'), op(`(call $buf.get ${expr(a)} ${expr(b)})`)
@@ -218,7 +175,7 @@ Object.assign(expr, {
       // FIXME: add static optimization here for property - to avoid calling i32.modwrap if idx is known
       // FIXME: another static optimization: if length is known in advance (likely yes) - make static modwrap
 
-      return inc('buf.len'), inc('buf.tee'), inc('i32.modwrap'), op(`(call $buf.tee ${expr(buf)} ${asInt(expr(idx))} ${asFloat(expr(b))})`, 'f64')
+      return inc('ref.len'), inc('buf.set'), inc('i32.modwrap'), op(`(call $buf.tee ${expr(buf)} ${asInt(expr(idx))} ${asFloat(expr(b))})`, 'f64')
     }
 
     // a = b,  a = (b,c),   a = (b;c,d)
@@ -480,13 +437,9 @@ Object.assign(expr, {
   },
 })
 
-function varName(name) {
-  return name + block.slice(0,block.cur).join('.');
-}
-
 // define variable in current scope, export if necessary; returns resolved name
 function define(name, type='f64') {
-  name = varName(name)
+  name += block.slice(0,block.cur).join('.')
   if (!locals) {
     if (!globals[name]) globals[name] = {var:true, type}
     if (!locals && exports) exports[name] = globals[name]
@@ -499,11 +452,64 @@ function define(name, type='f64') {
 
 // define temp variable, always in local scope; returns tmp var name
 // FIXME: possibly can turn it into `define`
+// FIXME: tmp should be able to free variable once finished using
 function tmp(name, type='f64') {
   let len = (locals || globals)[_tmp].length || ''
   name = `tmp${len}.${name}`
   ;(locals || globals)[_tmp].push(`$${name} ${type}`)
   return name
+}
+
+// create array initializer op (via heap), from element nodes
+function buf(inits, root=true) {
+  let src = tmp('src','i32'), dst = tmp('dst', 'i32'), size = tmp('size','i32')
+
+  heap = Math.max(heap, 1); // min heap is 8192 elements
+
+  let out = root ? `(i32.const 0)` : `` // put heap address to memory for root array, nested arrays have it in stack
+  out += `(local.tee $${src})` // save beginning pointer
+
+  // TODO: if inits don't contain computed ranges or comprehension, we can init memory directly via data section
+
+  // each element saves value to memory and increases heap pointer in stack
+  for (let init of inits) {
+    // [a..b], [..b]
+    if (init[0] === '..') {
+      let [,min,max] = init
+      if (!max) err('Arrays cannot be constructed from right-open ranges, TODO passed')
+
+      // [..1] - just skips heap
+      if (!min && typeof max[1] === 'number') {
+        out += `(i32.add (i32.shl (i32.const ${max[1]}) (i32.const 3)))`
+        heap = Math.max(heap, max[1] >> 12) // increase heap
+      }
+      // [x..y] - generic computed range
+      else {
+        inc('range')
+        // increase heap
+        if (typeof min[1] === 'number' && typeof max[1] === 'number') heap = Math.max(heap, (max[1]-min[1]) >> 12)
+        // create range in memory from ptr in stack
+        out += `(call $range ${asFloat(expr(min))} ${asFloat(expr(max))} (f64.const 1))`
+      }
+    }
+    // [a..b <| ...] - comprehension
+    else if (init[0] === '<|') {
+      // let lop = loop(init, true)
+      // out += `(i32.add ${lop})`;
+      // TODO: comprehension - expects heap address in stack, puts loop results into heap
+    }
+    // [x*2] - single value
+    else inc('push'), out += `(call $push ${asFloat(expr(init))})`
+  }
+
+  // move buffer to static memory: references static address, deallocates heap tail
+
+  out += `(local.set $${size} (i32.sub (local.get $${src})))` // get total length
+  + `(local.set $${dst} (call $malloc (local.get $${size})))` // allocate new memory
+  + `(memory.copy (local.get $${dst}) (local.get $${src}) (local.get $${size}))` // move heap to static memory
+  + `(call $ref (local.get $${dst}) (i32.shr_u (local.get $${size}) (i32.const 3)) )` // create reference
+
+  return op(out,'f64',{buf:true})
 }
 
 // return loop expression, possibly with saving results to heap
@@ -518,10 +524,10 @@ function loop(node, save=false) {
   // }
 
 
-  loop++
+  loopc++
 
   let from, to, next, params, pre
-  let idx = tmp('idx','i32'), item = define('#'.repeat(loop),'f64'), end = tmp('end','i32')
+  let idx = tmp('idx','i32'), item = define('#'.repeat(loopc),'f64'), end = tmp('end','i32')
 
   // a..b <| ...
   if (a[0]==='..') {
@@ -558,8 +564,8 @@ function loop(node, save=false) {
     // list <| ...
     else {
       // i = 0; to=buf[]; while (i < to) {# = buf[i]; ...; i++}
-      inc('buf.len'), inc('buf.get')
-      from = `(i32.const 0)`, to = `(call $buf.len ${aop})`, next = `(call $buf.get ${aop} (local.get $${idx}))`
+      inc('ref.len'), inc('buf.get')
+      from = `(i32.const 0)`, to = `(call $ref.len ${aop})`, next = `(call $buf.get ${aop} (local.get $${idx}))`
       params = ``, pre = ``
     }
   }
@@ -567,7 +573,7 @@ function loop(node, save=false) {
   let res = `${pre}\n` +
   `(local.set $${idx} ${from})\n` +
   `(local.set $${end} ${to})\n` +
-  `(loop $loop${loop} ${params} (result f64)\n` +
+  `(loop $loop${loopc} ${params} (result f64)\n` +
     `(${locals?.[item] ? 'local':'global'}.set $${item} ${next})\n` +
     `(if (result f64) (i32.le_s (local.get $${idx}) (local.get $${end}))\n` +
       `(then\n` +
@@ -581,7 +587,7 @@ function loop(node, save=false) {
       `(else (f64.const 0))\n` +
   `))\n`
 
-  loop--
+  loopc--
 
   return res
 }
@@ -604,6 +610,7 @@ function inc(name) {
 }
 
 // pick N input args back into stack, like (a,b,c) -> (a,b)
+// FIXME: ignore types, make only f64 type, call as `f64.pick_4_3`? too many funcs with similar meaning like pick/i32_f64_2, pick/f64_f64_2 - we anyways use it only in swizzling
 function pick(count, input) {
   let name
 

@@ -3569,7 +3569,7 @@ Having wat files is more useful than direct compilation to binary form:
   * `..[-1]`, `..[0]`
     + technically correct
 
-## [x] exclusive / non-inclusive range: how? -> use `0..10` as exclusive, `0..+10` as inclusive
+## [x] exclusive / non-inclusive range: how? -> use `0..10` as exclusive, `0..=10` as inclusive
 
   * `0..<10`, `0<..10`
     - `0 > ..10`, `0.. < 10`
@@ -3589,13 +3589,16 @@ Having wat files is more useful than direct compilation to binary form:
     - `=` has wrong association, there must be `<`
     + `Rust` has that
     + open-right range seems to be ubiquotous & mathematically standard
-    - clamp is weird: `x -< 0..=10` -  very unnatural
+    - clamp is weird: `x <? 0..=10` - very unnatural
+      ~ `x <=? 0..10` ?
+      ~ or we can keep clamping to normal values `x <? 0..10` and keep range "exclusive" only for range constructor
   * inclusive as `0...10`, exclusive as `0..<10`?
     - too lengthy
   * ruby's `0...10`?
     - `0.. .10`
   * `0..+10` for inclusive range, `0..10` for exclusive
     + `+` has no meaning as operator anyways
+    - `10..-+10` vs `10..+-10` is weird,vs `10..=-10`
 
 
 ## [x] replace `x -< 0..10` with `x =< 0..10`? -> clamp is `x <? 0..10`
@@ -3729,3 +3732,11 @@ Having wat files is more useful than direct compilation to binary form:
     - may need to have special fn to change length, since uses reinterpreting
 
   * `x[10]; y = @latr.sublist(x, len: 3, start: 2)`
+
+## [ ] Range step: how
+
+  * `[0..+10..0.5]`
+  * `[0..0.5..+10]`
+    * `[20..0.5..+-20]`
+  * `[0..10:0.5]`
+  * `[0..20 <| x -> x*0.5]`

@@ -24,12 +24,15 @@ function compileWat (code, importObj={}) {
   '(func $i32.log2 (import "imports" "log") (param i32 i32) (result i32 i32))\n' +
   '(func $i32.log3 (import "imports" "log") (param i32 i32 i32) (result i32 i32 i32))\n' +
   '(func $f64.log (import "imports" "log") (param f64) (result f64))\n' +
+  '(func $f64.log2 (import "imports" "log") (param f64 f64) (result f64 f64))\n' +
+  '(func $f64.log3 (import "imports" "log") (param f64 f64 f64) (result f64 f64 f64))\n' +
   '(func $i64.log (import "imports" "log") (param i64) (result i64))\n' +
   code
   const wasmModule = wabt.parseWat('inline', code, {
-    // simd: true,
+    simd: true,
     reference_types: true,
-    gc: true
+    gc: true,
+    bulk_memory: true
     // function_references: true
   })
 
@@ -249,21 +252,16 @@ t('compile: function oneliners', t => {
 })
 
 
-t.skip('debugs', t => {
+t('debugs', t => {
   const memory = new WebAssembly.Memory({ initial: 1 });
   const importObject = { env: { memory } };
   let module = compileWat(`
-  (func $module/init
-    (local i32 i32 i32)
-    (i32.const 1)
-    (i32.const 2)
-    (i32.const 3)
-    (local.set 0)(local.set 1)(local.set 2)
-    (call $i32.log3 (local.get 0) (local.get 1) (local.get 2))
+  (func $__main
+    (i32.const 1)(i32.const 2)(call $i32.log3 (i32.const 3))
     (drop)(drop)(drop)
   )
-  (start $module/init)
-  `, importObject)
+  (start $__main)
+`, importObject)
 
   // console.log(module.exports.x(1n))
 })
@@ -318,11 +316,11 @@ t('compile: list basic', t => {
 })
 
 t('compile: list from static range', t => {
-  let wat = compile(`x=[..3], y=[0..3]; x,y,xl=x[],yl=y[].`)
+  let wat = compile(`x=[..3], y=[0..4]; x,y,xl=x[],yl=y[].`)
   // console.log(wat)
   let mod = compileWat(wat)
   let {__memory:memory, x, y, xl, yl} = mod.exports
-  let xarr = new Float64Array(memory.buffer, x.value, 3)
+  let xarr = new Float64Array(memory.buffer, x.value, 10)
   is(xarr[0], 0,'x0')
   is(xarr[1], 0,'x1')
   is(xarr[2], 0,'x2')
@@ -335,17 +333,17 @@ t('compile: list from static range', t => {
   is(yl.value,4,'ylen')
 })
 
-t.only('compile: list from dynamic range', t => {
-  let wat = compile(`a=3, x=[..a], xl=x[].`)
+t('compile: list from dynamic range', t => {
+  let wat = compile(`a=3, x=[0..a], xl=x[].`)
   // , y=[1, x[0]..x[2], 2..-2]; x,y, xl=x[],yl=y[].`)
   // console.log(wat)
   let mod = compileWat(wat)
   let {__memory:memory, x, y, xl, yl} = mod.exports
   let xarr = new Float64Array(memory.buffer, x.value, 3)
   is(xarr[0], 0,'x0')
-  is(xarr[1], 0,'x1')
-  is(xarr[2], 0,'x2')
-  is(xl.value,3,'xlen')
+  is(xarr[1], 1,'x1')
+  is(xarr[2], 2,'x2')
+  is(xl.value, 3,'xlen')
 })
 
 t.todo('compile: lists from invalid ranges', t => {
