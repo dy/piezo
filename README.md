@@ -443,9 +443,9 @@ _Lino_ fills that gap, providing robust low-level layer for audio/DSP. It target
 ### Principles
 
 * _Common syntax_: already familiar code, copy-pastable floatbeats.
-* _No-keywords_: no learning curve - word means variable, symbol means operator. Also trily i18l code.
-* _Case-agnostic_: changing case doesn't break code, which is URL-safe & typo-proof (`sampleRate` vs `samplerate`).
-* _Space-agnistic_: spaces/newlines can be removed, eg. for compression.
+* _No-keywords_: word means variable, symbol means operator; truly i18l code.
+* _Case-agnostic_: changing case doesn't break code; URL-safe & typo-proof (`sampleRate` vs `samplerate`).
+* _Space-agnistic_: spaces/newlines can be safely removed or added, eg. for compression or prettifying.
 * _0 types_: type is internal feature, let user focus on processing logic, not language.
 * _0 runtime_: statically analyzable, no lamda functions, no OOP, no heavy structures.
 * _Groups_: multiple returns, multiple operands.
