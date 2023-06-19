@@ -123,18 +123,18 @@ b() = (                         \\
 b(), b(), b();                  \\ 1, 2, 3
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ arrays
-m = [..10];                     \\ create empty array of 10
-m = [..10 <| 0];                \\ create array of 10 zeros
-m = [1,2,3,4];                  \\ create array with 4 values
-m = [l:2, r:4, c:6];            \\ create with position aliases
-m = [n[..]];                    \\ create copy of n
-m = [1, 2..4, last:5];          \\ create from mixed definition
-m = [1, [2, 3, [4]]];           \\ create nested arrays (tree)
-m = [0..4 <| i: i * 2];       \\ create from array comprehension
-(first, last) = (m.0, m.last);  \\ get by static index / alias
+m = [..10];                     \\ array of 10 elements (not necessarily 0)
+m = [..10 <| 0];                \\ array of 10 zeros
+m = [1,2,3,4];                  \\ array with 4 values
+m = [l:2, r:4, c:6];            \\ position aliases
+m = [n[..]];                    \\ copy n
+m = [1, 2..4, last:5];          \\ mixed definition
+m = [1, [2, 3, [4]]];           \\ nested arrays (tree)
+m = [0..4 <| i -> i * 2];       \\ array comprehension
+m.0, m.last;                    \\ get by static index / alias
 (first, last) = (m[0], m[-1]);  \\ get by dynamic index
 (second, third) = m[1..];       \\ get multiple values
-(first, last:c) = m[..];        \\ get all
+(first, last:c) = m[..];        \\ all values
 length = m[];                   \\ get length
 m[0] = 1;                       \\ set value
 m[2..] = (1, 2..4, n[1..3]);    \\ set multiple values from offset 2
@@ -145,7 +145,7 @@ m[0..] = m[1..,0];              \\ rotate
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ loop, map, reduce
 (a, b, c) <| i -> x(i);         \\ for each item i do x(item)
-(10..1 <| i : (                \\ iterate range
+(10..1 <| i -> (                \\ iterate range
   i < 3 ? ^^;                   \\ ^^ break
   i < 5 ? ^;                    \\ ^ continue
 ));                             \\
