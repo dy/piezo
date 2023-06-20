@@ -7,9 +7,9 @@
 <!--
 ## Projects using lino
 
-* [web-audio-api](https:\\github.com/audiojs/web-audio-api)
-* [audiojs](https:\\github.com/audiojs/)
-* [sonr](https:\\github.com/sonr/)
+* [web-audio-api](https://github.com/audiojs/web-audio-api)
+* [audiojs](https://github.com/audiojs/)
+* [sonr](https://github.com/sonr/)
 -->
 
 
@@ -252,7 +252,7 @@ lpf.                                \\ export lpf function, end program
 
 ### ZZFX
 
-Generates ZZFX's [coin sound](https:\\codepen.io/KilledByAPixel/full/BaowKzv) `zzfx(...[,,1675,,.06,.24,1,1.82,,,837,.06])`.
+Generates ZZFX's [coin sound](https://codepen.io/KilledByAPixel/full/BaowKzv) `zzfx(...[,,1675,,.06,.24,1,1.82,,,837,.06])`.
 
 ```
 @math: pi,abs,sin,round;
@@ -312,7 +312,7 @@ coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
 ```
 
 <!--
-## [Freeverb](https:\\github.com/opendsp/freeverb/blob/master/index.js)
+## [Freeverb](https://github.com/opendsp/freeverb/blob/master/index.js)
 
 ```
 @'./combfilter.li#comb';
@@ -345,7 +345,7 @@ Features:
 * _multiarg pipes_ − pipe can consume groups. Depending on arity of target it can act as convolver: `a,b,c | (a,b) -> a+b` becomes  `(a,b | (a,b)->a+b), (b,c | (a,b)->a+b)`.
 * _fold operator_ − `a,b,c |> fn` acts as `reduce(a,b,c, fn)`, provides efficient way to reduce a group or array to a single value.
 
-### [Floatbeat](https:\\dollchan.net/bytebeat/index.html#v3b64fVNRS+QwEP4rQ0FMtnVNS9fz9E64F8E38blwZGvWDbaptCP2kP3vziTpumVPH0qZyXzfzHxf8p7U3aNJrhK0rYHfgHAOZZkrlVVu0+saKbd5dTXazolRwnvlKuwNvvYORjiB/LpyO6pt7XhYqTNYZ1DP64WGBYgczuhAQgpiTXEtIwP29pteBZXqwTrB30jwc7i/i0jX2cF8g2WIGKlhriTRcPjSvcVMBn5NxvgCOc3TmqZ7/IdmmEnAMkX2UPB3oMHdE9WcKqVK+i5Prz+PKa98uOl60RgE6zP0+wUr+qVpZNsDUjKhtyLkKvS+LID0FYVSrJql8KdSMptKKlx9eTIbcllvdf8HxabpaJrIXEiycV7WGPeEW9Y4v5CBS07WBbUitvRqVbg7UDtQRRG3dqtZv3C7bsBbFUVcALvwH86MfSDws62fD7CTb0eIghE/mDAPyw9O9+aoa9h63zxXl2SW/GKOFNRyxbyF3N+FA8bPyzFb5misC9+J/XCC14nVKfgRQ7RY5ivKeKmmjOJMaBJSbEZJoiZZMuj2pTEPGunZhqeatOEN3zadxrXRmOw+AA==)
+### [Floatbeat](https://dollchan.net/bytebeat/index.html#v3b64fVNRS+QwEP4rQ0FMtnVNS9fz9E64F8E38blwZGvWDbaptCP2kP3vziTpumVPH0qZyXzfzHxf8p7U3aNJrhK0rYHfgHAOZZkrlVVu0+saKbd5dTXazolRwnvlKuwNvvYORjiB/LpyO6pt7XhYqTNYZ1DP64WGBYgczuhAQgpiTXEtIwP29pteBZXqwTrB30jwc7i/i0jX2cF8g2WIGKlhriTRcPjSvcVMBn5NxvgCOc3TmqZ7/IdmmEnAMkX2UPB3oMHdE9WcKqVK+i5Prz+PKa98uOl60RgE6zP0+wUr+qVpZNsDUjKhtyLkKvS+LID0FYVSrJql8KdSMptKKlx9eTIbcllvdf8HxabpaJrIXEiycV7WGPeEW9Y4v5CBS07WBbUitvRqVbg7UDtQRRG3dqtZv3C7bsBbFUVcALvwH86MfSDws62fD7CTb0eIghE/mDAPyw9O9+aoa9h63zxXl2SW/GKOFNRyxbyF3N+FA8bPyzFb5misC9+J/XCC14nVKfgRQ7RY5ivKeKmmjOJMaBJSbEZJoiZZMuj2pTEPGunZhqeatOEN3zadxrXRmOw+AA==)
 
 Transpiled floatbeat/bytebeat song:
 
@@ -438,7 +438,7 @@ const arrValues = new Float64Array(__memory, arr.value, 3)
 
 JavaScript and _Web Audio API_ is not suitable for audio purposes – it has unpredictable pauses, glitches and so on. It's better handled in worklet with WASM. Besides, audio/signal processing generally doesn't have cross-platform solution, many environments lack audio features.
 
-_Lino_ fills that gap, providing robust low-level layer for audio/DSP. It targets browsers, [audio worklets](https:\\developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, VST, Rust, Python, Go, [embedded systems](https:\\github.com/bytecodealliance/wasm-micro-runtime) etc. Inspired by [_mono_](https:\\github.com/stagas/mono), _zzfx_, _bytebeat_, _[hxos](https:\\github.com/stagas/hxos)_, [_min_](https:\\github.com/r-lyeh/min) etc.
+_Lino_ fills that gap, providing robust low-level layer for audio/DSP. It targets browsers, [audio worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, VST, Rust, Python, Go, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) etc. Inspired by [_mono_](https://github.com/stagas/mono), _zzfx_, _bytebeat_, _[hxos](https://github.com/stagas/hxos)_, [_min_](https://github.com/r-lyeh/min) etc.
 
 ### Principles
 
@@ -456,4 +456,4 @@ _Lino_ fills that gap, providing robust low-level layer for audio/DSP. It target
 * _Static/Linear memory_: no garbage to collect, only 1-page heap.
 * _Flat_: no nested scopes, flat arrays, flat groups.
 
-<p align=center><a href="https:\\github.com/krsnzd/license/">🕉</a></p>
+<p align=center><a href="https://github.com/krsnzd/license/">🕉</a></p>

@@ -36,6 +36,11 @@
 * [x] implement array pointer as float64
 * [x] ~~`x=1; x=1.0` - add float dup~~
 * [x] arity of ops, for proper `(drop)` amount, eg. `a ? b;` has 0 items in stack;
+* [x] early return detection
+  * [ ] break/continue
+* [ ] list comprehension
+* [ ] static lists detection
+* [ ] better detect & collapse static nodes
 * [ ] init static arrays via `data` section, do `init` only for calc values
 * [ ] implement new loops
 * [x] implement no-ptr buffer lengths: either i64 or 2 values in stack

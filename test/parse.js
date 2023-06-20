@@ -130,8 +130,14 @@ t('parse: statements', t => {
   is(parse('foo()'), ['()','foo'], 'semi-colons at end of line are mandatory')
   is(parse('(c = a + b; c)'), ['(',[';',['=','c',['+','a','b']],'c']], 'parens define block, return last element')
   is(parse('(a=b+1; a,b,c)'), ['(',[';',['=','a',['+','b',[INT,1]]],[',','a','b','c']]], 'block can return group')
-  // is(parse('(a ? ^b; c)'), ['(',[';',['?:','a',['^','b']],'c']], 'return/break operator can preliminarily return value')
+  // is(parse('(a ? b,c;)'), ['(',[';',['?','a',[',','b','c']]]], 'if-seq')
+  is(parse('(a ? ^b; c)'), ['(',[';',['?','a',['^','b']],'c']], 'return/break operator can early return value')
+  is(parse('(a ? ^-b; c)'), ['(',[';',['?','a',['^',['-','b']]],'c']], 'return/break')
+  is(parse('(a ? ^; c)'), ['(',[';',['?','a',['^']],'c']], 'return/break token')
+  // is(parse('(a ? ^a,b; c)'), ['(',[';',['?','a',['^',[',','a','b']]],'c']], 'return/break token')
+  is(parse('(a ? ^(a,b); c)'), ['(',[';',['?','a',['^',['(',[',','a','b']]]],'c']], 'return/break token')
   is(parse('(foo(); bar();)'), ['(',[';',['()','foo'],['()','bar']]], 'semi-colon after last statement returns void')
+  is(parse('a?^a:^b'), ['?:','a',['^','a'],['^','b']], 'order of labels')
 })
 
 t('parse: conditions', t => {
@@ -247,7 +253,7 @@ t('parse: stateful variables', t => {
   is(parse('b(), b(), b();'),[';',[',',['()','b'],['()','b'],['()','b']]], '1, 2, 3')
 })
 
-t('parse: defer', t => {
+t.skip('parse: defer', t => {
   is(parse(`a()=(*i=0;>++i;)`), ['=',
     ['()','a'],
     ['(',

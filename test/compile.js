@@ -251,19 +251,22 @@ t('compile: function oneliners', t => {
   is(mod.exports.mult(2,4), 8)
 })
 
-
 t('debugs', t => {
   const memory = new WebAssembly.Memory({ initial: 1 });
   const importObject = { env: { memory } };
   let module = compileWat(`
-  (func $__main
-    (i32.const 1)(i32.const 2)(call $i32.log3 (i32.const 3))
-    (drop)(drop)(drop)
+  (func $x (result f64)
+    (f64.convert_i32_s
+      (block (result i32)
+        (if (result i32) (i32.const 1) (then (f64.const 100.1)(return)) (else (i32.const 111)))
+        (call $i32.log (i32.const 0))(drop)
+      )
+    )
   )
-  (start $__main)
+  (export "x" (func $x))
 `, importObject)
 
-  // console.log(module.exports.x(1n))
+  console.log(module.exports.x())
 })
 
 t('compile: misc vars', t => {
@@ -426,6 +429,32 @@ t.todo('compile: memory grow', t => {
   let wat = compile(`grow()=[..10].`)
   let mod = compileWat(wat)
   let {__memory:memory, grow} = mod.exports
+
+})
+
+t('compile: early returns', t => {
+  let wat = compile(`x(a)=(a ? ^-a; 123), y(a)=(a?^12;13.4), z(a)=(a?^11:^12.1;^13).`)
+  let mod = compileWat(wat)
+  let {__memory:memory, x, y, z} = mod.exports
+  is(x(0), 123);
+  is(x(1), -1);
+
+  is(y(0), 13.4);
+  is(y(1), 12);
+
+  is(z(0), 12.1);
+  is(z(1), 11);
+
+  throws(() => {
+    compile(`y(a,b)=(a ? ^b; a,b).`)
+  }, 'Inconsistent')
+})
+
+t.todo('compile: break multiple scopes', t => {
+
+})
+
+t.todo('compile: break/continue', t => {
 
 })
 

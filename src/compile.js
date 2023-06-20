@@ -4,7 +4,7 @@ import stdlib from "./stdlib.js"
 import {FLOAT,INT} from './const.js'
 import { parse as parseWat } from "watr";
 
-let includes, globals, funcs, locals, loopc, exports, block, heap;
+let includes, globals, funcs, func, locals, loopc, exports, blockc, heap, returns;
 
 const _tmp = Symbol('tmp')
 
@@ -21,9 +21,12 @@ export default function compile(node) {
   locals, // current fn local scope
   includes = [], // pieces to prepend
   funcs = {}, // defined user and util functions
+  // FIXME: loop ideally must be used by-reference
   loopc = 0, // current loop number
-  block = Object.assign([''],{cur:0}), // current block count
+  blockc = Object.assign([''],{cur:0}), // current block count
   exports = null, // items to export
+  returns = null, // returned items from block (collect early returns)
+  func = null, // current function that's being initialized
   heap = 0 // heap size as number of pages (detected from max static array size)
 
   // run global in start function
@@ -104,16 +107,35 @@ Object.assign(expr, {
     // ((a)) -> a
     while (body[0]==='(') body = body[1]
 
-    // resolve block scopes var names conflict
-    block.cur++
-    block[block.cur]=(block[block.cur]||0)+1
+    // resolve scopes var names
+    blockc[++blockc.cur]=(blockc[blockc.cur]||0)+1
 
     // FIXME: detect block type, if it needs early return - then we ought to wrap it
-    let res = expr(body)
+    let parentReturns = returns;
+    returns=[];
 
-    block.cur--
+    let out = expr(body);
 
-    return res
+    // early returns are always f64, so for return consistency we wrap result into f64
+    if (returns.length) {
+      let l = out.type.length
+      for (let ret of returns) {
+        if (ret.type.length !== l) err(`Inconsistent returned members in \`${func}\``)
+      }
+      out = asFloat(out);
+    }
+
+    returns = parentReturns;
+    blockc.cur--;
+
+    return out;
+  },
+
+  '^'([,a]) {
+    let aop = expr(a)
+    returns.push(aop)
+    // we enforce early returns to be f64
+    return op(`(return ${asFloat(aop)})`, aop.type)
   },
 
   '()'([,name, list]) {
@@ -211,6 +233,9 @@ Object.assign(expr, {
       // FIXME: maybe it's ok to redeclare function? then we'd need to use table
       if (globals[name]) err('Redefining function `' + name + '`: not allowed');
 
+      let prevFunc = func
+      func = name
+
       locals = {[_tmp]:[]}
 
       // normalize body to (a;b;) form
@@ -256,7 +281,9 @@ Object.assign(expr, {
       if (exports) exports[name] = globals[name]
 
       // init body - expressions write themselves to body
-      funcs[name] = `(func $${name} ${dfn.join(' ')}\n${result}\n(return))`
+      funcs[name] = `(func $${name} ${dfn.join(' ')}\n${result})`
+
+      func = prevFunc
 
       return
     }
@@ -281,7 +308,7 @@ Object.assign(expr, {
       let res = expr(a)
       if (res.type.length > 1) err('Group negation: unimplemented')
       if (res.type[0] === 'i32') return op(`(i32.sub (i32.const 0) ${res})`, 'i32', {static:res.static})
-      return `(f64.neg ${res})`
+      return op(`(f64.neg ${res})`, 'f64')
     }
 
     let aop = expr(a), bop = expr(b)
@@ -438,7 +465,7 @@ Object.assign(expr, {
 
 // define variable in current scope, export if necessary; returns resolved name
 function define(name, type='f64') {
-  name += block.slice(0,block.cur).join('.')
+  name += blockc.slice(0,blockc.cur).join('.')
   if (!locals) {
     if (!globals[name]) globals[name] = {var:true, type}
     if (!locals && exports) exports[name] = globals[name]
@@ -650,9 +677,9 @@ function op(str, type, info={}) {
 }
 
 // show error meaningfully
-export function err(msg, node={}) {
+function err(msg) {
   // Promise.resolve().then(() => {
-    throw Error((msg || 'Bad syntax') + ' `' + node.toString() + '`' )
+    throw Error((msg || 'Bad syntax'))
   // })
 }
 

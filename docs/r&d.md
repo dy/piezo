@@ -1074,7 +1074,7 @@ Having wat files is more useful than direct compilation to binary form:
   + `x -<= 0..10` is just a nice construct
   -  `x <- y` vs `x < -y`
 
-## [ ] Comments: //, /* vs ;; and (; ;) → try `\\` or `;;`
+## [ ] Comments: `//`, `/*` vs `;;` and `(; ;)` → try `\\` or `;;`
 
   1. `;;`
   + ;; make more sense, since ; is separator, and everything behind it doesn't matter
@@ -1090,6 +1090,11 @@ Having wat files is more useful than direct compilation to binary form:
   - single-comment breaks inline structures like a(x)=b;c;d.
   - not as "cool" as `\\`
   - `a + b;  ;; some comment` - not nice noise
+  + more lightweight than `\\`
+  + not confusable with `//`
+  + reminds `:` which is kind of cool for comments in typographics
+  + more conventional than `\\`
+  + Sercy sneezed
 
   2. `//`
   + // associates besides C+/Java/JS with F#, which is pipy
@@ -1112,10 +1117,11 @@ Having wat files is more useful than direct compilation to binary form:
     + mono-compatible
     + \ is almost never used in langs & that's unique
     + reminds `//`
+      - sort-of footgun or rake to confuse with `//`
     + it's short
     + association with "escape" sequence in strings
     + cooler than `;;`
-    + looks fresh directionally, shadow effect \\\\\\\\\\\\\\\\\\\\\\\\\
+    + looks fresh directionally, shadow effect `\\\\\\\\\\\\\\\\\\\\\\\\\`
     - possible conflict with string escapes
       + can be resolved with `\\`
         + creates clear separation of "comments" area
@@ -1123,10 +1129,18 @@ Having wat files is more useful than direct compilation to binary form:
     - syntax highlighters don't know that
       ~ neither `;;`
     - takes primary semantic meaning, rather than "safe" secondary meaning
+
   4. `/* */`
     + most popular
+    + most conventional
+    + allows removing newlines safely
+    - too decorative
     - unwanted association with mult/div
     - pair-operators are heavy
+
+  5. `(; ;)`
+    - wrongly associates with block
+    + compat with wasm
 
 ## [x] Groups: basic operations -> syntax sugar
 
@@ -3455,6 +3469,10 @@ Having wat files is more useful than direct compilation to binary form:
     + no need to displace heap all the time: it seems if we create dynamic array we'd copy heap O(n) times - crazy
     + gives better values for array refs - we can just ignore values `< HEAP_SIZE` in iterators, so that userland floats like 10.000012 don't make any point
     + gives nicer calc for mem.alloc - no need to discount heap - mem pointer can reserve heap as "first static array" lol
+    - low locality: once heap increases all array refs are lost
+      ~ not sure if that's dangerous
+      ~- programs with same memory but different heap don't share array references
+    + gets easily fixed once multiple memories hit in
 
   * Tail: `[ Static... | Heap... ]`
     + heap overflow throws error automatically
@@ -3740,6 +3758,22 @@ Having wat files is more useful than direct compilation to binary form:
 
   * `[0..+10..0.5]`
   * `[0..0.5..+10]`
-    * `[20..0.5..+-20]`
+    - `[20..0.5..+-20]`
   * `[0..10:0.5]`
+    - conflicts with
   * `[0..20 <| x -> x*0.5]`
+    - very verbose
+
+## [ ] Early return: how to consolidate type?
+
+  * we have to consolidate output type with early returns
+  * cases:
+  a. `(a?^b;c,d);`
+  b. `(a?^12;13.4);`
+  c. `(a?^12:^13.4;15)`
+
+  1. we can simply upgrade preliminary returns to f64
+    + simplest solution
+    - enforces all funcs with prelim returns be f64
+      ~+ prelim returns belong to userland anyways, it's not demanded internally
+    - we can't

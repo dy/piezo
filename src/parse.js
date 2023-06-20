@@ -10,11 +10,13 @@ const OPAREN=40, CPAREN=41, OBRACK=91, CBRACK=93, SPACE=32, QUOTE=39, DQUOTE=34,
 // precedences
 const PREC_SEMI=1,
 PREC_EXPORT=2,
-PREC_SEQUENCE=3, //  a, b==c, d,   a, b>=c, d,   a | b,c | d,   a?b:c , d
-PREC_DEFER=4,
+PREC_SEQUENCE=3, //  a, b==c, d,   a, b>=c, d,   a?b:c , d
+PREC_LABEL=4, // a:b = 2,  a:b, b:c,   a: b&c
+PREC_RETURN=4, // x ? ^a,b,c : y
+PREC_STATE=4, // *(a,b,c)
 PREC_LOOP=5, // <| |>
-PREC_LABEL=7, // a:b = 2,  a:b, b:c,   a: b&c
-PREC_IF=8,    // a ? b=c
+PREC_MAP=6,
+PREC_IF=8,    // a ? b=c;  a = b?c;
 PREC_ASSIGN=8,  // a=b, c=d,  a = b||c,  a = b | c,   a = b&c
 PREC_OR=11,
 PREC_AND=12,
@@ -29,9 +31,9 @@ PREC_SUM=20,
 PREC_RANGE=22, // +a .. -b, a**2 .. b**3, a*2 .. b*3; BUT a + 2..b + 3
 PREC_MULT=23,
 PREC_POW=24,
-PREC_UNARY=25,
-PREC_CALL=26, // a(b), a.b, a[b], a[]
-PREC_TOKEN=27 // [a,b] etc
+PREC_UNARY=26,
+PREC_CALL=27, // a(b), a.b, a[b], a[]
+PREC_TOKEN=28 // [a,b] etc
 
 // make id support #
 parse.id = n => skip(char => isId(char) || char === HASH)
@@ -131,7 +133,7 @@ binary('<<', PREC_SHIFT)
 binary('<?', PREC_CLAMP) // a <? b
 nary('<|', PREC_LOOP)
 binary('|>', PREC_LOOP)
-binary('->', PREC_LABEL)
+binary('->', PREC_MAP)
 
 // unaries
 unary('+', PREC_UNARY)
@@ -143,10 +145,11 @@ unary('--', PREC_UNARY)
 token('++', PREC_UNARY, a => a && ['-',['++',a],[INT,1]])
 token('--', PREC_UNARY, a => a && ['+',['--',a],[INT,1]])
 
-unary('^', PREC_TOKEN) // continue with value: ^ a
-token('^', PREC_TOKEN, a => !a && !expr(PREC_TOKEN) && ['^']) // continue: ^
-unary('^^', PREC_TOKEN) // break with value: ^ a
-token('^^', PREC_TOKEN, a => !a && !expr(PREC_TOKEN) && ['^^']) // return value: ^ a
+// returns
+// unary('^^', PREC_RETURN) // break with value: ^ a
+// unary('^', PREC_RETURN) // continue with value: ^ a
+token('^', PREC_TOKEN, (a,b) => !a && (b=expr(PREC_RETURN), b ? ['^',b] : ['^'])) // continue: ^
+token('^^', PREC_TOKEN, (a,b) => !a && (b=expr(PREC_RETURN), b ? ['^^',b] : ['^^'])) // break: ^^
 
 // a..b, ..b, a..
 token('..', PREC_RANGE, a => ['..', a, expr(PREC_RANGE)])
@@ -157,10 +160,10 @@ token('..=', PREC_RANGE, a => ['..=', a, expr(PREC_RANGE)])
 token('.', PREC_CALL, (a,b) => a && (b=skip(isId)) && ['.', a, b])
 
 // *a
-unary('*', PREC_DEFER)
+unary('*', PREC_STATE)
 
 // >a
-unary('>', PREC_DEFER)
+// unary('>', PREC_STATE)
 
 // @ 'ab'
 unary('@', PREC_TOKEN)
