@@ -353,12 +353,13 @@ t.todo('compile: lists from invalid ranges', t => {
       wat = compile(`x=[..-2]`)
 })
 
-t.todo('compile: lists nested static', t => {
+t('compile: lists nested static', t => {
   let wat = compile(`x=[1, y=[2, z=[3]]], w=[1,2], xl=x[], yl=y[], zl=z[], wl=w[].`)
+  // let wat = compile(`x=[1,[2]].`)
   // console.log(wat)
   let mod = compileWat(wat)
   let {__memory:memory, x, y, z, xl, yl, zl, w, wl} = mod.exports
-  let xarr = new Float64Array(memory.buffer, x.value, 3)
+  let xarr = new Float64Array(memory.buffer, x.value, 10)
   is(xarr[0], 1,'x0')
   is(xarr[1], y.value,'x1')
   is(xl.value, 2,'xlen')
@@ -370,8 +371,9 @@ t.todo('compile: lists nested static', t => {
   is(zarr[0], 3,'z0')
   is(zl.value, 1,'zlen')
   let warr = new Float64Array(memory.buffer, w.value, 3)
-  is(warr[0], 3,'w0')
-  is(wl.value, 1,'wlen')
+  is(warr[0], 1,'w0')
+  is(warr[1], 2,'w1')
+  is(wl.value, 2,'wlen')
 })
 
 t.todo('compile: list comprehension', t => {

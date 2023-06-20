@@ -61,9 +61,6 @@ export const std = {
     `(local.get 0)` +
   `)`,
 
-  // push single value into memory at idx, return next idx
-  "push": `(func $push (param i32 f64) (result i32) (f64.store (local.get 0) (local.get 1)) (i32.add (local.get 0) (i32.const 8)))`,
-
   // create reference at specific mem address & length (address is in bytes, length is # of items)
   "ref": `(func $ref (param i32 i32) (result f64)\n` +
     `(f64.reinterpret_i64 (i64.or\n` +

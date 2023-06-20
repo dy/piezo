@@ -23,7 +23,7 @@ export default function compile(node) {
   funcs = {}, // defined user and util functions
   loopc = 0, // current loop number
   block = Object.assign([''],{cur:0}), // current block count
-  exports = null // items to export
+  exports = null, // items to export
   heap = 0 // heap size as number of pages (detected from max static array size)
 
   // run global in start function
@@ -32,11 +32,11 @@ export default function compile(node) {
   // run globals init, if needed
   if (init) out = `(func $__main\n` +
     globals[_tmp].map((tmp)=>`(local ${tmp})`).join('') +
-    `${init}\n` +
+    `\n${init}\n` +
     `(return))\n` +
   `(start $__main)\n`
 
-  if (heap) out += `(memory (export "__memory") ${heap} ${MAX_MEMORY})(global $mem (mut i32) (i32.const ${heap<<16}))\n`
+  if (heap) out += `(memory (export "__memory") ${heap} ${MAX_MEMORY})(global $mem (mut i32) (i32.const ${heap<<16}))(global $heap (mut i32) (i32.const 0))\n`
 
   // declare variables
   // NOTE: it sets functions as global variables
@@ -108,7 +108,7 @@ Object.assign(expr, {
     block.cur++
     block[block.cur]=(block[block.cur]||0)+1
 
-    // FIXME: detect block type, if it needs preliminary return - then we ought to wrap it
+    // FIXME: detect block type, if it needs early return - then we ought to wrap it
     let res = expr(body)
 
     block.cur--
@@ -124,8 +124,7 @@ Object.assign(expr, {
     // FIXME: make sure default args are gotten values
     let {args} = globals[name]
 
-    // FIXME: this is very primitive call, must account input trypes properly
-    return op(`(call $${name} ${list.map(expr).join(' ')})`, 'f64')
+    return op(`(call $${name} ${list.map(arg => asFloat(expr(arg))).join(' ')})`, 'f64')
   },
 
   // [1,2,3]
@@ -461,13 +460,12 @@ function tmp(name, type='f64') {
 }
 
 // create array initializer op (via heap), from element nodes
-function buf(inits, root=true) {
+function buf(inits) {
   let src = tmp('src','i32'), dst = tmp('dst', 'i32'), size = tmp('size','i32')
 
   heap = Math.max(heap, 1); // min heap is 8192 elements
 
-  let out = root ? `(i32.const 0)` : `` // put heap address to memory for root array, nested arrays have it in stack
-  out += `(local.tee $${src})` // save beginning pointer
+  let out = `(global.get $heap)(local.set $${src})\n` // put heap ptr to stack
 
   // TODO: if inits don't contain computed ranges or comprehension, we can init memory directly via data section
 
@@ -480,7 +478,7 @@ function buf(inits, root=true) {
 
       // [..1] - just skips heap
       if (!min && typeof max[1] === 'number') {
-        out += `(i32.add (i32.shl (i32.const ${max[1]}) (i32.const 3)))`
+        out += `(global.get $heap)(i32.add (i32.shl (i32.const ${max[1]}) (i32.const 3)))(global.set $heap)\n`
         heap = Math.max(heap, max[1] >> 12) // increase heap
       }
       // [x..y] - generic computed range
@@ -489,7 +487,7 @@ function buf(inits, root=true) {
         // increase heap
         if (typeof min[1] === 'number' && typeof max[1] === 'number') heap = Math.max(heap, (max[1]-min[1]) >> 12)
         // create range in memory from ptr in stack
-        out += `(call $range ${asFloat(expr(min))} ${asFloat(expr(max))} (f64.const 1))`
+        out += `(global.get $heap)(call $range ${asFloat(expr(min))} ${asFloat(expr(max))} (f64.const 1))(global.set $heap)\n`
       }
     }
     // [a..b <| ...] - comprehension
@@ -498,15 +496,16 @@ function buf(inits, root=true) {
       // out += `(i32.add ${lop})`;
       // TODO: comprehension - expects heap address in stack, puts loop results into heap
     }
-    // [x*2] - single value
-    else inc('push'), out += `(call $push ${asFloat(expr(init))})`
+    // [x*2] - single value (reuses dst as temp holder)
+    else out += `(global.get $heap)(local.tee $${dst})(f64.store ${asFloat(expr(init))}) (i32.add (local.get $${dst}) (i32.const 8))(global.set $heap)\n`
   }
 
   // move buffer to static memory: references static address, deallocates heap tail
 
-  out += `(local.set $${size} (i32.sub (local.get $${src})))` // get total length
+  out += `(local.set $${size} (i32.sub (global.get $heap) (local.get $${src})))` // get length of created array
   + `(local.set $${dst} (call $malloc (local.get $${size})))` // allocate new memory
   + `(memory.copy (local.get $${dst}) (local.get $${src}) (local.get $${size}))` // move heap to static memory
+  + `(global.set $heap (local.get $${src}))` // free heap
   + `(call $ref (local.get $${dst}) (i32.shr_u (local.get $${size}) (i32.const 3)) )` // create reference
 
   return op(out,'f64',{buf:true})
@@ -595,6 +594,8 @@ function loop(node, save=false) {
 // wrap expression to float, if needed
 function asFloat(o) {
   if (o.type[0] === 'f64') return o
+  // avoid unnecessary const converters
+  if (o.startsWith('(i32.const')) return op(o.replace('(i32','(f64'), 'f64')
   return op(`(f64.convert_i32_s ${o})`, 'f64')
 }
 // cast expr to int

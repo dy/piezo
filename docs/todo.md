@@ -44,6 +44,7 @@
 * [x] implement computed ranges in lists creation
 * [x] ~~implement scopes as either tmp functions or blocks~~ -> just resolve variables
 * [x] Implement storing buffer items
+* [x] Internal static arrays
 * [ ] Make all `local.set` / `global.set` a `set(name, value)` function: we don't need to know about tmp/define etc.
   * [ ] Think if we need to expose fully-js API for building wasm code, similar to wasmati
 * [ ] Test nested scopes variables `(x=0;(y=1);y)`
