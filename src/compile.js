@@ -549,7 +549,6 @@ function loop(node, save=false) {
 
   // }
 
-
   loopc++
 
   let from, to, next, params, pre

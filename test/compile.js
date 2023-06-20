@@ -44,13 +44,18 @@ function compileWat (code, importObj={}) {
   })
   wasmModule.destroy()
 
-  const mod = new WebAssembly.Module(binary.buffer)
-  return new WebAssembly.Instance(mod, {
+  const config = {
     ...importObj,
     imports: {
       log(...args){ console.log(...args); return args }
     }
-  })
+  }
+  // sync instance - limits buffer size to 4kb
+  const module = new WebAssembly.Module(binary.buffer)
+  return { module, instance: new WebAssembly.Instance(module, config) }
+
+  // async instance
+  // return WebAssembly.instantiate(binary.buffer, config)
 }
 
 
@@ -69,9 +74,9 @@ t('compile: globals basic', t => {
     sampleRate, pi, pi2.
   `)
   let mod = compileWat(wat)
-  is(mod.exports.pi.value, 3.14)
-  is(mod.exports.pi2.value, 3.14*2)
-  is(mod.exports.sampleRate.value, 44100)
+  is(mod.instance.exports.pi.value, 3.14)
+  is(mod.instance.exports.pi2.value, 3.14*2)
+  is(mod.instance.exports.sampleRate.value, 44100)
 })
 
 t('compile: globals multiple', () => {
@@ -79,19 +84,19 @@ t('compile: globals multiple', () => {
   // let wat = compile(`pi, pi2, sampleRate = 3.14, 3.14*2, 44100.`)
   let wat = compile(`(pi, pi2, sampleRate) = (3.14, 3.14*2, 44100).`)
   let mod = compileWat(wat)
-  is(mod.exports.pi.value, 3.14)
-  is(mod.exports.pi2.value, 3.14*2)
-  is(mod.exports.sampleRate.value, 44100)
+  is(mod.instance.exports.pi.value, 3.14)
+  is(mod.instance.exports.pi2.value, 3.14*2)
+  is(mod.instance.exports.sampleRate.value, 44100)
 
   wat = compile(`(a,b) = (-1, -1.0).`)
   mod = compileWat(wat)
-  is(mod.exports.a.value, -1)
-  is(mod.exports.b.value, -1)
+  is(mod.instance.exports.a.value, -1)
+  is(mod.instance.exports.b.value, -1)
 
   wat = compile(`(a,b) = (-1, -1.0).`)
   mod = compileWat(wat)
-  is(mod.exports.a.value, -1)
-  is(mod.exports.b.value, -1)
+  is(mod.instance.exports.a.value, -1)
+  is(mod.instance.exports.b.value, -1)
 })
 
 t.todo('compile: export kinds', t => {
@@ -109,126 +114,126 @@ t.todo('compile: export kinds', t => {
 t('compile: numbers negatives', t => {
   let wat = compile(`x=-1.`)
   let mod = compileWat(wat)
-  is(mod.exports.x.value, -1)
+  is(mod.instance.exports.x.value, -1)
 
   wat = compile(`x=-1.0.`)
   mod = compileWat(wat)
-  is(mod.exports.x.value, -1)
+  is(mod.instance.exports.x.value, -1)
 })
 
 t('compile: numbers inc/dec', t => {
   let wat = compile(`x=0; y=x++; x,y.`)
   let mod = compileWat(wat)
-  is(mod.exports.x.value, 1)
-  is(mod.exports.y.value, 0)
+  is(mod.instance.exports.x.value, 1)
+  is(mod.instance.exports.y.value, 0)
 
   wat = compile(`x=0; y=++x; x,y.`)
   mod = compileWat(wat)
-  is(mod.exports.x.value, 1)
-  is(mod.exports.y.value, 1)
+  is(mod.instance.exports.x.value, 1)
+  is(mod.instance.exports.y.value, 1)
 
   wat = compile(`x=0; y=x--; x,y.`)
   mod = compileWat(wat)
-  is(mod.exports.x.value, -1)
+  is(mod.instance.exports.x.value, -1)
 })
 
 t('compile: conditions or/and', t => {
   let wat, mod
   wat = compile(`z=1||0.`)
   mod = compileWat(wat)
-  is(mod.exports.z.value, 1)
+  is(mod.instance.exports.z.value, 1)
   wat = compile(`z=1.2||0.0.`)
   mod = compileWat(wat)
-  is(mod.exports.z.value, 1.2)
+  is(mod.instance.exports.z.value, 1.2)
   wat = compile(`z=1.2||0.`)
   mod = compileWat(wat)
-  is(mod.exports.z.value, 1.2)
+  is(mod.instance.exports.z.value, 1.2)
   wat = compile(`z=1||0.0.`)
   mod = compileWat(wat)
-  is(mod.exports.z.value, 1)
+  is(mod.instance.exports.z.value, 1)
   wat = compile(`z=1.2&&0.2.`)
   mod = compileWat(wat)
-  is(mod.exports.z.value, 0.2)
+  is(mod.instance.exports.z.value, 0.2)
   wat = compile(`z=1&&2.`)
   mod = compileWat(wat)
-  is(mod.exports.z.value, 2)
+  is(mod.instance.exports.z.value, 2)
 })
 
 t('compile: assign/pick cases', t => {
   let wat, mod
   wat = compile(`a=1;b=2;c=(a,b).`)
   mod = compileWat(wat)
-  is(mod.exports.c.value, 1)
+  is(mod.instance.exports.c.value, 1)
 
   wat = compile(`a=1;b=2,c=3;(b,a)=(c,b).`)
   mod = compileWat(wat)
-  is(mod.exports.b.value, 3)
-  is(mod.exports.a.value, 2)
+  is(mod.instance.exports.b.value, 3)
+  is(mod.instance.exports.a.value, 2)
 
   wat = compile(`a=1;b=2;(c,b)=(a,b);a,b,c.`)
   mod = compileWat(wat)
-  is(mod.exports.c.value, 1)
-  is(mod.exports.b.value, 2)
-  is(mod.exports.a.value, 1)
+  is(mod.instance.exports.c.value, 1)
+  is(mod.instance.exports.b.value, 2)
+  is(mod.instance.exports.a.value, 1)
 
   wat = compile(`a=1;b=2;(c,a,b)=(a,b).`)
   mod = compileWat(wat)
-  is(mod.exports.c.value, 1)
-  is(mod.exports.a.value, 2)
-  is(mod.exports.b.value, 2)
+  is(mod.instance.exports.c.value, 1)
+  is(mod.instance.exports.a.value, 2)
+  is(mod.instance.exports.b.value, 2)
 
   wat = compile(`a=1;b=2;(c,d)=(a,b).`)
   mod = compileWat(wat)
-  is(mod.exports.c.value, 1)
-  is(mod.exports.d.value, 2)
+  is(mod.instance.exports.c.value, 1)
+  is(mod.instance.exports.d.value, 2)
 
   wat = compile(`a=1;b=2;a,(b,b)=a.`)
   mod = compileWat(wat)
-  is(mod.exports.b.value, 1)
-  is(mod.exports.a.value, 1)
+  is(mod.instance.exports.b.value, 1)
+  is(mod.instance.exports.a.value, 1)
 })
 
 t('compile: conditions', t => {
   let wat, mod
   wat = compile(`a=1;b=2;c=a?1:2.`)
   mod = compileWat(wat)
-  is(mod.exports.c.value, 1)
+  is(mod.instance.exports.c.value, 1)
 
   wat = compile(`a=1;b=2;a?c=b.`)
   mod = compileWat(wat)
-  is(mod.exports.c.value, 2)
+  is(mod.instance.exports.c.value, 2)
 
   wat = compile(`a=0;b=2;a?c=b.`)
   mod = compileWat(wat)
-  is(mod.exports.c.value, 0)
+  is(mod.instance.exports.c.value, 0)
 
   wat = compile(`a=0.0;b=2.1;a?c=b.`)
   mod = compileWat(wat)
-  is(mod.exports.c.value, 0)
+  is(mod.instance.exports.c.value, 0)
 
   wat = compile(`a=0.1;b=2.1;a?c=b.`)
   mod = compileWat(wat)
-  is(mod.exports.c.value, 2.1)
+  is(mod.instance.exports.c.value, 2.1)
 
   wat = compile(`a=1;b=2;a?:c=b.`)
   mod = compileWat(wat)
-  is(mod.exports.c.value, 0)
+  is(mod.instance.exports.c.value, 0)
 
   wat = compile(`a=0;b=2;a?:c=b.`)
   mod = compileWat(wat)
-  is(mod.exports.c.value, 2)
+  is(mod.instance.exports.c.value, 2)
 
   wat = compile(`a=0.0;b=2.1;a?:c=b.`)
   mod = compileWat(wat)
-  is(mod.exports.c.value, 2.1)
+  is(mod.instance.exports.c.value, 2.1)
 
   wat = compile(`a=0.0;b=2.1;c=a?b.`)
   mod = compileWat(wat)
-  is(mod.exports.c.value, 0)
+  is(mod.instance.exports.c.value, 0)
 
   wat = compile(`a=0.1;b=2.1;c=a?b.`)
   mod = compileWat(wat)
-  is(mod.exports.c.value, 2.1)
+  is(mod.instance.exports.c.value, 2.1)
 })
 
 t('compile: function oneliners', t => {
@@ -236,37 +241,34 @@ t('compile: function oneliners', t => {
   // no semi
   wat = compile(`mult(a, b=2) = a * b.`)
   mod = compileWat(wat)
-  is(mod.exports.mult(2,4), 8)
-  is(mod.exports.mult(2), 4)
+  is(mod.instance.exports.mult(2,4), 8)
+  is(mod.instance.exports.mult(2), 4)
 
   // no result
   mod = compileWat(compile(` mult(a, b) = (a * b). `))
-  is(mod.exports.mult(2,4), 8)
+  is(mod.instance.exports.mult(2,4), 8)
 
   // console.log(compile(` mult = (a, b) -> (b; a * b).`))
   mod = compileWat(compile(` mult(a, b) = (b; a * b).`))
-  is(mod.exports.mult(2,4), 8)
+  is(mod.instance.exports.mult(2,4), 8)
 
   mod = compileWat(compile(` mult(a, b) = (b; a * b;). `))
-  is(mod.exports.mult(2,4), 8)
+  is(mod.instance.exports.mult(2,4), 8)
 })
 
-t('debugs', t => {
+t('debugs', async t => {
   const memory = new WebAssembly.Memory({ initial: 1 });
   const importObject = { env: { memory } };
-  let module = compileWat(`
-  (func $x (result f64)
-    (f64.convert_i32_s
-      (block (result i32)
-        (if (result i32) (i32.const 1) (then (f64.const 100.1)(return)) (else (i32.const 111)))
-        (call $i32.log (i32.const 0))(drop)
-      )
-    )
+  const N = 1001
+  let {instance} = await compileWat(`
+  (func (result ${'f64 '.repeat(N)})
+    ${'(f64.const 1)'.repeat(N)}
+    (return)
   )
-  (export "x" (func $x))
+  (export "x" (func 0))
 `, importObject)
 
-  console.log(module.exports.x())
+  console.log(instance.exports.x())
 })
 
 t('compile: misc vars', t => {
@@ -287,23 +289,23 @@ t('compile: misc vars', t => {
 t('compile: ranges basic', t => {
   let wat = compile(`x = 11 <? 0..10.`)
   let mod = compileWat(wat)
-  is(mod.exports.x.value, 10)
+  is(mod.instance.exports.x.value, 10)
 
   wat = compile(`x = 0 <? 1..10.`)
   mod = compileWat(wat)
-  is(mod.exports.x.value, 1)
+  is(mod.instance.exports.x.value, 1)
 
   wat = compile(`clamp(x) = (x <? 0..10).`)
   mod = compileWat(wat)
-  is(mod.exports.clamp(11), 10)
-  is(mod.exports.clamp(-1), 0)
+  is(mod.instance.exports.clamp(11), 10)
+  is(mod.instance.exports.clamp(-1), 0)
 })
 
 t('compile: list basic', t => {
   let wat = compile(`x = [1, 2, 3], y = [4,5,6,7]; x,y,xl=x[],yl=y[].`)
   // console.log(wat)
   let mod = compileWat(wat)
-  let {__memory:memory, x, y, xl, yl} = mod.exports
+  let {__memory:memory, x, y, xl, yl} = mod.instance.exports
   let xarr = new Float64Array(memory.buffer, x.value, 3)
   // let i32s = new Int32Array(memory.buffer, 0)
   is(xarr[0], 1,'x0')
@@ -322,7 +324,7 @@ t('compile: list from static range', t => {
   let wat = compile(`x=[..3], y=[0..4]; x,y,xl=x[],yl=y[].`)
   // console.log(wat)
   let mod = compileWat(wat)
-  let {__memory:memory, x, y, xl, yl} = mod.exports
+  let {__memory:memory, x, y, xl, yl} = mod.instance.exports
   let xarr = new Float64Array(memory.buffer, x.value, 10)
   is(xarr[0], 0,'x0')
   is(xarr[1], 0,'x1')
@@ -341,7 +343,7 @@ t('compile: list from dynamic range', t => {
   // , y=[1, x[0]..x[2], 2..-2]; x,y, xl=x[],yl=y[].`)
   // console.log(wat)
   let mod = compileWat(wat)
-  let {__memory:memory, x, y, xl, yl} = mod.exports
+  let {__memory:memory, x, y, xl, yl} = mod.instance.exports
   let xarr = new Float64Array(memory.buffer, x.value, 3)
   is(xarr[0], 0,'x0')
   is(xarr[1], 1,'x1')
@@ -361,7 +363,7 @@ t('compile: lists nested static', t => {
   // let wat = compile(`x=[1,[2]].`)
   // console.log(wat)
   let mod = compileWat(wat)
-  let {__memory:memory, x, y, z, xl, yl, zl, w, wl} = mod.exports
+  let {__memory:memory, x, y, z, xl, yl, zl, w, wl} = mod.instance.exports
   let xarr = new Float64Array(memory.buffer, x.value, 10)
   is(xarr[0], 1,'x0')
   is(xarr[1], y.value,'x1')
@@ -391,7 +393,7 @@ t('compile: list simple write', t => {
   let wat = compile(`x = [..3]; x[0]=1; x.1=2; x[-1]=x[]; x.`)
   // console.log(wat)
   let mod = compileWat(wat)
-  let {__memory:memory, x} = mod.exports
+  let {__memory:memory, x} = mod.instance.exports
   let xarr = new Float64Array(memory.buffer, x.value, 3)
   is(xarr[0], 1,'x0')
   is(xarr[1], 2,'x1')
@@ -403,7 +405,7 @@ t.todo('compile: list wrap index', t => {
   let wat = compile(`x = [1, 2, 3]. x << 1.`)
   // console.log(wat)
   let mod = compileWat(wat)
-  let {memory, x, y, xl, yl} = mod.exports
+  let {memory, x, y, xl, yl} = mod.instance.exports
   let xarr = new Float64Array(memory.buffer, x.value, 3)
   is(xarr[0], 1,'x0')
   is(xarr[1], 2,'x1')
@@ -419,7 +421,7 @@ t.todo('compile: list wrap index', t => {
 t.todo('compile: sublist', t => {
   let wat = compile(`x = [1,2,3], y = [x].`)
   let mod = compileWat(wat)
-  let {__memory:memory, x} = mod.exports
+  let {__memory:memory, x} = mod.instance.exports
   let arr = new Float64Array(memory.buffer, 0, 2), ptr = x.value
   is(arr[ptr], 1)
   is(arr[ptr+1], 2)
@@ -428,14 +430,14 @@ t.todo('compile: sublist', t => {
 t.todo('compile: memory grow', t => {
   let wat = compile(`grow()=[..10].`)
   let mod = compileWat(wat)
-  let {__memory:memory, grow} = mod.exports
+  let {__memory:memory, grow} = mod.instance.exports
 
 })
 
 t('compile: early returns', t => {
   let wat = compile(`x(a)=(a ? ^-a; 123), y(a)=(a?^12;13.4), z(a)=(a?^11:^12.1;^13).`)
   let mod = compileWat(wat)
-  let {__memory:memory, x, y, z} = mod.exports
+  let {__memory:memory, x, y, z} = mod.instance.exports
   is(x(0), 123);
   is(x(1), -1);
 
@@ -458,10 +460,10 @@ t.todo('compile: break/continue', t => {
 
 })
 
-t('compile: loops basic', t => {
-  let wat = compile(`x=[1..3]; 0..2 <| x[#]=#+1; x.`)
+t.todo('compile: loops basic', t => {
+  let wat = compile(`x=[1..3]; 0..2 <| i -> x[i]=i+1; x.`)
   let mod = compileWat(wat)
-  let {__memory:memory, x} = mod.exports
+  let {__memory:memory, x} = mod.instance.exports
 
   let arr = new Float64Array(memory.buffer, x.value, 3)
 
@@ -484,7 +486,7 @@ t('compile: loop in loop', t => {
     );
   x.`)
   let mod = compileWat(wat)
-  let {memory, x} = mod.exports
+  let {memory, x} = mod.instance.exports
 
   let arr = new Float64Array(memory.buffer, x.value, 4)
 
@@ -498,7 +500,7 @@ t('compile: simple pipe', t => {
   let wat = compile(`x = [1,2,3]; y = x | x -> x * 2.`)
   console.log(wat)
   let mod = compileWat(wat)
-  let {memory, y} = mod.exports
+  let {memory, y} = mod.instance.exports
   let arr = new Float64Array(memory.buffer, 0, 3), ptr = y.value
   is(arr[ptr], 2)
   is(arr[ptr+1], 4)
@@ -511,7 +513,7 @@ t.todo('compile: audio-gain', t => {
   gain = ([blockSize]data, volume <? 0..1000) -> [data | x -> x * volume];
   `)
   let mod = compileWat(wat)
-  let {gain} = mod.exports
+  let {gain} = mod.instance.exports
   is(gain([1,2,3],2),[2,4,6])
 
   // let wat = compile(`

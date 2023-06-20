@@ -3473,6 +3473,7 @@ Having wat files is more useful than direct compilation to binary form:
       ~ not sure if that's dangerous
       ~- programs with same memory but different heap don't share array references
     + gets easily fixed once multiple memories hit in
+    - allocs heap per audio-node which is too excessive
 
   * Tail: `[ Static... | Heap... ]`
     + heap overflow throws error automatically
@@ -3673,7 +3674,7 @@ Having wat files is more useful than direct compilation to binary form:
       * or `a <? 10 >? 0` -> `a <? 0..10` meaning within, or less than
       + `a >? 0..10` means outside, not clear though which side
 
-## [x] Create empty array - how? -> use `x[10]`, ie. immediate "write" - same as regular variables
+## [x] Create empty array - how? -> `[..10]` since range is exclusive
 
   * `[..10]`
     - not clear if that's 10 members from 1 to 10 or 0 to 10 or what
@@ -3751,6 +3752,7 @@ Having wat files is more useful than direct compilation to binary form:
     + mathematically correct
     + keeps proper offset
     - may need to have special fn to change length, since uses reinterpreting
+    - knows about pointers
 
   * `x[10]; y = @latr.sublist(x, len: 3, start: 2)`
 

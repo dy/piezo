@@ -38,6 +38,7 @@
 * [x] arity of ops, for proper `(drop)` amount, eg. `a ? b;` has 0 items in stack;
 * [x] early return detection
   * [ ] break/continue
+* [ ] Readable generated code (pretty: true option)
 * [ ] list comprehension
 * [ ] static lists detection
 * [ ] better detect & collapse static nodes
