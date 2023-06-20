@@ -58,12 +58,11 @@ foo();                          \\ semi-colons at end of line are mandatory
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ conditions
 sign = a < 0 ? -1 : +1;         \\ inline ternary
 (2+2 >= 4) ?                    \\ multiline ternary
-  log("Math works!")            \\
-: "a" < "b" ?                   \\ else if
-  log("Sort strings")           \\
+  log(1)                        \\
+: 3 <= 1..2 ?                   \\ else if
+  log(2)                        \\
 : (                             \\ else
-  log("Get ready");             \\
-  log("Last chance")            \\
+  log(3);                       \\
 );                              \\
 a || b ? c;                     \\ if a or b then c
 a && b ?: c;                    \\ elvis: if not a and b then c
@@ -150,14 +149,14 @@ m[0..] = m[1..,0];              \\ rotate
   i < 5 ? ^;                    \\ ^ continue
 ));                             \\
 (0.. <| i -> (i>3 ? ^^; x(i))); \\ while idx <= 3 do x(i)
-items <| i -> i ** 2;           \\ iterate list
-items <| x -> a(x)              \\ chain
+items <| (it, idx) -> it ** 2;  \\ iterate array
+items <| x -> a(x)              \\ pipe iterations
       <| y -> b(y);             \\
 items <| x -> (                 \\ nest iterations
   ..x <| y -> a(x,y)            \\
 );                              \\
 x[3..5] <|= x -> x * 2;         \\ rewrite items in subrange
-list |> (x, sum) -> sum + x;    \\ reduce list, range or items
+list |> (x, sum) -> sum + x;    \\ reduce array, range or items
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ import, export
 @math:sin,pi,cos;               \\ import (into global scope)
@@ -436,24 +435,24 @@ const arrValues = new Float64Array(__memory, arr.value, 3)
 
 ## Motivation
 
-JavaScript and _Web Audio API_ is not suitable for audio purposes – it has unpredictable pauses, glitches and so on. It's better handled in worklet with WASM. Besides, audio/signal processing generally doesn't have cross-platform solution, many environments lack audio features.
+In general, audio/signal processing doesn't have cross-platform solution, many environments lack audio features.
+In partticular, JavaScript and _Web Audio API_ is not suitable for audio purposes – it has unpredictable pauses, glitches and so on. It's better handled in worklet with WASM.
 
-_Lino_ fills that gap, providing robust low-level layer for audio/DSP. It targets browsers, [audio worklets](https:\\developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, VST, Rust, Python, Go, [embedded systems](https:\\github.com/bytecodealliance/wasm-micro-runtime) etc. Inspired by [_mono_](https:\\github.com/stagas/mono), _zzfx_, _bytebeat_, _[hxos](https:\\github.com/stagas/hxos)_, [_min_](https:\\github.com/r-lyeh/min) etc.
+_Lino_ addresses these points, making audio/signals processing more accessible and robust. It targets browsers, [audio worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, VST, Rust, Python, Go, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) etc. Inspired by [_mono_](https://github.com/stagas/mono), _zzfx_, _bytebeat_, _[hxos](https:\\github.com/stagas/hxos)_, [_min_](https://github.com/r-lyeh/min) etc.
 
 ### Principles
 
-* _Common syntax_: already familiar code, copy-pastable floatbeats.
+* _Common syntax_: familiar code; copy-pastable floatbeats.
 * _No-keywords_: word means variable, symbol means operator; truly i18l code.
 * _Case-agnostic_: changing case doesn't break code; URL-safe & typo-proof (`sampleRate` vs `samplerate`).
 * _Space-agnistic_: spaces/newlines can be safely removed or added, eg. for compression or prettifying.
-* _0 types_: type is internal feature, let user focus on processing logic, not language.
-* _0 runtime_: statically analyzable, no lamda functions, no OOP, no heavy structures.
-* _Groups_: multiple returns, multiple operands.
+* _No types_: type is internal feature, better focus on processing logic rather than language.
+* _0 runtime_: statically analyzable, no OOP, no heavy structures, no lamda functions, no dynamic scopes.
 * _Explicit_: wysiwyg, no implicit globals, no import-alls.
+* _Groups_: multiple returns, multiple operands.
 * _Ranges_: prevent blowing up arguments.
 * _Pipes_: map/reduce instead of loops.
 * _Low-level_: no fancy features beyond math and buffers.
-* _Static/Linear memory_: no garbage to collect, only 1-page heap.
-* _Flat_: no nested scopes, flat arrays, flat groups.
+* _Static/Linear memory_: no garbage to collect, 1-page heap.
 
 <p align=center><a href="https:\\github.com/krsnzd/license/">🕉</a></p>
