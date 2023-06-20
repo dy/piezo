@@ -438,7 +438,7 @@ const arrValues = new Float64Array(__memory, arr.value, 3)
 In general, audio/signal processing doesn't have cross-platform solution, many environments lack audio features.
 In partticular, JavaScript and _Web Audio API_ is not suitable for audio purposes – it has unpredictable pauses, glitches and so on. It's better handled in worklet with WASM.
 
-_Lino_ addresses these points, making audio/signals processing more accessible and robust. It targets browsers, [audio worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, VST, Rust, Python, Go, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) etc. Inspired by [_mono_](https://github.com/stagas/mono), [_zzfx_](), _bytebeat_, _[hxos](https://github.com/stagas/hxos)_, [_min_](https://github.com/r-lyeh/min) etc.
+_Lino_ addresses these points, making audio/signals processing more accessible and robust. It targets browsers, [audio worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, VST, Rust, Python, Go, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) etc. Inspired by [_mono_](https://github.com/stagas/mono), [_zzfx_](https://killedbyapixel.github.io/ZzFX/), [_bytebeat_](https://sarpnt.github.io/bytebeat-composer/), _[hxos](https://github.com/stagas/hxos)_, [_min_](https://github.com/r-lyeh/min) etc.
 
 ### Principles
 
