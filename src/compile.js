@@ -611,7 +611,7 @@ function inc(name) {
 }
 
 // pick N input args back into stack, like (a,b,c) -> (a,b)
-// FIXME: ignore types, make only f64 type, call as `f64.pick_4_3`? too many funcs with similar meaning like pick/i32_f64_2, pick/f64_f64_2 - we anyways use it only in swizzling
+// we need various input types since we use pick in various scenarios, including booleans
 function pick(count, input) {
   let name
 
