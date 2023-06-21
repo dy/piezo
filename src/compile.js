@@ -4,7 +4,7 @@ import stdlib from "./stdlib.js"
 import {FLOAT,INT} from './const.js'
 import { parse as parseWat } from "watr";
 
-let includes, globals, funcs, func, locals, loopc, exports, blockc, heap, returns;
+let includes, globals, funcs, func, locals, exports, blockc, heap, returns;
 
 const _tmp = Symbol('tmp')
 
@@ -18,11 +18,10 @@ export default function compile(node) {
   // init compiling context
   // FIXME: make temp vars just part of local scope
   globals = {[_tmp]:[]}, // global scope (as name props)
-  locals, // current fn local scope
+  locals = null, // current fn local scope
   includes = [], // pieces to prepend
   funcs = {}, // defined user and util functions
   // FIXME: loop ideally must be used by-reference
-  loopc = 0, // current loop number
   blockc = Object.assign([''],{cur:0}), // current block count
   exports = null, // items to export
   returns = null, // returned items from block (collect early returns)
@@ -162,22 +161,6 @@ Object.assign(expr, {
 
   // a[b] or a[]
   '[]'([,a,b]) {
-    // // a[10], a[n] - create an array of defined length
-    // if (typeof a === 'string') {
-    //   a = varName(a)
-    //   // define array, if it doesn't exist
-    //   if (!locals?.[a] && !globals[a]) {
-    //     define(a)
-    //     // x[] - returns 0
-    //     if (!b) return op(`(i32.const 0)`, 'i32')
-
-    //     inc('buf.new'), inc('ref')
-
-    //     // a[10] - initializes array variable of defined size
-    //     return op(`(${locals ? 'local' : 'global'}.set $${a} (call $buf.new ${expr(b)}))(f64.const 0)`)
-    //   }
-    // }
-
     // a[] - length
     if (!b) return inc('ref.len'), op(`(call $ref.len ${expr(a)})`,'i32')
 
@@ -293,7 +276,104 @@ Object.assign(expr, {
 
   // a <| b
   '<|'([,a,b]) {
-    return op(loop(a,b,false),'f64',{dynamic:true})
+    let idx, item, out = ``
+
+    // loop creates scope on-par with block
+    blockc[++blockc.cur]=(blockc[blockc.cur]||0)+1
+    const loopId = blockc.slice(0,blockc.cur).join('.') || 0
+
+    // get item/idx name
+    // [.. <| x -> x]
+    if (b[0] === '->') {
+      let [, arg, body] = b
+      // x ->
+      if (typeof arg === 'string') item = define(arg), idx = tmp('idx')
+      // (x,i) ->
+      else if (arg[0]==='(') {
+        if (arg[1][0]===',') item = define(arg[1][1]), idx = define(arg[1][2], 'i32')
+        else if (typeof arg[1] === 'string') item = define(arg[1]), idx = tmp('idx', 'i32')
+        else err('Bad iterator arguments')
+      }
+      b = body
+    }
+    // [.. <| expr]
+    else {
+      idx = tmp('idx', 'i32'), item = tmp('item')
+      err('Expression loop: unimplemented')
+    }
+
+    // a..b <| ...
+    // FIXME: step via a..b/step?
+    // FIXME: curve via a..b?
+    if (a[0]==='..') {
+      // i = from; to; while (i < to) {# = i; ...; i++}
+      let [,min,max] = a
+      const from = tmp('from'), to = tmp('to')
+      out +=
+      `(local.tee $${from} ${asFloat(expr(min))})\n` +
+      `(local.set $${to} ${asFloat(expr(max))})\n` +
+      `(loop $${loopId} (param f64) (result f64) \n` +
+        `(if (param f64) (result f64) (f64.le (local.get $${from}) (local.get $${to}))\n` +
+          `(then\n` +
+            `(${locals?.[item]?'local':'global'}.set $${item})\n` +
+            `${expr(b)}\n` +
+            `(local.tee $${from} (f64.add (local.get $${from}) (f64.const 1)))\n` + // FIXME: step can be adjustable
+            // `(call $f64.log (global.get $${item}))` +
+            `(br $${loopId})\n` +
+          `)\n` +
+      `))\n`
+    }
+    // list <| ...
+    else {
+      let aop = expr(a)
+      // (a,b,c) <| ...
+      if (aop.type.length > 1) {
+        // we create tmp list for this group and iterate over it, then after loop we dump it into stack and free memory
+        // i=0; to=types.length; while (i < to) {# = stack.pop(); ...; i++}
+        from = `(f64.const 0)`, to = `(f64.const ${aop.type.length})`
+        next = `(f64.load (i32.add (global.get $heap) (local.get $${idx})))`
+        // push args into heap
+        // FIXME: there must be more generic copy-to-heap thing, eg. `(a, b..c, d<|e)`
+        err('Sequence iteration is not implemented')
+        for (let i = 0; i < aop.type.length; i++) {
+          let t = aop.type[aop.type.length - i - 1]
+          out += `${t==='i32'?'(f64.convert_i32_s)':''}(f64.store (i32.add (global.get $heap) (i32.const 8)))`
+        }
+      }
+      // (0..10 <| a ? ^b : c) <| ...
+      else if (aop.dynamic) {
+        // dynamic args are already in heap
+        from = `(i32.const 0)`, to = `(global.get $heap)`
+        next = `(f64.load (i32.add (global.get $heap) (local.get $${idx})))`
+        err('Unimplemented: dynamic loop arguments')
+        // FIXME: must be reading from heap: heap can just be a list also
+      }
+      // list <| ...
+      else {
+        // i = 0; to=buf[]; while (i < to) {# = buf[i]; ...; i++}
+        inc('ref.len'), inc('buf.get')
+
+        const src = tmp('src'), len = tmp('len','i32')
+        out +=
+        `(local.set $${src} ${aop})\n` +
+        `(local.set $${idx} (i32.const 0))\n` +
+        `(local.set $${len} (call $ref.len (local.get $${src})))\n` +
+        `(loop $${loopId} (result f64) \n` +
+          `(locals.tee $${item} (call $buf.get (local.get $${src}) (local.get $${idx})))\n` +
+          `(if (param f64) (result f64) (i32.le_u (local.get $${idx}) (local.get $${len}))\n` +
+            `(then\n` +
+              `${expr(b)}\n` +
+              `(local.set $${idx} (i32.add (local.get $${idx}) (i32.const 1)))\n` +
+              // `(call $f64.log (global.get $${item}))` +
+              `(br $${loopId})\n` +
+            `)\n` +
+        `))\n`
+      }
+    }
+
+    blockc.cur--
+
+    return op(out, 'f64', {dynamic:true})
   },
 
   // a |> (b,c)->d
@@ -455,6 +535,7 @@ Object.assign(expr, {
     // a.b
     if (b) err('Prop access is unimplemented ' + a + b, a)
 
+    console.log(locals)
     if (locals) err('Export must be in global scope')
     // FIXME: if (expNode !== node && expNode !== node[node.length-1]) err('Export must be the last node');
 
@@ -536,85 +617,6 @@ function buf(inits) {
   + `(call $ref (local.get $${dst}) (i32.shr_u (local.get $${size}) (i32.const 3)) )` // create reference
 
   return op(out,'f64',{buf:true})
-}
-
-// return loop expression, possibly with saving results to heap
-function loop(node, save=false) {
-  // // [.. <| x -> x]
-  // if (init[2][0] === '->') {
-
-  // }
-  // // [.. <| expr]
-  // else {
-
-  // }
-
-  loopc++
-
-  let from, to, next, params, pre
-  let idx = tmp('idx','i32'), item = define('#'.repeat(loopc),'f64'), end = tmp('end','i32')
-
-  // a..b <| ...
-  if (a[0]==='..') {
-    // i = from; to; while (i < to) {# = i; ...; i++}
-    let [,min,max] = a
-    from = asInt(expr(min)), to = asInt(expr(max)), next = `(f64.convert_i32_s (local.get $${idx}))`, params = ``, pre = ``
-  }
-  // list <| ...
-  else {
-    let aop = expr(a)
-    // (a,b,c) <| ...
-    if (aop.type.length > 1) {
-      // we create tmp list for this group and iterate over it, then after loop we dump it into stack and free memory
-      // i=0; to=types.length; while (i < to) {# = stack.pop(); ...; i++}
-      from = `(i32.const 0)`, to = `(i32.const ${aop.type.length})`
-      next = `(f64.load (i32.add (global.get $heap.ptr) (local.get $${idx})))`
-      params = ``
-      // push args into heap
-      // FIXME: should we use $heap.push3() function?
-      for (let i = 0; i < aop.type.length; i++) {
-        let t = aop.type[aop.type.length - i - 1]
-        pre += `${t==='f64'?'(f64.convert_i32_s)':'()'}(f64.store (i32.add (global.get $heap.ptr) (i32.const ${i << 3})))`
-      }
-    }
-    // (0..10 <| a ? ^b : c) <| ...
-    else if (aop.dynamic) {
-      // dynamic args are already in heap
-      from = `(i32.const 0)`, to = `(global.get $heap.size)`
-      next = `(f64.load (i32.add (global.get $heap.ptr) (local.get $${idx})))`
-      params = ``
-      err('Unimplemented: dynamic loop arguments')
-      // FIXME: must be reading from heap: heap can just be a list also
-    }
-    // list <| ...
-    else {
-      // i = 0; to=buf[]; while (i < to) {# = buf[i]; ...; i++}
-      inc('ref.len'), inc('buf.get')
-      from = `(i32.const 0)`, to = `(call $ref.len ${aop})`, next = `(call $buf.get ${aop} (local.get $${idx}))`
-      params = ``, pre = ``
-    }
-  }
-
-  let res = `${pre}\n` +
-  `(local.set $${idx} ${from})\n` +
-  `(local.set $${end} ${to})\n` +
-  `(loop $loop${loopc} ${params} (result f64)\n` +
-    `(${locals?.[item] ? 'local':'global'}.set $${item} ${next})\n` +
-    `(if (result f64) (i32.le_s (local.get $${idx}) (local.get $${end}))\n` +
-      `(then\n` +
-        `${expr(b)}\n` +
-        // save result to heap, if required
-        // save ? `(f64.store (i32.add (global.get $heap.ptr) (local.get $${idx}))` : `` +
-        `(local.set $${idx} (i32.add (local.get $${idx}) (i32.const 1)))` +
-        // `(call $f64.log (global.get $${item}))` +
-        `(br $loop${loop})\n` +
-      `)\n` +
-      `(else (f64.const 0))\n` +
-  `))\n`
-
-  loopc--
-
-  return res
 }
 
 // wrap expression to float, if needed

@@ -1095,6 +1095,7 @@ Having wat files is more useful than direct compilation to binary form:
   + reminds `:` which is kind of cool for comments in typographics
   + more conventional than `\\`
   + Sercy sneezed
+  + gives indication that the code is compiled down to wasm, wasm can even keep exact same comments
 
   2. `//`
   + // associates besides C+/Java/JS with F#, which is pipy
@@ -3489,6 +3490,8 @@ Having wat files is more useful than direct compilation to binary form:
     - memcpy static once heap grows
       + heap grows rarely, unlike static, since it's more like tetris - once arr is filled it destroys
     - requires hard heap limit anyways to prevent infinities
+    - once heap grows all array refs are lost
+      - we need to store refs as relative
 
   ? do we actually need growing memory?
     + limited memory ensures portability
@@ -3496,6 +3499,24 @@ Having wat files is more useful than direct compilation to binary form:
     + max array length is limited by-design to i24, which is 16M of els (f64s), which is 2048 pages of memory
       - so it's an overkill for simple tiny programs to limit to such huge numbers
       + same time it's good point to generally limit memory
+
+  * No heap `[ Static... ]`
+    + There's a way to comprehend arrays directly in static memory
+      + We just don't init internal arrays immediately but save their location and defer init, when the length is known
+        ? `[1, 2..x, [3], f()]` - how do we know location of `[3]`?
+          * `a=[1, 2..x, #1, #2]; a[a~<#1] = [3]; a[a~<#2] = f();`
+        ? `[0..x <| x -> (!x ? ^; [..x]), y]` - how does that work?
+          * `a=[0..x <| (x,i) -> (!x ? ^; #i)]; 0..x <| (x,i) -> (!x ? ^; a[a~<#i]=[..x])`
+        ? `[a=2,b=[..a],c=b[..]]` - how?
+          * `x=[#1,#2,#2]; x[x~<#1]=a=2; x[x~<#2]=b=[..a]; x[x~<#3]=c=b[..]`
+        -? `[0..x <| [..x++]]` how?
+    - debugging these is laborous
+    - perf tax finding index
+      ~+ we don't know memcpy tax from head method
+    - we need heap to iterat `(a,b,c) <|` - there's no way to do that via stack (it seems) since loop enforces params
+
+  * Mixed no-heap as much as possible, otherwise heap
+
 
 ## [x] Import into function scope? -> no, at least use `@math.pi` as direct tokens
 
@@ -3765,8 +3786,16 @@ Having wat files is more useful than direct compilation to binary form:
     - conflicts with
   * `[0..20 <| x -> x*0.5]`
     - very verbose
+  * `[0..10 / 0.01]`
+    + recommended by gpt
 
-## [ ] Early return: how to consolidate type?
+## [ ] Range modifiers: how, when?
+
+  * `0..100 ** 0.01`
+    * `a <? 0..100 ** .01` - maps to pow range?
+      + reinforces meaning of max operator, which is nice
+
+## [x] Early return: how to consolidate type? -> just enforce f64 for now for early returns
 
   * we have to consolidate output type with early returns
   * cases:
@@ -3779,3 +3808,5 @@ Having wat files is more useful than direct compilation to binary form:
     - enforces all funcs with prelim returns be f64
       ~+ prelim returns belong to userland anyways, it's not demanded internally
     - we can't
+
+## [ ] Iteration: optionally pass prev item, as in reducer? `a <| (x, i, prev) ->`

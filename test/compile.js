@@ -256,19 +256,19 @@ t('compile: function oneliners', t => {
   is(mod.instance.exports.mult(2,4), 8)
 })
 
-t('debugs', async t => {
+t('debugs', t => {
   const memory = new WebAssembly.Memory({ initial: 1 });
   const importObject = { env: { memory } };
-  const N = 1001
-  let {instance} = await compileWat(`
-  (func (result ${'f64 '.repeat(N)})
-    ${'(f64.const 1)'.repeat(N)}
-    (return)
+  let {instance} = compileWat(`
+  (func $x
+    (i32.const 0)
+    (loop
+    )
   )
-  (export "x" (func 0))
+  (export "x" (func $x))
 `, importObject)
 
-  console.log(instance.exports.x())
+  instance.exports.x()
 })
 
 t('compile: misc vars', t => {
@@ -460,7 +460,7 @@ t.todo('compile: break/continue', t => {
 
 })
 
-t.todo('compile: loops basic', t => {
+t('compile: loops basic', t => {
   let wat = compile(`x=[1..3]; 0..2 <| i -> x[i]=i+1; x.`)
   let mod = compileWat(wat)
   let {__memory:memory, x} = mod.instance.exports
@@ -496,8 +496,8 @@ t('compile: loop in loop', t => {
   is(arr[3], 3)
 })
 
-t('compile: simple pipe', t => {
-  let wat = compile(`x = [1,2,3]; y = x | x -> x * 2.`)
+t.todo('compile: loop over list', t => {
+  let wat = compile(`x = [1,2,3]; y = x <| x -> x * 2.`)
   console.log(wat)
   let mod = compileWat(wat)
   let {memory, y} = mod.instance.exports
