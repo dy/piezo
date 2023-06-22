@@ -16,173 +16,173 @@
 ## Reference
 
 ```
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ numbers
-16, 0x10, 0b0;                  \\ int, hex or binary
-16.0, .1, 1e3, 2e-3;            \\ float
-true = 0b1, false = 0b0;        \\ alias booleans
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; numbers
+16, 0x10, 0b0;                  ;; int, hex or binary
+16.0, .1, 1e3, 2e-3;            ;; float
+true = 0b1, false = 0b0;        ;; alias booleans
 
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ units
-1k = 1000; 1pi = 3.1415;        \\ define units
-1s = 44100; 1ms = 0.001s;       \\ useful for sample indexes
-10.1k, 2pi;                     \\ units deconstruct to numbers: 10100, 6.283
-1h2m3.5s;                       \\ unit combinations
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; units
+1k = 1000; 1pi = 3.1415;        ;; define units
+1s = 44100; 1ms = 0.001s;       ;; useful for sample indexes
+10.1k, 2pi;                     ;; units deconstruct to numbers: 10100, 6.283
+1h2m3.5s;                       ;; unit combinations
 
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ standard operators
-+ - * / % -- ++                 \\ arithmetical
-&& || ! ?:                      \\ logical
-& | ^ ~ >> <<                   \\ binary (for integer part of number)
-== != >= <=                     \\ comparisons
-. []                            \\ member access
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; standard operators
++ - * / % -- ++                 ;; arithmetical
+&& || ! ?:                      ;; logical
+& | ^ ~ >> <<                   ;; binary (for integer part of number)
+== != >= <=                     ;; comparisons
+. []                            ;; member access
 
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ extended operators
-** // %%                        \\ power, floor div, unsigned mod (wraps negatives)
-<? <?= ..                       \\ clamp/min/max, range
-<| <|= |> ->                    \\ for each, map, reduce
-*                               \\ stateful variable
-^ ^^                            \\ continue, break
-@ .                             \\ import, export
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; extended operators
+** // %%                        ;; power, floor div, unsigned mod (wraps negatives)
+<? <?= ..                       ;; clamp/min/max, range
+<| <|= |> ->                    ;; for each, map, reduce
+*                               ;; stateful variable
+^ ^^                            ;; continue, break
+@ .                             ;; import, export
 
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ variables
-foo=1, bar=2.0;                 \\ declare vars
-Ab_C_F#, $0, Δx, _;             \\ names permit alnum, unicodes, #, _, $
-fooBar123 == FooBar123;         \\ names are case-insensitive
-default=1, eval=fn, else=0;     \\ lino has no reserved words
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; variables
+foo=1, bar=2.0;                 ;; declare vars
+Ab_C_F#, $0, Δx, _;             ;; names permit alnum, unicodes, #, _, $
+fooBar123 == FooBar123;         ;; names are case-insensitive
+default=1, eval=fn, else=0;     ;; lino has no reserved words
 
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ statements
-foo();                          \\ semi-colons at end of line are mandatory
-(c = a + b; c);                 \\ parens define scope, return last element
-(a = b+1; a,b,c);               \\ scope can return multiple values
-(a ? ^b ; c);                   \\ early return b
-(a ? (b ? ^^c) : d);            \\ break 2 scopes
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; statements
+foo();                          ;; semi-colons at end of line are mandatory
+(c = a + b; c);                 ;; parens define scope, return last element
+(a = b+1; a,b,c);               ;; scope can return multiple values
+(a ? ^b ; c);                   ;; early return b
+(a ? (b ? ^^c) : d);            ;; break 2 scopes
 
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ conditions
-sign = a < 0 ? -1 : +1;         \\ inline ternary
-(2+2 >= 4) ?                    \\ multiline ternary
-  log(1)                        \\
-: 3 <= 1..2 ?                   \\ else if
-  log(2)                        \\
-: (                             \\ else
-  log(3);                       \\
-);                              \\
-a || b ? c;                     \\ if a or b then c
-a && b ?: c;                    \\ elvis: if not a and b then c
-a = b ? c;                      \\ if b then a = c (else a = 0)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; conditions
+sign = a < 0 ? -1 : +1;         ;; inline ternary
+(2+2 >= 4) ?                    ;; multiline ternary
+  log(1)                        ;;
+: 3 <= 1..2 ?                   ;; else if
+  log(2)                        ;;
+: (                             ;; else
+  log(3);                       ;;
+);                              ;;
+a || b ? c;                     ;; if a or b then c
+a && b ?: c;                    ;; elvis: if not a and b then c
+a = b ? c;                      ;; if b then a = c (else a = 0)
 
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ ranges
-0..10;                          \\ from 1 to 9 (10 exclusive)
-0.., ..10, ..;                  \\ open ranges
-10..1;                          \\ reverse range
-1.08..108.0;                    \\ float range
-(x-1)..(x+1);                   \\ calculated ranges
-x <= 0..10;                     \\ is x in 0..10 range (10 inclusive)?
-x <? 0..10;                     \\ max(min(x, 10), 0)
-a,b,c = 0..2;                   \\ a==0, b==1, c==2
-(-10..10)[];                    \\ span is 20
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; ranges
+0..10;                          ;; from 1 to 9 (10 exclusive)
+0.., ..10, ..;                  ;; open ranges
+10..1;                          ;; reverse range
+1.08..108.0;                    ;; float range
+(x-1)..(x+1);                   ;; calculated ranges
+x <= 0..10;                     ;; is x in 0..10 range (10 inclusive)?
+x <? 0..10;                     ;; max(min(x, 10), 0)
+a,b,c = 0..2;                   ;; a==0, b==1, c==2
+(-10..10)[];                    ;; span is 20
 
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ multiple values
-a, b=1, c=2;                    \\ define multiple
-(a, b, c)++;                    \\ inc multiple elements: (a++, b++, c++)
-(a, (b, c));                    \\ always flat: (a, b, c)
-(a,b,c) = (d,e,f);              \\ assign multiple: a=d, b=e, c=f
-(a,b) = (b,a);                  \\ swap: temp=a; a=b; b=temp;
-(a,b) + (c,d);                  \\ any ops act on members: (a+c, b+d)
-(a,b).x;                        \\ (a.x, b.x);
-(a,b) = (c,d,e);                \\ (a=c, b=d);
-(a,b,c) = d;                    \\ (a=d, b=d, c=d);
-a = (b,c,d);                    \\ (a=b);
-(a,,b) = (c,d,e);               \\ (a=c, d, b=e);
-(a,b,c) = (d,,e);               \\ (a=d, b, c=e);
-a = b, c = d;                   \\ assignment precedence: (a = b), (c = d)
-(a,b,c) = fn();                 \\ fn returns multiple values;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; multiple values
+a, b=1, c=2;                    ;; define multiple
+(a, b, c)++;                    ;; inc multiple elements: (a++, b++, c++)
+(a, (b, c));                    ;; always flat: (a, b, c)
+(a,b,c) = (d,e,f);              ;; assign multiple: a=d, b=e, c=f
+(a,b) = (b,a);                  ;; swap: temp=a; a=b; b=temp;
+(a,b) + (c,d);                  ;; any ops act on members: (a+c, b+d)
+(a,b).x;                        ;; (a.x, b.x);
+(a,b) = (c,d,e);                ;; (a=c, b=d);
+(a,b,c) = d;                    ;; (a=d, b=d, c=d);
+a = (b,c,d);                    ;; (a=b);
+(a,,b) = (c,d,e);               ;; (a=c, d, b=e);
+(a,b,c) = (d,,e);               ;; (a=d, b, c=e);
+a = b, c = d;                   ;; assignment precedence: (a = b), (c = d)
+(a,b,c) = fn();                 ;; fn returns multiple values;
 
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ functions
-double(n) = n*2;                \\ define function
-times(m = 1, n <= 1..) = (      \\ optional, clamped args
-  n == 0 ? ^n;                  \\ early return
-  m*n                           \\ default return
-);                              \\
-times(3,2);                     \\ 6
-times(5);                       \\ 5. optional argument
-times(n: 10);                   \\ 10. named argument
-times(,11);                     \\ 11. skipped argument
-copy = triple;                  \\ capture function
-copy(10);                       \\ also 30
-swap(x,y) = (y,x);              \\ return multiple values
-(a,b) = swap(b,a);              \\ destructure returns
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; functions
+double(n) = n*2;                ;; define function
+times(m = 1, n <= 1..) = (      ;; optional, clamped args
+  n == 0 ? ^n;                  ;; early return
+  m*n                           ;; default return
+);                              ;;
+times(3,2);                     ;; 6
+times(5);                       ;; 5. optional argument
+times(n: 10);                   ;; 10. named argument
+times(,11);                     ;; 11. skipped argument
+copy = triple;                  ;; capture function
+copy(10);                       ;; also 30
+swap(x,y) = (y,x);              ;; return multiple values
+(a,b) = swap(b,a);              ;; destructure returns
 
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ stateful variables
-a() = ( *i=0; i++ );            \\ i persists value between calls
-a(), a();                       \\ 0, 1
-b() = (                         \\
-  *i=[..4];                     \\ local memory of 4 items
-  i.1 = i.2 + 1;                \\ write previous i.2 to current i.1
-  i[0..] = i[-1,0..];           \\ shift memory
-  i.1                           \\ return current item
-);                              \\
-b(), b(), b();                  \\ 1, 2, 3
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; stateful variables
+a() = ( *i=0; i++ );            ;; i persists value between calls
+a(), a();                       ;; 0, 1
+b() = (                         ;;
+  *i=[..4];                     ;; local memory of 4 items
+  i.1 = i.2 + 1;                ;; write previous i.2 to current i.1
+  i[0..] = i[-1,0..];           ;; shift memory
+  i.1                           ;; return current item
+);                              ;;
+b(), b(), b();                  ;; 1, 2, 3
 
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ arrays
-m = [..10];                     \\ array of 10 elements (not necessarily 0)
-m = [..10 <| 0];                \\ array of 10 zeros
-m = [1,2,3,4];                  \\ array with 4 values
-m = [l:2, r:4, c:6];            \\ position aliases
-m = [n[..]];                    \\ copy n
-m = [1, 2..4, last:5];          \\ mixed definition
-m = [1, [2, 3, [4]]];           \\ nested arrays (tree)
-m = [0..4 <| i -> i * 2];       \\ array comprehension
-m.0, m.last;                    \\ get by static index / alias
-(first, last) = (m[0], m[-1]);  \\ get by dynamic index
-(second, third) = m[1..];       \\ get multiple values
-(first, last:c) = m[..];        \\ all values
-length = m[];                   \\ get length
-m[0] = 1;                       \\ set value
-m[2..] = (1, 2..4, n[1..3]);    \\ set multiple values from offset 2
-m[0..] = 0..4 <| x -> x * 2     \\ set via iteration
-m[1,2] = m[2,1];                \\ rearrange
-m[0..] = m[-1..0];              \\ reverse order
-m[0..] = m[1..,0];              \\ rotate
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; arrays
+m = [..10];                     ;; array of 10 elements (not necessarily 0)
+m = [..10 <| 0];                ;; array of 10 zeros
+m = [1,2,3,4];                  ;; array with 4 values
+m = [l:2, r:4, c:6];            ;; position aliases
+m = [n[..]];                    ;; copy n
+m = [1, 2..4, last:5];          ;; mixed definition
+m = [1, [2, 3, [4]]];           ;; nested arrays (tree)
+m = [0..4 <| i -> i * 2];       ;; array comprehension
+m.0, m.last;                    ;; get by static index / alias
+(first, last) = (m[0], m[-1]);  ;; get by dynamic index
+(second, third) = m[1..];       ;; get multiple values
+(first, last:c) = m[..];        ;; all values
+length = m[];                   ;; get length
+m[0] = 1;                       ;; set value
+m[2..] = (1, 2..4, n[1..3]);    ;; set multiple values from offset 2
+m[0..] = 0..4 <| x -> x * 2     ;; set via iteration
+m[1,2] = m[2,1];                ;; rearrange
+m[0..] = m[-1..0];              ;; reverse order
+m[0..] = m[1..,0];              ;; rotate
 
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ loop, map, reduce
-(a, b, c) <| i -> x(i);         \\ for each item i do x(item)
-(10..1 <| i -> (                \\ iterate range
-  i < 3 ? ^^;                   \\ ^^ break
-  i < 5 ? ^;                    \\ ^ continue
-));                             \\
-(0.. <| i -> (i>3 ? ^^; x(i))); \\ while idx <= 3 do x(i)
-items <| (it, idx) -> it ** 2;  \\ iterate array
-items <| x -> a(x)              \\ pipe iterations
-      <| y -> b(y);             \\
-items <| x -> (                 \\ nest iterations
-  ..x <| y -> a(x,y)            \\
-);                              \\
-x[3..5] <|= x -> x * 2;         \\ rewrite items in subrange
-list |> (x, sum) -> sum + x;    \\ reduce array, range or items
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; loop, map, reduce
+(a, b, c) <| i -> x(i);         ;; for each item i do x(item)
+(10..1 <| i -> (                ;; iterate range
+  i < 3 ? ^^;                   ;; ^^ break
+  i < 5 ? ^;                    ;; ^ continue
+));                             ;;
+(0.. <| i -> (i>3 ? ^^; x(i))); ;; while idx <= 3 do x(i)
+items <| (it, idx) -> it ** 2;  ;; iterate array
+items <| x -> a(x)              ;; pipe iterations
+      <| y -> b(y);             ;;
+items <| x -> (                 ;; nest iterations
+  ..x <| y -> a(x,y)            ;;
+);                              ;;
+x[3..5] <|= x -> x * 2;         ;; rewrite items in subrange
+list |> (x, sum) -> sum + x;    ;; reduce array, range or items
 
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ import, export
-@math:sin,pi,cos;               \\ import (into global scope)
-1pi = @math.pi;                 \\ or use imported member directly
-x, y, z.                        \\ export (from global scope)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; import, export
+@math:sin,pi,cos;               ;; import (into global scope)
+1pi = @math.pi;                 ;; or use imported member directly
+x, y, z.                        ;; export (from global scope)
 ```
 
 <!--
 
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ strings
-\\ NOTE: can be not trivial to
-hi="hello";                     \\ strings
-string="{hi} world";            \\ interpolated string: "hello world"
-"\u0020", "\x20";               \\ unicode or ascii codes
-string[1]; string.1;            \\ positive indexing from first element [0]: 'e'
-string[-3];                     \\ negative indexing from last element [-1]: 'r'
-string[2..10];                  \\ substring
-string[1, 2..10, -1];           \\ slice/pick multiple elements
-string[-1..0];                  \\ reverse
-string[];                       \\ length
-string == string;               \\ comparison (==,!=,>,<)
-string + string;                \\ concatenation: "hello worldhello world"
-string - string;                \\ removes all occurences of the right string in the left string: ""
-string / string;                \\ split: "a b" / " " = ["a", "b"]
-string * list;                  \\ join: " " * ["a", "b"] = "a b"
-string * 2;                     \\ repeat: "abc" * 2 = "abcabc"
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; strings
+;; NOTE: can be not trivial to
+hi="hello";                     ;; strings
+string="{hi} world";            ;; interpolated string: "hello world"
+"\u0020", "\x20";               ;; unicode or ascii codes
+string[1]; string.1;            ;; positive indexing from first element [0]: 'e'
+string[-3];                     ;; negative indexing from last element [-1]: 'r'
+string[2..10];                  ;; substring
+string[1, 2..10, -1];           ;; slice/pick multiple elements
+string[-1..0];                  ;; reverse
+string[];                       ;; length
+string == string;               ;; comparison (==,!=,>,<)
+string + string;                ;; concatenation: "hello worldhello world"
+string - string;                ;; removes all occurences of the right string in the left string: ""
+string / string;                ;; split: "a b" / " " = ["a", "b"]
+string * list;                  ;; join: " " * ["a", "b"] = "a b"
+string * 2;                     ;; repeat: "abc" * 2 = "abcabc"
 NOTE: indexOf can be done as `string | (x,i) -> (x == "l" ? i)`
 -->
 
@@ -194,16 +194,16 @@ NOTE: indexOf can be done as `string | (x,i) -> (x == "l" ? i)`
 Provides k-rate amplification for block of samples.
 
 ```
-gain(                               \\ define a function with block, volume arguments.
-  block,                            \\ block is a list argument
-  volume <= 0..100                  \\ volume is limited to 0..100 range
+gain(                               ;; define a function with block, volume arguments.
+  block,                            ;; block is a list argument
+  volume <= 0..100                  ;; volume is limited to 0..100 range
 ) = (
-  block <|= x -> x * volume;        \\ map each sample by multiplying by value
+  block <|= x -> x * volume;        ;; map each sample by multiplying by value
 );
 
-gain([0..5 <| x -> x * 0.1], 2);    \\ 0, .2, .4, .6, .8, 1
+gain([0..5 <| x -> x * 0.1], 2);    ;; 0, .2, .4, .6, .8, 1
 
-gain.                               \\ export gain function
+gain.                               ;; export gain function
 ```
 
 <!--Minifies as `gain(b,v)=b|=x->x*v.`-->
@@ -213,20 +213,20 @@ gain.                               \\ export gain function
 A-rate (per-sample) biquad filter processor.
 
 ```
-@math: pi,cos,sin;                  \\ import pi, sin, cos from math
+@math: pi,cos,sin;                  ;; import pi, sin, cos from math
 
-1pi = pi;                           \\ define pi units
-1s = 44100;                         \\ define time units in samples
-1k = 10000;                         \\ basic si units
+1pi = pi;                           ;; define pi units
+1s = 44100;                         ;; define time units in samples
+1k = 10000;                         ;; basic si units
 
-lpf(                                \\ per-sample processing function
-  x0,                               \\ input sample value
-  freq <= 1..10k = 100,             \\ filter frequency, float
-  Q <= 0.001..3.0 = 1.0             \\ quality factor, float
+lpf(                                ;; per-sample processing function
+  x0,                               ;; input sample value
+  freq <= 1..10k = 100,             ;; filter frequency, float
+  Q <= 0.001..3.0 = 1.0             ;; quality factor, float
 ) = (
-  *(x1, y1, x2, y2) = 0;            \\ define filter state
+  *(x1, y1, x2, y2) = 0;            ;; define filter state
 
-  \\ lpf formula
+  ;; lpf formula
   w = 2pi * freq / 1s;
   (sin_w, cos_w) = (sin(w), cos(w));
   a = sin_w / (2.0 * Q);
@@ -238,15 +238,15 @@ lpf(                                \\ per-sample processing function
 
   y0 = b0*x0 + b1*x1 + b2*x2 - a1*y1 - a2*y2;
 
-  (x1, x2) = (x0, x1);              \\ shift state
+  (x1, x2) = (x0, x1);              ;; shift state
   (y1, y2) = (y0, y1);
 
-  y0                                \\ return y0
+  y0                                ;; return y0
 );
 
-\\ (0, .1, .3) <| x -> lpf(x, 108, 5)
+;; (0, .1, .3) <| x -> lpf(x, 108, 5)
 
-lpf.                                \\ export lpf function, end program
+lpf.                                ;; export lpf function, end program
 ```
 
 ### ZZFX
@@ -260,45 +260,45 @@ Generates ZZFX's [coin sound](https://codepen.io/KilledByAPixel/full/BaowKzv) `z
 1s = 44100;
 1ms = 1s / 1000;
 
-\\ define waveform generators
+;; define waveform generators
 oscillator = [
   saw(phase) = (1 - 4 * abs( round(phase/2pi) - phase/2pi )),
   sine(phase) = sin(phase)
 ];
 
-\\ applies adsr curve to sequence of samples
+;; applies adsr curve to sequence of samples
 adsr(
   x,
-  a <= 1ms..,                     \\ prevent click
+  a <= 1ms..,                     ;; prevent click
   d,
-  (s, sv=1),                      \\ optional group-argument
+  (s, sv=1),                      ;; optional group-argument
   r
 ) = (
-  *i = 0;                         \\ internal counter, increments after fn body
+  *i = 0;                         ;; internal counter, increments after fn body
   t = i / 1s;
 
   total = a + d + s + r;
 
   y = t >= total ? 0 : (
-    t < a ? t/a :                 \\ attack
-    t < a + d ?                   \\ decay
-    1-((t-a)/d)*(1-sv) :          \\ decay falloff
-    t < a  + d + s ?              \\ sustain
-    sv :                          \\ sustain volume
+    t < a ? t/a :                 ;; attack
+    t < a + d ?                   ;; decay
+    1-((t-a)/d)*(1-sv) :          ;; decay falloff
+    t < a  + d + s ?              ;; sustain
+    sv :                          ;; sustain volume
     (total - t)/r * sv
   ) * x;
   i++;
   y
 );
 
-\\ curve effect
+;; curve effect
 curve(x, amt<=0..10=1.82) = (sign(x) * abs(x)) ** amt;
 
-\\ coin = triangle with pitch jump, produces block
+;; coin = triangle with pitch jump, produces block
 coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
-  out[1023];                      \\ output block of 1024 samples
+  out[1023];                      ;; output block of 1024 samples
   *i=0;
-  *phase = 0;                     \\ current phase
+  *phase = 0;                     ;; current phase
   t = i / 1s;
 
   out <|= oscillator[shape](phase)
@@ -323,7 +323,7 @@ coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
 (b1,b2,b3,b4) = (1422,1491,1557,1617);
 (p1,p2,p3,p4) = (225,556,441,341);
 
-\\ TODO: stretch
+;; TODO: stretch
 
 reverb(input, room=0.5, damp=0.5) = (
   *combs_a = a0,a1,a2,a3 | a -> stretch(a),
