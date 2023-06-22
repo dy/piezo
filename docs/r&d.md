@@ -3810,3 +3810,9 @@ Having wat files is more useful than direct compilation to binary form:
     - we can't
 
 ## [ ] Iteration: optionally pass prev item, as in reducer? `a <| (x, i, prev) ->`
+
+## [ ] Iteration: allow condition on the left side? `a < b <| ...`
+  + enables simple while loops
+  + allows prohibiting infinite lhs ranges
+  + detectible from input arg type
+  - `1 <| ...` will produce infinite loop

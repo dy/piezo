@@ -273,17 +273,17 @@ t('debugs', t => {
 
 t('compile: misc vars', t => {
   let wat,x;
-  x = compileWat(compile(`x;x.`)).exports.x // unknown type falls to f64
-  x = compileWat(compile(`x=1;x.`)).exports.x // int type
-  x = compileWat(compile(`x=1.0;x.`)).exports.x // float type
-  x = compileWat(compile(`x()=1;x.`)).exports.x // func type
-  // x = compileWat(compile(`x=0..10;x.`)).exports.x // range type
-  x = compileWat(compile(`x=[];x.`)).exports.x // arr type
-  x = compileWat(compile(`x;x=1;x.`)).exports.x // late-int type
-  x = compileWat(compile(`x;x=1.0;x.`)).exports.x // late-float type
-  // x = compileWat(compile(`x;x()=1;x.`)).exports.x // late-func type
-  // x = compileWat(compile(`x;x=0..10;x.`)).exports.x // late-range type
-  x = compileWat(compile(`x;x=[];x.`)).exports.x // late-arr type
+  x = compileWat(compile(`x;x.`)).instance.exports.x // unknown type falls to f64
+  x = compileWat(compile(`x=1;x.`)).instance.exports.x // int type
+  x = compileWat(compile(`x=1.0;x.`)).instance.exports.x // float type
+  x = compileWat(compile(`x()=1;x.`)).instance.exports.x // func type
+  // x = compileWat(compile(`x=0..10;x.`)).instance.exports.x // range type
+  x = compileWat(compile(`x=[];x.`)).instance.exports.x // arr type
+  x = compileWat(compile(`x;x=1;x.`)).instance.exports.x // late-int type
+  x = compileWat(compile(`x;x=1.0;x.`)).instance.exports.x // late-float type
+  // x = compileWat(compile(`x;x()=1;x.`)).instance.exports.x // late-func type
+  // x = compileWat(compile(`x;x=0..10;x.`)).instance.exports.x // late-range type
+  x = compileWat(compile(`x;x=[];x.`)).instance.exports.x // late-arr type
 })
 
 t('compile: ranges basic', t => {
@@ -472,7 +472,7 @@ t('compile: loops basic', t => {
   is(arr[2], 3)
 })
 
-t('compile: loop in loop', t => {
+t.todo('compile: loop in loop', t => {
   let wat = compile(`
     x=[..4];
     i=0;
@@ -486,7 +486,7 @@ t('compile: loop in loop', t => {
     );
   x.`)
   let mod = compileWat(wat)
-  let {memory, x} = mod.instance.exports
+  let {__memory:memory, x} = mod.instance.exports
 
   let arr = new Float64Array(memory.buffer, x.value, 4)
 

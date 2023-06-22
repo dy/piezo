@@ -71,7 +71,7 @@ function expr(statement) {
   if (typeof statement === 'string') {
     // just x,y; or a=x; where x is undefined
     statement = define(statement);
-    return op(`(${locals?.[statement]?'local':'global'}.get $${statement})`,`f64`)
+    return op(get(statement),`f64`)
   }
   if (statement[0] in expr) return expr[statement[0]](statement) || ''
   err('Unknown operation `' + statement[0] + '`',statement)
@@ -185,7 +185,7 @@ Object.assign(expr, {
     // a = b,  a = (b,c),   a = (b;c,d)
     if (typeof a === 'string') {
       a = define(a)
-      return op(locals ? `(local.tee $${a} ${pick(1,asFloat(expr(b)))})` : `(global.set $${a} ${pick(1,asFloat(expr(b)))})(global.get $${a})`, 'f64')
+      return op(locals ? `(local.tee $${a} ${pick(1,asFloat(expr(b)))})` : `${set(a, pick(1,asFloat(expr(b))))}(global.get $${a})`, 'f64')
     }
 
     // (a,b) = ...
@@ -199,7 +199,7 @@ Object.assign(expr, {
       return op(
         inputs + '\n'+
         outputs.map((n,i)=> (
-          n=define(n), `${inputs.type[i] === 'i32' ? `(f64.convert_i32_s)` : ''}(${globals[n]?`global`:`local`}.set $${n})`
+          n=define(n), `${inputs.type[i] === 'i32' ? `(f64.convert_i32_s)` : ''}${set(n)}`
         )).reverse().join('') +
         outputs.map(n=>(n=define(n), `(${globals[n]?'global':'local'}.get $${n})`)).join(''),
         Array(outputs.length).fill(`f64`)
@@ -315,7 +315,7 @@ Object.assign(expr, {
       `(loop $${loopId} (param f64) (result f64) \n` +
         `(if (param f64) (result f64) (f64.le (local.get $${from}) (local.get $${to}))\n` +
           `(then\n` +
-            `(${locals?.[item]?'local':'global'}.set $${item})\n` +
+            `${set(item)}\n` +
             `${expr(b)}\n` +
             `(local.tee $${from} (f64.add (local.get $${from}) (f64.const 1)))\n` + // FIXME: step can be adjustable
             // `(call $f64.log (global.get $${item}))` +
@@ -544,6 +544,15 @@ Object.assign(expr, {
   },
 })
 
+// return (local.set) or (global.set)
+function set (name, op='') {
+  return `${op}(${locals?.[name]?'local':'global'}.set $${name})`
+}
+
+function get (name) {
+  return `(${locals?.[name]?'local':'global'}.get $${name})`
+}
+
 // define variable in current scope, export if necessary; returns resolved name
 function define(name, type='f64') {
   name += blockc.slice(0,blockc.cur).join('.')
@@ -568,6 +577,7 @@ function tmp(name, type='f64') {
 }
 
 // create array initializer op (via heap), from element nodes
+// FIXME: reorganize - no good to take nodes here
 function buf(inits) {
   let src = tmp('src','i32'), dst = tmp('dst', 'i32'), size = tmp('size','i32')
 
