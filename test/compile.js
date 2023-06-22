@@ -427,11 +427,14 @@ t.todo('compile: sublist', t => {
   is(arr[ptr+1], 2)
 })
 
-t.todo('compile: memory grow', t => {
-  let wat = compile(`grow()=[..10].`)
+t('compile: memory grow', t => {
+  let wat = compile(`grow()=[..8192].`)
   let mod = compileWat(wat)
-  let {__memory:memory, grow} = mod.instance.exports
-
+  let {__memory, __mem, grow} = mod.instance.exports
+  for (let i = 1; i < 100; i++) {
+    is(__mem.value, 65536*i)
+    grow()
+  }
 })
 
 t('compile: early returns', t => {

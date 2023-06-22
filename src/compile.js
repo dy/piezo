@@ -29,33 +29,43 @@ export default function compile(node) {
   heap = 0 // heap size as number of pages (detected from max static array size)
 
   // run global in start function
-  let init = expr(node), out = ``
+  let init = expr(node).trim(), out = ``
+
+  if (heap) out += `;; memory: ${heap*64}Kb heap\n` +
+  `(memory (export "__memory") ${heap} ${MAX_MEMORY})\n(global $__heap (export "__heap") (mut i32) (i32.const 0))\n(global $__mem (export "__mem") (mut i32) (i32.const ${heap<<16}))\n\n`
+
+  // declare includes
+  if (includes.length) out += `;; includes\n`;
+  for (let include of includes)
+    if (stdlib[include]) out += stdlib[include] + '\n\n';
+    else err('Unknown include `' + include + '`')
 
   // run globals init, if needed
-  if (init) out = `(func $__main\n` +
+  if (init) out += `;; init\n` +
+  `(func $__init\n` +
     globals[_tmp].map((tmp)=>`(local ${tmp})`).join('') +
     `\n${init}\n` +
     `(return))\n` +
-  `(start $__main)\n`
-
-  if (heap) out += `(memory (export "__memory") ${heap} ${MAX_MEMORY})(global $mem (mut i32) (i32.const ${heap<<16}))(global $heap (mut i32) (i32.const 0))\n`
+  `(start $__init)\n\n`
 
   // declare variables
   // NOTE: it sets functions as global variables
-  for (let name in globals)
-    out = `(global $${name} (mut ${globals[name].type}) (${globals[name].type}.const 0))\n` + out
+  if (Object.keys(globals).length) {
+    out += `;; globals\n`
+    for (let name in globals)
+      out += `(global $${name} (mut ${globals[name].type}) (${globals[name].type}.const 0))\n`
+    out += `\n`
+  }
 
   // declare funcs
+  for (let name in funcs) { out += `;; functions\n`; break }
   for (let name in funcs)
-    out = funcs[name] + '\n' + out
-
-  // declare includes
-  for (let include of includes)
-    if (stdlib[include]) out = stdlib[include] + '\n' + out; else err('Unknown include `' + include + '`')
+  out += funcs[name] + '\n\n'
 
   // provide exports
+  for (let name in exports) { out += `;; exports\n`; break }
   for (let name in exports)
-    out += `\n(export "${name}" (${exports[name].func ? 'func' : 'global'} $${name}))`
+    out += `(export "${name}" (${exports[name].func ? 'func' : 'global'} $${name}))`
 
   console.log(out)
   // console.log(...parseWat(out))
@@ -331,20 +341,20 @@ Object.assign(expr, {
         // we create tmp list for this group and iterate over it, then after loop we dump it into stack and free memory
         // i=0; to=types.length; while (i < to) {# = stack.pop(); ...; i++}
         from = `(f64.const 0)`, to = `(f64.const ${aop.type.length})`
-        next = `(f64.load (i32.add (global.get $heap) (local.get $${idx})))`
+        next = `(f64.load (i32.add (global.get $__heap) (local.get $${idx})))`
         // push args into heap
         // FIXME: there must be more generic copy-to-heap thing, eg. `(a, b..c, d<|e)`
         err('Sequence iteration is not implemented')
         for (let i = 0; i < aop.type.length; i++) {
           let t = aop.type[aop.type.length - i - 1]
-          out += `${t==='i32'?'(f64.convert_i32_s)':''}(f64.store (i32.add (global.get $heap) (i32.const 8)))`
+          out += `${t==='i32'?'(f64.convert_i32_s)':''}(f64.store (i32.add (global.get $__heap) (i32.const 8)))`
         }
       }
       // (0..10 <| a ? ^b : c) <| ...
       else if (aop.dynamic) {
         // dynamic args are already in heap
-        from = `(i32.const 0)`, to = `(global.get $heap)`
-        next = `(f64.load (i32.add (global.get $heap) (local.get $${idx})))`
+        from = `(i32.const 0)`, to = `(global.get $__heap)`
+        next = `(f64.load (i32.add (global.get $__heap) (local.get $${idx})))`
         err('Unimplemented: dynamic loop arguments')
         // FIXME: must be reading from heap: heap can just be a list also
       }
@@ -583,7 +593,7 @@ function buf(inits) {
 
   heap = Math.max(heap, 1); // min heap is 8192 elements
 
-  let out = `(global.get $heap)(local.set $${src})\n` // put heap ptr to stack
+  let out = `(global.get $__heap)(local.set $${src})\n` // put heap ptr to stack
 
   // TODO: if inits don't contain computed ranges or comprehension, we can init memory directly via data section
 
@@ -596,16 +606,16 @@ function buf(inits) {
 
       // [..1] - just skips heap
       if (!min && typeof max[1] === 'number') {
-        out += `(global.get $heap)(i32.add (i32.shl (i32.const ${max[1]}) (i32.const 3)))(global.set $heap)\n`
-        heap = Math.max(heap, max[1] >> 12) // increase heap
+        out += `(global.get $__heap)(i32.add (i32.shl (i32.const ${max[1]}) (i32.const 3)))(global.set $__heap)\n`
+        heap = Math.max(heap, (max[1]-1 >> 13) + 1) // increase heap
       }
       // [x..y] - generic computed range
       else {
         inc('range')
         // increase heap
-        if (typeof min[1] === 'number' && typeof max[1] === 'number') heap = Math.max(heap, (max[1]-min[1]) >> 12)
+        if (typeof min[1] === 'number' && typeof max[1] === 'number') heap = Math.max(heap, ((max[1]-min[1]-1) >> 13)+1)
         // create range in memory from ptr in stack
-        out += `(global.get $heap)(call $range ${asFloat(expr(min))} ${asFloat(expr(max))} (f64.const 1))(global.set $heap)\n`
+        out += `(global.get $__heap)(call $range ${asFloat(expr(min))} ${asFloat(expr(max))} (f64.const 1))(global.set $__heap)\n`
       }
     }
     // [a..b <| ...] - comprehension
@@ -615,16 +625,16 @@ function buf(inits) {
       // TODO: comprehension - expects heap address in stack, puts loop results into heap
     }
     // [x*2] - single value (reuses dst as temp holder)
-    else out += `(global.get $heap)(local.tee $${dst})(f64.store ${asFloat(expr(init))}) (i32.add (local.get $${dst}) (i32.const 8))(global.set $heap)\n`
+    else out += `(global.get $__heap)(local.tee $${dst})(f64.store ${asFloat(expr(init))}) (i32.add (local.get $${dst}) (i32.const 8))(global.set $__heap)\n`
   }
 
   // move buffer to static memory: references static address, deallocates heap tail
 
-  out += `(local.set $${size} (i32.sub (global.get $heap) (local.get $${src})))` // get length of created array
-  + `(local.set $${dst} (call $malloc (local.get $${size})))` // allocate new memory
-  + `(memory.copy (local.get $${dst}) (local.get $${src}) (local.get $${size}))` // move heap to static memory
-  + `(global.set $heap (local.get $${src}))` // free heap
-  + `(call $ref (local.get $${dst}) (i32.shr_u (local.get $${size}) (i32.const 3)) )` // create reference
+  out += `(local.set $${size} (i32.sub (global.get $__heap) (local.get $${src})))\n` // get length of created array
+  + `(local.set $${dst} (call $malloc (local.get $${size})))\n` // allocate new memory
+  + `(memory.copy (local.get $${dst}) (local.get $${src}) (local.get $${size}))\n` // move heap to static memory
+  + `(global.set $__heap (local.get $${src}))\n` // free heap
+  + `(call $ref (local.get $${dst}) (i32.shr_u (local.get $${size}) (i32.const 3)))\n` // create reference
 
   return op(out,'f64',{buf:true})
 }

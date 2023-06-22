@@ -454,5 +454,6 @@ _Lino_ addresses these points, making audio/signals processing more accessible a
 * _Pipes_: map/reduce instead of loops.
 * _Low-level_: no fancy features beyond math and buffers.
 * _Static/Linear memory_: no garbage to collect, 1-page heap.
+* _Pretty_: produced WASM must be readable
 
 <p align=center><a href="https://github.com/krsnzd/license/">🕉</a></p>

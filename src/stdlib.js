@@ -14,15 +14,16 @@ export const std = {
     `(then (i32.add (local.get 1) (local.get $rem))) (else (local.get $rem))\n` +
   `))`,
 
-  // increase available memory to N bytes, grow if necessary; move heap data if necessary; returns ptr to allocated block;
-  "malloc": `(func $malloc (param i32) (result i32) (local i32 i32)\n` +
-    `(local.set 1 (global.get $mem))\n` + // beginning of free memory
-    `(global.set $mem (i32.add (global.get $mem) (local.get 0)))\n` + // move memory pointer
+  // increase available memory to N bytes, grow if necessary; returns ptr to allocated block
+  "malloc":
+  `(func $malloc (param i32) (result i32) (local i32 i32)\n` +
+    `(local.set 1 (global.get $__mem))\n` + // beginning of free memory
+    `(global.set $__mem (i32.add (global.get $__mem) (local.get 0)))\n` + // move memory pointer
     `(local.set 2 (i32.shl (memory.size) (i32.const 16)) )\n` + // max available memory
     // 2^12 is how many f64 fits into 64Kb memory page
-    `(if (i32.ge_u (global.get $mem) (local.get 2)) (then\n` +
+    `(if (i32.ge_u (global.get $__mem) (local.get 2)) (then\n` +
       // grow memory by the amount of pages needed to accomodate full data
-      `(memory.grow (i32.add (i32.shr_u (i32.sub (global.get $mem) (local.get 2)) (i32.const 16)) (i32.const 1)) )(drop)\n` +
+      `(memory.grow (i32.add (i32.shr_u (i32.sub (global.get $__mem) (local.get 2))(i32.sub (i32.const 1)) (i32.const 16)) (i32.const 1)) )(drop)\n` +
     `))\n` +
     `(local.get 1)\n` +
   `)`,
@@ -61,18 +62,20 @@ export const std = {
     `(local.get 0)` +
   `)`,
 
-  // create reference at specific mem address & length (address is in bytes, length is # of items)
-  "ref": `(func $ref (param i32 i32) (result f64)\n` +
+  // create reference to memory address (in bytes) & length (# of f64 items)
+  "ref":
+  `(func $ref (param i32 i32) (result f64)\n` +
     `(f64.reinterpret_i64 (i64.or\n` +
       // buffer address is int part of f64, safe up to i32 ints
       `(i64.reinterpret_f64 (f64.convert_i32_u (local.get 0)))\n` +
       // buffer length is last 24 bits of f64 - it doesn't affect address i32 part
-      `(i64.extend_i32_u (i32.and (i32.const 0x00ffffff) (local.get 1)))\n` +
+      `(i64.extend_i32_u (i32.and (i32.const 0x00ffffff) (local.get 1)))` +
     `))\n` +
   `(return))`,
 
   // get address/length from reference
-  "deref": `(func $deref (param f64) (result i32 i32) (call $ref.addr (local.get 0)) (call $ref.len (local.get 0)) (return))`,
+  "deref":
+  `(func $deref (param f64) (result i32 i32) (call $ref.addr (local.get 0)) (call $ref.len (local.get 0)) (return))`,
 
   // reads buffer address from pointer (likely not needed to use since can be just converted float to int)
   "ref.addr": `(func $ref.addr (param f64) (result i32) (i32.trunc_f64_u (local.get 0)) (return))`,
@@ -82,7 +85,7 @@ export const std = {
 
   // takes required size, allocates memory and returns adr
   "buf.new": `(func $buf.new (param i32) (result i32) (local i32) \n` +
-    `(local.set 1 (call $mem.alloc (i32.shl (local.get 0) (i32.const 3))))\n` + // get allocated fragment ptr
+    `(local.set 1 (call $__mem.alloc (i32.shl (local.get 0) (i32.const 3))))\n` + // get allocated fragment ptr
     `(local.get 1)\n` + // return adr
   `(return))`,
 

@@ -2777,7 +2777,7 @@ Having wat files is more useful than direct compilation to binary form:
   1. Alloc memory every return
   - needs somehow freeing memory, gc or manually
     - there doesn't seem to exist a reliable gc way, still would need manual run
-  - harder for user to read values back: dealing with typed arrays, need to know $memory naming
+  - harder for user to read values back: dealing with typed arrays, need to know $__memory naming
 
   2. Reuse memory by callsite
   - Subsequent call erases memory
