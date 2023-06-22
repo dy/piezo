@@ -16,25 +16,29 @@
 ## Reference
 
 ```
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; numbers
+;; Numbers
+
 16, 0x10, 0b0;                  ;; int, hex or binary
 16.0, .1, 1e3, 2e-3;            ;; float
 true = 0b1, false = 0b0;        ;; alias booleans
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; units
+;; Units
+
 1k = 1000; 1pi = 3.1415;        ;; define units
 1s = 44100; 1ms = 0.001s;       ;; useful for sample indexes
 10.1k, 2pi;                     ;; units deconstruct to numbers: 10100, 6.283
 1h2m3.5s;                       ;; unit combinations
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; standard operators
+;; Standard Operators
+
 + - * / % -- ++                 ;; arithmetical
 && || ! ?:                      ;; logical
 & | ^ ~ >> <<                   ;; binary (for integer part of number)
 == != >= <=                     ;; comparisons
 . []                            ;; member access
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; extended operators
+;; Extended Operators
+
 ** // %%                        ;; power, floor div, unsigned mod (wraps negatives)
 <? <?= ..                       ;; clamp/min/max, range
 <| <|= |> ->                    ;; for each, map, reduce
@@ -42,20 +46,23 @@ true = 0b1, false = 0b0;        ;; alias booleans
 ^ ^^                            ;; continue, break
 @ .                             ;; import, export
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; variables
+;; Variables
+
 foo=1, bar=2.0;                 ;; declare vars
 Ab_C_F#, $0, Δx, _;             ;; names permit alnum, unicodes, #, _, $
 fooBar123 == FooBar123;         ;; names are case-insensitive
 default=1, eval=fn, else=0;     ;; lino has no reserved words
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; statements
+;; Statements
+
 foo();                          ;; semi-colons at end of line are mandatory
 (c = a + b; c);                 ;; parens define scope, return last element
 (a = b+1; a,b,c);               ;; scope can return multiple values
 (a ? ^b ; c);                   ;; early return b
 (a ? (b ? ^^c) : d);            ;; break 2 scopes
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; conditions
+;; Conditions
+
 sign = a < 0 ? -1 : +1;         ;; inline ternary
 (2+2 >= 4) ?                    ;; multiline ternary
   log(1)                        ;;
@@ -68,7 +75,8 @@ a || b ? c;                     ;; if a or b then c
 a && b ?: c;                    ;; elvis: if not a and b then c
 a = b ? c;                      ;; if b then a = c (else a = 0)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; ranges
+;; Ranges
+
 0..10;                          ;; from 1 to 9 (10 exclusive)
 0.., ..10, ..;                  ;; open ranges
 10..1;                          ;; reverse range
@@ -79,7 +87,8 @@ x <? 0..10;                     ;; max(min(x, 10), 0)
 a,b,c = 0..2;                   ;; a==0, b==1, c==2
 (-10..10)[];                    ;; span is 20
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; multiple values
+;; Multiple values
+
 a, b=1, c=2;                    ;; define multiple
 (a, b, c)++;                    ;; inc multiple elements: (a++, b++, c++)
 (a, (b, c));                    ;; always flat: (a, b, c)
@@ -95,7 +104,8 @@ a = (b,c,d);                    ;; (a=b);
 a = b, c = d;                   ;; assignment precedence: (a = b), (c = d)
 (a,b,c) = fn();                 ;; fn returns multiple values;
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; functions
+;; Functions
+
 double(n) = n*2;                ;; define function
 times(m = 1, n <= 1..) = (      ;; optional, clamped args
   n == 0 ? ^n;                  ;; early return
@@ -110,7 +120,8 @@ copy(10);                       ;; also 30
 swap(x,y) = (y,x);              ;; return multiple values
 (a,b) = swap(b,a);              ;; destructure returns
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; stateful variables
+;; Stateful Variables
+
 a() = ( *i=0; i++ );            ;; i persists value between calls
 a(), a();                       ;; 0, 1
 b() = (                         ;;
@@ -121,7 +132,8 @@ b() = (                         ;;
 );                              ;;
 b(), b(), b();                  ;; 1, 2, 3
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; arrays
+;; Arrays
+
 m = [..10];                     ;; array of 10 elements (not necessarily 0)
 m = [..10 <| 0];                ;; array of 10 zeros
 m = [1,2,3,4];                  ;; array with 4 values
@@ -142,7 +154,8 @@ m[1,2] = m[2,1];                ;; rearrange
 m[0..] = m[-1..0];              ;; reverse order
 m[0..] = m[1..,0];              ;; rotate
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; loop, map, reduce
+;; Loop, Map, Reduce
+
 (a, b, c) <| i -> x(i);         ;; for each item i do x(item)
 (10..1 <| i -> (                ;; iterate range
   i < 3 ? ^^;                   ;; ^^ break
@@ -158,7 +171,8 @@ items <| x -> (                 ;; nest iterations
 x[3..5] <|= x -> x * 2;         ;; rewrite items in subrange
 list |> (x, sum) -> sum + x;    ;; reduce array, range or items
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; import, export
+;; Import, Export
+
 @math:sin,pi,cos;               ;; import (into global scope)
 1pi = @math.pi;                 ;; or use imported member directly
 x, y, z.                        ;; export (from global scope)
