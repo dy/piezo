@@ -1097,6 +1097,7 @@ Having wat files is more useful than direct compilation to binary form:
   + Sercy sneezed
   + gives indication that the code is compiled down to wasm, wasm can even keep exact same comments
   + lisp, scheme, clojure, racket, asm style
+  + clean & minimalistic, easier to read
 
   2. `//`
   + // associates besides C+/Java/JS with F#, which is pipy
