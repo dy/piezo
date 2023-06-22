@@ -1096,6 +1096,7 @@ Having wat files is more useful than direct compilation to binary form:
   + more conventional than `\\`
   + Sercy sneezed
   + gives indication that the code is compiled down to wasm, wasm can even keep exact same comments
+  + lisp, scheme, clojure, racket, asm style
 
   2. `//`
   + // associates besides C+/Java/JS with F#, which is pipy
@@ -1142,6 +1143,8 @@ Having wat files is more useful than direct compilation to binary form:
   5. `(; ;)`
     - wrongly associates with block
     + compat with wasm
+    + everything is block-y anyways
+    + smiles ;)
 
 ## [x] Groups: basic operations -> syntax sugar
 
@@ -2532,7 +2535,7 @@ Having wat files is more useful than direct compilation to binary form:
       - same as above: `res = a ? fn() : err : fn2() : err`
   * Possible syntax: `fn(a) ?= (!a ? 'Bad arg'!; 1/a);`
 
-### [ ] How do we define throw?
+## [ ] How do we define throw?
   * `!'Error message'`
     + makes use of atoms
   * `?'Error'`
