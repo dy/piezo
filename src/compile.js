@@ -290,7 +290,6 @@ Object.assign(expr, {
 
     // loop creates scope on-par with block
     blockc[++blockc.cur]=(blockc[blockc.cur]||0)+1
-    const loopId = blockc.slice(0,blockc.cur).join('.') || 0
 
     // get item/idx name
     // [.. <| x -> x]
@@ -322,14 +321,14 @@ Object.assign(expr, {
       out +=
       `(local.tee $${from} ${asFloat(expr(min))})\n` +
       `(local.set $${to} ${asFloat(expr(max))})\n` +
-      `(loop $${loopId} (param f64) (result f64) \n` +
+      `(loop (param f64) (result f64) \n` +
         `(if (param f64) (result f64) (f64.le (local.get $${from}) (local.get $${to}))\n` +
           `(then\n` +
             `${set(item)}\n` +
             `${expr(b)}\n` +
             `(local.tee $${from} (f64.add (local.get $${from}) (f64.const 1)))\n` + // FIXME: step can be adjustable
             // `(call $f64.log (global.get $${item}))` +
-            `(br $${loopId})\n` +
+            `(br 1)\n` +
           `)\n` +
       `))\n`
     }
@@ -368,14 +367,14 @@ Object.assign(expr, {
         `(local.set $${src} ${aop})\n` +
         `(local.set $${idx} (i32.const 0))\n` +
         `(local.set $${len} (call $ref.len (local.get $${src})))\n` +
-        `(loop $${loopId} (result f64) \n` +
+        `(loop (result f64) \n` +
           `(locals.tee $${item} (call $buf.get (local.get $${src}) (local.get $${idx})))\n` +
           `(if (param f64) (result f64) (i32.le_u (local.get $${idx}) (local.get $${len}))\n` +
             `(then\n` +
               `${expr(b)}\n` +
               `(local.set $${idx} (i32.add (local.get $${idx}) (i32.const 1)))\n` +
               // `(call $f64.log (global.get $${item}))` +
-              `(br $${loopId})\n` +
+              `(br 1)\n` +
             `)\n` +
         `))\n`
       }

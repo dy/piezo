@@ -71,6 +71,7 @@
 * [ ] math: sin, cos, pow, mod etc - from mono https://github.com/stagas/mono
 * [ ] *state (global var per callsite?)
 * [ ] Readme examples
+* [ ] Make `br_if` loops everywhere - it doesn't create control block (more lightweight)
 
 ## 2
 
