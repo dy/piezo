@@ -31,39 +31,39 @@ export default function compile(node) {
   // run global in start function
   let init = expr(node).trim(), out = ``
 
-  if (heap) out += `;; memory: ${heap*64}Kb heap\n` +
+  if (heap) out += `;;;;;;;;;;;;;;;;;;;;;;;;;;;; Memory: ${heap*64}Kb heap\n` +
   `(memory (export "__memory") ${heap} ${MAX_MEMORY})\n(global $__heap (export "__heap") (mut i32) (i32.const 0))\n(global $__mem (export "__mem") (mut i32) (i32.const ${heap<<16}))\n\n`
 
   // declare includes
-  if (includes.length) out += `;; includes\n`;
+  if (includes.length) out += `;;;;;;;;;;;;;;;;;;;;;;;;;;;; Includes\n`;
   for (let include of includes)
     if (stdlib[include]) out += stdlib[include] + '\n\n';
     else err('Unknown include `' + include + '`')
 
-  // run globals init, if needed
-  if (init) out += `;; init\n` +
-  `(func $__init\n` +
-    globals[_tmp].map((tmp)=>`(local ${tmp})`).join('') +
-    `\n${init}\n` +
-    `(return))\n` +
-  `(start $__init)\n\n`
-
   // declare variables
   // NOTE: it sets functions as global variables
   if (Object.keys(globals).length) {
-    out += `;; globals\n`
+    out += `;;;;;;;;;;;;;;;;;;;;;;;;;;;; Globals\n`
     for (let name in globals)
       out += `(global $${name} (mut ${globals[name].type}) (${globals[name].type}.const 0))\n`
     out += `\n`
   }
 
   // declare funcs
-  for (let name in funcs) { out += `;; functions\n`; break }
+  for (let name in funcs) { out += `;;;;;;;;;;;;;;;;;;;;;;;;;;;; Functions\n`; break }
   for (let name in funcs)
   out += funcs[name] + '\n\n'
 
+  // run globals init, if needed
+  if (init) out += `;;;;;;;;;;;;;;;;;;;;;;;;;;;; Init\n` +
+  `(func $__init\n` +
+    (globals[_tmp].length ? (globals[_tmp].map((tmp)=>`(local ${tmp})`).join('') + '\n') : '') +
+    (init ? `${init}\n` : ``) +
+    `(return))\n` +
+  `(start $__init)\n\n`
+
   // provide exports
-  for (let name in exports) { out += `;; exports\n`; break }
+  for (let name in exports) { out += `;;;;;;;;;;;;;;;;;;;;;;;;;;;; Exports\n`; break }
   for (let name in exports)
     out += `(export "${name}" (${exports[name].func ? 'func' : 'global'} $${name}))`
 
