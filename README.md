@@ -28,10 +28,10 @@ true = 0b1, false = 0b0;        ;; alias booleans
 1h2m3.5s;                       ;; unit combinations
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; standard operators
-+ - * / % -- ++                 ;; arithmetical
-&& || ! ?:                      ;; logical
-& | ^ ~ >> <<                   ;; binary (for integer part of number)
-== != >= <=                     ;; comparisons
++ - * / % -- ++                 ;; arithmetical (float)
+&& || ! ?: ?                    ;; logical (boolean)
+== != >= <=                     ;; comparisons (boolean)
+& | ^ ~ >> <<                   ;; binary (integer)
 . []                            ;; member access
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; extended operators
@@ -74,7 +74,7 @@ a = b ? c;                      ;; if b then a = c (else a = 0)
 10..1;                          ;; reverse range
 1.08..108.0;                    ;; float range
 (x-1)..(x+1);                   ;; calculated ranges
-x <= 0..10;                     ;; is x in 0..10 range (10 inclusive)?
+x <= 0..10;                     ;; is x in 0..10 range (10 inclusive)
 x <? 0..10;                     ;; max(min(x, 10), 0)
 a,b,c = 0..2;                   ;; a==0, b==1, c==2
 (-10..10)[];                    ;; span is 20
@@ -148,14 +148,14 @@ m[0..] = m[1..,0];              ;; rotate
   i < 3 ? ^^;                   ;; ^^ break
   i < 5 ? ^;                    ;; ^ continue
 ));                             ;;
-(0.. <| i -> (i>3 ? ^^; x(i))); ;; while idx <= 3 do x(i)
-items <| (it, idx) -> it ** 2;  ;; iterate array
+i < 10 <| x(i++);               ;; while idx <= 3 do x(i)
+items <| (item, idx) -> ();     ;; iterate array
 items <| x -> a(x)              ;; pipe iterations
       <| y -> b(y);             ;;
 items <| x -> (                 ;; nest iterations
   ..x <| y -> a(x,y)            ;;
 );                              ;;
-x[3..5] <|= x -> x * 2;         ;; rewrite items in subrange
+x[3..5] <|= x -> x * 2;         ;; map items from range
 list |> (x, sum) -> sum + x;    ;; reduce array, range or items
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; import, export
@@ -436,7 +436,7 @@ const arrValues = new Float64Array(__memory, arr.value, 3)
 ## Motivation
 
 In general, audio/signal processing doesn't have cross-platform solution, many environments lack audio features.
-In partticular, JavaScript and _Web Audio API_ is not suitable for audio purposes – it has unpredictable pauses, glitches and so on. It's better handled in worklet with WASM.
+In particular, JavaScript and _Web Audio API_ is not suitable for audio purposes – it has unpredictable pauses, glitches and so on. It's better handled in worklet with WASM.
 
 _Lino_ addresses these points, making audio/signals processing more accessible and robust. It targets browsers, [audio worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, VST, Rust, Python, Go, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) etc. Inspired by [_mono_](https://github.com/stagas/mono), [_zzfx_](https://killedbyapixel.github.io/ZzFX/), [_bytebeat_](https://sarpnt.github.io/bytebeat-composer/), _[hxos](https://github.com/stagas/hxos)_, [_min_](https://github.com/r-lyeh/min) etc.
 
