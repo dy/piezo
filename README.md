@@ -1,6 +1,6 @@
 # 🎧 lino
 
-**Lino** (*li*ne *no*ise) is low-level micro-language for sound design and processing. It has minimal common syntax, useful language patterns (units, ranges, groups, stateful vars, pipes), static/linear memory and compiles to 0-runtime WASM. <!-- It also has smooth operator and organic sugar. -->
+**Lino** (*li*ne *no*ise) is low-level sound language with minimal common syntax, useful patterns, static/linear memory and compiling to 0-runtime WASM. <!-- It also has smooth operator and organic sugar. -->
 
 <!--[Motivation](./docs/motivation.md)  |  [Documentation](./docs/reference.md)  |  [Examples](./docs/examples.md).-->
 
