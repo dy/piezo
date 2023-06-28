@@ -445,10 +445,10 @@ Inspired by [_mono_](https://github.com/stagas/mono), [_zzfx_](https://killedbya
 ### Principles
 
 * _Expressive_: common expressions syntax, range clamping prevents blowing up args, group-operations for shortness.
-* _No-keywords_: word means variable, symbol means operator. Truly i18l code.
-* _Case-agnostic_: changing case doesn't break code. URL-safe & typo-proof (`sampleRate` vs `samplerate`).
-* _Space-agnistic_: spaces/newlines (excluding comments) can be safely removed or added, eg. for compression or prettifying.
-* _No types_: type is internal feature defined by-operator. Better focus on processing logic rather than language.
+* _No-keywords_: intuition - word means variable, symbol means operator. Allows truly i18l code.
+* _Case-agnostic_: changing case doesn't break code, ie. URL-safe. Typo-proof, eg. no `sampleRate` vs `samplerate` mistake.
+* _Space-agnostic_: spaces/newlines (excluding comments) can be safely removed or added, eg. for compression or prettifying.
+* _No types_: type is internal feature defined by operator. Focus on processing logic rather than language.
 * _0 runtime_: statically analyzable, no OOP, no structures, no lamda functions, no dynamic scopes.
 * _Explicit_: no implicit globals, no import-alls, no file conventions (like package.json).
 * _Low-level_: no fancy features beyond math and buffers.
