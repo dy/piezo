@@ -435,25 +435,27 @@ const arrValues = new Float64Array(__memory, arr.value, 3)
 
 ## Motivation
 
-In general, audio/signal processing doesn't have cross-platform solution, many environments lack audio features.
-In particular, JavaScript and _Web Audio API_ is not suitable for audio purposes – it has unpredictable pauses, glitches and so on. It's better handled in worklet with WASM.
+In general, audio processing doesn't have cross-platform solution, many environments lack audio features.
 
-_Lino_ addresses these points, making audio/signals processing more accessible and robust. It targets browsers, [audio worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, VST, Rust, Python, Go, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) etc. Inspired by [_mono_](https://github.com/stagas/mono), [_zzfx_](https://killedbyapixel.github.io/ZzFX/), [_bytebeat_](https://sarpnt.github.io/bytebeat-composer/), _[hxos](https://github.com/stagas/hxos)_, [_min_](https://github.com/r-lyeh/min) etc.
+In particular, JS _Web Audio API_ is not suitable for audio purposes – it has unpredictable pauses, glitches and so on. It's better handled in worklet with WASM.
+
+_Lino_ addresses these points, making audio/signals processing more accessible and robust.
+
+It targets browsers, [audio worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, Python, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) etc.
+
+Inspired by [_mono_](https://github.com/stagas/mono), [_zzfx_](https://killedbyapixel.github.io/ZzFX/), [_bytebeat_](https://sarpnt.github.io/bytebeat-composer/), _[hxos](https://github.com/stagas/hxos)_, [_min_](https://github.com/r-lyeh/min) and others.
 
 ### Principles
 
-* _Common syntax_: familiar code; copy-pastable floatbeats.
-* _No-keywords_: word means variable, symbol means operator; truly i18l code.
-* _Case-agnostic_: changing case doesn't break code; URL-safe & typo-proof (`sampleRate` vs `samplerate`).
-* _Space-agnistic_: spaces/newlines can be safely removed or added, eg. for compression or prettifying.
-* _No types_: type is internal feature, better focus on processing logic rather than language.
-* _0 runtime_: statically analyzable, no OOP, no heavy structures, no lamda functions, no dynamic scopes.
-* _Explicit_: wysiwyg, no implicit globals, no import-alls.
-* _Groups_: multiple returns, multiple operands.
-* _Ranges_: prevent blowing up arguments.
-* _Pipes_: map/reduce instead of loops.
+* _Expressive_: common expressions syntax, range clamping prevents blowing up args, group-operations for shortness.
+* _No-keywords_: word means variable, symbol means operator. Truly i18l code.
+* _Case-agnostic_: changing case doesn't break code. URL-safe & typo-proof (`sampleRate` vs `samplerate`).
+* _Space-agnistic_: spaces/newlines (excluding comments) can be safely removed or added, eg. for compression or prettifying.
+* _No types_: type is internal feature defined by-operator. Better focus on processing logic rather than language.
+* _0 runtime_: statically analyzable, no OOP, no structures, no lamda functions, no dynamic scopes.
+* _Explicit_: no implicit globals, no import-alls, no file conventions (like package.json).
 * _Low-level_: no fancy features beyond math and buffers.
-* _Static/Linear memory_: no garbage to collect, 1-page heap.
-* _Pretty_: produced WASM must be readable
+* _Static/Linear memory_: no garbage to collect, static-size heap.
+* _Readability_: produced WASM must be readable.
 
 <p align=center><a href="https://github.com/krsnzd/license/">🕉</a></p>
