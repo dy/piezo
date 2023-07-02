@@ -69,14 +69,13 @@
 
 ## [ ] Free (nice) operators
 
-  * `|>`
   * `<>`, `><`
   * `::`
   * `-<`, `=<`, `~<`
   * `-/`, `=/`, `~/`
   * `-|`, `=|`, `~|`
   * `-\`, `=\`, `~\`
-  * `->`, `=>`, `~>`
+  * `=>`, `~>`
   * `''`, `""`
   * `?=`, `~=`
 
@@ -1098,6 +1097,10 @@ Having wat files is more useful than direct compilation to binary form:
   + gives indication that the code is compiled down to wasm, wasm can even keep exact same comments
   + lisp, scheme, clojure, racket, asm style
   + clean & minimalistic, easier to read
+  - `;; xxx` or `(;....;)` is valid actual syntax
+    - eg. `sin(x)(; explainer ;)` is confusable with `sin(x)()`
+      ~+ kind-of equivalent to "nothing", eg. `x(a, (; some description;))` === `x(a,)`
+    ~ `0..10<|(x,i)->sin(x);;i;;+sin(x*2)`
 
   2. `//`
   + // associates besides C+/Java/JS with F#, which is pipy
@@ -1120,7 +1123,7 @@ Having wat files is more useful than direct compilation to binary form:
     + mono-compatible
     + \ is almost never used in langs & that's unique
     + reminds `//`
-      - sort-of footgun or rake to confuse with `//`
+    - sort-of constant footgun to confuse with `//`
     + it's short
     + association with "escape" sequence in strings
     + cooler than `;;`
@@ -1132,14 +1135,20 @@ Having wat files is more useful than direct compilation to binary form:
     - syntax highlighters don't know that
       ~ neither `;;`
     - takes primary semantic meaning, rather than "safe" secondary meaning
+    ?- what's inline pairing? `\* *\`?
+      + `\ inline comment \`
 
   4. `/* */`
     + most popular
     + most conventional
     + allows removing newlines safely
+    + supported by highlighters
     - too decorative
     - unwanted association with mult/div
     - pair-operators are heavy
+    + space-agnostic
+    - not nice without `//` pair
+    - visual noise with state vars `*x;/*x is pos*/;`
 
   5. `(; ;)`
     - wrongly associates with block
@@ -3822,3 +3831,141 @@ Having wat files is more useful than direct compilation to binary form:
   + detectible from input arg type
     * it would need special boolean indicator for ops result. Boolean ops:
   - `1 <| ...` will produce infinite loop
+
+## [ ] State variables: How can we call same fn twice with same context? -> let's identify by callsite in code
+
+  * It seems for now to be able only externally
+  ? but what if we need to say fill an array with signal from synth?
+
+  1. `(a,b,c)->osc()` - identifies state fn by callsite (literally location in code) - so `osc` is same state
+    + logic similar to react hooks
+    + solves problem of dynamic infinite linked list, so that we can know hooks tree in advance
+    ? how can we iterate, say, 100 separate oscillators? having 100 callsites?
+      ~+ kind-of meaningful reflection of underneath complexity
+      ~+ musician would anyways manually connect such things, so it kind-of follows manual patching
+    - doesn't leverage power of groups
+
+  3. Grops/ranges iterate as separate contexts, and lists as same context?
+    `(a,b..c) <| item->osc(item)` vs `samples <| sample -> osc(item)`
+    - doesn't solve the problem of computed ranges: they still need dynamic-size instances
+    - we may need to iterate list of frequencies via array...
+
+  4. Parens indicate separate context or not, eg.
+    * `(a,b,c)<|item->osc(item)` - same context
+    * `(a,b,c)<|item->(osc(item))` - separate context
+    * `(a,b,c)<|(item->osc(item))` - separate context
+    - very fragile/sensitive: parens should not break the code
+
+  5. `osc.0()`, `osc.1()` - use dot-operator to identify instances
+    ? what about dynamic indexing
+  5.1 `osc:0()`, `osc:1()`, `osc:i()`
+    - `:` is reserved for labeling
+  5.2 `osc#0()`, `osc#1()`, `osc#i()`
+    + `#` used as id across many environments
+    + `#` used as `member` naturally
+    + looks like part of name, same time allows dynamic index
+    ? subtle conflict with `list.1` or `list[1]` - what's meaning of `list#1`?
+      - it means _first instance_ of `list`, but what's that?
+    ? subtle conflict with potential strings `'abc{d}'` vs `osc{2}()`
+      ~ `osc{2}` looks like multiple oscillators rather than osc identifier
+
+## [ ] State variables logic - how to map callsite to memory address
+
+  ```
+  sin(f, (; scope-id ;)) = (*phase=0;>phase+=f;...);
+  note(f, (; parent ;)) = sin(f, (; parent,1 ;)) + (xxx ? sin(f*2, (; parent,2 ;))) + sin(f*3);
+  chord(fs, (; parent ;)) = (fs) |> (f, sum, i) -> sum += note(f, (; parent,i ;)); ;; sum all freqs in a chord
+  ;; likely will be this, to indicate separate callsites
+  ;; chord(fs) = note(fs[0]) + note(fs[1]) + note(fs[2]) + note(fs[3]);
+  ;; or this
+  ;; chord(fs) = fs |> (f,sum,i) -> sum += note#i(f)
+  samples |> (x,i) -> i<1000?chord(A,(;1;)) + i>1000?chord(B,(;2;)) + i>2000?chord(c,(;3;))
+  ```
+
+  * From the example - context is defined by # in current (function?) scope (like react hooks).
+  * Unlike hooks, the id is defined by the # within function, not by call order.
+  * Function scope prefixes the id
+
+  1. For each stateful fn we create a global - current memory pointer;
+    * upon calling the function, we set current pointer to proper address
+    * outer calls should know all required memory for internal calls, since internal ptrs have offset within outer ptr
+
+    ```
+    sin.ptr, sin(f) = (phase=memory[sin.ptr];>phase+=f;...);
+    note.ptr, note(f) = (sin.ptr=note.ptr; sin(f); sin.ptr+=sizeOf(sin)) + (sin(f*2)) ;
+    chord.ptr, chord(fs) = (
+      note.ptr = chord.ptr;
+      fs |> (f, sum, i) -> (sum += note(f); note.ptr += sizeOf(note););
+    )
+    chord.ptr = 0 \or something like 0\;
+    chord(A), chord.ptr += sizeOf(chord), chord(B), chord.ptr += sizeOf(chord), chord(C);
+    ```
+    * we know static size of a function state in advance, so we can just wrap calls to increase memory pointer to known size
+      * so essentially we precalculate memory and "store" offsets as code constants
+    - doesn't allow dynamic-size allocations
+      ? can we store relative offsets, so that we don't need to know absolute addresses?
+    + allows pre-allocating required memory for even gated stateful calls like `a ? note(a);`, meaning counting memory is done absolutely
+
+  2. Count offsets from first fn to run
+    ```
+    sin(f, addr=mem) = (sin.count=0;*phase=(sin.count++;mem[addr]||0);>phase+=f;...);
+
+    note(f, addr=mem) = (
+      note.count=0
+      sin(f, addr+note.count);(note.count+=sin.count) +
+      (xxx ? sin(f*2, addr+note.count);(note.count+=sin.count)) +
+      sin(f*3, addr+note.count);(note.count+=sin.count)
+    );
+
+    chord(fs, addr=mem) = (
+      chord.count = 0
+      fs |> (f, sum, i) -> (sum += note(f, addr+chord.count);chord.count+=note.count;);
+    );
+
+    root.count = 0;
+    if (!addr) addr = mem
+    chord(A,addr+root.count);root.count+=chord.count,
+    chord(B,addr+root.count);root.count+=chord.count,
+    chord(C,addr+root.count);root.count+=chord.count;
+    ```
+    - no address persistency: note can produce either 2 or 3 values
+      ~ unless we unwrap all internal calls
+        - order of calls still can be messed up, considering we can do loop: in other words we don't know order in advance
+    * we don't know exact address offsets until we run the function, which can be gated. The only thing we know is call id.
+
+  3. Local variable for callsites, eg `chord.123423` - once called they obtain the address.
+    * similar to 1., but variables obtain the callsite address ptr dynamically, not hardcode
+    ```
+    sin(f) = (*phase=0;>phase+=f;...);
+    sin.note.1, sin.note.2, sin.note.3
+    note(f) = sin(f) + (xxx ? sin(f*2)) + sin(f*3);
+    note.0, note.1, note.2 ... note.N
+    chord(fs) = fs |> (f, sum, i) -> sum += note#i(f); ;; sum all freqs in a chord
+    chord.1, chord.2, chord.3
+    chord(A), chord(B), chord(C);
+    ```
+    - see chord function - it can receive any-length argument, but we can't create any-length number of variables
+      -> callsite pointers must be stored in a table or linked list
+
+  4. stateful fn has pointer to first substate adr
+    ```
+    sin.adr
+    sin(f) = (*phase=mem[sin.adr]||init;>>phase+=f;...);
+    note.adr
+    note(f) = (
+      (sin.adr=note.adr;sin(f)) +  ;; sin -> sin#0
+      (xxx?(sin.adr=next(note.adr,1);sin(f*2)) + ;; sin -> sin#1
+      (sin.adr=next(note.adr,2);sin(f*3)) ;; sin -> sin#2
+    )
+    chord(fs) = fs |> (f,sum,i) -> sum += (note.adr=next(chord.adr,i); note#i(f));
+    chord#1(A), chord#1(B), chord#1(C) ;; ignores iterating the address
+    ```
+    * if there is gated address in-between - it can be skipped by `next` function, which just forwards lookup to next available hook
+
+## [ ] Prohibit dynamic-size list comprehensions
+
+  + Solves issue of state vars logic: we can precalculate addresses
+  + Likely we don't need heap: can be fully static memory
+  + There's plenty of places where dynamic lists are not supported anyways: function return, function args
+  ~ maybe we need to introduce some meaningful static-only limitations for the beginning and get v1 of lang ready.
+    * like array building, static-size map/reduce, state variables etc. once that's ready we may think of extending to dynamic-size ones.

@@ -38,7 +38,7 @@ true = 0b1, false = 0b0;        ;; alias booleans
 ** // %%                        ;; power, floor div, unsigned mod (wraps negatives)
 <? <?= ..                       ;; clamp/min/max, range
 <| <|= |> ->                    ;; for each, map, reduce
-*                               ;; stateful variable
+*                               ;; state variable
 ^ ^^                            ;; continue, break
 @ .                             ;; import, export
 
@@ -110,16 +110,17 @@ copy(10);                       ;; also 30
 swap(x,y) = (y,x);              ;; return multiple values
 (a,b) = swap(b,a);              ;; destructure returns
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; stateful variables
-a() = ( *i=0; i++ );            ;; i persists value between calls
-a(), a();                       ;; 0, 1
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; state variables
+a() = ( *i=0; ++i );            ;; i persists value between calls
+0..2 <| a();                    ;; 1, 2
 b() = (                         ;;
-  *i=[..4];                     ;; local memory of 4 items
-  i.1 = i.2 + 1;                ;; write previous i.2 to current i.1
-  i[0..] = i[-1,0..];           ;; shift memory
-  i.1                           ;; return current item
+  *i=[..4 <| 1];                ;; local memory of 4 items
+  i[1..] = i[0..];              ;; shift memory
+  i.0 = i.1 * 2;                ;; write previous i.1 to current i.0
 );                              ;;
-b(), b(), b();                  ;; 1, 2, 3
+0..4 <| b();                    ;; 2, 4, 8, 16
+b(); b(); b();                  ;; state is identified by callsite (3 separate states)
+b#2(), b#2(), b#2();            ;; to refer to same state use b#idx
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; arrays
 m = [..10];                     ;; array of 10 elements (not necessarily 0)
