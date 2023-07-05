@@ -3832,21 +3832,31 @@ Having wat files is more useful than direct compilation to binary form:
     * it would need special boolean indicator for ops result. Boolean ops:
   - `1 <| ...` will produce infinite loop
 
-## [ ] State variables: How can we call same fn twice with same context? -> let's identify by callsite in code
+## [ ] State variables: How can we call same fn twice with same context? -> let's identify by callsite in code with regards to callstack
 
   * It seems for now to be able only externally
   ? but what if we need to say fill an array with signal from synth?
 
-  1. `(a,b,c)->osc()` - identifies state fn by callsite (literally location in code) - so `osc` is same state
+  1. `(a,b,c) <| x->osc(x)` - identifies state fn by callsite (literally location in code) - so `osc` is same state
+    + same as tagged literals in js x`abc`
+      - tagged literals don't account for callstack, they literally identify location in code
+        * `x()=(*i=0); y()=x(); y();y();` - template tags would keep same state of x for different y calls.
+          ? can we utilize that fact somehow?
+            - not really: `sound()=(gen()); sound(); sound()` - 2 sound instances would share same gen instance, not good
     + logic similar to react hooks
-    + solves problem of dynamic infinite linked list, so that we can know hooks tree in advance
+    + solves problem of dynamic infinite linked list, so that we can know state tree in advance
+    + we know all callsite ids in advance
     ? how can we iterate, say, 100 separate oscillators? having 100 callsites?
       ~+ kind-of meaningful reflection of underneath complexity
       ~+ musician would anyways manually connect such things, so it kind-of follows manual patching
-    - doesn't leverage power of groups
+    - doesn't leverage power of groups to deal with multiple states
+      ~ js kind-of doesn't spawn template tags instances either
+    ~ every function that has potential of calling internal state function becomes state function
+
+  2. Some indicator of new instance... `sound()=(*osc;)`
 
   3. Grops/ranges iterate as separate contexts, and lists as same context?
-    `(a,b..c) <| item->osc(item)` vs `samples <| sample -> osc(item)`
+    `(a,b..c) <| item -> osc(item)` vs `samples <| sample -> osc(item)`
     - doesn't solve the problem of computed ranges: they still need dynamic-size instances
     - we may need to iterate list of frequencies via array...
 
@@ -3855,6 +3865,10 @@ Having wat files is more useful than direct compilation to binary form:
     * `(a,b,c)<|item->(osc(item))` - separate context
     * `(a,b,c)<|(item->osc(item))` - separate context
     - very fragile/sensitive: parens should not break the code
+      - ie. parens are not "transparent" anymore
+    - enforces syntax of stateful functions as
+    + kind of meaningful if we define `*` context by `()` scope, not by function body
+      + same way it works for declaring within-scope variables `(a;(b=0;))`
 
   5. `osc.0()`, `osc.1()` - use dot-operator to identify instances
     ? what about dynamic indexing
@@ -3868,8 +3882,10 @@ Having wat files is more useful than direct compilation to binary form:
       - it means _first instance_ of `list`, but what's that?
     ? subtle conflict with potential strings `'abc{d}'` vs `osc{2}()`
       ~ `osc{2}` looks like multiple oscillators rather than osc identifier
+    - isn't enough for absolute identification - osc can be called with same id somewhere else
+    ~- needs resolution of automatic id and manual id, ie. we can't refer automatic ids manually eg `osc();osc#0()` - not the same.
 
-## [ ] State variables logic - how to map callsite to memory address
+## [ ] State variables logic - how to map callsite to memory address? -> see 4.1 - via array argument
 
   ```
   sin(f, (; scope-id ;)) = (*phase=0;>phase+=f;...);
@@ -3936,31 +3952,58 @@ Having wat files is more useful than direct compilation to binary form:
   3. Local variable for callsites, eg `chord.123423` - once called they obtain the address.
     * similar to 1., but variables obtain the callsite address ptr dynamically, not hardcode
     ```
+    sin.adr
     sin(f) = (*phase=0;>phase+=f;...);
-    sin.note.1, sin.note.2, sin.note.3
-    note(f) = sin(f) + (xxx ? sin(f*2)) + sin(f*3);
-    note.0, note.1, note.2 ... note.N
-    chord(fs) = fs |> (f, sum, i) -> sum += note#i(f); ;; sum all freqs in a chord
-    chord.1, chord.2, chord.3
-    chord(A), chord(B), chord(C);
+    ;; this "table" stores all callsite instances addresses
+    ;; would be meaningful to put into memory
+    chord1.note1.sin1, chord1.note1.sin2, chord1.note1.sin3
+    chord2.note1.sin1, chord2.note1.sin2, chord2.note1.sin3
+    chord3.note1.sin1, chord3.note1.sin2, chord3.note1.sin3
+    note.adr
+    note(f) =
+      (sin.adr=sin.1||=$mem;sin(f)) +
+      (xxx ? (sin.adr=sin.2||=$mem;sin(f*2))) +
+      (sin.adr=sin.3||=$mem;sin(f*3));
+    chord.adr
+    chord(fs) = fs |> (f, sum, i) -> sum += (note.adr=note.1||=$mem;note(f)); ;; sum all freqs in a chord
+    chord1, chord2, chord3
+    chord.adr=chord.1||=$mem;chord(A),
+    chord.adr=chord.2||=$mem;chord(B),
+    chord.adr=chord.3||=$mem;chord(C);
     ```
     - see chord function - it can receive any-length argument, but we can't create any-length number of variables
       -> callsite pointers must be stored in a table or linked list
 
-  4. stateful fn has pointer to first substate adr
+  4. stateful fn has pointer to first state adr - we have a memory region for instances
+    + allows compactness - storing only addresses of data, since we know sequence of hooks in advance
+    + allows dynamic allocation of new stateful functions
+    + allows lazy-init of memory regions
+    + allows storing absolute address value directly in code
     ```
     sin.adr
-    sin(f) = (*phase=mem[sin.adr]||init;>>phase+=f;...);
+    sin(f) = (*phase=mem[adr]||(mem[adr]=alloc(1);...init);>>phase+=f;...;mem[adr]=phase;);
     note.adr
     note(f) = (
-      (sin.adr=note.adr;sin(f)) +  ;; sin -> sin#0
-      (xxx?(sin.adr=next(note.adr,1);sin(f*2)) + ;; sin -> sin#1
-      (sin.adr=next(note.adr,2);sin(f*3)) ;; sin -> sin#2
+      (adr=mem[0x00];sin(f)) +
+      (xxx?(adr=mem[0x01];sin(f*2))) +
+      (adr=mem[0x02];sin(f*3))
     )
-    chord(fs) = fs |> (f,sum,i) -> sum += (note.adr=next(chord.adr,i); note#i(f));
-    chord#1(A), chord#1(B), chord#1(C) ;; ignores iterating the address
+    chord(fs) = fs |> (f,sum,i) -> sum += (note(f));
+    chord(A);
+    chord(B);
+    chord(C);
     ```
-    * if there is gated address in-between - it can be skipped by `next` function, which just forwards lookup to next available hook
+    - external variables is not flexible enough: we cannot dynamically spawn variables.
+      * it's better to pass state as last argument, an array of arrays
+
+  4.1 last argument is array of addresses for fn state
+    + allows dynamic passing state to fn
+    ```
+    sin(f,st=[cur:1,..1]) = (*phase=mem[st[st.cur]||(mem[st[st.cur]]=[1])];st.cur++;...;mem[st[0]]=phase);
+    note(f,st=[cur:1,..1]) = (sin(f,st) + (xxx?sin(f*2,st)) + sin(f*3,st); >>st.cur%=st.len);
+    chord(fs,st=[cur:1,..1]) = (fx |> (f,sum,i) -> sum += note(f,st); >>st.cur%=st.len);
+    chord(a); chord(b); chord(c);
+    ```
 
 ## [ ] Prohibit dynamic-size list comprehensions
 

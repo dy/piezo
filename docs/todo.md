@@ -38,7 +38,8 @@
 * [x] arity of ops, for proper `(drop)` amount, eg. `a ? b;` has 0 items in stack;
 * [x] early return detection
   * [ ] break/continue
-* [ ] Readable generated code (pretty: true option)
+* [x] Readable generated code
+* [ ] state variables
 * [ ] list comprehension
 * [ ] static lists detection
 * [ ] better detect & collapse static nodes
@@ -54,6 +55,7 @@
 * [x] Make all `local.set` / `global.set` a `set(name, value)` function: we don't need to know about tmp/define etc.
   * [ ] Think if we need to expose fully-js API for building wasm code, similar to wasmati
 * [ ] Test nested scopes variables `(x=0;(y=1);y)`
+* [ ] `(a=1,c; (b=2; c=a+b;); c)` test
 * [ ] Extend i32 to i64 whereever possible
 * [ ] Test optional arguments
 * [ ] Test a,,c = d,e,f; a,b,c = d,,f
