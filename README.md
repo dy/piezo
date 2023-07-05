@@ -112,15 +112,14 @@ swap(x,y) = (y,x);              ;; return multiple values
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; state variables
 a() = ( *i=0; ++i );            ;; i persists value between calls
-0..2 <| a();                    ;; 1, 2
+a(), a();                       ;; 1, 2
 b() = (                         ;;
   *i=[..4 <| 1];                ;; local memory of 4 items
   i[1..] = i[0..];              ;; shift memory
-  i.0 = i.1 * 2;                ;; write previous i.1 to current i.0
+  i[0] = i[1] * 2;              ;; write previous i.1 to current i.0
 );                              ;;
-0..4 <| b();                    ;; 2, 4, 8, 16
-b(); b(); b();                  ;; state is identified by callsite (3 separate states)
-b#2(), b#2(), b#2();            ;; to refer to same state use b#idx
+b(), b(), b();                  ;; 2, 4, 8
+b.0(), b.1(), b.1();            ;; separate states: 2, 2, 4
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; arrays
 m = [..10];                     ;; array of 10 elements (not necessarily 0)
@@ -128,11 +127,11 @@ m = [..10 <| 0];                ;; array of 10 zeros
 m = [1,2,3,4];                  ;; array with 4 values
 m = [l:2, r:4, c:6];            ;; position aliases
 m = [n[..]];                    ;; copy n
-m = [1, 2..4, last:5];          ;; mixed definition
+m = [first:1, 2..4, last:5];    ;; mixed definition
 m = [1, [2, 3, [4]]];           ;; nested arrays (tree)
 m = [0..4 <| i -> i * 2];       ;; array comprehension
-m.0, m.last;                    ;; get by static index / alias
-(first, last) = (m[0], m[-1]);  ;; get by dynamic index
+m.first, m.last;                ;; get by name alias
+(first, last) = (m[0], m[-1]);  ;; get by index
 (second, third) = m[1..];       ;; get multiple values
 (first, last:c) = m[..];        ;; all values
 length = m[];                   ;; get length
