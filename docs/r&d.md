@@ -4008,9 +4008,9 @@ Having wat files is more useful than direct compilation to binary form:
   4.2
     + absolute offsets account for skipped positions
     ```
-    sin(f,st=[..1],cur=0) = (*phase=mem[st[cur]||(mem[st[cur]]=[1])];cur++;...;mem[st[0]]=phase);
-    note(f,st=[..1],cur=0) = (sin(f,st,cur+0) + (xxx?sin(f*2,st,cur+1)) + sin(f*3,st,cur+2););
-    chord(fs,st=[..1],cur=0) = (fx |> (f,sum,i) -> sum += note(f,st,cur+0); >>st.cur%=st.len);
+    sin(f,st=[..1],cur=0) = (*phase=mem[st[cur]||(mem[st[cur]]=1)];cur++;...;mem[st[cur]]=phase);
+    note(f,st=[..(sizeof(sin)+sizeof(sin)+sizeof(sin))],cur=0) = (sin(f,st,cur) + (xxx?sin(f*2,st,cur+sizeof(sin)) + sin(f*3,st,cur+sizeof(sin)+sizeof(sin););
+    chord(fs,st=[..sizeof(note)],cur=0) = (fx |> (f,sum,i) -> sum += note(f,st,cur+0));
     chord(a); chord(b); chord(c);
     ```
 
