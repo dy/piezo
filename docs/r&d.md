@@ -3832,7 +3832,7 @@ Having wat files is more useful than direct compilation to binary form:
     * it would need special boolean indicator for ops result. Boolean ops:
   - `1 <| ...` will produce infinite loop
 
-## [ ] State variables: How can we call same fn twice with same context? -> let's identify by callsite in code with regards to callstack
+## [ ] State variables: How can we call same fn twice with same context? -> 
 
   * It seems for now to be able only externally
   ? but what if we need to say fill an array with signal from synth?
@@ -3852,15 +3852,18 @@ Having wat files is more useful than direct compilation to binary form:
     - doesn't leverage power of groups to deal with multiple states
       ~ js kind-of doesn't spawn template tags instances either
     ~ every function that has potential of calling internal state function becomes state function
+    - not compatible with JS: we may need from JS a way to call same function multiple times with persistent state (expected)
 
-  2. Some indicator of new instance... `sound()=(*osc;)`
-
-  3. Grops/ranges iterate as separate contexts, and lists as same context?
+  2. Indicator of static function, eg `*x() = (*i=0;...;i++)`
+    + allows JS to use state persistency
+    - doesn't solve direct case for JS: it still doesn't persist state
+   
+  4. Grops/ranges iterate as separate contexts, and lists as same context?
     `(a,b..c) <| item -> osc(item)` vs `samples <| sample -> osc(item)`
     - doesn't solve the problem of computed ranges: they still need dynamic-size instances
     - we may need to iterate list of frequencies via array...
 
-  4. Parens indicate separate context or not, eg.
+  5. Parens indicate separate context or not, eg.
     * `(a,b,c)<|item->osc(item)` - same context
     * `(a,b,c)<|item->(osc(item))` - separate context
     * `(a,b,c)<|(item->osc(item))` - separate context
@@ -3870,11 +3873,12 @@ Having wat files is more useful than direct compilation to binary form:
     + kind of meaningful if we define `*` context by `()` scope, not by function body
       + same way it works for declaring within-scope variables `(a;(b=0;))`
 
-  5. `osc.0()`, `osc.1()` - use dot-operator to identify instances
+  6. `osc.0()`, `osc.1()` - use dot-operator to identify instances
     ? what about dynamic indexing
-  5.1 `osc:0()`, `osc:1()`, `osc:i()`
+
+  6.1 `osc:0()`, `osc:1()`, `osc:i()`
     - `:` is reserved for labeling
-  5.2 `osc#0()`, `osc#1()`, `osc#i()`
+  6.2 `osc#0()`, `osc#1()`, `osc#i()`
     + `#` used as id across many environments
     + `#` used as `member` naturally
     + looks like part of name, same time allows dynamic index
@@ -3884,6 +3888,30 @@ Having wat files is more useful than direct compilation to binary form:
       ~ `osc{2}` looks like multiple oscillators rather than osc identifier
     - isn't enough for absolute identification - osc can be called with same id somewhere else
     ~- needs resolution of automatic id and manual id, ie. we can't refer automatic ids manually eg `osc();osc#0()` - not the same.
+
+  7. Global functions are stateful, in-scope functions are per-call-context.
+    * `sin(f);sin(f);sin(f);` - same state
+    * `signal(f)=(sin(f)+sin(f*2)+sin(f*3);)` - separate states
+    - code depends on nested level (non-transferable): not consistent
+    - mind-wrapping: code behaves in different ways
+    ? it seems by default we have to use same-state function, unless separate state is provided?
+  
+  8. All functions are single-state by default, unless instancing is provided via `osc#0() + osc#1() + osc#2() + osc#i()`
+    + compatible with JS in external fn case
+    + obvious separate instances
+    + enables same-state and multi-state funcs: `fs |> (f,sum,i) -> sum+=osc#i(f)` vs `fs |> (f,sum,i) -> sum+=osc(f)`
+    - cross-scope instance transparency: `osc(f); sound1(f)=(osc(f)+...); sound2(f)=(osc(f)+...)`
+      -> these sounds use same osc instance.
+      ? should osc instance depend on current scope?
+  
+  8.1 Per-scope-instance: `osc(); sound1(f)=(osc(f)+...); sound2(f)=(osc(f)+...)` 
+    + no osc id conflict
+    ~ separate instances can be only-static as `osc.1(f) + osc.2(f) + osc.3(f)`
+      + doesn't reserve `#` syntax
+      + can be calculated in advance - no dynamic instances
+        ~ likely we can prohibit `arr.1` - only for instances
+      - natural expectation is `osc[i](f)` which we don't support
+    ? how do we allow dynamic-sized scopes, ie. number of instances can vary?
 
 ## [ ] State variables logic - how to map callsite to memory address? -> see 4.1 - via array argument
 
