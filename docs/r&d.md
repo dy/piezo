@@ -4004,6 +4004,15 @@ Having wat files is more useful than direct compilation to binary form:
     chord(fs,st=[cur:1,..1]) = (fx |> (f,sum,i) -> sum += note(f,st); >>st.cur%=st.len);
     chord(a); chord(b); chord(c);
     ```
+    - gated params screw offset here - we need absolute offset instead of iterating.
+  4.2
+    + absolute offsets account for skipped positions
+    ```
+    sin(f,st=[..1],cur=0) = (*phase=mem[st[cur]||(mem[st[cur]]=[1])];cur++;...;mem[st[0]]=phase);
+    note(f,st=[..1],cur=0) = (sin(f,st,cur+0) + (xxx?sin(f*2,st,cur+1)) + sin(f*3,st,cur+2););
+    chord(fs,st=[..1],cur=0) = (fx |> (f,sum,i) -> sum += note(f,st,cur+0); >>st.cur%=st.len);
+    chord(a); chord(b); chord(c);
+    ```
 
 ## [ ] Prohibit dynamic-size list comprehensions
 
