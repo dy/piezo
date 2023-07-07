@@ -74,6 +74,7 @@
 * [ ] *state (global var per callsite?)
 * [ ] Readme examples
 * [ ] Make `br_if` loops everywhere - it doesn't create control block (more lightweight)
+* [ ] Test in-loop variables `xs <| (x) -> (y;x+=y;)`
 
 ## 2
 

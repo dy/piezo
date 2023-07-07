@@ -52,8 +52,9 @@ default=1, eval=fn, else=0;     ;; lino has no reserved words
 foo();                          ;; semi-colons at end of line are mandatory
 (c = a + b; c);                 ;; parens define scope, return last element
 (a = b+1; a,b,c);               ;; scope can return multiple values
-(a ? ^b ; c);                   ;; early return b
+(a ? ^b ; c);                   ;; or early return b
 (a ? (b ? ^^c) : d);            ;; break 2 scopes
+(sin(), sin());                 ;; scope defines state visibility (see below)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; conditions
 sign = a < 0 ? -1 : +1;         ;; inline ternary
@@ -111,15 +112,16 @@ swap(x,y) = (y,x);              ;; return multiple values
 (a,b) = swap(b,a);              ;; destructure returns
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; state variables
-a() = ( *i=0; ++i );            ;; i persists value between calls
+a() = ( *i=0; ++i );            ;; i persists value between a calls
 a(), a();                       ;; 1, 2
 b() = (                         ;;
   *i=[..4 <| 1];                ;; local memory of 4 items
   i[1..] = i[0..];              ;; shift memory
-  i[0] = i[1] * 2;              ;; write previous i.1 to current i.0
+  i.0 = i.1 * 2;                ;; write previous i.1 to current i.0
 );                              ;;
 b(), b(), b();                  ;; 2, 4, 8
-b.0(), b.1(), b.1();            ;; separate states: 2, 2, 4
+c() = (b(), b(), b());          ;; state is defined by function scope
+b(); c();                       ;; 16; 2, 4, 8;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; arrays
 m = [..10];                     ;; array of 10 elements (not necessarily 0)
@@ -156,7 +158,7 @@ items <| x -> (                 ;; nest iterations
   ..x <| y -> a(x,y)            ;;
 );                              ;;
 x[3..5] <|= x -> x * 2;         ;; map items from range
-list |> (x, sum) -> sum + x;    ;; reduce array, range or items
+list |> (x, sum) -> sum + x;    ;; fold/reduce
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; import, export
 @math:sin,pi,cos;               ;; import (into global scope)

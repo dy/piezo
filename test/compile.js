@@ -256,33 +256,17 @@ t('compile: function oneliners', t => {
   is(mod.instance.exports.mult(2,4), 8)
 })
 
-t('debugs', t => {
+t.only('debugs', t => {
   const memory = new WebAssembly.Memory({ initial: 1 });
   const importObject = { env: { memory } };
   let {instance} = compileWat(`
-  (func $x (local i32)
-
-    (loop (;2;)
-      (call $i32.log (i32.const 222))(drop)
-      (loop (;1;)
-        (call $i32.log (i32.const 111))(drop)
-        (loop (;0;)
-          (local.set 0 (i32.add (local.get 0) (i32.const 1)))
-          (call $i32.log (local.get 0))(drop)
-          (br_if 0 (i32.lt_s (local.get 0) (i32.const 4)))
-        )
-
-        (local.set 0 (i32.add (local.get 0) (i32.const 1)))
-        (call $i32.log (local.get 0))(drop)
-        (br_if 0 (i32.lt_s (local.get 0) (i32.const 8)))
-      )
-    )
+  (func $x (param i32) (local i32)
 
     (return)
   )
   (export "x" (func $x))
 `, importObject)
-
+  console.log(instance.exports.x.length)
   instance.exports.x()
 })
 

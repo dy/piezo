@@ -1073,7 +1073,7 @@ Having wat files is more useful than direct compilation to binary form:
   + `x -<= 0..10` is just a nice construct
   -  `x <- y` vs `x < -y`
 
-## [ ] Comments: `//`, `/*` vs `;;` and `(; ;)` → try `\\` or `;;`
+## [ ] Comments: `//`, `/*` vs `;;` and `(; ;)` → `;;`
 
   1. `;;`
   + ;; make more sense, since ; is separator, and everything behind it doesn't matter
@@ -1101,6 +1101,7 @@ Having wat files is more useful than direct compilation to binary form:
     - eg. `sin(x)(; explainer ;)` is confusable with `sin(x)()`
       ~+ kind-of equivalent to "nothing", eg. `x(a, (; some description;))` === `x(a,)`
     ~ `0..10<|(x,i)->sin(x);;i;;+sin(x*2)`
+  + `;;` is safer & softer, not as spiky / scratchy, more familiar
 
   2. `//`
   + // associates besides C+/Java/JS with F#, which is pipy
@@ -2525,6 +2526,8 @@ Having wat files is more useful than direct compilation to binary form:
     * `x() = (*i=0;.i++;)`, `x()=(.a; b,c,; .d;)`, `x(a) = (.log(a); .a+=1; a)`
       - not easy to find-select
 
+## [ ] !Prefer operator `x()=(a;<<x=1;a*x;)` - declares values at the beginning?
+
 ## [ ] Try-catch -> `x() ?= (a, b, c)` makes fn definition wrapped with try-catch
 
   ! Golang-like `result, err = fn()`
@@ -3776,7 +3779,7 @@ Having wat files is more useful than direct compilation to binary form:
     + defines arguments to skip
   + removes questions, merges pattern
 
-## [x] How to create sublist from existing list? -> @latr.sublist
+## [ ] How to create sublist/subarray? -> @latr.sublist
 
   * `x[] = y[1,2..3]`
     - syntactically creates copy of y
@@ -3789,6 +3792,20 @@ Having wat files is more useful than direct compilation to binary form:
     - knows about pointers
 
   * `x[10]; y = @latr.sublist(x, len: 3, start: 2)`
+
+  * `x[..] = y[..]`
+    - creates a copy
+
+  * `x = y[..]`
+    - takes first item from many
+
+  * `x = [10..]y`
+    - weird syntax
+
+  * `x []= 10..`
+    ~ kind of valid self-slicing
+    - loses reference to initial list
+    - means `x = x[10..]` would create reference, not clone
 
 ## [ ] Range step: how
 
@@ -3832,7 +3849,7 @@ Having wat files is more useful than direct compilation to binary form:
     * it would need special boolean indicator for ops result. Boolean ops:
   - `1 <| ...` will produce infinite loop
 
-## [ ] State variables: How can we call same fn twice with same context? -> 
+## [ ] State variables: How can we call same fn twice with same context? -> context is the same per-scope; to call with other context - wrap into a function
 
   * It seems for now to be able only externally
   ? but what if we need to say fill an array with signal from synth?
@@ -3857,7 +3874,7 @@ Having wat files is more useful than direct compilation to binary form:
   2. Indicator of static function, eg `*x() = (*i=0;...;i++)`
     + allows JS to use state persistency
     - doesn't solve direct case for JS: it still doesn't persist state
-   
+
   4. Grops/ranges iterate as separate contexts, and lists as same context?
     `(a,b..c) <| item -> osc(item)` vs `samples <| sample -> osc(item)`
     - doesn't solve the problem of computed ranges: they still need dynamic-size instances
@@ -3872,6 +3889,16 @@ Having wat files is more useful than direct compilation to binary form:
     - enforces syntax of stateful functions as
     + kind of meaningful if we define `*` context by `()` scope, not by function body
       + same way it works for declaring within-scope variables `(a;(b=0;))`
+  5.1 (following 8.1 and 6.1) - scope defines state
+    * `(osc()) + (osc()) + (osc())` - 3 separate oscillators
+    * `osc() + osc() + osc()` - 3 calls to same oscillator
+    * `(a,b,c)<|x->osc(x)` - same oscillator
+    * `(a,b,c)<|(x->osc(x))` - same oscillator
+    * `(a,b,c)<|x->(osc(x))` - separate oscillator
+    + to export single instance to JS do `sin.`
+    + to export separate instance to JS do `sin1()=(sin()); sin2()=(sin())`
+    - loop meaning is confusable and unclear
+    - makes parens super-sensitive - can't easily remove them
 
   6. `osc.0()`, `osc.1()` - use dot-operator to identify instances
     ? what about dynamic indexing
@@ -3889,13 +3916,16 @@ Having wat files is more useful than direct compilation to binary form:
     - isn't enough for absolute identification - osc can be called with same id somewhere else
     ~- needs resolution of automatic id and manual id, ie. we can't refer automatic ids manually eg `osc();osc#0()` - not the same.
 
+    ~ `a#b` is means of polymorphism, but we resolve variables via scopes `(a=1) + (a=2)` are 2 different `a`'s.
+      !? we could do the same for stateful functions: scope defines state
+
   7. Global functions are stateful, in-scope functions are per-call-context.
     * `sin(f);sin(f);sin(f);` - same state
     * `signal(f)=(sin(f)+sin(f*2)+sin(f*3);)` - separate states
     - code depends on nested level (non-transferable): not consistent
     - mind-wrapping: code behaves in different ways
     ? it seems by default we have to use same-state function, unless separate state is provided?
-  
+
   8. All functions are single-state by default, unless instancing is provided via `osc#0() + osc#1() + osc#2() + osc#i()`
     + compatible with JS in external fn case
     + obvious separate instances
@@ -3903,15 +3933,22 @@ Having wat files is more useful than direct compilation to binary form:
     - cross-scope instance transparency: `osc(f); sound1(f)=(osc(f)+...); sound2(f)=(osc(f)+...)`
       -> these sounds use same osc instance.
       ? should osc instance depend on current scope?
-  
-  8.1 Per-scope-instance: `osc(); sound1(f)=(osc(f)+...); sound2(f)=(osc(f)+...)` 
+
+  8.1 Per-scope-instance: `osc(); sound1(f)=(osc(f)+...); sound2(f)=(osc(f)+...)`
     + no osc id conflict
     ~ separate instances can be only-static as `osc.1(f) + osc.2(f) + osc.3(f)`
       + doesn't reserve `#` syntax
       + can be calculated in advance - no dynamic instances
         ~ likely we can prohibit `arr.1` - only for instances
       - natural expectation is `osc[i](f)` which we don't support
+      - `a.b` associates more with "part of the whole", whereas `a#b` just identifies `a` by id
     ? how do we allow dynamic-sized scopes, ie. number of instances can vary?
+      * number of instances is hardcoded/known in advance.
+    * following 5.1:
+      + if user needs a new instance - can wrap into new scope as `oscA()=(sin()+sin()+sin()...), oscB()=(sin()+sin()+sin())`
+    + simple
+    + easy to grasp: function is standalone instance, new instance is done either via wrapping or via new module instance
+    + js-compatible
 
 ## [ ] State variables logic - how to map callsite to memory address? -> see 4.1 - via array argument
 
@@ -4002,7 +4039,7 @@ Having wat files is more useful than direct compilation to binary form:
     - see chord function - it can receive any-length argument, but we can't create any-length number of variables
       -> callsite pointers must be stored in a table or linked list
 
-  4. stateful fn has pointer to first state adr - we have a memory region for instances
+  4. memory region for instances with static pointers
     + allows compactness - storing only addresses of data, since we know sequence of hooks in advance
     + allows dynamic allocation of new stateful functions
     + allows lazy-init of memory regions
@@ -4038,9 +4075,40 @@ Having wat files is more useful than direct compilation to binary form:
     ```
     sin(f,st=[..1],cur=0) = (*phase=mem[st[cur]||(mem[st[cur]]=1)];cur++;...;mem[st[cur]]=phase);
     note(f,st=[..(sizeof(sin)+sizeof(sin)+sizeof(sin))],cur=0) = (sin(f,st,cur) + (xxx?sin(f*2,st,cur+sizeof(sin)) + sin(f*3,st,cur+sizeof(sin)+sizeof(sin););
-    chord(fs,st=[..sizeof(note)],cur=0) = (fx |> (f,sum,i) -> sum += note(f,st,cur+0));
+    chord(fs,st=[..sizeof(note)],cur=0) = (fs |> (f,sum,i) -> sum += note(f,st,cur+0));
     chord(a); chord(b); chord(c);
     ```
+
+  5. fn scope-based instances entail C-like static variables per-function
+    ```
+    sin(f)=(*phase=0;...);
+    x(f)=(sin(f)+sin(f)+cos(f));
+    y(f) = (0..10|>(i,s)->x(i*108)+s + sin(54));
+
+    ;; converts to
+
+    sin.state = [..1];
+    sin(f)=(phase=mem[sin.ptr];...;st[sin.ptr]=phase);
+    x.state = [..2];
+    x(f)=(
+      sin.prev=sin.state;sin.state=x.state.sub(0);
+      cos.prev=cos.state;cos.state=x.state.sub(1);
+      >>sin.state=sin.prev;
+      >>cos.state=cos.prev;
+      sin(f)+sin(f)+cos(f);
+    )
+    y.state = [..3];
+    y(f)=(
+      x.prev=x.state;x.state=y.state.sub(0);
+      sin.prev=sin.state;sin.state=y.state.sub(3);
+      >>x.state=x.prev;
+      >>sin.state=sin.prev;
+      0..10|>(i,s)->x(i*108)+s + sin(54)
+    );
+    ```
+    + allows attaching/detaching all states in the beginning/end of parent function
+    + doesn't require fake arguments
+    + allows tracking function state in a standalone way
 
 ## [ ] Prohibit dynamic-size list comprehensions
 
@@ -4049,3 +4117,11 @@ Having wat files is more useful than direct compilation to binary form:
   + There's plenty of places where dynamic lists are not supported anyways: function return, function args
   ~ maybe we need to introduce some meaningful static-only limitations for the beginning and get v1 of lang ready.
     * like array building, static-size map/reduce, state variables etc. once that's ready we may think of extending to dynamic-size ones.
+  + we cannot dynamically declare local variables within loop. Static-size loop would make it possible to declare all variables in advance...
+    - it would require thousands of local variables...
+
+## [ ] Loop vs fold: no difference
+
+  * `sum=0; xs <| (x) -> (sum += x)`
+  * `xs |> (x, sum) -> sum + x`
+  * Folds seem to be more efficient than loops: they create single value as result, loop creates multiple values (heap?).
