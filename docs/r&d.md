@@ -3949,6 +3949,8 @@ Having wat files is more useful than direct compilation to binary form:
     + simple
     + easy to grasp: function is standalone instance, new instance is done either via wrapping or via new module instance
     + js-compatible
+    + essentially same as 6.1/6.2: `sin1()=sin(); sin2()=sin(); ...` - just create as many funcs as you need with own names
+    + parens don't affect scope anyhow
 
 ## [ ] State variables logic - how to map callsite to memory address? -> see 4.1 - via array argument
 
