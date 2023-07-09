@@ -260,14 +260,17 @@ t.only('debugs', t => {
   const memory = new WebAssembly.Memory({ initial: 1 });
   const importObject = { env: { memory } };
   let {instance} = compileWat(`
-  (func $x (param i32) (local i32)
-
+  (func $x (param funcref)
+    (call_indirect (type $cbType) (local.get 0))
     (return)
   )
+  (func $cb (param i32) (call $i32.log (local.get 0))(return))
+  (type $cbType (func (param i32)))
   (export "x" (func $x))
+  (export "cb" (func $cb))
 `, importObject)
   console.log(instance.exports.x.length)
-  instance.exports.x()
+  instance.exports.x(instance.exports.cb)
 })
 
 t('compile: misc vars', t => {

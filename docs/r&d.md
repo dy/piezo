@@ -3951,6 +3951,13 @@ Having wat files is more useful than direct compilation to binary form:
     + js-compatible
     + essentially same as 6.1/6.2: `sin1()=sin(); sin2()=sin(); ...` - just create as many funcs as you need with own names
     + parens don't affect scope anyhow
+    - there's a chance of confusion when we may want a function have access to same context as root `sin();x()=(sin());`
+      ? how to get access to root context? or just generally same fn context from another fn?
+        ~ likely we can make functions strong singletons - whenever it's called from it gets same context
+          ? same time how to create new instance then?
+            !? `x()=(sin(x))` calls root instance, `*y()=(sin(x))` creates new instance?
+              ? how to make mixed new and old instances then, eg. `y()=(*sin(a)+sin(b))`?
+                !? pass fn as arg: `x(sin1)=(sin()+sin1())` - keeps state of parent fn
 
 ## [ ] State variables logic - how to map callsite to memory address? -> see 4.1 - via array argument
 

@@ -27,3 +27,4 @@
 * [ ] https://github.com/JoepVanlier/JSFX
 * [ ] https://github.com/survivejs/audio-katas
 * [ ] neural networklets
+* [ ] Alex Rome cases https://www.youtube.com/watch?v=mbnLqOI1yQA

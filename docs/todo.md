@@ -10,7 +10,6 @@
   * [x] compiler
   * [x] parser: very basic commands, no legacy
   * [x] Compare vs wabt, wat-compiler
-  * [ ] Repl with compiler selector
 
 * [x] Parser
 
@@ -71,10 +70,11 @@
 * [ ] Nice errors: line number to AST nodes?
 * [ ] Stub all wrong syntax error cases, like `++a=123;` etc - any operators on the lhs of `=` etc., all permutations
 * [ ] math: sin, cos, pow, mod etc - from mono https://github.com/stagas/mono
-* [ ] *state (global var per callsite?)
+* [ ] *state
 * [ ] Readme examples
 * [ ] Make `br_if` loops everywhere - it doesn't create control block (more lightweight)
 * [ ] Test in-loop variables `xs <| (x) -> (y;x+=y;)`
+* [ ] pass fns by reference
 
 ## 2
 
@@ -95,6 +95,7 @@
 
 ## 3
 
+* [ ] Repl with compiler selector
 * [ ] Web-audio-api
 * [ ] musi
 * [ ] latr
