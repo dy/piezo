@@ -20,6 +20,8 @@ function clean (str) {
 const wabt = await Wabt()
 function compileWat (code, importObj={}) {
   code =
+  '(func $funcref.log (import "imports" "log") (param funcref))\n' +
+  '(func $externref.log (import "imports" "log") (param externref) (result externref))\n' +
   '(func $i32.log (import "imports" "log") (param i32) (result i32))\n' +
   '(func $i32.log2 (import "imports" "log") (param i32 i32) (result i32 i32))\n' +
   '(func $i32.log3 (import "imports" "log") (param i32 i32 i32) (result i32 i32 i32))\n' +
@@ -47,7 +49,7 @@ function compileWat (code, importObj={}) {
   const config = {
     ...importObj,
     imports: {
-      log(...args){ console.log(...args); return args }
+      log(...args){ console.log(...args); }
     }
   }
   // sync instance - limits buffer size to 4kb
@@ -261,16 +263,17 @@ t.only('debugs', t => {
   const importObject = { env: { memory } };
   let {instance} = compileWat(`
   (func $x (param funcref)
-    (call_indirect (type $cbType) (local.get 0))
+    (call $i32.log (i32.const 123))
+    (call $funcref.log (local.get 0))
+    (call $i32.log (i32.const 456))
     (return)
   )
-  (func $cb (param i32) (call $i32.log (local.get 0))(return))
-  (type $cbType (func (param i32)))
+  (func $cb (param i32) (return))
   (export "x" (func $x))
   (export "cb" (func $cb))
 `, importObject)
-  console.log(instance.exports.x.length)
-  instance.exports.x(instance.exports.cb)
+  // console.log(instance.exports.cb)
+  instance.exports.x(instance.exports.x(instance.exports.cb))
 })
 
 t('compile: misc vars', t => {
