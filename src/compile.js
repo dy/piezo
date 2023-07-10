@@ -33,6 +33,8 @@ export default function compile(node) {
 
   if (heap) out += `;;;;;;;;;;;;;;;;;;;;;;;;;;;; Memory: ${heap*64}Kb heap\n` +
   `(memory (export "__memory") ${heap} ${MAX_MEMORY})\n(global $__heap (export "__heap") (mut i32) (i32.const 0))\n(global $__mem (export "__mem") (mut i32) (i32.const ${heap<<16}))\n\n`
+  else out += `;;;;;;;;;;;;;;;;;;;;;;;;;;;; Memory\n` +
+  `(memory (export "__memory") ${heap} ${MAX_MEMORY})\n(global $__mem (export "__mem") (mut i32) (i32.const 0))\n\n`
 
   // declare includes
   if (includes.length) out += `;;;;;;;;;;;;;;;;;;;;;;;;;;;; Includes\n`;
@@ -51,8 +53,9 @@ export default function compile(node) {
 
   // declare funcs
   for (let name in funcs) { out += `;;;;;;;;;;;;;;;;;;;;;;;;;;;; Functions\n`; break }
-  for (let name in funcs)
-  out += funcs[name] + '\n\n'
+  for (let name in funcs) {
+    out += funcs[name] + '\n\n'
+  }
 
   // run globals init, if needed
   if (init) out += `;;;;;;;;;;;;;;;;;;;;;;;;;;;; Init\n` +
@@ -179,7 +182,7 @@ Object.assign(expr, {
   },
 
   '='([,a,b]) {
-    while (a[0] === '(') a = a[1] // unbracket
+    while (a[0] === '(') a = a[1]; // unbracket
 
     // x[y]=1, x.y=1
     if (a[0] === '[]' || a[0] === '.') {
@@ -195,7 +198,7 @@ Object.assign(expr, {
     // a = b,  a = (b,c),   a = (b;c,d)
     if (typeof a === 'string') {
       a = define(a)
-      return op(locals ? `(local.tee $${a} ${pick(1,asFloat(expr(b)))})` : `${set(a, pick(1,asFloat(expr(b))))}(global.get $${a})`, 'f64')
+      return tee(a, pick(1,asFloat(expr(b))))
     }
 
     // (a,b) = ...
@@ -209,16 +212,16 @@ Object.assign(expr, {
       return op(
         inputs + '\n'+
         outputs.map((n,i)=> (
-          n=define(n), `${inputs.type[i] === 'i32' ? `(f64.convert_i32_s)` : ''}${set(n)}`
+          `${inputs.type[i] === 'i32' ? `(f64.convert_i32_s)` : ''}${set(define(n))}`
         )).reverse().join('') +
-        outputs.map(n=>(n=define(n), `(${globals[n]?'global':'local'}.get $${n})`)).join(''),
+        outputs.map(n=>get(define(n))).join(''),
         Array(outputs.length).fill(`f64`)
       )
     }
 
     // x(a,b) = y
     if (a[0]==='()') {
-      let [,name,args] = a, body = b, inits = [], result, dfn = []
+      let [,name,args] = a, body = b, inits = [], result, dfn = [], defer = []
 
       // functions defined within scope of other functions, `x()=(y(a)=a;)`
       if (locals) err('Declaring local function `' + name +'`: not allowed');
@@ -228,6 +231,11 @@ Object.assign(expr, {
 
       let prevFunc = func
       func = name
+
+      // FIXME: put function to a table
+      // pointer to a function - need to be declared in advance, since body may contain refs
+      globals[name] = {func:true, args, type:'i32'};
+      if (exports) exports[name] = globals[name]
 
       locals = {[_tmp]:[]}
 
@@ -257,6 +265,7 @@ Object.assign(expr, {
       })
 
       body[1].splice(1,0,...inits) // prepend inits
+
       result = expr(body)
 
       // define result, comes after (param) before (local)
@@ -268,15 +277,25 @@ Object.assign(expr, {
       // declare tmps
       dfn.push(locals[_tmp].map((tmp)=>`(local ${tmp})`).join(''))
 
+      // if fn is stateful - defer saving values
+      // FIXME: possibly we may need to upgrade state vars to always read/write from memory, but now too complicated
+      globals[name].state?.forEach(name => {
+        defer.push(`(f64.store (local.get $${name}.adr) (local.get $${name}))`)
+      })
       locals = null
 
-      globals[name] = {func:true, args, type:'i32'}; // NOTE: we set type to i32 as preliminary pointer to function (must be in a table)
-      if (exports) exports[name] = globals[name]
-
       // init body - expressions write themselves to body
-      funcs[name] = `(func $${name} ${dfn.join(' ')}\n${result})`
+      funcs[name] = `(func $${name} ${dfn.join(' ')}\n${result}\n${defer.join(' ')})`
 
       func = prevFunc
+
+      // alloc state, if required
+      if (globals[name].state) {
+        // state is just region of memory storing sequence of i32s - pointers to memory holding actual state values
+        define(name + '.state', 'i32')
+        inc('malloc')
+        return op(`(global.set $${name}.state (call $malloc (i32.const ${globals[name].state.length << 2})))`)
+      }
 
       return
     }
@@ -411,11 +430,49 @@ Object.assign(expr, {
     return op(`(f64.add ${asFloat(aop)} ${asFloat(bop)})`,'f64')
   },
   '*'([,a,b]) {
-    // FIXME: stateful variable
+    // stateful variable
     if (!b) {
-      locals[a].stateful = true
-      err('Stateful variable: unimplemented')
-      return ``
+      if (!func) err('State variable declared outside of function')
+      const state = globals[func].state ||= []
+      console.log(a)
+      // *i;
+      if (typeof a === 'string') {
+        define(a);
+        state.push(a)
+        return;
+      }
+      // *i=10; *i=[0..10];
+      if (a[0]==='=') {
+        let [,name,init] = a
+        name = define(name);
+
+        // return tee(name, op(`(call $state.load (global.get $${func}.state) (i32.const ${state.length++}))`,'f64'))
+
+        let ptr = define(name + '.adr', 'i32'), // ptr stores variable memory address
+          stateName = func + `.state`,
+        res =
+        // first calculate state cell
+        `(local.set $${ptr} (i32.add (global.get $${stateName}) (i32.const ${state.length << 2})))\n` +
+        // if pointer is zero - init state
+        `(if (i32.eqz (i32.load (local.get $${ptr})))\n` +
+          `(then\n` +
+            // allocate memory for a single variable
+            `(i32.store (local.get $${ptr}) (local.tee $${ptr} (call $malloc (i32.const 8))))\n` +
+            // initialize value in that location
+            `(f64.store (local.get $${ptr}) (local.tee $${name} ${asFloat(expr(init))}))\n` +
+          `)\n` +
+          `(else \n` +
+            // local variable from state ptr
+            `(local.set $${name} (f64.load (local.tee $${ptr} (i32.load (local.get $${ptr})))))\n` +
+          `)\n` +
+        `)\n` +
+        `(local.get $${name})`
+
+        state.push(name);
+        return op(res, 'f64');
+      }
+      // *(i,j)=10,20;
+      err('State variable: unimplemented')
     }
     let aop = expr(a), bop = expr(b)
     return op(`(f64.mul ${asFloat(aop)} ${asFloat(bop)})`,'f64')
@@ -554,12 +611,16 @@ Object.assign(expr, {
 })
 
 // return (local.set) or (global.set)
-function set (name, op='') {
-  return `${op}(${locals?.[name]?'local':'global'}.set $${name})`
+function set (name, init='') {
+  return op(`(${locals?.[name]?'local':'global'}.set $${name} ${init})`, null)
 }
 
 function get (name) {
-  return `(${locals?.[name]?'local':'global'}.get $${name})`
+  return op(`(${locals?.[name]?'local':'global'}.get $${name})`, 'f64')
+}
+
+function tee (name, init) {
+  return op(locals?.[name] ? `(local.tee $${name} ${init})` : `(global.set $${name} ${init})(global.get $${name})`, init.type)
 }
 
 // define variable in current scope, export if necessary; returns resolved name
@@ -657,12 +718,12 @@ function inc(name) {
   if (!includes.includes(name)) includes.push(name)
 }
 
-// pick N input args back into stack, like (a,b,c) -> (a,b)
-// we need various input types since we use pick in various scenarios, including booleans
+// pick N input args into stack, like (a,b,c) -> (a,b)
+// NOTE: we need various input types (not just N:M) because we use pick in various scenarios, including bool ops
 function pick(count, input) {
   let name
 
-  // if expression is 1 element, eg. (a,b,c) = d - we duplicate it to stack
+  // if expression is 1 element, eg. (a,b,c) = d - we duplicate d to stack
   if (input.type.length === 1) {
     // a = b - skip picking
     if (count === 1) return input
