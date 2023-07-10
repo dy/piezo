@@ -3779,7 +3779,7 @@ Having wat files is more useful than direct compilation to binary form:
     + defines arguments to skip
   + removes questions, merges pattern
 
-## [ ] How to create sublist/subarray? -> @latr.sublist
+## [x] How to create sublist/subarray? -> @latr.sublist or directly math `y+=2;y[]-=2;`
 
   * `x[] = y[1,2..3]`
     - syntactically creates copy of y
@@ -3806,6 +3806,10 @@ Having wat files is more useful than direct compilation to binary form:
     ~ kind of valid self-slicing
     - loses reference to initial list
     - means `x = x[10..]` would create reference, not clone
+
+  * `x = [..10]; y = x+3; y[] -= 3;`
+    * that's just math trick, not actual operator.
+    * that's why we can wrap it into `@latr.subarray(x, start, end)`
 
 ## [ ] Range step: how
 
@@ -3849,7 +3853,7 @@ Having wat files is more useful than direct compilation to binary form:
     * it would need special boolean indicator for ops result. Boolean ops:
   - `1 <| ...` will produce infinite loop
 
-## [ ] State variables: How can we call same fn twice with same context? -> context is the same per-scope; to call with other context - wrap into a function
+## [x] State variables: How can we call same fn twice with same context? -> context is the same per-scope; to call with other context - wrap into a function; you can pass funcs by reference.
 
   * It seems for now to be able only externally
   ? but what if we need to say fill an array with signal from synth?
@@ -3958,6 +3962,8 @@ Having wat files is more useful than direct compilation to binary form:
             !? `x()=(sin(x))` calls root instance, `*y()=(sin(x))` creates new instance?
               ? how to make mixed new and old instances then, eg. `y()=(*sin(a)+sin(b))`?
                 !? pass fn as arg: `x(sin1)=(sin()+sin1())` - keeps state of parent fn
+                  + we can pass fn refs as floats as well - it seems trivial to store all funcs in a table
+                    + that allows calling directly or indirectly
 
 ## [ ] State variables logic - how to map callsite to memory address? -> see 4.1 - via array argument
 

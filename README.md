@@ -122,6 +122,8 @@ b() = (                         ;;
 b(), b(), b();                  ;; 2, 4, 8
 c() = (b(), b(), b());          ;; state is defined by function scope
 b(); c();                       ;; 16; 2, 4, 8;
+d(_b) = (b(), _b());            ;; to get external state, pass fn as argument
+d(b);                           ;; 2, 32;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; arrays
 m = [..10];                     ;; array of 10 elements (not necessarily 0)

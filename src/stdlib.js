@@ -101,10 +101,10 @@ export const std = {
 
   // buf.get(buf, pos): reads value at position from buffer
   "buf.get": `(func $buf.get (param f64 i32)\n` +
-  // wrap negative idx
-  `(if (i32.lt_s (local.get 1) (i32.const 0)) (then (local.set 1 (call $i32.modwrap (local.get 1) (call $ref.len (local.get 0))))))\n` +
-  // TODO: check if index is out of boundaries
-  `(f64.load (i32.add (i32.trunc_f64_u (local.get 0)) (i32.shl (local.get 1) (i32.const 3))))\n` +
+    // wrap negative idx
+    `(if (i32.lt_s (local.get 1) (i32.const 0)) (then (local.set 1 (call $i32.modwrap (local.get 1) (call $ref.len (local.get 0))))))\n` +
+    // TODO: check if index is out of boundaries
+    `(f64.load (i32.add (i32.trunc_f64_u (local.get 0)) (i32.shl (local.get 1) (i32.const 3))))\n` +
   `)`,
 
   math: `(global pi f64 (f64.const 3.141592653589793))`

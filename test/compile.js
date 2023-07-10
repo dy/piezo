@@ -258,7 +258,7 @@ t('compile: function oneliners', t => {
   is(mod.instance.exports.mult(2,4), 8)
 })
 
-t.only('debugs', t => {
+t('debugs', t => {
   const memory = new WebAssembly.Memory({ initial: 1 });
   const importObject = { env: { memory } };
   let {instance} = compileWat(`
@@ -268,7 +268,7 @@ t.only('debugs', t => {
     (call $i32.log (i32.const 456))
     (return)
   )
-  (func $cb (param i32) (return))
+  (func $cb (param i32)   (return))
   (export "x" (func $x))
   (export "cb" (func $cb))
 `, importObject)
@@ -506,13 +506,21 @@ t.todo('compile: loop in loop', t => {
 
 t.todo('compile: loop over list', t => {
   let wat = compile(`x = [1,2,3]; y = x <| x -> x * 2.`)
-  console.log(wat)
   let mod = compileWat(wat)
   let {memory, y} = mod.instance.exports
   let arr = new Float64Array(memory.buffer, 0, 3), ptr = y.value
   is(arr[ptr], 2)
   is(arr[ptr+1], 4)
   not(arr[ptr+2], 6)
+})
+
+t('compile: state variable - basic', t => {
+  let wat = compile(`x()=(*i=0;i++).`)
+  let mod = compileWat(wat)
+  let {x} = mod.instance.exports
+  is(x(),0)
+  is(x(),1)
+  is(x(),2)
 })
 
 t.todo('compile: audio-gain', t => {

@@ -74,7 +74,7 @@
 * [ ] Readme examples
 * [ ] Make `br_if` loops everywhere - it doesn't create control block (more lightweight)
 * [ ] Test in-loop variables `xs <| (x) -> (y;x+=y;)`
-* [ ] pass fns by reference
+* [ ] pass fns by reference `x(a,_osc)=(osc(a)+_osc(a))`
 
 ## 2
 
