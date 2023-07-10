@@ -70,7 +70,9 @@
 * [ ] Nice errors: line number to AST nodes?
 * [ ] Stub all wrong syntax error cases, like `++a=123;` etc - any operators on the lhs of `=` etc., all permutations
 * [ ] math: sin, cos, pow, mod etc - from mono https://github.com/stagas/mono
-* [ ] *state
+* [x] *state
+  * [ ] `*x=[0..10]`
+  * [ ] `x()=(*i);y()=(x())`
 * [ ] Readme examples
 * [ ] Make `br_if` loops everywhere - it doesn't create control block (more lightweight)
 * [ ] Test in-loop variables `xs <| (x) -> (y;x+=y;)`
