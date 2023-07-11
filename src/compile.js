@@ -311,7 +311,7 @@ Object.assign(expr, {
       }
 
       // init body - expressions write themselves to body
-      funcs[name] = `(func $${name} ${dfn.join(' ')}\n${prepare.join('\n')}${result}\n${defer.join(' ')})`
+      funcs[name] = `(func $${name} ${dfn.join(' ')}\n(;prepare;)\n${prepare.join('\n')}\n(;body;)\n${result}\n(;defer;)\n${defer.join(' ')})`
 
       func = prevFunc
 
