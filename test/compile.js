@@ -18,7 +18,7 @@ function clean (str) {
 
 // convert wast code to binary
 const wabt = await Wabt()
-function compileWat (code, importObj={}) {
+export function compileWat (code, importObj={}) {
   code =
   '(func $funcref.log (import "imports" "log") (param funcref))\n' +
   '(func $externref.log (import "imports" "log") (param externref) (result externref))\n' +
@@ -105,18 +105,6 @@ t('compile: export - no junk exports', () => {
   let wat = compile(`w()=(); y=[1]; x()=(*i=0), z=[y.0, v=[1]].`)
   let mod = compileWat(wat)
   same(Object.keys(mod.instance.exports), ['__memory','x','z'])
-})
-
-t.todo('compile: export kinds', t => {
-
-  throws(() => analyse(parse(`x,y.;z`)), /export/i)
-  is(analyse(parse(`x.`)).export, {x:'global'})
-  is(analyse(parse(`x=1.`)).export, {x:'global'})
-  is(analyse(parse(`x,y.`)).export, {x:'global',y:'global'})
-  is(analyse(parse(`x,y,z.`)).export, {x:'global',y:'global',z:'global'})
-  is(analyse(parse(`x=1;x.`)).export, {x:'global'})
-  is(analyse(parse(`x=1,y=1;x,y.`)).export, {x:'global',y:'global'})
-  is(analyse(parse(`(x,y)=(1,1).`)).export, {x:'global',y:'global'})
 })
 
 t('compile: numbers negatives', t => {
@@ -369,7 +357,7 @@ t.todo('compile: lists from invalid ranges', t => {
       wat = compile(`x=[..-2]`)
 })
 
-t('compile: lists nested static', t => {
+t('compile: lists - nested static', t => {
   let wat = compile(`x=[1, y=[2, z=[3]]], y, z, w=[1,2], xl=x[], yl=y[], zl=z[], wl=w[].`)
   // let wat = compile(`x=[1,[2]].`)
   // console.log(wat)

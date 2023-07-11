@@ -38,19 +38,24 @@
 * [x] early return detection
   * [ ] break/continue
 * [x] Readable generated code
-* [ ] state variables
+* [ ] Bench biquad
+  * [ ] Clamp args
+  * [ ] Imports
+  * [ ] Units
+  * [ ] basic maths
+  * [ ] All operators
+* [ ] static arrays
 * [ ] list comprehension
-* [ ] static lists detection
 * [ ] better detect & collapse static nodes
-* [ ] init static arrays via `data` section, do `init` only for calc values
-* [ ] implement new loops
+  * [ ] a+0 -> a
+* [ ] static arrays via `data` section
+* [ ] loops
 * [x] implement no-ptr buffer lengths: either i64 or 2 values in stack
 * [x] ~~refactor `pick(N,arg)` into `dup(arg,3)`~~
 * [ ] more complex group conditionals: `a,b,c || d,e`, `a,b * c,d`
 * [x] implement computed ranges in lists creation
 * [x] ~~implement scopes as either tmp functions or blocks~~ -> just resolve variables
 * [x] Implement storing buffer items
-* [ ] Static arrays init
 * [x] Make all `local.set` / `global.set` a `set(name, value)` function: we don't need to know about tmp/define etc.
   * [x] ~~Think if we need to expose fully-js API for building wasm code, similar to wasmati~~ no
 * [ ] Test nested scopes variables `(x=0;(y=1);y)`
@@ -58,14 +63,12 @@
 * [ ] Extend i32 to i64 whereever possible
 * [ ] Test optional arguments
 * [ ] Test a,,c = d,e,f; a,b,c = d,,f
-* [ ] Test if memory grows properly
+* [x] Test if memory grows properly
 * [x] Simple loops
 * [x] Track memory via runtime variable: check against array len/address
 * [ ] Dispose references to immediate arrays `[1,2,3]` if not saved anywhere
   * [ ] Can be also disposed once variable is out of reach
     * [ ] Need detection when vars are out of reach
-* [ ] Audio gain example
-* [ ] Sine gen example
 * [ ] All lang reference cases
 * [ ] Nice errors: line number to AST nodes?
 * [ ] Stub all wrong syntax error cases, like `++a=123;` etc - any operators on the lhs of `=` etc., all permutations
@@ -73,11 +76,14 @@
 * [x] *state
   * [x] `*x=[0..10]`
   * [x] `x()=(*i);y()=(x())`
+  * [ ] `x()=(*(a,b,c))`
   * [ ] `x(_sin)=(sin() + _sin())`
-* [ ] Readme examples
 * [ ] Make `br_if` loops everywhere - it doesn't create control block (more lightweight)
 * [ ] Test in-loop variables `xs <| (x) -> (y;x+=y;)`
 * [ ] pass fns by reference `x(a,_osc)=(osc(a)+_osc(a))`
+* [ ] Readme examples
+  * [ ] Audio gain example
+  * [ ] Sine gen example
 
 ## 2
 
