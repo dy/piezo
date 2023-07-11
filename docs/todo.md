@@ -72,7 +72,7 @@
 * [ ] math: sin, cos, pow, mod etc - from mono https://github.com/stagas/mono
 * [x] *state
   * [ ] `*x=[0..10]`
-  * [ ] `x()=(*i);y()=(x())`
+  * [x] `x()=(*i);y()=(x())`
 * [ ] Readme examples
 * [ ] Make `br_if` loops everywhere - it doesn't create control block (more lightweight)
 * [ ] Test in-loop variables `xs <| (x) -> (y;x+=y;)`

@@ -523,6 +523,42 @@ t('compile: state variable - basic', t => {
   is(x(),2)
 })
 
+t('compile: state variable - scope', t => {
+  let wat = compile(`x()=(*i=0;i++), y()=x().`)
+  let mod = compileWat(wat)
+  let {x,y} = mod.instance.exports
+  is(x(),0)
+  is(y(),0)
+  is(x(),1)
+  is(x(),2)
+  is(y(),1)
+  is(y(),2)
+})
+
+t.todo('compile: state variable - group init', t => {
+  let wat = compile(`x()=(*(i=0,j=1,k=2);i+j+k), y()=x().`)
+  let mod = compileWat(wat)
+  let {x,y} = mod.instance.exports
+})
+
+t.todo('compile: state variable - multiple states', t => {
+  let wat = compile(`x()=(*i=0,*j=1,*a=[..2]; i++ + j++ + a[0]++ + a[1]++); y()=(x()+x());`)
+  let mod = compileWat(wat)
+  let {x,y} = mod.instance.exports
+  is(x(),1)
+  is(x(),5)
+  is(x(),9)
+  is(x(),13)
+  is(y(),6)
+  is(y(),21)
+})
+
+t.todo('compile: state variable - mixed deps', t => {
+  let wat = compile(`x()=(*i=0,i++); y()=(*a=[0,1];x()+a[0]+a[1]++); z()=(x()+y());`)
+  let mod = compileWat(wat)
+  let {x,y,z} = mod.instance.exports
+})
+
 t.todo('compile: audio-gain', t => {
   let wat = compile(`
   blockSize = 1024;

@@ -2419,7 +2419,7 @@ Having wat files is more useful than direct compilation to binary form:
   Top Back Center - TBC
   Top Back Right - TBR
 
-## [ ] Defer -> `x(a) = (>log(a); >a+=1; a)`
+## [ ] Defer -> `x(a) = (>>log(a); >>a+=1; a)`
 
   + like golang defer execution runs item after function return
   + allows separating return value from increments needed after function
@@ -2429,6 +2429,7 @@ Having wat files is more useful than direct compilation to binary form:
     - no nice definition of variable state and its change
     - noisy code of creating result holder var, performing state update, returning result
     + kind of natural
+    - state vars really need it, `x()=(*a=[0,1];>>a[1..]=a[0..];)`
   * symbols: `>>, ||, ~>, //, \\, >-, >>|, <|, <!`,
     * `x()=(@(a);b,c;@(d))`
       - brings `@` into local scope
@@ -2439,6 +2440,7 @@ Having wat files is more useful than direct compilation to binary form:
       - a bit too heavy by meaning
       - takes away cool `\\` as comments
     * `x() = (*i=0;**i++;)`, `x()=(**a; b,c,; **d;)`, `x(a) = (**log(a); **a+=1; a)`
+      * `x()=(*a=[0,1];**a[1..]=a[0..])`
     * `x() = (/a; b,c; /d;)`, `x()=(*i=0;/i++;*phase=0;/phase+=t;)`, `x()=(/log(a))`
       + one-symbol
       + associates with reddit tags

@@ -4,7 +4,7 @@ import stdlib from "./stdlib.js"
 import {FLOAT,INT} from './const.js'
 import { parse as parseWat } from "watr";
 
-let includes, globals, funcs, func, locals, exports, blockc, heap, returns;
+let includes, globals, funcs, func, locals, exports, blockc, heap, mem, returns;
 
 const _tmp = Symbol('tmp')
 
@@ -26,15 +26,16 @@ export default function compile(node) {
   exports = null, // items to export
   returns = null, // returned items from block (collect early returns)
   func = null, // current function that's being initialized
-  heap = 0 // heap size as number of pages (detected from max static array size)
+  heap = 0, // heap size as number of pages (detected from max static array size)
+  mem = false // indicates if memory must be included (heap automatically enables memory)
 
   // run global in start function
   let init = expr(node).trim(), out = ``
 
   if (heap) out += `;;;;;;;;;;;;;;;;;;;;;;;;;;;; Memory: ${heap*64}Kb heap\n` +
   `(memory (export "__memory") ${heap} ${MAX_MEMORY})\n(global $__heap (export "__heap") (mut i32) (i32.const 0))\n(global $__mem (export "__mem") (mut i32) (i32.const ${heap<<16}))\n\n`
-  else out += `;;;;;;;;;;;;;;;;;;;;;;;;;;;; Memory\n` +
-  `(memory (export "__memory") ${heap} ${MAX_MEMORY})\n(global $__mem (export "__mem") (mut i32) (i32.const 0))\n\n`
+  else if (mem) out += `;;;;;;;;;;;;;;;;;;;;;;;;;;;; Memory\n` +
+  `(memory (export "__memory") 0 ${MAX_MEMORY})\n(global $__mem (export "__mem") (mut i32) (i32.const 0))\n\n`
 
   // declare includes
   if (includes.length) out += `;;;;;;;;;;;;;;;;;;;;;;;;;;;; Includes\n`;
@@ -68,7 +69,7 @@ export default function compile(node) {
   // provide exports
   for (let name in exports) { out += `;;;;;;;;;;;;;;;;;;;;;;;;;;;; Exports\n`; break }
   for (let name in exports)
-    out += `(export "${name}" (${exports[name].func ? 'func' : 'global'} $${name}))`
+    out += `(export "${name}" (${exports[name].func ? 'func' : 'global'} $${name}))\n`
 
   console.log(out)
   // console.log(...parseWat(out))
@@ -155,8 +156,15 @@ Object.assign(expr, {
 
     if (!globals[name]) err('Unknown function call: ' + name)
 
-    // FIXME: make sure default args are gotten values
-    let {args} = globals[name]
+    // FIXME: make sure default args are gotten values?
+    let {args, state} = globals[name]
+
+    // if internal call is stateful, the current function becomes stateful either
+    if (state) {
+      const callerState = globals[func].state ||= []
+      ;(globals[func].substate ||= {})[name] = callerState.length // save offset within caller state
+      callerState.length += state.length
+    }
 
     return op(`(call $${name} ${list.map(arg => asFloat(expr(arg))).join(' ')})`, 'f64')
   },
@@ -165,8 +173,6 @@ Object.assign(expr, {
   '['([,inits]) {
     // NOTE: this expects heap pointer in stack
     inits = !inits ? [] : inits[0] !== ',' ? [inits] : inits.slice(1)
-
-    inc('malloc'), inc('ref')
 
     // return buffer initializer
     return buf(inits)
@@ -221,7 +227,7 @@ Object.assign(expr, {
 
     // x(a,b) = y
     if (a[0]==='()') {
-      let [,name,args] = a, body = b, inits = [], result, dfn = [], defer = []
+      let [,name,args] = a, body = b, inits = [], result, dfn = [], prepare = [], defer = []
 
       // functions defined within scope of other functions, `x()=(y(a)=a;)`
       if (locals) err('Declaring local function `' + name +'`: not allowed');
@@ -284,20 +290,32 @@ Object.assign(expr, {
       })
       locals = null
 
-      // init body - expressions write themselves to body
-      funcs[name] = `(func $${name} ${dfn.join(' ')}\n${result}\n${defer.join(' ')})`
-
-      func = prevFunc
+      let initState
 
       // alloc state, if required
       if (globals[name].state) {
         // state is just region of memory storing sequence of i32s - pointers to memory holding actual state values
         define(name + '.state', 'i32')
-        inc('malloc')
-        return op(`(global.set $${name}.state (call $malloc (i32.const ${globals[name].state.length << 2})))`)
+        inc('malloc'), mem=true
+        initState = op(`(global.set $${name}.state (call $malloc (i32.const ${globals[name].state.length << 2})))`)
       }
 
-      return
+      // if has calls to internal stateful funcs (indirect state) - push state to stack, to recover on return
+      for (let fn in globals[name].substate) {
+        dfn.push(`(local $${fn}.prev i32)`)
+        // NOTE: we can't push/pop state from stack because fn body produces result (output) that will cover stack
+        prepare.push(`(local.set $${fn}.prev (global.get $${fn}.state))`) // save prev state
+        // put local state fragment to the stack
+        prepare.push(`(global.set $${fn}.state (i32.add (global.get $${name}.state) (i32.const ${globals[name].substate[fn]<<2})))`)
+        defer.push(`(global.set $${fn}.state (local.get $${fn}.prev))`) // load prev state
+      }
+
+      // init body - expressions write themselves to body
+      funcs[name] = `(func $${name} ${dfn.join(' ')}\n${prepare.join('\n')}${result}\n${defer.join(' ')})`
+
+      func = prevFunc
+
+      return initState
     }
 
     err('Unknown assignment', a)
@@ -445,8 +463,7 @@ Object.assign(expr, {
       if (a[0]==='=') {
         let [,name,init] = a
         name = define(name);
-
-        // return tee(name, op(`(call $state.load (global.get $${func}.state) (i32.const ${state.length++}))`,'f64'))
+        inc('malloc'), mem=true
 
         let ptr = define(name + '.adr', 'i32'), // ptr stores variable memory address
           stateName = func + `.state`,
@@ -464,7 +481,7 @@ Object.assign(expr, {
           `(else \n` +
             // local variable from state ptr
             `(local.set $${name} (f64.load (local.tee $${ptr} (i32.load (local.get $${ptr})))))\n` +
-          `)\n` +
+          `)` +
         `)\n` +
         `(local.get $${name})`
 
@@ -689,6 +706,8 @@ function buf(inits) {
   }
 
   // move buffer to static memory: references static address, deallocates heap tail
+
+  inc('malloc'), inc('ref'), mem=true
 
   out += `(local.set $${size} (i32.sub (global.get $__heap) (local.get $${src})))\n` // get length of created array
   + `(local.set $${dst} (call $malloc (local.get $${size})))\n` // allocate new memory
