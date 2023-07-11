@@ -62,47 +62,38 @@ export const std = {
     `(local.get 0)` +
   `)`,
 
-  // create reference to memory address (in bytes) & length (# of f64 items)
-  "ref":
-  `(func $ref (param i32 i32) (result f64)\n` +
+  // create reference to memory address (in bytes) with length (# of f64 items) - doesn't allocate memory, just creates ref
+  "arr.ref":
+  `(func $arr.ref (param i32 i32) (result f64)\n` +
     `(f64.reinterpret_i64 (i64.or\n` +
-      // buffer address is int part of f64, safe up to i32 ints
+      // array address is int part of f64, safe up to i32 ints
       `(i64.reinterpret_f64 (f64.convert_i32_u (local.get 0)))\n` +
-      // buffer length is last 24 bits of f64 - it doesn't affect address i32 part
+      // array length is last 24 bits of f64 - it doesn't affect address i32 part
       `(i64.extend_i32_u (i32.and (i32.const 0x00ffffff) (local.get 1)))` +
     `))\n` +
   `(return))`,
 
-  // get address/length from reference
-  "deref":
-  `(func $deref (param f64) (result i32 i32) (call $ref.addr (local.get 0)) (call $ref.len (local.get 0)) (return))`,
+  // reads array address from ref (likely not needed to use since can be just converted float to int)
+  "arr.adr": `(func $arr.adr (param f64) (result i32) (i32.trunc_f64_u (local.get 0)) (return))`,
 
-  // reads buffer address from pointer (likely not needed to use since can be just converted float to int)
-  "ref.addr": `(func $ref.addr (param f64) (result i32) (i32.trunc_f64_u (local.get 0)) (return))`,
+  // reads array length as last 24 bits of f64 number
+  "arr.len": `(func $arr.len (param f64) (result i32) (i32.wrap_i64 (i64.and (i64.const 0x0000000000ffffff) (i64.reinterpret_f64 (local.get 0)))))`,
 
-  // reads buffer length as last 24 bits of f64 number
-  "ref.len": `(func $ref.len (param f64) (result i32) (i32.wrap_i64 (i64.and (i64.const 0x0000000000ffffff) (i64.reinterpret_f64 (local.get 0)))))`,
-
-  // takes required size, allocates memory and returns adr
-  "buf.new": `(func $buf.new (param i32) (result i32) (local i32) \n` +
-    `(local.set 1 (call $__mem.alloc (i32.shl (local.get 0) (i32.const 3))))\n` + // get allocated fragment ptr
-    `(local.get 1)\n` + // return adr
-  `(return))`,
-
-  // buf.set(buf, pos, val): writes $val into buffer, $idx is position in buffer, not address. Returns buffer
-  "buf.set": `(func $buf.set (param f64 i32 f64) (result f64)\n` +
-    // wrap negative idx: if idx < 0 idx = idx %% buf[]
-    `(if (i32.lt_s (local.get 1) (i32.const 0)) (then (local.set 1 (call $i32.modwrap (local.get 1) (call $ref.len (local.get 0))))))\n` +
+  // arr.set(ref, pos, val): writes $val into array, $idx is position in array (not mem address). Returns array ref (for chaining).
+  "arr.set": `(func $arr.set (param f64 i32 f64) (result f64)\n` +
+    // wrap negative idx: if idx < 0 idx = idx %% ref[]
+    `(if (i32.lt_s (local.get 1) (i32.const 0)) (then (local.set 1 (call $i32.modwrap (local.get 1) (call $arr.len (local.get 0))))))\n` +
     `(f64.store (i32.add (i32.trunc_f64_u (local.get 0)) (i32.shl (local.get 1) (i32.const 3))) (local.get 2))\n` +
     `(local.get 0)\n` +
   `(return))\n` +
-  // same as buf.set, but returns assigned value
-  `(func $buf.tee (param f64 i32 f64) (result f64) (call $buf.set (local.get 0)(local.get 1)(local.get 2))(drop) (return (local.get 2)))`,
 
-  // buf.get(buf, pos): reads value at position from buffer
-  "buf.get": `(func $buf.get (param f64 i32)\n` +
+  // same as arr.set, but returns assigned value
+  `(func $arr.tee (param f64 i32 f64) (result f64) (call $arr.set (local.get 0)(local.get 1)(local.get 2))(drop) (return (local.get 2)))`,
+
+  // arr.get(ref, pos): reads value at position from array
+  "arr.get": `(func $arr.get (param f64 i32)\n` +
     // wrap negative idx
-    `(if (i32.lt_s (local.get 1) (i32.const 0)) (then (local.set 1 (call $i32.modwrap (local.get 1) (call $ref.len (local.get 0))))))\n` +
+    `(if (i32.lt_s (local.get 1) (i32.const 0)) (then (local.set 1 (call $i32.modwrap (local.get 1) (call $arr.len (local.get 0))))))\n` +
     // TODO: check if index is out of boundaries
     `(f64.load (i32.add (i32.trunc_f64_u (local.get 0)) (i32.shl (local.get 1) (i32.const 3))))\n` +
   `)`,

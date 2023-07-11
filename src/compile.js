@@ -181,10 +181,10 @@ Object.assign(expr, {
   // a[b] or a[]
   '[]'([,a,b]) {
     // a[] - length
-    if (!b) return inc('ref.len'), op(`(call $ref.len ${expr(a)})`,'i32')
+    if (!b) return inc('arr.len'), op(`(call $arr.len ${expr(a)})`,'i32')
 
     // a[b] - regular access
-    return inc('buf.get'), op(`(call $buf.get ${expr(a)} ${expr(b)})`)
+    return inc('arr.get'), op(`(call $arr.get ${expr(a)} ${expr(b)})`)
   },
 
   '='([,a,b]) {
@@ -198,7 +198,7 @@ Object.assign(expr, {
       // FIXME: add static optimization here for property - to avoid calling i32.modwrap if idx is known
       // FIXME: another static optimization: if length is known in advance (likely yes) - make static modwrap
 
-      return inc('ref.len'), inc('buf.set'), inc('i32.modwrap'), op(`(call $buf.tee ${expr(buf)} ${asInt(expr(idx))} ${asFloat(expr(b))})`, 'f64')
+      return inc('arr.len'), inc('arr.set'), inc('i32.modwrap'), op(`(call $arr.tee ${expr(buf)} ${asInt(expr(idx))} ${asFloat(expr(b))})`, 'f64')
     }
 
     // a = b,  a = (b,c),   a = (b;c,d)
@@ -311,7 +311,7 @@ Object.assign(expr, {
       }
 
       // init body - expressions write themselves to body
-      funcs[name] = `(func $${name} ${dfn.join(' ')}\n;; prepare\n${prepare.join('\n')}\n;; body\n${result}\n;; defer\n${defer.join(' ')})`
+      funcs[name] = `(func $${name} ${dfn.join(' ')}${prepare.length ? `\n;; prepare\n${prepare.join('\n')}\n` : ``};; body\n${result}\n${defer.length ? `;; defer\n${defer.join(' ')}` : ``})`
 
       func = prevFunc
 
@@ -397,15 +397,15 @@ Object.assign(expr, {
       // list <| ...
       else {
         // i = 0; to=buf[]; while (i < to) {# = buf[i]; ...; i++}
-        inc('ref.len'), inc('buf.get')
+        inc('arr.len'), inc('arr.get')
 
         const src = tmp('src'), len = tmp('len','i32')
         out +=
         `(local.set $${src} ${aop})\n` +
         `(local.set $${idx} (i32.const 0))\n` +
-        `(local.set $${len} (call $ref.len (local.get $${src})))\n` +
+        `(local.set $${len} (call $arr.len (local.get $${src})))\n` +
         `(loop (result f64) \n` +
-          `(locals.tee $${item} (call $buf.get (local.get $${src}) (local.get $${idx})))\n` +
+          `(locals.tee $${item} (call $arr.get (local.get $${src}) (local.get $${idx})))\n` +
           `(if (param f64) (result f64) (i32.le_u (local.get $${idx}) (local.get $${len}))\n` +
             `(then\n` +
               `${expr(b)}\n` +
@@ -452,7 +452,7 @@ Object.assign(expr, {
     if (!b) {
       if (!func) err('State variable declared outside of function')
       const state = globals[func].state ||= []
-      console.log(a)
+
       // *i;
       if (typeof a === 'string') {
         define(a);
@@ -465,6 +465,7 @@ Object.assign(expr, {
         name = define(name);
         inc('malloc'), mem=true
 
+        console.log(name, init)
         let ptr = define(name + '.adr', 'i32'), // ptr stores variable memory address
           stateName = func + `.state`,
         res =
@@ -615,9 +616,12 @@ Object.assign(expr, {
   // a,b,c . x?
   '.'([,a,b]) {
     // a.b
-    if (b) err('Prop access is unimplemented ' + a + b, a)
+    if (b) {
+      // a.0 - index access
+      let idx = isNaN(Number(b)) ? err('Alias access is unimplemented') : Number(b)
+      return inc('arr.get'), op(`(call $arr.get ${expr(a)} (i32.const ${idx}))`)
+    }
 
-    console.log(locals)
     if (locals) err('Export must be in global scope')
     // FIXME: if (expNode !== node && expNode !== node[node.length-1]) err('Export must be the last node');
 
@@ -706,13 +710,13 @@ function buf(inits) {
 
   // move buffer to static memory: references static address, deallocates heap tail
 
-  inc('malloc'), inc('ref'), mem=true
+  inc('malloc'), inc('arr.ref'), mem=true
 
   out += `(local.set $${size} (i32.sub (global.get $__heap) (local.get $${src})))\n` // get length of created array
   + `(local.set $${dst} (call $malloc (local.get $${size})))\n` // allocate new memory
   + `(memory.copy (local.get $${dst}) (local.get $${src}) (local.get $${size}))\n` // move heap to static memory
   + `(global.set $__heap (local.get $${src}))\n` // free heap
-  + `(call $ref (local.get $${dst}) (i32.shr_u (local.get $${size}) (i32.const 3)))\n` // create reference
+  + `(call $arr.ref (local.get $${dst}) (i32.shr_u (local.get $${size}) (i32.const 3)))\n` // create reference
 
   return op(out,'f64',{buf:true})
 }
