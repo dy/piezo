@@ -535,6 +535,18 @@ t('compile: state variable - scope', t => {
   is(y(),2)
 })
 
+t.todo('compile: state variable - array init', t => {
+  let wat = compile(`x()=(*i=[..2]; i.0++ + i.1++), y()=x().`)
+  let mod = compileWat(wat)
+  let {x,y} = mod.instance.exports
+  is(x(),0)
+  is(x(),2)
+  is(x(),4)
+  is(y(),0)
+  is(y(),2)
+  is(y(),4)
+})
+
 t.todo('compile: state variable - group init', t => {
   let wat = compile(`x()=(*(i=0,j=1,k=2);i+j+k), y()=x().`)
   let mod = compileWat(wat)

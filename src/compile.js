@@ -471,19 +471,18 @@ Object.assign(expr, {
         // first calculate state cell
         `(local.set $${ptr} (i32.add (global.get $${stateName}) (i32.const ${state.length << 2})))\n` +
         // if pointer is zero - init state
-        `(if (i32.eqz (i32.load (local.get $${ptr})))\n` +
+        `(if (result f64) (i32.eqz (i32.load (local.get $${ptr})))\n` +
           `(then\n` +
             // allocate memory for a single variable
             `(i32.store (local.get $${ptr}) (local.tee $${ptr} (call $malloc (i32.const 8))))\n` +
-            // initialize value in that location
-            `(f64.store (local.get $${ptr}) (local.tee $${name} ${asFloat(expr(init))}))\n` +
+            // initialize value in that location (saved to memory by fn defer)
+            `(local.tee $${name} ${asFloat(expr(init))})\n` +
           `)\n` +
           `(else \n` +
             // local variable from state ptr
-            `(local.set $${name} (f64.load (local.tee $${ptr} (i32.load (local.get $${ptr})))))\n` +
+            `(local.tee $${name} (f64.load (local.tee $${ptr} (i32.load (local.get $${ptr})))))\n` +
           `)` +
-        `)\n` +
-        `(local.get $${name})`
+        `)\n`
 
         state.push(name);
         return op(res, 'f64');
