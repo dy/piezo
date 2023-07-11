@@ -403,24 +403,17 @@ t('compile: list simple write', t => {
   is(xarr[0], 1,'x0')
   is(xarr[1], 2,'x1')
   is(xarr[2], 3,'x2')
-
 })
 
-t.todo('compile: list wrap index', t => {
-  let wat = compile(`x = [1, 2, 3]. x << 1.`)
+t('compile: list wrap index', t => {
+  let wat = compile(`x = [1, 2, 3]; a=x.0,b=x.1,c=x[2],d=x[-1].`)
   // console.log(wat)
   let mod = compileWat(wat)
-  let {memory, x, y, xl, yl} = mod.instance.exports
-  let xarr = new Float64Array(memory.buffer, x.value, 3)
-  is(xarr[0], 1,'x0')
-  is(xarr[1], 2,'x1')
-  is(xarr[2], 3,'x2')
-  is(xl.value,3,'xlen')
-  let yarr = new Float64Array(memory.buffer, y.value, 3)
-  is(yarr[0], 4,'y0')
-  is(yarr[1], 5,'y1')
-  is(yarr[2], 6,'y2')
-  is(yl.value,3,'ylen')
+  let {a,b,c,d} = mod.instance.exports
+  is(a.value, 1)
+  is(b.value, 2)
+  is(c.value, 3)
+  is(d.value, 3)
 })
 
 t.todo('compile: sublist', t => {
@@ -535,7 +528,7 @@ t('compile: state variable - scope', t => {
   is(y(),2)
 })
 
-t.todo('compile: state variable - array init', t => {
+t('compile: state variable - array init', t => {
   let wat = compile(`x()=(*i=[..2]; i.0++ + i.1++), y()=x().`)
   let mod = compileWat(wat)
   let {x,y} = mod.instance.exports

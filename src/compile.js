@@ -180,11 +180,13 @@ Object.assign(expr, {
 
   // a[b] or a[]
   '[]'([,a,b]) {
+    inc('arr.len'), inc('i32.modwrap')
+
     // a[] - length
-    if (!b) return inc('arr.len'), op(`(call $arr.len ${expr(a)})`,'i32')
+    if (!b) return op(`(call $arr.len ${expr(a)})`,'i32')
 
     // a[b] - regular access
-    return inc('arr.get'), op(`(call $arr.get ${expr(a)} ${expr(b)})`)
+    return inc('arr.get'), op(`(call $arr.get ${expr(a)} ${expr(b)})`,'f64')
   },
 
   '='([,a,b]) {
@@ -311,7 +313,7 @@ Object.assign(expr, {
       }
 
       // init body - expressions write themselves to body
-      funcs[name] = `(func $${name} ${dfn.join(' ')}${prepare.length ? `\n;; prepare\n${prepare.join('\n')}\n` : ``};; body\n${result}\n${defer.length ? `;; defer\n${defer.join(' ')}` : ``})`
+      funcs[name] = `(func $${name} ${dfn.join(' ')}${prepare.length ? `\n;; prepare\n${prepare.join('\n')}` : ``}\n;; body\n${result}${defer.length ? `\n;; defer\n${defer.join(' ')}` : ``})`
 
       func = prevFunc
 
@@ -465,7 +467,6 @@ Object.assign(expr, {
         name = define(name);
         inc('malloc'), mem=true
 
-        console.log(name, init)
         let ptr = define(name + '.adr', 'i32'), // ptr stores variable memory address
           stateName = func + `.state`,
         res =
@@ -617,9 +618,9 @@ Object.assign(expr, {
   '.'([,a,b]) {
     // a.b
     if (b) {
-      // a.0 - index access
+      // a.0 - index access - doesn't require modwrap
       let idx = isNaN(Number(b)) ? err('Alias access is unimplemented') : Number(b)
-      return inc('arr.get'), op(`(call $arr.get ${expr(a)} (i32.const ${idx}))`)
+      return op(`(f64.load (i32.add ${asInt(expr(a))} (i32.const ${idx << 3})))`, 'f64')
     }
 
     if (locals) err('Export must be in global scope')
