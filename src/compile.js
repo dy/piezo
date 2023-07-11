@@ -2,6 +2,7 @@
 import parse from "./parse.js"
 import stdlib from "./stdlib.js"
 import {FLOAT,INT} from './const.js'
+import stringify from './stringify.js'
 import { parse as parseWat } from "watr";
 
 let includes, globals, funcs, func, locals, exports, blockc, heap, mem, returns;
@@ -23,7 +24,7 @@ export default function compile(node) {
   funcs = {}, // defined user and util functions
   // FIXME: loop ideally must be used by-reference
   blockc = Object.assign([''],{cur:0}), // current block count
-  exports = null, // items to export
+  exports = {}, // items to export
   returns = null, // returned items from block (collect early returns)
   func = null, // current function that's being initialized
   heap = 0, // heap size as number of pages (detected from max static array size)
@@ -33,9 +34,9 @@ export default function compile(node) {
   let init = expr(node).trim(), out = ``
 
   if (heap) out += `;;;;;;;;;;;;;;;;;;;;;;;;;;;; Memory: ${heap*64}Kb heap\n` +
-  `(memory (export "__memory") ${heap} ${MAX_MEMORY})\n(global $__heap (export "__heap") (mut i32) (i32.const 0))\n(global $__mem (export "__mem") (mut i32) (i32.const ${heap<<16}))\n\n`
+  `(memory (export "__memory") ${heap} ${MAX_MEMORY})\n(global $__heap (mut i32) (i32.const 0))\n(global $__mem (mut i32) (i32.const ${heap<<16}))\n\n`
   else if (mem) out += `;;;;;;;;;;;;;;;;;;;;;;;;;;;; Memory\n` +
-  `(memory (export "__memory") 0 ${MAX_MEMORY})\n(global $__mem (export "__mem") (mut i32) (i32.const 0))\n\n`
+  `(memory (export "__memory") 0 ${MAX_MEMORY})\n(global $__mem (mut i32) (i32.const 0))\n\n`
 
   // declare includes
   if (includes.length) out += `;;;;;;;;;;;;;;;;;;;;;;;;;;;; Includes\n`;
@@ -85,7 +86,7 @@ function expr(statement) {
   if (typeof statement === 'string') {
     // just x,y; or a=x; where x is undefined
     statement = define(statement);
-    return op(get(statement),`f64`)
+    return get(statement)
   }
   if (statement[0] in expr) return expr[statement[0]](statement) || ''
   err('Unknown operation `' + statement[0] + '`',statement)
@@ -101,6 +102,8 @@ Object.assign(expr, {
     let list=[];
     for (let s of statements) s && list.push(expr(s));
     list = list.filter(Boolean)
+
+    if (!list.length) return op()
 
     return op(
       list.map((op,i) => op + `(drop)`.repeat(i===list.length-1 ? 0 : op.type.length)).join('\n'),
@@ -205,6 +208,7 @@ Object.assign(expr, {
 
     // a = b,  a = (b,c),   a = (b;c,d)
     if (typeof a === 'string') {
+      if (globals[a]?.func) err(`Redefining function '${a}' is not allowed`)
       a = define(a)
       return tee(a, pick(1,asFloat(expr(b))))
     }
@@ -243,13 +247,12 @@ Object.assign(expr, {
       // FIXME: put function to a table
       // pointer to a function - need to be declared in advance, since body may contain refs
       globals[name] = {func:true, args, type:'i32'};
-      if (exports) exports[name] = globals[name]
 
       locals = {[_tmp]:[]}
 
       // normalize body to (a;b;) form
       body = body[0]==='(' ? body : ['(',body]
-      body[1] = body[1][0] === ';' ? body[1] : [';',body[1]]
+      body[1] = !body[1] ? [';'] : body[1][0] === ';' ? body[1] : [';',body[1]]
 
       // get args list
       args = !args ? [] : args[0] === ',' ? args.slice(1) : [args];
@@ -266,7 +269,7 @@ Object.assign(expr, {
         else if (arg[0]==='<?') [,name,init] = arg, inits.push(['<?=',name,arg[2]])
         else err('Unknown function argument')
 
-        locals[name] = {arg:true}
+        locals[name] = {arg:true,type:'f64'}
 
         dfn.push(`(param $${name} f64)`)
         return name
@@ -297,7 +300,7 @@ Object.assign(expr, {
       // alloc state, if required
       if (globals[name].state) {
         // state is just region of memory storing sequence of i32s - pointers to memory holding actual state values
-        define(name + '.state', 'i32')
+        define(name + '.state', 'i32', false)
         inc('malloc'), mem=true
         initState = op(`(global.set $${name}.state (call $malloc (i32.const ${globals[name].state.length << 2})))`)
       }
@@ -313,7 +316,11 @@ Object.assign(expr, {
       }
 
       // init body - expressions write themselves to body
-      funcs[name] = `(func $${name} ${dfn.join(' ')}${prepare.length ? `\n;; prepare\n${prepare.join('\n')}` : ``}\n;; body\n${result}${defer.length ? `\n;; defer\n${defer.join(' ')}` : ``})`
+      funcs[name] = `(func $${name} ${dfn.join(' ')}` +
+        (prepare.length ? `\n;; prepare\n${prepare.join('\n')}` : ``) +
+        (result ? `\n;; body\n${result}` : ``) +
+        (defer.length ? `\n;; defer\n${defer.join(' ')}` : ``) +
+      `)`
 
       func = prevFunc
 
@@ -626,8 +633,23 @@ Object.assign(expr, {
     if (locals) err('Export must be in global scope')
     // FIXME: if (expNode !== node && expNode !== node[node.length-1]) err('Export must be the last node');
 
-    exports = {}
-    return expr(a)
+    let res = expr(a)
+
+    const exported = (a) => {
+      // a
+      if (typeof a === 'string') exports[a] = globals[a] || err('Unknown export member `' + a + `'`)
+      // a,b; a=1,b=2;
+      else if (a[0] === ',') for (let i of a.slice(1)) exported(i)
+      // a=1. (a,b,c)=(1,2,3).
+      // (a,b,c)
+      // [a,b,c]
+      // a(); a()=()
+      else if (['(','=','[','()'].includes(a[0])) exported(a[1])
+      else err('Unknown export expression `' + stringify(a) + '`');
+    }
+    exported(a)
+
+    return res
   },
 })
 
@@ -637,7 +659,7 @@ function set (name, init='') {
 }
 
 function get (name) {
-  return op(`(${locals?.[name]?'local':'global'}.get $${name})`, 'f64')
+  return op(`(${locals?.[name]?'local':'global'}.get $${name})`, locals?.[name]?.type || globals[name]?.type)
 }
 
 function tee (name, init) {
@@ -649,7 +671,6 @@ function define(name, type='f64') {
   name += blockc.slice(0,blockc.cur).join('.')
   if (!locals) {
     if (!globals[name]) globals[name] = {var:true, type}
-    if (!locals && exports) exports[name] = globals[name]
   }
   else {
     if (!locals[name]) locals[name] = {var:true, type}
@@ -773,7 +794,7 @@ function pick(count, input) {
 // makes sure it stringifies properly into wasm expression
 // provides any additional info: types, static, min/max etc
 // supposed to be a replacement for getDesc to avoid mirroring every possible op
-function op(str, type, info={}) {
+function op(str='', type, info={}) {
   str = new String(str)
   if (!type) type = []
   else if (typeof type === 'string') type = [type]

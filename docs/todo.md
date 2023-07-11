@@ -50,9 +50,9 @@
 * [x] implement computed ranges in lists creation
 * [x] ~~implement scopes as either tmp functions or blocks~~ -> just resolve variables
 * [x] Implement storing buffer items
-* [x] Internal static arrays
+* [ ] Static arrays init
 * [x] Make all `local.set` / `global.set` a `set(name, value)` function: we don't need to know about tmp/define etc.
-  * [ ] Think if we need to expose fully-js API for building wasm code, similar to wasmati
+  * [x] ~~Think if we need to expose fully-js API for building wasm code, similar to wasmati~~ no
 * [ ] Test nested scopes variables `(x=0;(y=1);y)`
 * [ ] `(a=1,c; (b=2; c=a+b;); c)` test
 * [ ] Extend i32 to i64 whereever possible
@@ -71,8 +71,9 @@
 * [ ] Stub all wrong syntax error cases, like `++a=123;` etc - any operators on the lhs of `=` etc., all permutations
 * [ ] math: sin, cos, pow, mod etc - from mono https://github.com/stagas/mono
 * [x] *state
-  * [ ] `*x=[0..10]`
+  * [x] `*x=[0..10]`
   * [x] `x()=(*i);y()=(x())`
+  * [ ] `x(_sin)=(sin() + _sin())`
 * [ ] Readme examples
 * [ ] Make `br_if` loops everywhere - it doesn't create control block (more lightweight)
 * [ ] Test in-loop variables `xs <| (x) -> (y;x+=y;)`
