@@ -43,10 +43,12 @@
   * [ ] Imports
   * [ ] Units
   * [ ] basic maths
-  * [ ] All operators
+  * [ ] Group operators
+  * [ ] Comments
 * [ ] static arrays
 * [ ] list comprehension
-* [ ] better detect & collapse static nodes
+* [ ] static expressions detection
+  * [ ] need for units
   * [ ] a+0 -> a
 * [ ] static arrays via `data` section
 * [ ] loops

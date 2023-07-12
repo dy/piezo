@@ -133,6 +133,19 @@ t('compile: numbers inc/dec', t => {
   is(mod.instance.exports.x.value, -1)
 })
 
+t.only('compile: units', t => {
+  let wat = compile(`
+    1k = 1000; 1pi = 3.1415;
+    1s = 44100; 1m=60s; 1h=60m; 1ms = 0.001s;
+    a=10.1k, b=2pi, c=1h2m3.5s .
+  `)
+
+  let mod = compileWat(wat)
+  is(mod.instance.exports.a.value, 10100)
+  is(mod.instance.exports.b.value, 3.1415*2)
+  is(mod.instance.exports.c.value, 60*60*44100 + 2*60*44100 + 3.5*44100)
+})
+
 t('compile: conditions or/and', t => {
   let wat, mod
   wat = compile(`z=1||0.`)

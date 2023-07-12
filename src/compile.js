@@ -5,7 +5,7 @@ import {FLOAT,INT} from './const.js'
 import stringify from './stringify.js'
 import { parse as parseWat } from "watr";
 
-let includes, globals, funcs, func, locals, exports, blockc, heap, mem, returns;
+let includes, globals, funcs, func, locals, exports, blockc, heap, mem, returns, units;
 
 const _tmp = Symbol('tmp')
 
@@ -28,7 +28,8 @@ export default function compile(node) {
   returns = null, // returned items from block (collect early returns)
   func = null, // current function that's being initialized
   heap = 0, // heap size as number of pages (detected from max static array size)
-  mem = false // indicates if memory must be included (heap automatically enables memory)
+  mem = false, // indicates if memory must be included (heap automatically enables memory)
+  units = {} // holds currently defined units (inserted as direct constants)
 
   // run global in start function
   let init = expr(node).trim(), out = ``
@@ -92,10 +93,22 @@ function expr(statement) {
   err('Unknown operation `' + statement[0] + '`',statement)
 }
 
+// convert unit node to value
+function u2c (n, unit, ext) {
+  // FIXME: test
+  if (unit) n *= units[unit] || err(`Unknown unit \`${unit}\``);
+  if (ext) n += u2c(...ext.slice(1))
+  return n
+}
+
 Object.assign(expr, {
   // number primitives: 1.0, 2 etc.
-  [FLOAT]([,a]) { return op(`(f64.const ${a})`,'f64',{static:true})},
-  [INT]([,a]) { return op(`(i32.const ${a})`,'i32',{static:true})},
+  [FLOAT]([,a,unit,ext]) {
+    return op(`(f64.const ${u2c(a,unit,ext)})`,'f64',{static:true})
+  },
+  [INT]([,a,unit,ext]) {
+    return op(`(i32.const ${u2c(a,unit,ext)})`,'i32',{static:true})
+  },
 
   // a; b; c;
   ';'([,...statements]){
@@ -327,7 +340,16 @@ Object.assign(expr, {
       return initState
     }
 
-    err('Unknown assignment', a)
+    // 1k = ... - define units
+    if ((a[0] === INT || a[0] === FLOAT) && a[2]) {
+      // FIXME: here can be full-fledged static expression like 1pi * 3 etc.
+      if (b[0] !== INT && b[0] !== FLOAT) err(`Invalid unit definition \`${stringify(['=',a,b])}\``)
+      let [,n,unit] = a, [,value] = b
+      units[unit] = value / n
+      return
+    }
+
+    err(`Unknown assignment left value \`${stringify(a)}\``)
   },
 
   // a <| b
