@@ -134,7 +134,7 @@ m = [n[..]];                    ;; copy n
 m = [first:1, 2..4, last:5];    ;; mixed definition
 m = [1, [2, 3, [4]]];           ;; nested arrays (tree)
 m = [0..4 <| i -> i * 2];       ;; array comprehension
-m.first, m.last;                ;; get by name alias
+m.0, m.first, m.last;           ;; get by static index or alias
 (first, last) = (m[0], m[-1]);  ;; get by index
 (second, third) = m[1..];       ;; get multiple values
 (first, last:c) = m[..];        ;; all values
