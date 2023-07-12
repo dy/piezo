@@ -134,7 +134,7 @@ m = [n[..]];                    ;; copy n
 m = [first:1, 2..4, last:5];    ;; mixed definition
 m = [1, [2, 3, [4]]];           ;; nested arrays (tree)
 m = [0..4 <| i -> i * 2];       ;; array comprehension
-m.first, m.last;                ;; get by name alias
+m.0, m.first, m.last;           ;; get by static index or alias
 (first, last) = (m[0], m[-1]);  ;; get by index
 (second, third) = m[1..];       ;; get multiple values
 (first, last:c) = m[..];        ;; all values
@@ -448,9 +448,9 @@ Inspired by [_mono_](https://github.com/stagas/mono), [_zzfx_](https://killedbya
 
 ### Principles
 
-* _Expressive_: common expressions syntax, range clamping prevents blowing up args, group-operations for shortness.
-* _No-keywords_: intuition - word means variable, symbol means operator. Allows truly i18l code.
-* _Case-agnostic_: changing case doesn't break code, ie. URL-safe. Typo-proof, eg. no `sampleRate` vs `samplerate` mistake.
+* _Expressive_: common familiar expressions syntax, useful language patterns like range clamping, group operations etc.
+* _No-keywords_: word means variable, symbol means operator. Allows truly i18l code.
+* _Case-agnostic_: changing case doesn't break code: URL-safe. Typo-proof, eg. no `sampleRate` vs `samplerate` mistake.
 * _Space-agnostic_: spaces/newlines (excluding comments) can be safely removed or added, eg. for compression or prettifying.
 * _No types_: type is internal feature defined by operator. Focus on processing logic rather than language.
 * _0 runtime_: statically analyzable, no OOP, no structures, no lamda functions, no dynamic scopes.
