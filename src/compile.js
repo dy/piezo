@@ -94,20 +94,19 @@ function expr(statement) {
 }
 
 // convert unit node to value
-function u2c (n, unit, ext) {
-  // FIXME: test
+function applyUnits (n, unit, ext) {
   if (unit) n *= units[unit] || err(`Unknown unit \`${unit}\``);
-  if (ext) n += u2c(...ext.slice(1))
+  if (ext) n += applyUnits(...ext.slice(1))
   return n
 }
 
 Object.assign(expr, {
   // number primitives: 1.0, 2 etc.
   [FLOAT]([,a,unit,ext]) {
-    return op(`(f64.const ${u2c(a,unit,ext)})`,'f64',{static:true})
+    return op(`(f64.const ${applyUnits(a,unit,ext)})`,'f64',{static:true})
   },
   [INT]([,a,unit,ext]) {
-    return op(`(i32.const ${u2c(a,unit,ext)})`,'i32',{static:true})
+    return op(`(i32.const ${applyUnits(a,unit,ext)})`,'i32',{static:true})
   },
 
   // a; b; c;
@@ -344,8 +343,8 @@ Object.assign(expr, {
     if ((a[0] === INT || a[0] === FLOAT) && a[2]) {
       // FIXME: here can be full-fledged static expression like 1pi * 3 etc.
       if (b[0] !== INT && b[0] !== FLOAT) err(`Invalid unit definition \`${stringify(['=',a,b])}\``)
-      let [,n,unit] = a, [,value] = b
-      units[unit] = value / n
+      let [,n,unit] = a, [,value,bUnit] = b
+      units[unit] = applyUnits(value,bUnit) / n
       return
     }
 
