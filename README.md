@@ -22,7 +22,7 @@
 true = 0b1, false = 0b0;        ;; alias booleans
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; units
-1k = 1000; 1pi = 355/113;       ;; define units
+1k = 1000; 1pi = 3.1415926;     ;; define units
 1s = 44100; 1ms = 0.001s;       ;; useful for sample indexes
 10.1k, 2pi;                     ;; units deconstruct to numbers: 10100, 6.283
 1m=60s;1h=60m; 1h2m3.5s;        ;; unit combinations
