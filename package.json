@@ -7,7 +7,7 @@
     "watr": "^1.2.0"
   },
   "dependencies": {
-    "subscript": "^7.4.3"
+    "subscript": "^7.4.6"
   },
   "name": "sonscript",
   "description": "> Sound language",

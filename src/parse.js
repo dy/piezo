@@ -10,14 +10,15 @@ const OPAREN=40, CPAREN=41, OBRACK=91, CBRACK=93, SPACE=32, QUOTE=39, DQUOTE=34,
 // precedences
 const PREC_SEMI=1,
 PREC_EXPORT=2,
-PREC_SEQUENCE=3, //  a, b==c, d,   a, b>=c, d,   a:b , c:d
 PREC_LABEL=4, // a:b = 2,  a:b, b:c,   a: b&c
 PREC_RETURN=4, // x ? ^a : y
 PREC_STATE=4, // *(a,b,c)
 PREC_LOOP=5, // <| |>
 PREC_MAP=6, // ->
+// NOTE: these halves are sensitive since subscript for rassoc uses 0.5 precedence shift
+PREC_SEQUENCE=7.75, //  ^a,b,c;  a, b ? c,d : e,f;
 PREC_IF=8,    // a ? b=c;  a = b?c;
-PREC_ASSIGN=8,  // a=b, c=d,  a = b||c,  a = b | c,   a = b&c
+PREC_ASSIGN=8.25,  // a=b, c=d,  a = b||c,  a = b | c,   a = b&c
 PREC_OR=11,
 PREC_AND=12,
 PREC_BOR=13, // a|b , c|d,   a = b|c
@@ -178,7 +179,7 @@ token('?', PREC_IF, (a, b, c) => (
   a && (b=expr(PREC_IF-1)) && skip(c => c === COLON) && (c=expr(PREC_IF-1), ['?:', a, b, c])
 ))
 // a:b, c:d
-binary(':', PREC_LABEL, true)
+// binary(':', PREC_LABEL, true)
 
 // a[b], a[]
 token('[', PREC_CALL,  (a,b) => a && (b=expr(0,CBRACK), b ? ['[]', a, b] : ['[]', a]))

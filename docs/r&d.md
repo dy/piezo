@@ -2740,6 +2740,14 @@ Having wat files is more useful than direct compilation to binary form:
   - forces group-assign be parenthesized (a,b,c) = (d, e, f)
   + allows comma-style operations sequence, rather than python-like meaning, eg a++, b+=2, c=4,
 
+  3. Single assignment is group, multiple is seq: `a,b = c,d` vs `a=b, c=d`
+
+  + Allows unparented assignments `a,b=c,d;`
+  ? What are potential confusions?
+    - `a,b=c,d=e,f` - not allowed sequence of multiple assignments
+    - `c=d,e` as return member or elsewhere considers only `c` as return instead of `c=d, e`
+  - breaks regular parsing logic
+
 ## [ ] Should var scope be defined by parens `(x=1;(y=2;);y)` or by function? -> use per-function scope
 
   1. By parens: `y==undefined`
@@ -3546,10 +3554,13 @@ Having wat files is more useful than direct compilation to binary form:
   * Mixed no-heap as much as possible, otherwise heap
 
 
-## [x] Import into function scope? -> no, at least use `@math.pi` as direct tokens
+## [x] Import into function scope? -> let's use `@math.pi` as direct tokens for now, multiple imports are too heavy for the value
 
-  * `saw() = (@math#pi; pi*2+...)`
+  * `saw() = (@math:pi; pi*2+...)`
   + allows avoiding conflicts
+  ~+ seems unavoidable if we introduce with `list:a,b,c` operator
+    - we don't;
+    - also we don't have array aliases.
 
 ## [x] Import JS things? -> yes, import only JS things, WASM has no import mechanisms
 
@@ -3565,7 +3576,7 @@ Having wat files is more useful than direct compilation to binary form:
   + naturally enables shared memory
   ? can help with question of naming memory?
 
-## [x] Directly call imported items as `@math.pi`? -> yes, both with destructuring as `@math:x,y,z`
+## [x] Directly call imported items as `@math.pi`? -> yes
 
   + so js does.
   + nicely separates namespace
@@ -3585,7 +3596,79 @@ Having wat files is more useful than direct compilation to binary form:
     ? What if `(pi, sin, cos) <= @math`?
   + makes `@` part of name with special meaning
 
-## [ ] Should we make dot part of name, eg. `x.1`, `x.2`?
+  ? what if `pi@math`?
+
+  * if we make import as `@math:x,y,z` then `list:first,last` acts as destructuring as well...
+    * same as `(x,y,z)=@math.(x,y,z)` or `(first:first, last:last) = list`
+    - we already have `list.first`, `list[0]` - making also `list:first` adds to confusion
+      ? can we lower precedence of `.` so that `list.a,b,c` returns 3 items?
+        - nah, `list.a, b, c` that is
+    ~ makes `:` local operator, eg. `(list:first,last; first+last)`, so `(@math:sin,cos; sin(x)+cos(x))`
+    ~ narrow version of `with` operator, that takes list of items to expose
+    - `lib:a,b,c` has precedence conflict with `fn(a:1,b:2,c:3)` and `[first:a, last:b]`
+
+  ? Should we just keep `(x,y,z)=(@math.x,@math.y,@math.z)`? Can we optimize it?
+    * `(x,y,z)=@math[x,y,z]`?
+      ? `(a,b,c)=list[0,1,2]`?
+    * `(x,y,z)=@math.(x,y,z)`?
+      ? `(a,b,c)=list.(0,1,2)`?
+    * `(x,y,z)=@math.;`?
+      ? `(a,b,c)=list.`?
+    * `(x,y,z)=@math[..]`?
+    * `(..x,..y,..z)=@math`?
+    * `x,y,z @ math`?
+
+
+## [x] Labels `a:1, b:2` vs imports `a: b,c` -> we need neither of them, but let's raise `,` precedence;
+
+  - ~~`[a:1, b:2]`~~, `fn(a:1, b:2)` and ~~`(a:1, b:2) = x`~~ "hold hostage" the following operators:
+    * `list: a,b,c`
+      + if we prohibit named lists, this disappears
+    * `@mod: a,b,c`
+      + if we opt out of named lists, we essentially introduce `:` for only imports
+        + we likely don't need `@a:b,c` imports
+    * `^ a,b,c`
+    * `a,b,c <|`, `a,b,c |>`
+    * `a,b,c -> a,b,c`
+    * `x ? a,b,c;`
+  - we're not able to implement array aliases: arbitrary argument can be an array, some arrays have aliases others not
+    , we're not going to make aliases dynamic
+  - destructuring `(a:1,b:2)=x` is therefore not needed, since we can't create array aliases
+  - function named args therefore reserve a whole unique naming method `a:1, b:2`, which is not supported elsewhere.
+
+  ? What are the alternative ways for named arguments ? Are they so much useful?
+    + they increase readability
+      - increase code size as well
+    - `fn(a,,b,,,c)` - pretty terse and minimalistic way, compatible with arrays, to skip args
+    - js doesn't have named arguments
+    ~- if we pass args from heap as `x(x:1, 1..10)` then what? is there a conflict?
+    - units also help separating args: `osc(3s, 1000hz)`, it would be too verbose to `osc(t:3s, f:1000hz)`
+    ? we could do them as group `osc((t:3s), (f:1000hz))`, `adsr((a:1),(d:2),(s:3),(r:4))`
+      ~ so `label:` works more as part of block/group as `(name: a,b,c)` rather than individual items.
+        + which makes sense in terms of importing `@modul:a,b,c`
+
+## [x] Is it worthy introducing `:` only for importing members, ie. -> no, at least not now
+
+    * `@math:sin,cos` vs `sin=@math.sin, cos=@math.cos`
+    + we introduce whole operator for exports: `a,b,c.`
+    + it's very naturan typographic convention: `these: this, that`.
+    ~ alternatively we just do `(sin, cos) = @math`
+    - `@math:sin,cos` doesn't allow redefinition of names, it's hardly bound to "with"
+    - colon has types association lately
+    - it's likely good practice to explicitly indicate `@math.sin` to show that's not native code everywhere
+    - JS does `Math.sin`
+
+  ? Can we reuse `:` for sequences somewhere else?
+    * `export: sin, cos;`
+    * `(x()+y(), z()+w()): a, b`
+    - nah
+
+## [x] Importing issue: `@math.pi` vs `@math.sin()` - we have to detect either member is a function or a number. How? -> let's try by usage, since ops do typecast in similar way
+
+  1. By usage. `@math.pi * 2` - imports number, `@math.sin()` - imports a function.
+    + we apply same logic in ops: `()` treats as fn, `[]` as array and `+` as number
+
+## [x] Should we make dot part of name, eg. `x.1`, `x.2`? -> no, it can be `a . 0`
 
   - likely no, since we use it in `@math.pi`
 

@@ -143,25 +143,24 @@ m[0..] = m[-1..0];              ;; reverse order
 m[0..] = m[1..,0];              ;; rotate
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; loop, map, reduce
-(a, b, c) <| i -> x(i);         ;; for each item i do x(item)
-(a, b, c) <| i -> x(i);         ;; for each item i do x(item)
+a, b, c <| i -> x(i);           ;; for each item i do x(item)
+a, b, c <| i -> x(i);           ;; for each item i do x(item)
 (10..1 <| i -> (                ;; iterate range
   i < 3 ? ^^;                   ;; ^^ break
   i < 5 ? ^;                    ;; ^ continue
 ));                             ;;
 i < 10 <| x(i++);               ;; while idx <= 3 do x(i)
-items <| (item, idx) -> ();     ;; iterate array
+items <| item, idx -> ();       ;; iterate array
 items <| x -> a(x)              ;; pipe iterations
       <| y -> b(y);             ;;
 items <| x -> (                 ;; nest iterations
   ..x <| y -> a(x,y)            ;;
 );                              ;;
 x[3..5] <|= x -> x * 2;         ;; map items from range
-list |> (x, sum) -> sum + x;    ;; fold/reduce
+list |> x, sum -> sum + x;      ;; fold/reduce
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; import, export
-@math:sin,pi,cos;               ;; import multiple
-@math.pi * 2;                   ;; or use imported member directly
+@math.pi * 2;                   ;; use imported member as @lib.prop
 x, y, z.                        ;; export (from global scope)
 ```
 
