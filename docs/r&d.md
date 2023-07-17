@@ -4234,4 +4234,3 @@ Having wat files is more useful than direct compilation to binary form:
 
   * `sum=0; xs <| (x) -> (sum += x)`
   * `xs |> (x, sum) -> sum + x`
-  * Folds seem to be more efficient than loops: they create single value as result, loop creates multiple values (heap?).
