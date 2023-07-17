@@ -18,7 +18,7 @@ function clean (str) {
 
 // convert wast code to binary
 const wabt = await Wabt()
-export function compileWat (code, importObj={}) {
+export function compileWat (code, imports={}) {
   code =
   '(func $funcref.log (import "imports" "log") (param funcref))\n' +
   '(func $externref.log (import "imports" "log") (param externref) (result externref))\n' +
@@ -47,10 +47,11 @@ export function compileWat (code, importObj={}) {
   wasmModule.destroy()
 
   const config = {
-    ...importObj,
     imports: {
-      log(...args){ console.log(...args); }
-    }
+      ...(imports.imports||{}),
+      log(...args){ console.log(...args); },
+    },
+    ...imports
   }
   // sync instance - limits buffer size to 4kb
   const module = new WebAssembly.Module(binary.buffer)
@@ -144,6 +145,13 @@ t('compile: units', t => {
   is(mod.instance.exports.a.value, 10100)
   is(mod.instance.exports.b.value, 3.1415*2)
   is(mod.instance.exports.c.value, 60*60*44100 + 2*60*44100 + 3.5*44100)
+})
+
+t.todo('compile: units - errors', t => {
+  // bad expressions
+  //
+  compile(`1h=1s;1s=44800;`)
+  compile(`1k=x();`)
 })
 
 t('compile: conditions or/and', t => {
@@ -267,20 +275,13 @@ t('compile: function oneliners', t => {
 
 t.skip('debugs', t => {
   const memory = new WebAssembly.Memory({ initial: 1 });
-  const importObject = { env: { memory } };
+  const importObject = { x: { y: ()=>123, z:123 }};
   let {instance} = compileWat(`
-  (func $x (param funcref)
-    (call $i32.log (i32.const 123))
-    (call $funcref.log (local.get 0))
-    (call $i32.log (i32.const 456))
-    (return)
-  )
-  (func $cb (param i32)   (return))
-  (export "x" (func $x))
-  (export "cb" (func $cb))
-`, importObject)
-  // console.log(instance.exports.cb)
-  instance.exports.x(instance.exports.x(instance.exports.cb))
+    (import "x" "y" (func $xy (result i32)))
+    (import "x" "y" (global $xy i32))
+    ;;(export "xy" (func $x.y))
+  `, importObject)
+  // instance.exports.x(instance.exports.x(instance.exports.cb))
 })
 
 t('compile: misc vars', t => {
@@ -462,7 +463,6 @@ t('compile: early returns', t => {
 })
 
 t.todo('compile: break multiple scopes', t => {
-
 })
 
 t.todo('compile: break/continue', t => {
@@ -572,6 +572,17 @@ t.todo('compile: state variable - mixed deps', t => {
   let {x,y,z} = mod.instance.exports
 })
 
+t.todo('compile: import simple', t => {
+  let wat = compile(`@math:e,sqrt2; pi=@math.pi,e,sqrt2.`)
+  let mod = compileWat(wat, {math:{e:Math.E, pi:Math.PI}})
+  let {pi,e,sqrt2} = mod.instance.exports
+  console.log(pi,e,sqrt2)
+})
+
+t.todo('compile: import non-existent', t => {
+
+})
+
 t.todo('compile: audio-gain', t => {
   let wat = compile(`
   blockSize = 1024;
@@ -605,9 +616,6 @@ t.todo('compile: sine gen', t => {
 
   is(wat, [])
 })
-
-
-t.todo('compile: imports')
 
 
 

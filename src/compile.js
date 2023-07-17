@@ -5,7 +5,7 @@ import {FLOAT,INT} from './const.js'
 import stringify from './stringify.js'
 import { parse as parseWat } from "watr";
 
-let includes, globals, funcs, func, locals, exports, blockc, heap, mem, returns, units;
+let includes, globals, funcs, func, locals, exports, heap, mem, returns, units;
 
 const _tmp = Symbol('tmp')
 
@@ -23,7 +23,6 @@ export default function compile(node) {
   includes = [], // pieces to prepend
   funcs = {}, // defined user and util functions
   // FIXME: loop ideally must be used by-reference
-  blockc = Object.assign([''],{cur:0}), // current block count
   exports = {}, // items to export
   returns = null, // returned items from block (collect early returns)
   func = null, // current function that's being initialized
@@ -135,9 +134,6 @@ Object.assign(expr, {
     // ((a)) -> a
     while (body[0]==='(') body = body[1]
 
-    // resolve scopes var names
-    blockc[++blockc.cur]=(blockc[blockc.cur]||0)+1
-
     // FIXME: detect block type, if it needs early return - then we ought to wrap it
     let parentReturns = returns;
     returns=[];
@@ -154,7 +150,6 @@ Object.assign(expr, {
     }
 
     returns = parentReturns;
-    blockc.cur--;
 
     return out;
   },
@@ -355,9 +350,6 @@ Object.assign(expr, {
   '<|'([,a,b]) {
     let idx, item, out = ``
 
-    // loop creates scope on-par with block
-    blockc[++blockc.cur]=(blockc[blockc.cur]||0)+1
-
     // get item/idx name
     // [.. <| x -> x]
     if (b[0] === '->') {
@@ -446,8 +438,6 @@ Object.assign(expr, {
         `))\n`
       }
     }
-
-    blockc.cur--
 
     return op(out, 'f64', {dynamic:true})
   },
@@ -689,7 +679,6 @@ function tee (name, init) {
 
 // define variable in current scope, export if necessary; returns resolved name
 function define(name, type='f64') {
-  name += blockc.slice(0,blockc.cur).join('.')
   if (!locals) {
     if (!globals[name]) globals[name] = {var:true, type}
   }

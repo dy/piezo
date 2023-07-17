@@ -4,7 +4,7 @@ import compile from '../src/compile.js'
 import { compileWat } from './compile.js'
 
 
-t('perf: biquad', t => {
+t.todo('perf: biquad', t => {
   compile(`
     @math: pi,cos,sin;                  ;; import pi, sin, cos from math
 

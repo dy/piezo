@@ -10,12 +10,12 @@ const OPAREN=40, CPAREN=41, OBRACK=91, CBRACK=93, SPACE=32, QUOTE=39, DQUOTE=34,
 // precedences
 const PREC_SEMI=1,
 PREC_EXPORT=2,
-PREC_SEQUENCE=3, //  a, b==c, d,   a, b>=c, d,   a?b:c , d
+PREC_SEQUENCE=3, //  a, b==c, d,   a, b>=c, d,   a:b , c:d
 PREC_LABEL=4, // a:b = 2,  a:b, b:c,   a: b&c
-PREC_RETURN=4, // x ? ^a,b,c : y
+PREC_RETURN=4, // x ? ^a : y
 PREC_STATE=4, // *(a,b,c)
 PREC_LOOP=5, // <| |>
-PREC_MAP=6,
+PREC_MAP=6, // ->
 PREC_IF=8,    // a ? b=c;  a = b?c;
 PREC_ASSIGN=8,  // a=b, c=d,  a = b||c,  a = b | c,   a = b&c
 PREC_OR=11,
@@ -99,7 +99,7 @@ lookup[QUOTE] = string(QUOTE)
 token('//', PREC_TOKEN, (a, prec) => (skip(c => c >= SPACE), a||expr(prec)))
 
 // sequences
-nary(',', PREC_SEQUENCE, false)
+nary(',', PREC_SEQUENCE, true)
 nary(';', PREC_SEMI, true)
 nary('||', PREC_OR)
 nary('&&', PREC_AND)
@@ -178,7 +178,7 @@ token('?', PREC_IF, (a, b, c) => (
   a && (b=expr(PREC_IF-1)) && skip(c => c === COLON) && (c=expr(PREC_IF-1), ['?:', a, b, c])
 ))
 // a:b, c:d
-binary(':', PREC_LABEL, false)
+binary(':', PREC_LABEL, true)
 
 // a[b], a[]
 token('[', PREC_CALL,  (a,b) => a && (b=expr(0,CBRACK), b ? ['[]', a, b] : ['[]', a]))

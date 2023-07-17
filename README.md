@@ -23,9 +23,9 @@ true = 0b1, false = 0b0;        ;; alias booleans
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; units
 1k = 1000; 1pi = 3.1415926;     ;; define units
-1s = 44100; 1ms = 0.001s;       ;; useful for sample indexes
+1s = 44100; 1m = 60s;           ;; useful for sample indexes
 10.1k, 2pi;                     ;; units deconstruct to numbers: 10100, 6.283
-1m=60s;1h=60m; 1h2m3.5s;        ;; unit combinations
+2m35s;                          ;; unit combinations
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; standard operators
 + - * / % -- ++                 ;; arithmetical (float)
@@ -54,7 +54,6 @@ foo();                          ;; semi-colons at end of line are mandatory
 (a = b+1; a,b,c);               ;; scope can return multiple values
 (a ? ^b ; c);                   ;; or early return b
 (a ? (b ? ^^c) : d);            ;; break 2 scopes
-(sin(), sin());                 ;; scope defines state visibility (see below)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; conditions
 sign = a < 0 ? -1 : +1;         ;; inline ternary
@@ -87,7 +86,7 @@ a, b=1, c=2;                    ;; define multiple
 (a,b,c) = (d,e,f);              ;; assign multiple: a=d, b=e, c=f
 (a,b) = (b,a);                  ;; swap: temp=a; a=b; b=temp;
 (a,b) + (c,d);                  ;; any ops act on members: (a+c, b+d)
-(a,b).x;                        ;; (a.x, b.x);
+(a,b).1;                        ;; (a.1, b.1);
 (a,b) = (c,d,e);                ;; (a=c, b=d);
 (a,b,c) = d;                    ;; (a=d, b=d, c=d);
 a = (b,c,d);                    ;; (a=b);
@@ -104,12 +103,11 @@ times(m = 1, n <= 1..) = (      ;; optional, clamped args
 );                              ;;
 times(3,2);                     ;; 6
 times(5);                       ;; 5. optional argument
-times(n: 10);                   ;; 10. named argument
-times(,11);                     ;; 11. skipped argument
+times(,10);                     ;; 10. skipped argument
 copy = triple;                  ;; capture function
 copy(10);                       ;; also 30
-swap(x,y) = (y,x);              ;; return multiple values
-(a,b) = swap(b,a);              ;; destructure returns
+dup(x) = (x,x);                 ;; return multiple values
+(a,b) = dup(b);                 ;; destructure returns
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; state variables
 a() = ( *i=0; ++i );            ;; i persists value between a calls
@@ -129,15 +127,13 @@ d(b);                           ;; 2, 32;
 m = [..10];                     ;; array of 10 elements (not necessarily 0)
 m = [..10 <| 0];                ;; array of 10 zeros
 m = [1,2,3,4];                  ;; array with 4 values
-m = [l:2, r:4, c:6];            ;; position aliases
 m = [n[..]];                    ;; copy n
-m = [first:1, 2..4, last:5];    ;; mixed definition
+m = [1, 2..4, 5];               ;; mixed definition
 m = [1, [2, 3, [4]]];           ;; nested arrays (tree)
 m = [0..4 <| i -> i * 2];       ;; array comprehension
-m.0, m.first, m.last;           ;; get by static index or alias
-(first, last) = (m[0], m[-1]);  ;; get by index
-(second, third) = m[1..];       ;; get multiple values
-(first, last:c) = m[..];        ;; all values
+m.0, m.1;                       ;; get by static index
+(first, last) = (m[0], m[-1]);  ;; get by calculated index
+(second, ..last) = m[1, 2..];   ;; get multiple values
 length = m[];                   ;; get length
 m[0] = 1;                       ;; set value
 m[2..] = (1, 2..4, n[1..3]);    ;; set multiple values from offset 2
@@ -147,6 +143,7 @@ m[0..] = m[-1..0];              ;; reverse order
 m[0..] = m[1..,0];              ;; rotate
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; loop, map, reduce
+(a, b, c) <| i -> x(i);         ;; for each item i do x(item)
 (a, b, c) <| i -> x(i);         ;; for each item i do x(item)
 (10..1 <| i -> (                ;; iterate range
   i < 3 ? ^^;                   ;; ^^ break
@@ -163,8 +160,8 @@ x[3..5] <|= x -> x * 2;         ;; map items from range
 list |> (x, sum) -> sum + x;    ;; fold/reduce
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; import, export
-@math:sin,pi,cos;               ;; import (into global scope)
-1pi = @math.pi;                 ;; or use imported member directly
+@math:sin,pi,cos;               ;; import multiple
+@math.pi * 2;                   ;; or use imported member directly
 x, y, z.                        ;; export (from global scope)
 ```
 
@@ -445,6 +442,8 @@ In particular, JS _Web Audio API_ is not suitable for audio purposes – it has 
 _Lino_ addresses these points, making audio/signals processing more accessible and robust.<br/>
 It targets browsers, [audio worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, Python, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) etc.<br/>
 Inspired by [_mono_](https://github.com/stagas/mono), [_zzfx_](https://killedbyapixel.github.io/ZzFX/), [_bytebeat_](https://sarpnt.github.io/bytebeat-composer/), _[hxos](https://github.com/stagas/hxos)_, [_min_](https://github.com/r-lyeh/min) and others.
+
+Speaking personally, it's back-to-the-roots attempt of rethinking JS in clean sweet functional style.
 
 ### Principles
 

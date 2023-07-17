@@ -487,7 +487,7 @@ Having wat files is more useful than direct compilation to binary form:
 
   + saves many conversions
   - has implicit sr variable...
-  ?! `@pi=3.14; 2pi;`, `@s = 44800; 1s;`
+  ?! ~~`@pi=3.14; 2pi;`, `@s = 44800; 1s;`~~
     - `1s === 44800`, not `@s`
     - reserves `@`
     - `1pi1ms1s` mixed units fail
@@ -812,7 +812,7 @@ Having wat files is more useful than direct compilation to binary form:
   * Also it can create references to a variable in memory.
   * We use arrays for that purpose, therefore we don't need pointers syntax replica.
 
-## [x] Named array items → ~~yes, useful and organic replacement for object structs~~ -> nah, not clear how with `x[10]` notation
+## [x] Named array items → ~~yes, useful and organic replacement for object structs~~ -> not possible to make arbitrary-argument aliases
 
   * named properties in arrays? `[1,2,3,a:4,b:5]`
     ~ reminds typescript named tuples
@@ -821,8 +821,11 @@ Having wat files is more useful than direct compilation to binary form:
   + in JS that's frequent good-to-have
   + that would organically introduce pattern of named fn arguments either `gain(volume: 1)`
   + named group items are also useful: `oscillators = (a: x->y, b: x-y)`
+    - we don't have groups as primitives
   - conflicting convention: we don't really use labels anywhere (we use variables instead)
   - it kind-of enforces lambdas, which we want to avoid also.
+  - require strings to implement dynamic access `x['first']`
+  - some arrays have aliases, others don't: we're not going to make aliases dynamic
 
 ## [x] If `a ? b`, elvis: `a ?: b`? -> yes, for now it's the best option
   * ~ equivalent to a ? #0 : b
@@ -2592,16 +2595,19 @@ Having wat files is more useful than direct compilation to binary form:
     ~ can take exact name though
     + lowcase-enforced export is kind of cool, `exports.samplerate`
   - not much conventional, only MySQL and other oldies
+  - import question: `@math:E` vs `@math.e`
+    ~ can be solved via manual imports
   + solves problem mentioned by despawnerer (`dateRange` vs `daterange`)
   + lowcase is typographycally more expressive
   + code is robust to changing case, eg. as url string
-  - `1Ms` vs `1ms` is critical
+  - `1Ms` vs `1ms`
     ~ not sure it's good idea to designate such meaning to capitalization
     ~ `1Ms` is super-unlikely, for bytes can use `1mb` - it's never millibyte
   + `#@$_` alleviate case-insensitivity
   - Strings don't allow code to be case-change robust.
     * we either discard strings or make it (half) case-sensitive
   - Atoms may require case-sensitivity, eg. for error messages
+  -
 
   0.5 Capfirst-sensitive, (`Abc` == `ABc`) != (`aBC` == `abc`)
 
@@ -2734,7 +2740,7 @@ Having wat files is more useful than direct compilation to binary form:
   - forces group-assign be parenthesized (a,b,c) = (d, e, f)
   + allows comma-style operations sequence, rather than python-like meaning, eg a++, b+=2, c=4,
 
-## [x] Should var scope be defined by parens `(x=1;(y=2;);y)` or by function? -> we should use parens as scope, but create scope only if new vars are defined there
+## [ ] Should var scope be defined by parens `(x=1;(y=2;);y)` or by function? -> use per-function scope
 
   1. By parens: `y==undefined`
 
@@ -2745,15 +2751,21 @@ Having wat files is more useful than direct compilation to binary form:
   - harder to implement
   + streamlines scopes mechanism
   + allows merging globalParse & localParse mechanism, we just have to properly detect variables.
+  - `(a,b,c)=(1,2,3)` - this initializer logically creates `a,b,c` within first scope, which is false.
+  - in-scope variables are one-time use - they can relatively safely be reused after, can't they?
+  - `try {let x = 0;} catch(){ x===undefined }` - is not nice JS footgun, often we need variable from internal scope
+  - hard to explain to users what's going on
 
   2. By function: `y==2`
   + closer to webassembly
-  - less usefulness
-
-## [x] IR: nested scopes, each scope has own toString() method -> yes, good clean uniform approach
-
-  + unifies returning structure
-  + differentiates scopes with same interface
+  + easier to handle variables since have access to them
+  + more transparency, `((a=1;); a++; (a=2;))` feels fine
+  + function scope is already defined by function,
+  + keeps parens original "safe" meaning of precedence, no logic changes
+  + simpler var naming implementation logic
+  + less variables-per-function in result
+  + solves issue of loops `a <| x -> (y=x)` - `y` becomes function-wise variable
+  - no scope isolation like `let` in JS, not sure what's usefulness of that
 
 ## [x] How to solve problem of array `length` in scope definition - it can't be used as variable name? -> use .scope
 
@@ -2875,7 +2887,6 @@ Having wat files is more useful than direct compilation to binary form:
     - `x[1024]` creates an array of `1025` items
       + we create array as `[..1024]` or `[0..1024]` - which is 1024 members with exclusive lists, not as member reading
 
-
 ## [x] Allocate memory: `*[size]x = (1,2,3)` vs `[12]x = [1,2,3]` -> use arrays x = [1,2,3]
 
   1. `*[size]x = (1,2,3)`
@@ -2956,7 +2967,6 @@ Having wat files is more useful than direct compilation to binary form:
   * We're looking for something like `[1,2,3] | gain(volume) | filter(f:440,gain:-1000)` which returns an array as a result.
     * Therefore `gain`, `filter` functions should expect some hidden or first argument to be not an item but full array
   * We're also looking at gain code looking like `gain = (x, volume) -> x * volume`
-
 
 ## [x] Pipe - should it work more as single-sample processing, or can take whole argument? -> ok, use pipe as iterator, benefits outweight block-processing functions
 
@@ -3069,7 +3079,7 @@ Having wat files is more useful than direct compilation to binary form:
   + we kind-of need idx checker function if we're going to implement ring buffer
   + modwrap operator is for that purpose...
 
-## [x] Scope resolution -> functions have no nested scopes and declared at the top level
+## [x] Scope resolution (fns within fns) -> functions have no nested scopes and declared at the top level
 
   * Would be nice to make all variables local
     + less noise in code, + local.tee available
@@ -3585,7 +3595,7 @@ Having wat files is more useful than direct compilation to binary form:
   * that means there's one global namespace
   * shadowing variables in JS is not nice practice anyways `let x = 0; if () { let x = 1; } `
 
-## [x] Changing variables type `x=1;x=1.0;` -> vars are always f64
+## [x] Changing variables type `x=1;x=1.0;` -> vars are always f64, operators can cast to int
 
   * that's problematic via wasm, since it enforces variable type: would be wrong to cast float to int
   ? upgrade type definition to float if it's ever assigned to
