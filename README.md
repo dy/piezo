@@ -1,6 +1,6 @@
 # 🎧 lino
 
-Low-level microlanguage with common syntax, linear/static memory, 0 types and compiling to 0-runtime WASM. <!-- It also has smooth operator and organic sugar. -->
+Low-level microlanguage with common syntax, linear/static memory, 0 types and compiling to 0-runtime WASM. The main purpose is audio processing code. <!-- It also has smooth operator and organic sugar. -->
 
 <!--[Motivation](./docs/motivation.md)  |  [Documentation](./docs/reference.md)  |  [Examples](./docs/examples.md).-->
 
