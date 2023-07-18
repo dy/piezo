@@ -1,6 +1,6 @@
 # 🎧 lino
 
-**Lino** (*li*ne *no*ise) is low-level language with minimal common syntax, radical design, linear/static memory, compiling to 0-runtime WASM. <!-- It also has smooth operator and organic sugar. -->
+Low-level microlanguage with common syntax, linear/static memory, 0 types and compiling to 0-runtime WASM. <!-- It also has smooth operator and organic sugar. -->
 
 <!--[Motivation](./docs/motivation.md)  |  [Documentation](./docs/reference.md)  |  [Examples](./docs/examples.md).-->
 
@@ -438,11 +438,10 @@ const arrValues = new Float64Array(__memory, arr.value, 3)
 ## Motivation
 
 In general, audio processing doesn't have cross-platform solution, many environments lack audio features.<br/>
-In particular, JS _Web Audio API_ is not suitable for audio purposes – unpredictable pauses, glitches and so on. It's better handled in worklet with WASM.
+In particular, JS _Web Audio API_ is not suitable for audio purposes – unpredictable pauses, glitches and so on. It's better handled in worklet with WASM.<br/>
+_Lino_ addresses these points, hopefully making audio code more accessible and robust.
 
-_Lino_ addresses these points, hopefully making audio code more accessible and robust.<br/>
-
-Speaking personally, the direction JS took is worrisome, so I want to secure some ground, rethink some old JS decisions and let some wishes come true.
+Speaking personally, the direction JS took is worrisome, so I want to secure some ground, rethink some old JS decisions and let some wishes come true. Beauty is subjective, and someone can find lino a *li*ne *no*ise, but I find it beautiful.
 
 <!--
 It targets browsers, [audio worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, Python, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) etc.<br/>
