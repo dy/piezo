@@ -440,7 +440,7 @@ _Lino_ addresses these points, hopefully making audio code more accessible and r
 It targets browsers, [audio worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, Python, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) etc.<br/>
 -->
 
-Speaking personally, it's my attempt to rethink JS the way I like. Also to secure some ground, because the direction JS took is worrisome.
+Speaking personally, it's my attempt to rethink JS the way I like. The direction JS took is worrisome, so I need to secure some ground.
 
 <!--
 ### Principles
