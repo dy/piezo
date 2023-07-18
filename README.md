@@ -437,16 +437,16 @@ const arrValues = new Float64Array(__memory, arr.value, 3)
 
 ## Motivation
 
-In general, audio processing doesn't have cross-platform solution, many environments lack audio features.<br/>
-In particular, JS _Web Audio API_ is not suitable for audio purposes – unpredictable pauses, glitches and so on. It's better handled in worklet with WASM.
+Speaking in general, audio processing doesn't have cross-platform solution, many environments lack audio features.<br/>
+Speaking in particular, JS _Web Audio API_ is not suitable for audio purposes – unpredictable pauses, glitches and so on. It's better handled in worklet with WASM.
 
 _Lino_ addresses these points, hopefully making audio code more accessible and robust.<br/>
+
+Speaking personally, the direction JS took is worrisome, so I want to secure some ground, rethink some old JS decisions and let some wishes come true.
 
 <!--
 It targets browsers, [audio worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, Python, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) etc.<br/>
 -->
-
-Speaking personally, it's my attempt to rethink JS the way I like. The direction JS took is worrisome, so I need to secure some ground.
 
 <!--
 ### Principles
