@@ -1,6 +1,6 @@
 # 🎧 lino
 
-**Lino** (*li*ne *no*ise) is low-level language with minimal common syntax, eccentric patterns, linear memory and compiling to 0-runtime WASM. <!-- It also has smooth operator and organic sugar. -->
+**Lino** (*li*ne *no*ise) is low-level language with minimal common syntax, radical design, linear/static memory, compiling to 0-runtime WASM. <!-- It also has smooth operator and organic sugar. -->
 
 <!--[Motivation](./docs/motivation.md)  |  [Documentation](./docs/reference.md)  |  [Examples](./docs/examples.md).-->
 
@@ -50,9 +50,9 @@ default=1, eval=fn, else=0;     ;; lino has no reserved words
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; statements
 foo();                          ;; semi-colons at end of line are mandatory
-(c = a + b; c);                 ;; parens define scope, return last element
-(a = b+1; a,b,c);               ;; scope can return multiple values
-(a ? ^b ; c);                   ;; or early return b
+(c = a + b; c);                 ;; parens return last statement
+(a = b+1; a,b,c);               ;; can return multiple values
+(a ? ^b; c);                    ;; or return early
 (a ? (b ? ^^c) : d);            ;; break 2 scopes
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; conditions
@@ -66,10 +66,10 @@ sign = a < 0 ? -1 : +1;         ;; inline ternary
 );                              ;;
 a || b ? c;                     ;; if a or b then c
 a && b ?: c;                    ;; elvis: if not a and b then c
-a = b ? c;                      ;; if b then a = c (else a = 0)
+a = b ? c;                      ;; if b then a = c, else a = 0
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; ranges
-0..10;                          ;; from 1 to 9 (10 exclusive)
+0..10;                          ;; from 1 to 9 (1 inclusive, 10 exclusive)
 0.., ..10, ..;                  ;; open ranges
 10..1;                          ;; reverse range
 1.08..108.0;                    ;; float range
@@ -79,21 +79,17 @@ x <? 0..10;                     ;; max(min(x, 10), 0)
 a,b,c = 0..2;                   ;; a==0, b==1, c==2
 (-10..10)[];                    ;; span is 20
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; multiple values
-a, b=1, c=2;                    ;; define multiple
-(a, b, c)++;                    ;; inc multiple elements: (a++, b++, c++)
-(a, (b, c));                    ;; always flat: (a, b, c)
-(a,b,c) = (d,e,f);              ;; assign multiple: a=d, b=e, c=f
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; groups
+a, b=1, c=2;                    ;; define multiple values
+(a, b, c)++;                    ;; increment multiple elements: (a++, b++, c++)
+(a, (b, c));                    ;; groups are always flat: (a, b, c)
+(a,b,c) = (d,e,f);              ;; assign multiple elements: a=d, b=e, c=f
 (a,b) = (b,a);                  ;; swap: temp=a; a=b; b=temp;
-(a,b) + (c,d);                  ;; any ops act on members: (a+c, b+d)
-(a,b).1;                        ;; (a.1, b.1);
-(a,b) = (c,d,e);                ;; (a=c, b=d);
-(a,b,c) = d;                    ;; (a=d, b=d, c=d);
-a = (b,c,d);                    ;; (a=b);
-(a,,b) = (c,d,e);               ;; (a=c, d, b=e);
-(a,b,c) = (d,,e);               ;; (a=d, b, c=e);
-a = b, c = d;                   ;; assignment precedence: (a = b), (c = d)
-(a,b,c) = fn();                 ;; fn returns multiple values;
+(a,b) + (c,d);                  ;; ops act on members: (a+c, b+d)
+(a,b).1 = (c,d)[2];             ;; (a.1=c[2], b.1=d[2]);
+(a,b) = (c,d,e);                ;; drop extra: (a=c, b=d);
+(a,b,c) = d;                    ;; duplicate: (a=d, b=d, c=d);
+(a,,b) = (c,d,e);               ;; skip: (a=c, d, b=e);
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; functions
 double(n) = n*2;                ;; define function
@@ -107,31 +103,31 @@ times(,10);                     ;; 10. skipped argument
 copy = triple;                  ;; capture function
 copy(10);                       ;; also 30
 dup(x) = (x,x);                 ;; return multiple values
-(a,b) = dup(b);                 ;; destructure returns
+(a,b) = dup(b);                 ;; get returns
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; state variables
 a() = ( *i=0; ++i );            ;; i persists value between a calls
 a(), a();                       ;; 1, 2
-b() = (                         ;;
-  *i=[..4 <| 1];                ;; local memory of 4 items
+fib() = (                       ;;
+  *i=[1,0,0];                   ;; local memory of 3 items
   i[1..] = i[0..];              ;; shift memory
-  i.0 = i.1 * 2;                ;; write previous i.1 to current i.0
+  i.0 = i.1 + i.2;              ;; sum prev 2 items
 );                              ;;
-b(), b(), b();                  ;; 2, 4, 8
-c() = (b(), b(), b());          ;; state is defined by function scope
-b(); c();                       ;; 16; 2, 4, 8;
-d(_b) = (b(), _b());            ;; to get external state, pass fn as argument
-d(b);                           ;; 2, 32;
+fib(), fib(), fib();            ;; 1, 2, 3
+c() = (fib(), fib(), fib());    ;; state is defined by function scope
+fib(); c();                     ;; 5; 1, 2, 3;
+d(_b) = (fib(), _b());          ;; to get external state, pass fn as argument
+d(b);                           ;; 1, 8;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; arrays
-m = [..10];                     ;; array of 10 elements (not necessarily 0)
-m = [..10 <| 0];                ;; array of 10 zeros
-m = [1,2,3,4];                  ;; array with 4 values
+m = [..10];                     ;; array of 10 elements
+m = [..10 <| 2];                ;; prefilled with value
+m = [1,2,3,4];                  ;; array of 4
 m = [n[..]];                    ;; copy n
 m = [1, 2..4, 5];               ;; mixed definition
 m = [1, [2, 3, [4]]];           ;; nested arrays (tree)
-m = [0..4 <| i -> i * 2];       ;; array comprehension
-m.0, m.1;                       ;; get by static index
+m = [0..4 <| i -> i * 2];       ;; comprehension
+m.0, m.1;                       ;; get by static index (fast)
 (first, last) = (m[0], m[-1]);  ;; get by calculated index
 (second, ..last) = m[1, 2..];   ;; get multiple values
 length = m[];                   ;; get length
