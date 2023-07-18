@@ -413,17 +413,23 @@ lino source.li > compiled.wasm
 import * as lino from 'lino'
 
 // create wasm arrayBuffer
-const buffer = lino.compile(`mult(x,y) = x*y; arr=[1,2,3];  mult, arr.`)
+const wast = lino.compile(`n=2; mult(x) = x*n; arr=[1,2,3];  mult, n, arr.`)
+const buffer = /* Compile wasm text to buffer somehow, eg. wabt or wat-compier */;
 
 // create wasm instance
 const module = new WebAssembly.Module(buffer)
 const instance = new WebAssembly.Instance(module)
 
 // use API
-const {mult, arr, __memory} = instance.exports
-mult(108,2) // 216
+const {mult, n, arr, __memory} = instance.exports
 
-// arrays are exposed as reference to memory
+// numbers exported as globals
+n.value = 2
+
+// functions exported directly
+mult(108) // 216
+
+// arrays are numbers storing reference to memory
 const arrValues = new Float64Array(__memory, arr.value, 3)
 ```
 
