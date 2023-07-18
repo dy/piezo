@@ -25,7 +25,7 @@ true = 0b1, false = 0b0;        ;; alias booleans
 1k = 1000; 1pi = 3.1415926;     ;; define units
 1s = 44100; 1m = 60s;           ;; useful for sample indexes
 10.1k, 2pi;                     ;; units deconstruct to numbers: 10100, 6.283
-2m35s;                          ;; unit combinations
+2m35s;                          ;; allow combinations
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; standard operators
 + - * / % -- ++                 ;; arithmetical (float)
