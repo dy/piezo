@@ -1,6 +1,6 @@
 # 🎧 lino
 
-**Lino** (*li*ne *no*ise) is low-level sound language with minimal common syntax, useful patterns, static/linear memory and compiling to 0-runtime WASM. <!-- It also has smooth operator and organic sugar. -->
+**Lino** (*li*ne *no*ise) is low-level language with minimal common syntax, eccentric patterns, linear memory and compiling to 0-runtime WASM. <!-- It also has smooth operator and organic sugar. -->
 
 <!--[Motivation](./docs/motivation.md)  |  [Documentation](./docs/reference.md)  |  [Examples](./docs/examples.md).-->
 
@@ -436,14 +436,17 @@ const arrValues = new Float64Array(__memory, arr.value, 3)
 ## Motivation
 
 In general, audio processing doesn't have cross-platform solution, many environments lack audio features.<br/>
-In particular, JS _Web Audio API_ is not suitable for audio purposes – it has unpredictable pauses, glitches and so on. It's better handled in worklet with WASM.
+In particular, JS _Web Audio API_ is not suitable for audio purposes – unpredictable pauses, glitches and so on. It's better handled in worklet with WASM.
 
-_Lino_ addresses these points, making audio/signals processing more accessible and robust.<br/>
+_Lino_ addresses these points, hopefully making audio code more accessible and robust.<br/>
+
+<!--
 It targets browsers, [audio worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, Python, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) etc.<br/>
-Inspired by [_mono_](https://github.com/stagas/mono), [_zzfx_](https://killedbyapixel.github.io/ZzFX/), [_bytebeat_](https://sarpnt.github.io/bytebeat-composer/), _[hxos](https://github.com/stagas/hxos)_, [_min_](https://github.com/r-lyeh/min) and others.
+-->
 
-Speaking personally, it's back-to-the-roots attempt of rethinking JS in clean sweet functional style.
+Speaking personally, it's my attempt to rethink JS the way I like. Also to secure some ground, because the direction JS took is worrisome.
 
+<!--
 ### Principles
 
 * _Expressive_: common familiar expressions syntax, useful language patterns like range clamping, group operations etc.
@@ -456,5 +459,15 @@ Speaking personally, it's back-to-the-roots attempt of rethinking JS in clean sw
 * _Low-level_: no fancy features beyond math and buffers.
 * _Static/Linear memory_: no garbage to collect, static-size heap.
 * _Readability_: produced WASM must be readable.
+-->
+
+### Inspiration
+
+* [_mono_](https://github.com/stagas/mono)
+* [_zzfx_](https://killedbyapixel.github.io/ZzFX/)
+* [_bytebeat_](https://sarpnt.github.io/bytebeat-composer/)
+* [_hxos_](https://github.com/stagas/hxos)
+* [_min_](https://github.com/r-lyeh/min)
+* [_porffor_](https://github.com/CanadaHonk/porffor)
 
 <p align=center><a href="https://github.com/krsnzd/license/">🕉</a></p>
