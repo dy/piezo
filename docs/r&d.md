@@ -496,6 +496,24 @@ Having wat files is more useful than direct compilation to binary form:
     + laconic, obvious and truthy
     ~+ customizable from outside as `1s=sampleRate`
 
+## [ ] Units: what does customization give vs take
+
+  + Gives i18l code: 1м3с
+  + Gives customization of sample rate: `1s=44800`
+    - For external customization `1s=@param.sampleRate` we need dynamic units
+  +? Custom math expressions / param values eg. `1step=20`
+    -> units must be localized to scope and be dynamic then, if we allow redefining them
+  + `1s=44100` solves problem of time vs offset variables
+  + `1pi=@math.pi`
+  - Duplicated code `1k=1000` in all programs
+    ~+ Soft introduction into program
+  - Non-compatible definitions, eg. `1pi=3.1415` vs `1pi=3.1415926`
+    ~ not a big deal
+    ~+ allows some experimentation
+  - Non-compatible program code if units are undefined or (worse) conflictly defined
+    - `1M=1000000` vs `1m=0.001` vs `1M=1024000`
+      ~+ local definition/redefinition can help
+
 ## [x] Number types: fractions, complex numbers -> when needed
 
   + improves precision
@@ -3647,9 +3665,9 @@ Having wat files is more useful than direct compilation to binary form:
       ~ so `label:` works more as part of block/group as `(name: a,b,c)` rather than individual items.
         + which makes sense in terms of importing `@modul:a,b,c`
 
-## [x] Is it worthy introducing `:` only for importing members, ie. -> no, at least not now
+## [ ] Is it worthy introducing `:` only for importing members, ie. ->
 
-    * `@math:sin,cos` vs `sin=@math.sin, cos=@math.cos`
+  1. `@math:sin,cos` vs `sin=@math.sin, cos=@math.cos`
     + we introduce whole operator for exports: `a,b,c.`
     + it's very naturan typographic convention: `these: this, that`.
     ~ alternatively we just do `(sin, cos) = @math`
@@ -3657,16 +3675,35 @@ Having wat files is more useful than direct compilation to binary form:
     - colon has types association lately
     - it's likely good practice to explicitly indicate `@math.sin` to show that's not native code everywhere
     - JS does `Math.sin`
+    + `@math.abs` everywhere makes code quite noisy
+    ? Can we reuse `:` for sequences somewhere else?
+      * `export: sin, cos;`
+      * `(x()+y(), z()+w()): a, b`
+      - nah
 
-  ? Can we reuse `:` for sequences somewhere else?
-    * `export: sin, cos;`
-    * `(x()+y(), z()+w()): a, b`
-    - nah
+  2. `@math#sin,cos`
+    + allows files as href `@./std.ln#sin,cos`
+      - takes access to files
+    + decouples `:` from operator, making it more part of "string"
 
-## [x] Importing issue: `@math.pi` vs `@math.sin()` - we have to detect either member is a function or a number. How? -> let's try by usage, since ops do typecast in similar way
+  3. no imports?
+    - no library reuse
+      ~ can reuse via manual copy-paste
+    + self-isolated code
+    + no unnecessary file access or bundling
+    - imports is part of JS, code may be not known
+    + good for embeddable systems since all code is known in advance
+
+## [ ] Importing issue: `@math.pi` vs `@math.sin()` - we have to detect type and fn signature. How?
 
   1. By usage. `@math.pi * 2` - imports number, `@math.sin()` - imports a function.
     + we apply same logic in ops: `()` treats as fn, `[]` as array and `+` as number
+    - `x=@math.pi; y()=(x+1)` - it can be a bit problematic to track status of `x`
+    - `y(x)=(x); y(@math.pi);` - it cannot be ambiguous here.
+
+  2. From import object (js side)?
+    - we don't have import object on lino compile stage...
+    + it would be the most reliable since just function is not enough, we need to know signature
 
 ## [x] Should we make dot part of name, eg. `x.1`, `x.2`? -> no, it can be `a . 0`
 

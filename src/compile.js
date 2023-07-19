@@ -636,6 +636,11 @@ Object.assign(expr, {
   '.'([,a,b]) {
     // a.b
     if (b) {
+      // @lib.prop
+      if (a[0]==='@') {
+        console.log(a,b)
+      }
+
       // a.0 - index access - doesn't require modwrap
       let idx = isNaN(Number(b)) ? err('Alias access is unimplemented') : Number(b)
       return op(`(f64.load (i32.add ${asInt(expr(a))} (i32.const ${idx << 3})))`, 'f64')

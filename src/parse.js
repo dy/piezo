@@ -2,7 +2,7 @@
 import parse, { lookup, skip, cur, idx, err, expr, token, unary, binary, nary, isId } from 'subscript/parse.js'
 import { FLOAT, INT } from './const.js'
 
-export default (src) => parse(src)
+export default parse
 
 // char codes
 const OPAREN=40, CPAREN=41, OBRACK=91, CBRACK=93, SPACE=32, QUOTE=39, DQUOTE=34, PERIOD=46, BSLASH=92, _0=48, _9=57, COLON=58, HASH=35, AT=64, PLUS = 43, MINUS = 45, GT = 62

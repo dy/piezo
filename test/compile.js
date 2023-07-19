@@ -573,10 +573,11 @@ t.todo('compile: state variable - mixed deps', t => {
 })
 
 t.todo('compile: import simple', t => {
-  let wat = compile(`@math:e,sqrt2; pi=@math.pi,e,sqrt2.`)
+  let wat = compile(`pi=@math.pi, sinpi(n=1)=@math.sin(pi*n).`)
   let mod = compileWat(wat, {math:{e:Math.E, pi:Math.PI}})
-  let {pi,e,sqrt2} = mod.instance.exports
-  console.log(pi,e,sqrt2)
+  let {pi,sinpi} = mod.instance.exports
+  is(pi, Math.PI)
+  is(sinpi(2), Math.sin(Math.PI * 2))
 })
 
 t.todo('compile: import non-existent', t => {
