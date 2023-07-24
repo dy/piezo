@@ -141,10 +141,10 @@ m[0..] = m[1..,0];              ;; rotate
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; loop, map, reduce
 a, b, c <| i -> x(i);           ;; for each item i do x(item)
 a, b, c <| i -> x(i);           ;; for each item i do x(item)
-10..1 <| i -> (                ;; iterate range
+10..1 <| i -> (                 ;; iterate range
   i < 3 ? ^^;                   ;; ^^ break
   i < 5 ? ^;                    ;; ^ continue
-);                             ;;
+);                              ;;
 i < 10 <| x(i++);               ;; while idx <= 3 do x(i)
 items <| item, idx -> ();       ;; iterate array
 items <| x -> a(x)              ;; pipe iterations
@@ -156,7 +156,7 @@ x[3..5] <|= x -> x * 2;         ;; map items from range
 list |> x, sum -> sum + x;      ;; fold/reduce
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; import, export
-<math#pi>;                      ;; import (into global scope)
+<math#pi,sin>;                  ;; import (into global scope)
 x, y, z.                        ;; export (from global scope)
 ```
 
