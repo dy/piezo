@@ -1993,7 +1993,7 @@ Having wat files is more useful than direct compilation to binary form:
   + JS keywords are ridiculous: they block many good names pushing user use marginal names.
   + keywords play role of comments anyways. It's better to put freeword explanation into comments rather than pollute language.
 
-## [x] Import no-keyword? -> @ 'math#floor' or like that
+## [x] Import no-keyword? -> `<math#floor>`
 
   * No need to define scope: imports full contents
   * #[math]; (Rusti)
@@ -2057,6 +2057,12 @@ Having wat files is more useful than direct compilation to binary form:
     - prefix is easier identifiable
   * `osc1, osc2 =: '@audio-lab/synt'`
   * `<math>, <./path/to/my/son>, <@audio-lab/synth>`
+    + associates with C's `#import <std>`
+    + encloses internal stuff: it's not string nor expression, same time safe
+    + saves extra operator `@`, `:` - allows `#` internally as part of URL
+      + can be used for defer
+    + reminds brackets in terms of "include here"
+    + relatively rare to use for anything else
   * sin, cos <- 'math', <- '@audio-lab/synth'
     + reminds list comprehension with assignment
     - conflict with arrow function ->
@@ -2067,7 +2073,7 @@ Having wat files is more useful than direct compilation to binary form:
     * it's better to always assign to a variable to make importable parts explicit.
     - conflicts with notes. We need to import all of them.
 
-## [x] Import subparts → try `@ 'math#floor,cos,sin'`
+## [x] Import subparts → try `<math#floor,cos,sin>`
 
   1. `@ 'math': sin, cos`
     + defines global functions
@@ -2080,12 +2086,16 @@ Having wat files is more useful than direct compilation to binary form:
     + no `:` overloading.
     - global functions come as part of atom
       ~ they're not really global
+      ~+ can be rethought as `<math#sin>` - not so much part of atom.
     + easier to type
     - list `#a,b,c` is non-standard-ish.
+      ~ google uses it like that
+      ~ the most natural way
     - disallows spaces: `@ 'math#pi,sin,abs';` looks messy, if imports many items
       ~ maybe that's nice, since it's not full-fledged syntax anyways
       ~ besides URLs are like that yep, have a look at font imports.
       + smaller
+      ~+ doesn't have to be single-string in case of `<>`, can safely do `<math#sin, pi, abs`
     + looks cleaner as a single "addressing" token.
     + easier to indicate "import all" as just `@ 'math'`
 
@@ -3572,15 +3582,16 @@ Having wat files is more useful than direct compilation to binary form:
   * Mixed no-heap as much as possible, otherwise heap
 
 
-## [x] Import into function scope? -> let's use `@math.pi` as direct tokens for now, multiple imports are too heavy for the value
+## [x] Import into function scope? -> no, too big of a workaround for wasm imports
 
-  * `saw() = (@math:pi; pi*2+...)`
+  * `saw() = (<math#pi>; pi*2+...)`
   + allows avoiding conflicts
   ~+ seems unavoidable if we introduce with `list:a,b,c` operator
     - we don't;
     - also we don't have array aliases.
+  - conflicts with the way imports are done in wasm
 
-## [x] Import JS things? -> yes, import only JS things, WASM has no import mechanisms
+## [x] Import JS things? -> yes, import only via JS, hold on with importing files
 
   * Must look more like a native object
   + `@math.pi` can be directly mapped as `(import "math" "pi")`
@@ -3593,8 +3604,9 @@ Having wat files is more useful than direct compilation to binary form:
 
   + naturally enables shared memory
   ? can help with question of naming memory?
+  + can be, yes, as `compile(src, {memory})`
 
-## [x] Directly call imported items as `@math.pi`? -> yes
+## [ ] Directly call imported items as `@math.pi`? ->
 
   + so js does.
   + nicely separates namespace
@@ -3613,6 +3625,8 @@ Having wat files is more useful than direct compilation to binary form:
       ? destructuring of internals must be also possible: `(ABC, CDE) = @musi.chord`
     ? What if `(pi, sin, cos) <= @math`?
   + makes `@` part of name with special meaning
+  - makes code very verbose
+  - C/CPP doesn't do this way
 
   ? what if `pi@math`?
 
@@ -3665,28 +3679,37 @@ Having wat files is more useful than direct compilation to binary form:
       ~ so `label:` works more as part of block/group as `(name: a,b,c)` rather than individual items.
         + which makes sense in terms of importing `@modul:a,b,c`
 
-## [ ] Is it worthy introducing `:` only for importing members, ie. ->
+## [x] Is it worthy introducing `:` only for importing members, ie. -> no, we use href as `<math#a,b>`
 
-  1. `@math:sin,cos` vs `sin=@math.sin, cos=@math.cos`
+  1. `@math:sin,cos`
+
     + we introduce whole operator for exports: `a,b,c.`
     + it's very naturan typographic convention: `these: this, that`.
     ~ alternatively we just do `(sin, cos) = @math`
     - `@math:sin,cos` doesn't allow redefinition of names, it's hardly bound to "with"
+      ~ we may not need aliasing - keep progs simple
+      ~ we can just in case do `@math:sin=sin2,cos=cos2`
     - colon has types association lately
-    - it's likely good practice to explicitly indicate `@math.sin` to show that's not native code everywhere
-    - JS does `Math.sin`
-    + `@math.abs` everywhere makes code quite noisy
-    ? Can we reuse `:` for sequences somewhere else?
-      * `export: sin, cos;`
-      * `(x()+y(), z()+w()): a, b`
-      - nah
+    ~ colon better associates with mapping: `@math#sin:sin2,cos:cos2`
+      - nah, in lino we use `=` for mapping
+      - also `a=b,c=d` is closer to cmdline args, `:` is more like specifier
+    + CPP/C tend to import headers, meaning importing to global scope. It feels nice.
 
-  2. `@math#sin,cos`
+
+  2. `@math.sin, @math.cos`
+    + explicitly indicates that that's external code
+    + JS does `Math.sin`
+    - `@math.abs` everywhere makes code verbose
+    - `.` operator we use for static index access. Although it's common across langs for props, we may not support it.
+      in other words, it breaks convention within lino.
+
+  3. `@math#sin,cos`
     + allows files as href `@./std.ln#sin,cos`
       - takes access to files
     + decouples `:` from operator, making it more part of "string"
+    - single operator is not enough for string. `<./std.ln#sin,cos>` would be safer
 
-  3. no imports?
+  4. no imports?
     - no library reuse
       ~ can reuse via manual copy-paste
     + self-isolated code
@@ -3694,16 +3717,19 @@ Having wat files is more useful than direct compilation to binary form:
     - imports is part of JS, code may be not known
     + good for embeddable systems since all code is known in advance
 
-## [ ] Importing issue: `@math.pi` vs `@math.sin()` - we have to detect type and fn signature. How?
+## [ ] Import type detection: `@math.pi` vs `@math.sin()` - we have to detect type and fn signature. How?
 
   1. By usage. `@math.pi * 2` - imports number, `@math.sin()` - imports a function.
     + we apply same logic in ops: `()` treats as fn, `[]` as array and `+` as number
     - `x=@math.pi; y()=(x+1)` - it can be a bit problematic to track status of `x`
     - `y(x)=(x); y(@math.pi);` - it cannot be ambiguous here.
 
-  2. From import object (js side)?
+  2. From import object (js side)? `compile(src, {imports:{...}})`
     - we don't have import object on lino compile stage...
     + it would be the most reliable since just function is not enough, we need to know signature
+    + solves question of importing memory or possibly even a table
+      ~ can be passed not polluting namespace
+    + allows joining modules: `imports: {latr: ...src}` compiles latr source (necessary parts)
 
 ## [x] Should we make dot part of name, eg. `x.1`, `x.2`? -> no, it can be `a . 0`
 

@@ -42,11 +42,13 @@
 * [x] Change `,` precedence to be under `=` to allow `^a,b,c`, `x?1,2,3:4,5,6`, `a,b<|x,i->x,i`
 * [ ] Bench biquad
   * [ ] Clamp args
-  * [ ] Imports -> can postpone for now, just insert code
+  * [ ] Imports - nice `<>` syntax with href internals and options
   * [x] Units
   * [ ] basic maths
   * [ ] Group operators
   * [ ] Comments
+* [ ] Bench sobel
+  * [ ] https://github.com/mattdesl/wasm-bench
 * [ ] static arrays
 * [ ] list comprehension
 * [ ] static expressions detection

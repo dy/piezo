@@ -156,7 +156,7 @@ x[3..5] <|= x -> x * 2;         ;; map items from range
 list |> x, sum -> sum + x;      ;; fold/reduce
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; import, export
-@math.pi * 2;                   ;; use imported member as @lib.prop
+<math#pi>;                      ;; import (into global scope)
 x, y, z.                        ;; export (from global scope)
 ```
 
@@ -209,7 +209,7 @@ gain.                               ;; export gain function
 A-rate (per-sample) biquad filter processor.
 
 ```
-@math: pi,cos,sin;                  ;; import pi, sin, cos from math
+<math#pi,cos,sin>;                  ;; import pi, sin, cos from math
 
 1pi = pi;                           ;; define pi units
 1s = 44100;                         ;; define time units in samples
@@ -250,7 +250,7 @@ lpf.                                ;; export lpf function, end program
 Generates ZZFX's [coin sound](https://codepen.io/KilledByAPixel/full/BaowKzv) `zzfx(...[,,1675,,.06,.24,1,1.82,,,837,.06])`.
 
 ```
-@math: pi,abs,sin,round;
+<math#pi,abs,sin,round>;
 
 1pi = pi;
 1s = 44100;
@@ -310,8 +310,8 @@ coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
 ## [Freeverb](https://github.com/opendsp/freeverb/blob/master/index.js)
 
 ```
-@'./combfilter.li#comb';
-@'./allpass.li#allpass';
+<./combfilter.li#comb>;
+<./allpass.li#allpass>;
 
 1s = 44100;
 
@@ -345,7 +345,7 @@ Features:
 Transpiled floatbeat/bytebeat song:
 
 ```
-@'math#asin,sin,pi';
+<math#asin,sin,pi>;
 
 1s = 44100;
 
@@ -413,7 +413,12 @@ lino source.li > compiled.wasm
 import * as lino from 'lino'
 
 // create wasm arrayBuffer
-const wast = lino.compile(`n=2; mult(x) = x*n; arr=[1,2,3];  mult, n, arr.`)
+const wast = lino.compile(`
+  n=1;
+  mult(x) = x*n;
+  arr=[1,2,3];
+  mult, n, arr.
+`, { ...config })
 const buffer = /* Compile wasm text to buffer somehow, eg. wabt or wat-compier */;
 
 // create wasm instance
@@ -423,17 +428,46 @@ const instance = new WebAssembly.Instance(module)
 // use API
 const {mult, n, arr, __memory} = instance.exports
 
-// numbers exported as globals
-n.value = 2
+// number exported as global
+n.value = 2;
 
-// functions exported directly
+// function exported directly
 mult(108) // 216
 
-// arrays are numbers storing reference to memory
+// array is a number pointer to memory
 const arrValues = new Float64Array(__memory, arr.value, 3)
 ```
 
+### Config
 
+Config object specifies behaviour of imports, memory and other aspects.
+
+```js
+{
+  // dict with imports
+  imports: {
+    // object
+    math: {
+      // direct value
+      pi: Math.PI,
+      // function / signature
+      sin: Math.sin
+    },
+
+    // or lino source code
+    latr: `...lino latr code`
+  },
+
+  // memory: false, string for name in exports or WebAssembly.Memory instance to import
+  memory: "__memory",
+
+  // heap size: false, auto or exact number
+  heap: false,
+
+  // enable static optimizations
+  optimize: false
+}
+```
 
 ## Motivation
 
@@ -441,7 +475,7 @@ In general, audio processing doesn't have cross-platform solution, many environm
 In particular, JS _Web Audio API_ is not suitable for audio purposes – unpredictable pauses, glitches and so on. It's better handled in worklet with WASM.<br/>
 _Lino_ addresses these points, hopefully making audio code more accessible and robust.
 
-Speaking personally, the direction JS took is worrisome, so I want to secure some ground, rethink some old JS decisions and let some wishes come true. Beauty is subjective, and someone can find lino a *li*ne *no*ise, but I find it beautiful.
+Speaking personally, that's my wish to rethink some JS parts and secure language area. Someone can find lino a *li*ne *no*ise, but I find it beautiful.
 
 <!--
 It targets browsers, [audio worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, Python, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) etc.<br/>

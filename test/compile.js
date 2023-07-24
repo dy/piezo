@@ -273,14 +273,16 @@ t('compile: function oneliners', t => {
   is(mod.instance.exports.mult(2,4), 8)
 })
 
-t.skip('debugs', t => {
+t.only('debugs', t => {
   const memory = new WebAssembly.Memory({ initial: 1 });
   const importObject = { x: { y: ()=>123, z:123 }};
   let {instance} = compileWat(`
     (import "x" "y" (func $xy (result i32)))
-    (import "x" "y" (global $xy i32))
-    ;;(export "xy" (func $x.y))
+    (import "x" "z" (global $xy i32))
+    (memory (export "__memory") 1 2048)
+    (export "xy" (func $xy))
   `, importObject)
+  console.log(instance)
   // instance.exports.x(instance.exports.x(instance.exports.cb))
 })
 
