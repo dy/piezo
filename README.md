@@ -52,7 +52,7 @@ default=1, eval=fn, else=0;     ;; lino has no reserved words
 foo();                          ;; semi-colons at end of line are mandatory
 (c = a + b; c);                 ;; parens return last statement
 (a = b+1; a,b,c);               ;; can return multiple values
-(a ? ^b; c);                    ;; or return early
+(a ? ^b; c);                    ;; or return early (break scope)
 (a ? (b ? ^^c) : d);            ;; break 2 scopes
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; conditions
@@ -141,10 +141,10 @@ m[0..] = m[1..,0];              ;; rotate
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; loop, map, reduce
 a, b, c <| i -> x(i);           ;; for each item i do x(item)
 a, b, c <| i -> x(i);           ;; for each item i do x(item)
-(10..1 <| i -> (                ;; iterate range
+10..1 <| i -> (                ;; iterate range
   i < 3 ? ^^;                   ;; ^^ break
   i < 5 ? ^;                    ;; ^ continue
-));                             ;;
+);                             ;;
 i < 10 <| x(i++);               ;; while idx <= 3 do x(i)
 items <| item, idx -> ();       ;; iterate array
 items <| x -> a(x)              ;; pipe iterations
