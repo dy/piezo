@@ -140,13 +140,12 @@ m[0..] = m[1..,0];              ;; rotate
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; loop, map, reduce
 a, b, c <| i -> x(i);           ;; for each item i do x(item)
-a, b, c <| i -> x(i);           ;; for each item i do x(item)
-10..1 <| i -> (                 ;; iterate range
+10..1 <| i -> (                 ;; iterate over range
   i < 3 ? ^^;                   ;; ^^ break
   i < 5 ? ^;                    ;; ^ continue
 );                              ;;
-i < 10 <| x(i++);               ;; while idx <= 3 do x(i)
-items <| item, idx -> ();       ;; iterate array
+i < 10 <| x(i++);               ;; while i < 10 do x(i++)
+items <| item, idx -> ();       ;; iterate over array items
 items <| x -> a(x)              ;; pipe iterations
       <| y -> b(y);             ;;
 items <| x -> (                 ;; nest iterations
@@ -458,10 +457,10 @@ Config object specifies behaviour of imports, memory and other aspects.
     latr: `...lino latr code`
   },
 
-  // memory: false, string for name in exports or WebAssembly.Memory instance to import
+  // memory: false, exported name string or imported WebAssembly.Memory instance
   memory: "__memory",
 
-  // heap size: false, auto or exact number
+  // heap size: false, auto or exact number of pages (64Kb each)
   heap: false,
 
   // enable static optimizations
