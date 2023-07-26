@@ -5,16 +5,19 @@ import {FLOAT,INT} from './const.js'
 import stringify from './stringify.js'
 import { parse as parseWat } from "watr";
 
-let includes, globals, funcs, func, locals, exports, heap, mem, returns, units;
+let prevCtx, includes, globals, funcs, func, locals, exports, heap, mem, returns, units, config;
 
 const _tmp = Symbol('tmp')
 
 // limit of memory is defined as: (max array length i24) / (number of f64 per memory page i13)
 const MAX_MEMORY = 2048
 
-export default function compile(node, config) {
+export default function compile(node, obj) {
   if (typeof node === 'string') node = parse(node)
   console.log('compile', node)
+
+  // save previous compiling context
+  prevCtx = {prevCtx, includes, globals, funcs, func, locals, exports, heap, mem, returns, units, config};
 
   // init compiling context
   // FIXME: make temp vars just part of local scope
@@ -29,6 +32,7 @@ export default function compile(node, config) {
   heap = 0, // heap size as number of pages (detected from max static array size)
   mem = false, // indicates if memory must be included (heap automatically enables memory)
   units = {} // holds currently defined units (inserted as direct constants)
+  config = obj || {}
 
   // run global in start function
   let init = expr(node).trim(), out = ``
@@ -72,9 +76,11 @@ export default function compile(node, config) {
   for (let name in exports)
     out += `(export "${name}" (${exports[name].func ? 'func' : 'global'} $${name}))\n`
 
-  console.log(out)
+  console.log(out);
   // console.log(...parseWat(out))
 
+  // restore previous compiling context
+  ;({prevCtx, includes, globals, funcs, func, locals, exports, heap, mem, returns, units, config} = prevCtx);
   return out
 }
 
@@ -611,22 +617,25 @@ Object.assign(expr, {
     return op(`(f64.max (f64.min ${asFloat(aop)} ${asFloat(maxop)}) ${asFloat(minop)})`, 'f64')
   },
 
-  // @ 'math#sin', @ 'path/to/lib'
-  '@'([,path]) {
+  // <math#sin>, <path/to/lib>
+  '<>'([,path]) {
     if (locals) err('Import must be in global scope')
-    if (Array.isArray(path)) path[0] === "'" ? path = path[1] : err('Bad path `' + path + '`')
+    path = path.trim();
+    if (path[0] === "'" || path[0] === '"') path = path.slice(1,-1);
     let url = new URL('import:'+path)
     let {hash, pathname} = url
-    throw 'Unimplemented'
+
+    let lib = config.imports?.[pathname]
+    if (!lib) err(`Unknown import entry '${pathname}'`)
 
     // FIXME: include directive into syntax tree
     // let src = fetchSource(pathname)
     // let include = parse(src)
     // node.splice(node.indexOf(impNode), 1, null, include)
 
-    let lib = stdlib[pathname], members = hash ? hash.slice(1).split(',') : Object.keys(lib)
+    let members = hash ? hash.slice(1).split(',') : Object.keys(lib)
     for (let member of members) {
-      scope[member] = { import: pathname, type: lib[member][1] }
+      define(member, 'f64')
     }
     // we return nothing since member is marked as imported
     return ''

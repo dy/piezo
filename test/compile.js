@@ -574,9 +574,10 @@ t.todo('compile: state variable - mixed deps', t => {
   let {x,y,z} = mod.instance.exports
 })
 
-t.todo('compile: import simple', t => {
-  let wat = compile(`pi=@math.pi, sinpi(n=1)=@math.sin(pi*n).`)
-  let mod = compileWat(wat, {math:{e:Math.E, pi:Math.PI}})
+t.only('compile: import simple', t => {
+  const imports = {math:{sin:Math.sin, pi:Math.PI}};
+  let wat = compile(`<math#pi,sin>; sinpi(n=1)=sin(pi*n).`, {imports})
+  let mod = compileWat(wat, imports)
   let {pi,sinpi} = mod.instance.exports
   is(pi, Math.PI)
   is(sinpi(2), Math.sin(Math.PI * 2))
