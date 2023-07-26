@@ -12,7 +12,7 @@ const _tmp = Symbol('tmp')
 // limit of memory is defined as: (max array length i24) / (number of f64 per memory page i13)
 const MAX_MEMORY = 2048
 
-export default function compile(node) {
+export default function compile(node, config) {
   if (typeof node === 'string') node = parse(node)
   console.log('compile', node)
 

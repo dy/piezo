@@ -92,8 +92,8 @@ const string = q => (qc, c, str='') => {
   return [String.fromCharCode(q),str]
 },
 escape = {n:'\n', r:'\r', t:'\t', b:'\b', f:'\f', v:'\v'}
-lookup[DQUOTE] = string(DQUOTE)
-lookup[QUOTE] = string(QUOTE)
+// lookup[DQUOTE] = string(DQUOTE)
+// lookup[QUOTE] = string(QUOTE)
 
 
 // comments
@@ -167,7 +167,7 @@ unary('*', PREC_STATE)
 // unary('>', PREC_STATE)
 
 // @ 'ab'
-unary('@', PREC_TOKEN)
+// unary('@', PREC_TOKEN)
 
 // a?b, a?:b
 // NOTE: unlike || && this one doesn't return item
@@ -184,8 +184,7 @@ token('?', PREC_IF, (a, b, c) => (
 // a[b], a[]
 token('[', PREC_CALL,  (a,b) => a && (b=expr(0,CBRACK), b ? ['[]', a, b] : ['[]', a]))
 
-// [a,b,c], [], [1]a, [1,2,3]a
-// token('[', PREC_TOKEN, (a,b,name) => !a && (b=expr(0,CBRACK), name = skip(isId), a = ['['], (b||name) && a.push(b||''), name && a.push(name), a ))
+// [a,b,c], []
 token('[', PREC_TOKEN, (a,b) => !a && (b = expr(0,CBRACK), b ? ['[', b] : ['[']))
 
 // (a,b,c), (a)
@@ -194,3 +193,5 @@ token('(', PREC_CALL, (a,b) => !a && (b = expr(0,CPAREN), b ? ['(', b] : ['(']))
 // a(b,c,d), a()
 token('(', PREC_CALL, (a,b) => a && (b = expr(0, CPAREN), b ? ['()', a, b] : ['()', a]))
 
+// <a#b,c>
+token('<', PREC_TOKEN, (a,b) => !a && (b = skip(c => c !== GT), skip(), b ? ['<>', b] : err('Empty import statement')))

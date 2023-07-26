@@ -273,7 +273,7 @@ t('compile: function oneliners', t => {
   is(mod.instance.exports.mult(2,4), 8)
 })
 
-t.only('debugs', t => {
+t.todo('debugs', t => {
   const memory = new WebAssembly.Memory({ initial: 1 });
   const importObject = { x: { y: ()=>123, z:123 }};
   let {instance} = compileWat(`

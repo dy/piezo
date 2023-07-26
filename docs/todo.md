@@ -40,6 +40,7 @@
 * [x] Readable generated code
 * [x] Per-function vars scope: we don't need parens as scope
 * [x] Change `,` precedence to be under `=` to allow `^a,b,c`, `x?1,2,3:4,5,6`, `a,b<|x,i->x,i`
+* [ ] Include config
 * [ ] Bench biquad
   * [ ] Clamp args
   * [ ] Imports - nice `<>` syntax with href internals and options

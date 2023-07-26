@@ -69,7 +69,7 @@ t('parse: clamp operator', t => {
 t('parse: length operator', t => {
   is(parse('[a,b,c][]'), ['[]', ['[', [',','a','b','c']]])
   is(parse('(a,b,c)[]'), ['[]', ['(', [',','a','b','c']]])
-  is(parse('"abc"[]'), ['[]', ['"', "abc"]])
+  // is(parse('"abc"[]'), ['[]', ['"', "abc"]])
   is(parse('(-a..+b)[]'), ['[]', ['(',['..', ['-','a'],['+','b']]]])
 })
 
@@ -87,7 +87,7 @@ t('parse: groups', t => {
   is(parse('a = b, c = d'), [',',['=','a','b'],['=','c','d']], 'a=b, c=d')
 })
 
-t('parse: strings', t => {
+t.skip('parse: strings', t => {
   is(parse('hi="hello"'),['=','hi',['"','hello']], 'strings')
   is(parse('string="{hi} world"'),['=','string',['"','{hi} world']], 'interpolated string: "hello world"')
   is(parse('"\u0020", "\x20"'),[',',['"','\u0020'],['"','\x20']], 'unicode or ascii codes')
@@ -155,13 +155,13 @@ t('parse: conditions', t => {
   // is(parse('a,b,c >- x ? a : b : c'), ['?:', ['>-', [',','a','b','c'], [':','a','b','c']]], 'switch operator')
   is(parse(`2+2 >= 4 ?        // multiline ternary
     a
-  : "a" < "b" ?               // else if
+  : a < b ?               // else if
     b
   : (c)`), ['?:',
     ['>=', ['+',[INT,2],[INT,2]], [INT,4]],
     'a',
     ['?:',
-      ['<', ['"','a'],['"','b']],
+      ['<', 'a', 'b'],
       'b',
       ['(','c']
     ],
@@ -190,7 +190,7 @@ t('parse: loops', t => {
   is(parse('c <| d <| e | f'),['<|','c','d',['|','e','f']], 'loop seq')
   is(parse(`a <| b = c = d | e = f`), ['<|','a',['=','b',['=','c',['=',['|','d','e'],'f']]]], 'equals' )
 
-  is(parse('s[] < 50 <| (s += ", hi")'),['<|',['<',['[]','s'],[INT,50]],['(',['+=','s',['"',', hi']]]], 'inline loop: `while (s.length < 50) do (s += ", hi)"`')
+  is(parse('s[] < 50 <| (s += hi)'),['<|',['<',['[]','s'],[INT,50]],['(',['+=','s','hi']]], 'inline loop')
   is(parse(`
   (i=0; ++i < 10 <| (             // multiline loop
     i < 3 && ^^;                   // \`^^\` to break loop (can return value as ^^x)
@@ -266,13 +266,9 @@ t.skip('parse: defer', t => {
 })
 
 t('parse: import', () => {
-  is(parse('@ \'./path/to/module\''), ['@',["'",'./path/to/module']],       'any file can be imported directly')
-  is(parse('@ \'math\''), ['@',["'",'math']],                   'or defined via import-maps.json')
-  is(parse('@ \'my-module#x,y,z\''), ['@',["'",'my-module#x,y,z']],        'import selected members')
-
-  is(parse(`@'math'`), ['@', ['\'','math']])
-  is(parse(`@'math#a'`), ['@', ['\'','math#a']])
-  is(parse(`@'math#a,b,c'`), ['@', ['\'','math#a,b,c']])
+  is(parse('<./path/to/module>'), ['<>','./path/to/module'],       '<path-to-file>')
+  is(parse('<math>'), ['<>','math'],                   '<math>')
+  is(parse('<my-module#x,y,z>'), ['<>','my-module#x,y,z'],        'import selected members')
 })
 
 t('parse: export', () => {
