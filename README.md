@@ -1,6 +1,6 @@
 # 🎧 lino
 
-Low-level microlanguage with common syntax, linear/static memory and compiling to 0-runtime WASM. Main purpose is audio processing. <!-- It also has smooth operator and organic sugar. -->
+Low-level microlanguage with common syntax, linear/static memory and compiling to 0-runtime WASM, made for the purpose of audio processing. <!-- It also has smooth operator and organic sugar. -->
 
 <!--[Motivation](./docs/motivation.md)  |  [Documentation](./docs/reference.md)  |  [Examples](./docs/examples.md).-->
 
@@ -52,7 +52,7 @@ default=1, eval=fn, else=0;     ;; lino has no reserved words
 foo();                          ;; semi-colons at end of line are mandatory
 (c = a + b; c);                 ;; parens return last statement
 (a = b+1; a,b,c);               ;; can return multiple values
-(a ? ^b; c);                    ;; or return early
+(a ? ^b; c);                    ;; or return early (break scope)
 (a ? (b ? ^^c) : d);            ;; break 2 scopes
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; conditions
@@ -140,13 +140,12 @@ m[0..] = m[1..,0];              ;; rotate
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; loop, map, reduce
 a, b, c <| i -> x(i);           ;; for each item i do x(item)
-a, b, c <| i -> x(i);           ;; for each item i do x(item)
-(10..1 <| i -> (                ;; iterate range
+10..1 <| i -> (                 ;; iterate over range
   i < 3 ? ^^;                   ;; ^^ break
   i < 5 ? ^;                    ;; ^ continue
-));                             ;;
-i < 10 <| x(i++);               ;; while idx <= 3 do x(i)
-items <| item, idx -> ();       ;; iterate array
+);                              ;;
+i < 10 <| x(i++);               ;; while i < 10 do x(i++)
+items <| item, idx -> ();       ;; iterate over array items
 items <| x -> a(x)              ;; pipe iterations
       <| y -> b(y);             ;;
 items <| x -> (                 ;; nest iterations
@@ -156,7 +155,7 @@ x[3..5] <|= x -> x * 2;         ;; map items from range
 list |> x, sum -> sum + x;      ;; fold/reduce
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; import, export
-<math#pi>;                      ;; import (into global scope)
+<math#pi,sin>;                  ;; import (into global scope)
 x, y, z.                        ;; export (from global scope)
 ```
 
@@ -458,10 +457,10 @@ Config object specifies behaviour of imports, memory and other aspects.
     latr: `...lino latr code`
   },
 
-  // memory: false, string for name in exports or WebAssembly.Memory instance to import
+  // memory: false, exported name string or imported WebAssembly.Memory instance
   memory: "__memory",
 
-  // heap size: false, auto or exact number
+  // heap size: false, auto or exact number of pages (64Kb each)
   heap: false,
 
   // enable static optimizations
