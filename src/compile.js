@@ -5,7 +5,7 @@ import {FLOAT,INT} from './const.js'
 import stringify from './stringify.js'
 import { parse as parseWat } from "watr";
 
-let prevCtx, includes, globals, funcs, func, locals, exports, heap, mem, returns, units, config;
+let prevCtx, includes, imports, globals, funcs, func, locals, exports, heap, mem, returns, units, config;
 
 const _tmp = Symbol('tmp')
 
@@ -17,13 +17,14 @@ export default function compile(node, obj) {
   console.log('compile', node)
 
   // save previous compiling context
-  prevCtx = {prevCtx, includes, globals, funcs, func, locals, exports, heap, mem, returns, units, config};
+  prevCtx = {prevCtx, includes, imports, globals, funcs, func, locals, exports, heap, mem, returns, units, config};
 
   // init compiling context
   // FIXME: make temp vars just part of local scope
   globals = {[_tmp]:[]}, // global scope (as name props)
   locals = null, // current fn local scope
-  includes = [], // pieces to prepend
+  includes = [], // pieces of wasm to inject
+  imports = [], // imported statements (regardless of libs) - funcs/globals/memory
   funcs = {}, // defined user and util functions
   // FIXME: loop ideally must be used by-reference
   exports = {}, // items to export
@@ -36,6 +37,13 @@ export default function compile(node, obj) {
 
   // run global in start function
   let init = expr(node).trim(), out = ``
+
+  if (Object.keys(imports).length) {
+    out += `;;;;;;;;;;;;;;;;;;;;;;;;;;;; Imports\n`
+    for (let name in imports)
+      out += `(import "${imports[name][0]}" "${imports[name][1]}" ${imports[name][2]})\n`
+    out += `\n`
+  }
 
   if (heap) out += `;;;;;;;;;;;;;;;;;;;;;;;;;;;; Memory: ${heap*64}Kb heap\n` +
   `(memory (export "__memory") ${heap} ${MAX_MEMORY})\n(global $__heap (mut i32) (i32.const 0))\n(global $__mem (mut i32) (i32.const ${heap<<16}))\n\n`
@@ -53,7 +61,7 @@ export default function compile(node, obj) {
   if (Object.keys(globals).length) {
     out += `;;;;;;;;;;;;;;;;;;;;;;;;;;;; Globals\n`
     for (let name in globals)
-      out += `(global $${name} (mut ${globals[name].type}) (${globals[name].type}.const 0))\n`
+      if (!globals[name].import) out += `(global $${name} (mut ${globals[name].type}) (${globals[name].type}.const 0))\n`
     out += `\n`
   }
 
@@ -80,7 +88,7 @@ export default function compile(node, obj) {
   // console.log(...parseWat(out))
 
   // restore previous compiling context
-  ;({prevCtx, includes, globals, funcs, func, locals, exports, heap, mem, returns, units, config} = prevCtx);
+  ;({prevCtx, includes, imports, globals, funcs, func, locals, exports, heap, mem, returns, units, config} = prevCtx);
   return out
 }
 
@@ -167,13 +175,13 @@ Object.assign(expr, {
     return op(`(return ${asFloat(aop)})`, aop.type)
   },
 
-  '()'([,name, list]) {
-    list = !list ? [] : list[0]===',' ? list.slice(1) : list
+  '()'([,name, args]) {
+    args = !args ? [] : args[0]===',' ? args.slice(1) : [args]
 
     if (!globals[name]) err('Unknown function call: ' + name)
 
     // FIXME: make sure default args are gotten values?
-    let {args, state} = globals[name]
+    let {state} = globals[name]
 
     // if internal call is stateful, the current function becomes stateful either
     if (state) {
@@ -182,7 +190,7 @@ Object.assign(expr, {
       callerState.length += state.length
     }
 
-    return op(`(call $${name} ${list.map(arg => asFloat(expr(arg))).join(' ')})`, 'f64')
+    return op(`(call $${name} ${args.map(arg => asFloat(expr(arg))).join(' ')})`, 'f64')
   },
 
   // [1,2,3]
@@ -257,10 +265,6 @@ Object.assign(expr, {
       let prevFunc = func
       func = name
 
-      // FIXME: put function to a table
-      // pointer to a function - need to be declared in advance, since body may contain refs
-      globals[name] = {func:true, args, type:'i32'};
-
       locals = {[_tmp]:[]}
 
       // normalize body to (a;b;) form
@@ -287,6 +291,10 @@ Object.assign(expr, {
         dfn.push(`(param $${name} f64)`)
         return name
       })
+
+      // FIXME: put function to a table
+      // pointer to a function - need to be declared before parsing body, since body may contain refs
+      globals[name] = {func:true, args, type:'i32'};
 
       body[1].splice(1,0,...inits) // prepend inits
 
@@ -635,7 +643,17 @@ Object.assign(expr, {
 
     let members = hash ? hash.slice(1).split(',') : Object.keys(lib)
     for (let member of members) {
-      define(member, 'f64')
+      const val = lib[member]
+      if (typeof val === 'number') {
+        // FIXME: here can be mutable global object
+        globals[member] = {var:true, import:true, type:'f64'}
+        imports.push([pathname,member,`(global $${member} f64)`])
+      }
+      else if (typeof val === 'function') {
+        // FIXME: function may return multiple values, but how to detect that?
+        imports.push([pathname,member,`(func $${member} ${val.length?`(param${` f64`.repeat(val.length)})`:''} (result f64))`])
+        globals[member] = {func:true, import:true, type:'i32'}
+      }
     }
     // we return nothing since member is marked as imported
     return ''
@@ -697,7 +715,7 @@ function define(name, type='f64') {
     if (!globals[name]) globals[name] = {var:true, type}
   }
   else {
-    if (!locals[name]) locals[name] = {var:true, type}
+    if (!globals[name] && !locals[name]) locals[name] = {var:true, type}
   }
   return name
 }
