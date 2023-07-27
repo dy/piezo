@@ -3,6 +3,43 @@ import t, { is, not, ok, same, throws } from 'tst'
 import compile from '../src/compile.js'
 import { compileWat } from './compile.js'
 
+t('perf: sobel', t => {
+  // Reference:
+  // https://github.com/mattdesl/wasm-bench/blob/main/src/javascript/process.js
+  compile(`
+    get_pixel(data, px, py, columns, rows) = (
+      (px < 0) ? px = 0;
+      (py < 0) ? py = 0;
+      (px >= columns) ? px = columns - 1;
+      (py >= rows) ? py = rows - 1;
+      data[px + py * columns];
+    ),
+
+    process(data, width, height) = (
+      0..height <| y -> (
+        0..width <| x -> (
+          ;; Extract values from image
+          (val0, val1, val2, val3, val5, val6, val7, val8) = (
+            get_pixel(data, x, y, width, height),
+            get_pixel(data, x + 1, y, width, height),
+            get_pixel(data, x + 2, y, width, height),
+            get_pixel(data, x, y + 1, width, height),
+            get_pixel(data, x + 2, y + 1, width, height),
+            get_pixel(data, x, y + 2, width, height),
+            get_pixel(data, x + 1, y + 2, width, height),
+            get_pixel(data, x + 2, y + 2, width, height),
+          )
+          ;; Apply Sobel kernel
+          gx = -1 * val0 + -2 * val3 + -1 * val6 + val2 + 2 * val5 + val8;
+          gy = -1 * val0 + -2 * val1 + -1 * val2 + val6 + 2 * val7 + val8;
+          mag = (gx * gx + gy * gy) ** 1/2;
+          mag <?= 0..1;
+          data[x + y * width] = mag;
+        )
+      )
+    ).`
+  )
+})
 
 t.todo('perf: biquad', t => {
   compile(`
