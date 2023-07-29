@@ -61,6 +61,17 @@ export function compileWat (code, imports={}) {
   // return WebAssembly.instantiate(binary.buffer, config)
 }
 
+t('compile: comments', t => {
+  let wat = compile(`x(a,w,h)=(
+    a=1
+    ;; a=2
+  ), y()=(
+    ;;(
+  ).`)
+  let mod = compileWat(wat)
+  let {x} = mod.instance.exports
+  is(x(), 1)
+})
 
 t('compile: globals basic', t => {
   // TODO: single global
@@ -251,6 +262,11 @@ t('compile: conditions', t => {
   wat = compile(`a=0.1;b=2.1;c=a?b.`)
   mod = compileWat(wat)
   is(mod.instance.exports.c.value, 2.1)
+
+  wat = compile(`x(px) = (px < 0 ? px = 0; px).`)
+  mod = compileWat(wat)
+  is(mod.instance.exports.x(-10), 0)
+  is(mod.instance.exports.x(10), 10)
 })
 
 t('compile: function oneliners', t => {
@@ -286,7 +302,7 @@ t.todo('debugs', t => {
   // instance.exports.x(instance.exports.x(instance.exports.cb))
 })
 
-t('compile: misc vars', t => {
+t('compile: vars misc', t => {
   let wat,x;
   x = compileWat(compile(`x;x.`)).instance.exports.x // unknown type falls to f64
   x = compileWat(compile(`x=1;x.`)).instance.exports.x // int type
@@ -471,7 +487,7 @@ t.todo('compile: break/continue', t => {
 
 })
 
-t('compile: loops basic', t => {
+t('compile: loops basic range', t => {
   let wat = compile(`x=[1..3]; 0..2 <| i -> x[i]=i+1; x.`)
   let mod = compileWat(wat)
   let {__memory:memory, x} = mod.instance.exports
@@ -481,6 +497,23 @@ t('compile: loops basic', t => {
   is(arr[0], 1)
   is(arr[1], 2)
   is(arr[2], 3)
+})
+
+t.only('compile: loop range in range', t => {
+  let wat = compile(`a=[..9], x(a,w,h)=(
+    0..w <| x -> (
+      ;;0..h <| y -> (
+        ;;a[y*w + x] = x+y
+      ;;)
+    )
+  ).`)
+  let mod = compileWat(wat)
+  let {__memory:memory, a, x} = mod.instance.exports
+
+  let arr = new Float64Array(memory.buffer, a.value, 9)
+  is(arr, [0,0,0,0,0,0,0,0,0])
+  x(a,3,3)
+  is(arr, [0,1,2,3,4,5,6,7,8])
 })
 
 t.todo('compile: loop in loop', t => {
@@ -602,8 +635,6 @@ t.todo('compile: audio-gain', t => {
   //   gain = ([2, blockSize]data, volume <? 0..1000) -> [data | ch -> (ch | x -> x * volume)];
   // `)
 })
-
-
 
 t.todo('compile: sine gen', t => {
   let wat = compile(analyse(parse(`

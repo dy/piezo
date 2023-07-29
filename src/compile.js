@@ -145,6 +145,9 @@ Object.assign(expr, {
   },
 
   '('([,body]){
+    // FIXME: make sure returning nothing is fine here (when empty brackets)
+    if (!body) return op('')
+
     // ((a)) -> a
     while (body[0]==='(') body = body[1]
 

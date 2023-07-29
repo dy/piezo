@@ -57,6 +57,8 @@
   * [ ] a+0 -> a
 * [ ] static arrays via `data` section
 * [ ] loops
+* [ ] implement means to allocate memory/array from outside & align memory API (env.memory is convention?)
+  + it can allow for more compact work with arrays / global memory without array includes
 * [x] implement no-ptr buffer lengths: either i64 or 2 values in stack
 * [x] ~~refactor `pick(N,arg)` into `dup(arg,3)`~~
 * [ ] more complex group conditionals: `a,b,c || d,e`, `a,b * c,d`

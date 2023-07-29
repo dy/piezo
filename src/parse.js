@@ -2,7 +2,11 @@
 import parse, { lookup, skip, cur, idx, err, expr, token, unary, binary, nary, isId } from 'subscript/parse.js'
 import { FLOAT, INT } from './const.js'
 
-export default parse
+export default (str) => (
+  // FIXME: if there's more meaningful way remove comments
+  str = str.replace(/;;[^\n]*/g,''),
+  parse(str)
+)
 
 // char codes
 const OPAREN=40, CPAREN=41, OBRACK=91, CBRACK=93, SPACE=32, QUOTE=39, DQUOTE=34, PERIOD=46, BSLASH=92, _0=48, _9=57, COLON=58, HASH=35, AT=64, PLUS = 43, MINUS = 45, GT = 62
@@ -95,10 +99,6 @@ escape = {n:'\n', r:'\r', t:'\t', b:'\b', f:'\f', v:'\v'}
 // lookup[DQUOTE] = string(DQUOTE)
 // lookup[QUOTE] = string(QUOTE)
 
-
-// comments
-token('//', PREC_TOKEN, (a, prec) => (skip(c => c >= SPACE), a||expr(prec)))
-
 // sequences
 nary(',', PREC_SEQUENCE, true)
 nary(';', PREC_SEMI, true)
@@ -133,7 +133,7 @@ binary('<<', PREC_SHIFT)
 
 binary('<?', PREC_CLAMP) // a <? b
 nary('<|', PREC_LOOP)
-binary('|>', PREC_LOOP)
+nary('|>', PREC_LOOP)
 binary('->', PREC_MAP)
 
 // unaries
@@ -195,3 +195,6 @@ token('(', PREC_CALL, (a,b) => a && (b = expr(0, CPAREN), b ? ['()', a, b] : ['(
 
 // <a#b,c>
 token('<', PREC_TOKEN, (a,b) => !a && (b = skip(c => c !== GT), skip(), b ? ['<>', b] : err('Empty import statement')))
+
+// comments
+// token(';;', PREC_TOKEN, (a, prec) => (skip(c => c >= SPACE), skip(), console.log(a), a))

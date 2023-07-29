@@ -8,10 +8,10 @@ t('perf: sobel', t => {
   // https://github.com/mattdesl/wasm-bench/blob/main/src/javascript/process.js
   compile(`
     get_pixel(data, px, py, columns, rows) = (
-      (px < 0) ? px = 0;
-      (py < 0) ? py = 0;
-      (px >= columns) ? px = columns - 1;
-      (py >= rows) ? py = rows - 1;
+      px < 0 ? px = 0;
+      py < 0 ? py = 0;
+      px >= columns ? px = columns - 1;
+      py >= rows ? py = rows - 1;
       data[px + py * columns];
     ),
 
