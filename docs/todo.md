@@ -57,6 +57,7 @@
   * [ ] a+0 -> a
 * [ ] static arrays via `data` section
 * [ ] loops
+* [ ] comments: must put comment into a previous token, instead of stripping
 * [ ] implement means to allocate memory/array from outside & align memory API (env.memory is convention?)
   + it can allow for more compact work with arrays / global memory without array includes
 * [x] implement no-ptr buffer lengths: either i64 or 2 values in stack

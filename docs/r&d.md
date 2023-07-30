@@ -868,7 +868,7 @@ Having wat files is more useful than direct compilation to binary form:
   * `a..b -> x` looks like function, but is possible
   * can be done via external lib
 
-## [x] Loops: ~~`i <- 0..10 <| a + i`, `i <- list <| a`, `[x <- 1,2,3 <| x*2]`~~ `0..10 | i -> a + i`
+## [ ] Loops: ~~`i <- 0..10 <| a + i`, `i <- list <| a`, `[x <- 1,2,3 <| x*2]`~~ ~~`0..10 | i -> a + i`~~
 
   * `for i in 0..10 (a,b,c)`, `for i in src a;`
   * alternatively as elixir does: `item <- 0..10 a,b,c`
@@ -3144,7 +3144,7 @@ Having wat files is more useful than direct compilation to binary form:
     * likely can be `osc=[sin(x)=...x,tri(x)=...x]`
   + resolves the issue of scope (above): no need to make all vars global since no scope recursion
 
-## [x] Replace `<|`, `|`, `|>`? -> ~~Let's try `::` for loop/generator and `list -> item ::` for extended loop/tranformer~~ let's use `<|`, `|>` for map/reduce, ~~`#` for member placeholder~~, `x -> x*2` for mapping function
+## [ ] Replace `<|`, `|`, `|>`? -> ~~Let's try `::` for loop/generator and `list -> item ::` for extended loop/tranformer~~ ~~let's use `<|`, `|>` for map/reduce,~~ `<|` and `|>` for loop (multiple/single arg), `#` for member placeholder, ~~`x -> x*2` for mapping function~~
 
   + Less problems with overloading `|`
   + Fold operator is likely not as useful
@@ -3307,10 +3307,17 @@ Having wat files is more useful than direct compilation to binary form:
       ? `#`, `##`, `###`?
         + follows `^`, `^^`, `^^^` paren breaking logic
         + matches markdowns
+        - `##` is messy and non-obvious
+      ? `0..w <| (x=#, 0..h <| y=#)`
+        + similar to fns
     + keeps spirit of pipes, more meaningfully
-    + no mandatory member
+    + similar to JS pipeline proposal with all that's argumentation
+    + **no mandatory member: allows while loop**
+    + **no mapper fn-like syntax or syntax conflict with function**
+    + **no global shadowing problem**
     + innovative & hereditary same time
-    + very compact
+    + **the most compact**
+      + allows cool pipes as `sin() |> `
     - problem with mapping `list <|= # * 2` - too heavy for map operator
       + quite nice directional meaning btw, like arrow points that the result is rewritten by-element
       ? do directly as `list = list <| # * 2`
@@ -3332,11 +3339,16 @@ Having wat files is more useful than direct compilation to binary form:
         - we can iterate via range `0.. <| # = 1` - assignment doesn't make sense here
       ? should we direct pipe somewhere at the end?
         `list <| #*2 <| filter(#) |> list`
+      ? ~~should we instead use `|>` as direct pipe and `<|` as inverse "writing" pipe?~~
+        - `list[10..20] <|= # * 2` is `list[10..20] = list[10..20] <| #*2`
+        - `list[10..20] <| list[30..40] |> # * 2` is confusing
     ?- how do we indicate index?
-      ? `list <| (*i=0, *prev; >i++, >prev=#;)`
+      ? ~~`list <| (*i=0, *prev; >i++, >prev=#;)`~~
         + !clever!
         - requires stateful varis per-block, not per-function
+      * just use variable `i; list <| i++`
     - no intuitive way to make reducers `a..b |> #0 + #1` ?
+      + reducers are anyways very similar to regular loops
 
   ? ALT: `(list:x <| x * 2):x <| filter(x)`, `a < 2 <| a++`, `list:x <|= x * 2`
     - doesn't allow nice chaining
@@ -3357,7 +3369,7 @@ Having wat files is more useful than direct compilation to binary form:
       - haskely construct
     + allows detecting iteration procedure
 
-  ? ALT: `list <| (x, i) -> x * 2 <| y -> y * 2`
+  ? ALT: `list <| x, i -> x * 2 <| y -> y * 2`
     + very natural reference to mappers
     + allows optimized reducer op as `0..10 |> (cur, sum) -> sum + cur`
     + no namespace pollution
@@ -3367,6 +3379,28 @@ Having wat files is more useful than direct compilation to binary form:
     + assignment/map as `list <|= x -> x * 2`
     + indicates item index naturally
     + a bit more neatural break/continue
+    - shadows global variable names with local args, same as function
+      - which creates an alternative notation to a function
+      - creates question if funciton reference can be used instead of mapper (answer is no)
+      - function naturally creates scope, and mapper here doesn't
+        - in other words, `x; vals <| x->` acts as `var x; for (x in vals)`
+    - fold & map are very similar by implementation `a,b,c <| x ->` vs `a,b,c |> x ->`
+
+  ? ALT: no range / list loops, only while loop
+    * `i=0; 0..list[] |> list[i] + list[i-1], i++`
+      + syntax tax is minimal
+      + no global shadowing: everything is clear
+    ? list comprehension problem
+    + solves fold/map conflict
+    + solves problem of condition in lhs
+
+  ? ALT: `x =~ list`
+    - nah: `x = ~list`
+  ? ALT: `x <~ list : `
+
+## [ ] What's the difference of `list <| # * 2` vs `list |> # * 2`?
+
+  ? First one returns multiple members, last one returns single (last) value
 
 ## [x] `list <| x` vs `a < 1 <| x` - how do we know left side type? -> lhs is always either `.. <| #` or `list <| #`
 
@@ -3400,6 +3434,15 @@ Having wat files is more useful than direct compilation to binary form:
     * `0.. <| # + 1` another kind of limited loop with nicer id
     ? `..(a ? >< : 0) <| a + 1`
     + refers to `..` in more looping sense!
+
+## [ ] Iteration: allow condition on the left side? `a < b <| ...`
+
+  + enables simple while loops
+  + allows prohibiting infinite lhs ranges
+  + detectible from input arg type
+    * it would need special boolean indicator for ops result. Boolean ops:
+  - `1 <| ...` will produce infinite loop
+
 
 ## [x] How to represent array pointer in code? -> let's try f64
 
@@ -3605,8 +3648,9 @@ Having wat files is more useful than direct compilation to binary form:
   + naturally enables shared memory
   ? can help with question of naming memory?
   + can be, yes, as `compile(src, {memory})`
+  ~+ we gotta need to provide means to work directly with memory
 
-## [ ] Directly call imported items as `@math.pi`? ->
+## [x] Directly call imported items as `@math.pi`? -> no: makes code unnecessarily verbose
 
   + so js does.
   + nicely separates namespace
@@ -3649,7 +3693,6 @@ Having wat files is more useful than direct compilation to binary form:
     * `(x,y,z)=@math[..]`?
     * `(..x,..y,..z)=@math`?
     * `x,y,z @ math`?
-
 
 ## [x] Labels `a:1, b:2` vs imports `a: b,c` -> we need neither of them, but let's raise `,` precedence;
 
@@ -3717,7 +3760,7 @@ Having wat files is more useful than direct compilation to binary form:
     - imports is part of JS, code may be not known
     + good for embeddable systems since all code is known in advance
 
-## [ ] Import type detection: `@math.pi` vs `@math.sin()` - we have to detect type and fn signature. How?
+## [x] Import type detection: `@math.pi` vs `@math.sin()` - we have to detect type and fn signature. How? -> let's try passing config object for now
 
   1. By usage. `@math.pi * 2` - imports number, `@math.sin()` - imports a function.
     + we apply same logic in ops: `()` treats as fn, `[]` as array and `+` as number
@@ -4000,16 +4043,6 @@ Having wat files is more useful than direct compilation to binary form:
     - enforces all funcs with prelim returns be f64
       ~+ prelim returns belong to userland anyways, it's not demanded internally
     - we can't
-
-## [ ] Iteration: optionally pass prev item, as in reducer? `a <| (x, i, prev) ->`
-
-## [ ] Iteration: allow condition on the left side? `a < b <| ...`
-
-  + enables simple while loops
-  + allows prohibiting infinite lhs ranges
-  + detectible from input arg type
-    * it would need special boolean indicator for ops result. Boolean ops:
-  - `1 <| ...` will produce infinite loop
 
 ## [x] State variables: How can we call same fn twice with same context? -> context is the same per-scope; to call with other context - wrap into a function; you can pass funcs by reference.
 

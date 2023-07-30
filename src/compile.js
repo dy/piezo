@@ -699,7 +699,7 @@ Object.assign(expr, {
   },
 })
 
-// return (local.set) or (global.set)
+// return (local.set) or (global.set) (if no init - takes from stack)
 function set (name, init='') {
   return op(`(${locals?.[name]?'local':'global'}.set $${name} ${init})`, null)
 }

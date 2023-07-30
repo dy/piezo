@@ -289,6 +289,13 @@ t('compile: function oneliners', t => {
   is(mod.instance.exports.mult(2,4), 8)
 })
 
+t('compile: function shadows global args', t => {
+  let mod = compileWat(compile(`a=1, mult(a) = (a=2).`))
+  is(mod.instance.exports.a.value, 1)
+  is(mod.instance.exports.mult(), 2)
+  is(mod.instance.exports.a.value, 1)
+})
+
 t.todo('debugs', t => {
   const memory = new WebAssembly.Memory({ initial: 1 });
   const importObject = { x: { y: ()=>123, z:123 }};
@@ -502,6 +509,7 @@ t('compile: loops basic range', t => {
 t.only('compile: loop range in range', t => {
   let wat = compile(`a=[..9], x(a,w,h)=(
     0..w <| x -> (
+      1
       ;;0..h <| y -> (
         ;;a[y*w + x] = x+y
       ;;)
