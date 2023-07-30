@@ -21,16 +21,10 @@ Low-level microlanguage with common syntax, linear/static memory and compiling t
 16.0, .1, 1e3, 2e-3;            ;; float
 true = 0b1, false = 0b0;        ;; alias booleans
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; units
-1k = 1000; 1pi = 3.1415926;     ;; define units
-1s = 44100; 1m = 60s;           ;; useful for sample indexes
-10.1k, 2pi;                     ;; units deconstruct to numbers: 10100, 6.283
-2m35s;                          ;; allow combinations
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; standard operators
 + - * / % -- ++                 ;; arithmetical (float)
 && || ! ?: ?                    ;; logical (boolean)
-== != >= <=                     ;; comparisons (boolean)
+> >= < <= == !=                 ;; comparisons (boolean)
 & | ^ ~ >> <<                   ;; binary (integer)
 . []                            ;; member access
 
@@ -47,6 +41,12 @@ foo=1, bar=2.0;                 ;; declare vars
 Ab_C_F#, $0, Δx, _;             ;; names permit alnum, unicodes, #, _, $
 fooBar123 == FooBar123;         ;; names are case-insensitive
 default=1, eval=fn, else=0;     ;; lino has no reserved words
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; units
+1k = 1000; 1pi = 3.1415926;     ;; define units
+1s = 44100; 1m = 60s;           ;; useful for sample indexes
+10.1k, 2pi;                     ;; units deconstruct to numbers: 10100, 6.283
+2m35s;                          ;; allow combinations
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; statements
 foo();                          ;; semi-colons at end of line are mandatory
