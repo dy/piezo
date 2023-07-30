@@ -3398,11 +3398,14 @@ Having wat files is more useful than direct compilation to binary form:
     - nah: `x = ~list`
   ? ALT: `x <~ list : `
 
-## [ ] What's the difference of `list <| # * 2` vs `list |> # * 2`?
+## [x] What's the difference of `list <| # * 2` vs `list |> # * 2`? -> multiple vs single return
 
   ? First one returns multiple members, last one returns single (last) value
+    ? can we detect that by-use-case?
+      - unlikely, same use-case can include both `[0,1,2<|#*2, 0,1,2|>#*2]`
+    + first uses heap, the second doesn't (is faster)
 
-## [x] `list <| x` vs `a < 1 <| x` - how do we know left side type? -> lhs is always either `.. <| #` or `list <| #`
+## [x] `list <| x` vs `a < 1 <| x` - how do we know left side type? -> from boolean operator result or by-syntax
 
   * type can be unknown, like `x(arg)=(arg <| ...)`
     ? do we run it until condition holds true?
@@ -3434,15 +3437,22 @@ Having wat files is more useful than direct compilation to binary form:
     * `0.. <| # + 1` another kind of limited loop with nicer id
     ? `..(a ? >< : 0) <| a + 1`
     + refers to `..` in more looping sense!
+    - no while is a bummer
 
-## [ ] Iteration: allow condition on the left side? `a < b <| ...`
+  ? ALT allow condition on the left side? `a < b <| ...` is boolean op on lhs
+    + enables simple while loops
+    + allows prohibiting infinite lhs ranges
+    + detectible from input arg as boolean operator
+      * it would need special boolean indicator for ops result. (any condition)
+    - `1 <| ...` will produce infinite loop
+      ~ we would not consider it a boolean op, it'd need to be `!0 <| ...`
 
-  + enables simple while loops
-  + allows prohibiting infinite lhs ranges
-  + detectible from input arg type
-    * it would need special boolean indicator for ops result. Boolean ops:
-  - `1 <| ...` will produce infinite loop
-
+  ? ALT: prohibit iterating lists: only range `a..b <|`, sequence `a,b,c <|` or condition (while) `a < 10 <|`
+    + it's trivial and more explicit to iterate loops as `0..arr[] <| arr[#]`
+      + it's also more useful for reducers/prev refs `1..arr[] |> arr[#-1] + arr[#]`
+    + it's more explicit and close to low-level what's going-on
+    - prohibits `x[1..10] <|= # * 2`
+    - breaks pipe `0..items[] |> filter(items[#]) |> gain(items[#])` is super-verbose
 
 ## [x] How to represent array pointer in code? -> let's try f64
 

@@ -40,8 +40,8 @@ PREC_UNARY=26,
 PREC_CALL=27, // a(b), a.b, a[b], a[]
 PREC_TOKEN=28 // [a,b] etc
 
-// make id support #
-parse.id = n => skip(char => isId(char) || char === HASH)
+// make id support #@
+parse.id = n => skip(char => isId(char) || char === HASH || char === AT)
 
 const isNum = c => c >= _0 && c <= _9
 const num = (a) => {

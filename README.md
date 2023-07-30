@@ -38,7 +38,7 @@ true = 0b1, false = 0b0;        ;; alias booleans
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; variables
 foo=1, bar=2.0;                 ;; declare vars
-Ab_C_F#, $0, Δx, _;             ;; names permit alnum, unicodes, #, _, $
+Ab_C_F#, $0, Δx, _;             ;; names permit alnum, unicodes, #_$@
 fooBar123 == FooBar123;         ;; names are case-insensitive
 default=1, eval=fn, else=0;     ;; lino has no reserved words
 
@@ -75,7 +75,9 @@ a = b ? c;                      ;; if b then a = c, else a = 0
 1.08..108.0;                    ;; float range
 (x-1)..(x+1);                   ;; calculated ranges
 x <= 0..10;                     ;; is x in 0..10 range (10 inclusive)
-x <? 0..10;                     ;; max(min(x, 10), 0)
+x <? ..10, x <? 0..;            ;; min(x, 10), max(x, 0)
+x <? 0..10;                     ;; clamo(x, 0, 10)
+x <?= 0..10;                    ;; x = clamp(x, 0, 10)
 a,b,c = 0..2;                   ;; a==0, b==1, c==2
 (-10..10)[];                    ;; span is 20
 
@@ -106,7 +108,7 @@ dup(x) = (x,x);                 ;; return multiple values
 (a,b) = dup(b);                 ;; get returns
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; state variables
-a() = ( *i=0; ++i );            ;; i persists value between a calls
+a() = ( *i=0; ++i );            ;; i persists value between calls
 a(), a();                       ;; 1, 2
 fib() = (                       ;;
   *i=[1,0,0];                   ;; local memory of 3 items
@@ -121,7 +123,7 @@ d(b);                           ;; 1, 8;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; arrays
 m = [..10];                     ;; array of 10 elements
-m = [..10 <| 2];                ;; prefilled with value
+m = [..10 <| 2];                ;; filled with value
 m = [1,2,3,4];                  ;; array of 4
 m = [n[..]];                    ;; copy n
 m = [1, 2..4, 5];               ;; mixed definition
@@ -139,7 +141,7 @@ m[0..] = m[-1..0];              ;; reverse order
 m[0..] = m[1..,0];              ;; rotate
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; loops
-a, b, c |> x(#);                ;; for each item i do x(item)
+a, b, c |> x(#);                ;; for each a, b, c do x(item)
 10.. |> (                       ;; iterate over range
   # < 3 ? ^^;                   ;; ^^ break
   # < 5 ? ^;                    ;; ^ continue

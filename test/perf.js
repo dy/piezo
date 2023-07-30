@@ -16,8 +16,8 @@ t('perf: sobel', t => {
     ),
 
     process(data, width, height) = (
-      0..height <| y -> (
-        0..width <| x -> (
+      0..height |> ( y=#;
+        0..width |> ( x=#;
           ;; Extract values from image
           (val0, val1, val2, val3, val5, val6, val7, val8) = (
             get_pixel(data, x, y, width, height),
@@ -32,7 +32,7 @@ t('perf: sobel', t => {
           ;; Apply Sobel kernel
           gx = -1 * val0 + -2 * val3 + -1 * val6 + val2 + 2 * val5 + val8;
           gy = -1 * val0 + -2 * val1 + -1 * val2 + val6 + 2 * val7 + val8;
-          mag = (gx * gx + gy * gy) ** 1/2;
+          mag = (gx * gx + gy * gy) ** .5;
           mag <?= 0..1;
           data[x + y * width] = mag;
         )
