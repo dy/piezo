@@ -34,7 +34,6 @@ true = 0b1, false = 0b0;        ;; alias booleans
 |> <| <|=                       ;; loop, map
 *                               ;; state variable
 ^ ^^                            ;; continue, break
-@ .                             ;; import, export
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; variables
 foo=1, bar=2.0;                 ;; declare vars
