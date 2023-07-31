@@ -5,9 +5,7 @@ import {FLOAT,INT} from './const.js'
 import stringify from './stringify.js'
 import { parse as parseWat } from "watr";
 
-let prevCtx, includes, imports, globals, funcs, func, locals, exports, heap, mem, returns, units, config;
-
-const _tmp = Symbol('tmp')
+let prevCtx, includes, imports, globals, locals, slocals, funcs, func, exports, heap, mem, returns, units, config, depth;
 
 // limit of memory is defined as: (max array length i24) / (number of f64 per memory page i13)
 const MAX_MEMORY = 2048
@@ -17,11 +15,12 @@ export default function compile(node, obj) {
   console.log('compile', node)
 
   // save previous compiling context
-  prevCtx = {prevCtx, includes, imports, globals, funcs, func, locals, exports, heap, mem, returns, units, config};
+  prevCtx = {prevCtx, includes, imports, globals, locals, slocals, funcs, func, exports, heap, mem, returns, units, config, depth};
 
   // init compiling context
   // FIXME: make temp vars just part of local scope
-  globals = {[_tmp]:[]}, // global scope (as name props)
+  globals = {}, // global scope (as name props)
+  slocals = {}, // start fn local scope
   locals = null, // current fn local scope
   includes = [], // pieces of wasm to inject
   imports = [], // imported statements (regardless of libs) - funcs/globals/memory
@@ -32,7 +31,8 @@ export default function compile(node, obj) {
   func = null, // current function that's being initialized
   heap = 0, // heap size as number of pages (detected from max static array size)
   mem = false, // indicates if memory must be included (heap automatically enables memory)
-  units = {} // holds currently defined units (inserted as direct constants)
+  units = {}, // holds currently defined units (inserted as direct constants)
+  depth = 0, // current loop/nested block counter
   config = obj || {}
 
   // run global in start function
@@ -74,7 +74,7 @@ export default function compile(node, obj) {
   // run globals init, if needed
   if (init) out += `;;;;;;;;;;;;;;;;;;;;;;;;;;;; Init\n` +
   `(func $__init\n` +
-    (globals[_tmp].length ? (globals[_tmp].map((tmp)=>`(local ${tmp})`).join('') + '\n') : '') +
+    (Object.keys(slocals).map((name)=>`(local $${name} ${slocals[name].type})`).join('') + '\n') +
     (init ? `${init}\n` : ``) +
     `(return))\n` +
   `(start $__init)\n\n`
@@ -88,7 +88,7 @@ export default function compile(node, obj) {
   // console.log(...parseWat(out))
 
   // restore previous compiling context
-  ;({prevCtx, includes, imports, globals, funcs, func, locals, exports, heap, mem, returns, units, config} = prevCtx);
+  ;({prevCtx, includes, imports, globals, funcs, func, locals, slocals, exports, heap, mem, returns, units, config, depth} = prevCtx);
   return out
 }
 
@@ -268,7 +268,7 @@ Object.assign(expr, {
       let prevFunc = func
       func = name
 
-      locals = {[_tmp]:[]}
+      locals = {}
 
       // normalize body to (a;b;) form
       body = body[0]==='(' ? body : ['(',body]
@@ -308,9 +308,6 @@ Object.assign(expr, {
 
       // declare locals
       for (let name in locals) if (!locals[name].arg) dfn.push(`(local $${name} ${locals[name].type})`)
-
-      // declare tmps
-      dfn.push(locals[_tmp].map((tmp)=>`(local ${tmp})`).join(''))
 
       // if fn is stateful - defer saving values
       // FIXME: possibly we may need to upgrade state vars to always read/write from memory, but now too complicated
@@ -373,7 +370,8 @@ Object.assign(expr, {
     if (a[0]==='..') {
       // i = from; to; while (i < to) {# = i; ...; i++}
       let [,min,max] = a
-      const idx = define('#'), to = tmp('to'), body = expr(b), type = body.type.join(' ')
+      const idx = define('#','f64',true), to = define(`to.${depth++}`,'f64',true),
+            body = expr(b), type = body.type.join(' ')
 
       out += `;; |>\n` +
         set(idx, asFloat(expr(min))) + '\n' +
@@ -441,6 +439,7 @@ Object.assign(expr, {
       }
     }
 
+    depth--
     return op(out, 'f64', {dynamic:true})
   },
 
@@ -686,41 +685,30 @@ Object.assign(expr, {
 
 // return (local.set) or (global.set) (if no init - takes from stack)
 function set (name, init='') {
-  return op(`(${locals?.[name]?'local':'global'}.set $${name} ${init})`, null)
+  return op(`(${locals?.[name]||slocals?.[name]?'local':'global'}.set $${name} ${init})`, null)
 }
 
 function get (name) {
-  return op(`(${locals?.[name]?'local':'global'}.get $${name})`, locals?.[name]?.type || globals[name]?.type)
+  return op(`(${locals?.[name]||slocals?.[name]?'local':'global'}.get $${name})`, (locals?.[name]||slocals?.[name]||globals[name]).type)
 }
 
 function tee (name, init) {
-  return op(locals?.[name] ? `(local.tee $${name} ${init})` : `(global.set $${name} ${init})(global.get $${name})`, init.type)
+  return op(locals?.[name] || slocals?.[name] ? `(local.tee $${name} ${init})` : `(global.set $${name} ${init})(global.get $${name})`, init.type)
 }
 
-// define variable in current scope, export if necessary; returns resolved name
-function define(name, type='f64') {
-  if (locals) {
-    if (!locals[name] && !globals[name]) locals[name] = {var:true, type}
-    return name
-  }
-  if (!globals[name]) globals[name] = {var:true, type}
-  return name
-}
-
-// define temp variable, always in local scope; returns tmp var name
-// FIXME: possibly can turn it into `define`
-// FIXME: tmp should be able to free variable once finished using
-function tmp(name, type='f64') {
-  let len = (locals || globals)[_tmp].length || ''
-  name = `tmp${len}.${name}`
-  ;(locals || globals)[_tmp].push(`$${name} ${type}`)
+// define variable in current scope (local or global, alt - start fn local), export if necessary; returns resolved name
+function define(name, type='f64', sloc=false) {
+  if (locals?.[name] || slocals?.[name] || globals?.[name]) return name;
+  ;(locals || (sloc?slocals:globals))[name] = {var:true, type}
   return name
 }
 
 // create array initializer op (via heap), from element nodes
 // FIXME: reorganize - no good to take nodes here
 function buf(inits) {
-  let src = tmp('src','i32'), dst = tmp('dst', 'i32'), size = tmp('size','i32')
+  depth++
+
+  let src = define(`src.${depth}`,'i32',true), dst = define(`dst.${depth}`, 'i32',true), size = define(`size.${depth}`,'i32',true)
 
   heap = Math.max(heap, 1); // min heap is 8192 elements
 
@@ -769,6 +757,7 @@ function buf(inits) {
   + `(global.set $__heap (local.get $${src}))\n` // free heap
   + `(call $arr.ref (local.get $${dst}) (i32.shr_u (local.get $${size}) (i32.const 3)))\n` // create reference
 
+  depth--
   return op(out,'f64',{buf:true})
 }
 
