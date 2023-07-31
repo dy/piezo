@@ -521,21 +521,20 @@ t('compile: loops range local', t => {
   is(arr[2], 3)
 })
 
-t.todo('compile: loop range in range', t => {
-  let wat = compile(`a=[..9], x(a,w,h)=(
-    0..w <| x -> (
-      1
-      ;;0..h <| y -> (
-        ;;a[y*w + x] = x+y
-      ;;)
+t('compile: loop range in range', t => {
+  let wat = compile(`a=[..9], f(a,w,h)=(
+    0..w |> (x=#;
+      0..h |> (y=#;
+        a[y*w + x] = x+y*w
+      )
     )
   ).`)
   let mod = compileWat(wat)
-  let {__memory:memory, a, x} = mod.instance.exports
+  let {__memory:memory, a, f} = mod.instance.exports
 
   let arr = new Float64Array(memory.buffer, a.value, 9)
   is(arr, [0,0,0,0,0,0,0,0,0])
-  x(a,3,3)
+  f(a,3,3)
   is(arr, [0,1,2,3,4,5,6,7,8])
 })
 

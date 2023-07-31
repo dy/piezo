@@ -362,25 +362,27 @@ Object.assign(expr, {
 
   // a |> b
   '|>'([,a,b]) {
-    let out = ``
-
     // a..b |> ...
     // FIXME: step via a..b/step?
     // FIXME: curve via a..b?
     if (a[0]==='..') {
+      depth++
       // i = from; to; while (i < to) {# = i; ...; i++}
-      let [,min,max] = a
-      const idx = define('#','f64',true), to = define(`to.${depth++}`,'f64',true),
+      const [,min,max] = a
+      const cur = define('#','f64'),
+            idx = define(`idx.${depth}`,'f64',true),
+            end = define(`end.${depth}`,'f64',true),
             body = expr(b), type = body.type.join(' ')
 
-      out += `;; |>\n` +
+      const out = `;; |>:${depth}\n` +
         set(idx, asFloat(expr(min))) + '\n' +
-        `(local.set $${to} ${asFloat(expr(max))})\n` +
+        `(local.set $${end} ${asFloat(expr(max))})\n` +
         body.type.map(t => `(${t}.const 0)`).join('') + '\n' + // init result values
         `(loop (param ${type}) (result ${type}) \n` +
-          `(if (param ${type}) (result ${type}) (f64.le ${get(idx)} (local.get $${to}))\n` + // if (# < to)
+          `(if (param ${type}) (result ${type}) (f64.le ${get(idx)} (local.get $${end}))\n` + // if (# < end)
             `(then\n` +
               `(drop)`.repeat(body.type.length) + '\n' +
+              set(cur, get(idx)) + '\n' +
               `${body}\n` +
               set(idx, op(`(f64.add ${get(idx)} (f64.const 1))`, 'f64')) +
               // FIXME: step can be adjustable
@@ -389,7 +391,11 @@ Object.assign(expr, {
             `)` +
           `)` +
         `)`
+
+      depth--
+      return op(out, body.type)
     }
+
     // list |> ...
     else {
       err('loop over list: unimplemented')
