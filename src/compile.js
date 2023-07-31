@@ -363,53 +363,38 @@ Object.assign(expr, {
     err(`Unknown assignment left value \`${stringify(a)}\``)
   },
 
-  // a <| b
-  '<|'([,a,b]) {
-    let idx, item, out = ``
+  // a |> b
+  '|>'([,a,b]) {
+    let out = ``
 
-    // get item/idx name
-    // [.. <| x -> x]
-    if (b[0] === '->') {
-      let [, arg, body] = b
-      // x ->
-      if (typeof arg === 'string') item = define(arg), idx = tmp('idx')
-      // (x,i) ->
-      else if (arg[0]==='(') {
-        if (arg[1][0]===',') item = define(arg[1][1]), idx = define(arg[1][2], 'i32')
-        else if (typeof arg[1] === 'string') item = define(arg[1]), idx = tmp('idx', 'i32')
-        else err('Bad iterator arguments')
-      }
-      b = body
-    }
-    // [.. <| expr]
-    else {
-      idx = tmp('idx', 'i32'), item = tmp('item')
-      err('Expression loop: unimplemented')
-    }
-
-    // a..b <| ...
+    // a..b |> ...
     // FIXME: step via a..b/step?
     // FIXME: curve via a..b?
     if (a[0]==='..') {
       // i = from; to; while (i < to) {# = i; ...; i++}
       let [,min,max] = a
-      const from = tmp('from'), to = tmp('to')
-      out +=
-      `(local.tee $${from} ${asFloat(expr(min))})\n` +
-      `(local.set $${to} ${asFloat(expr(max))})\n` +
-      `(loop (param f64) (result f64) \n` +
-        `(if (param f64) (result f64) (f64.le (local.get $${from}) (local.get $${to}))\n` +
-          `(then\n` +
-            `${set(item)}\n` +
-            `${expr(b)}\n` +
-            `(local.tee $${from} (f64.add (local.get $${from}) (f64.const 1)))\n` + // FIXME: step can be adjustable
-            // `(call $f64.log (global.get $${item}))` +
-            `(br 1)\n` +
-          `)\n` +
-      `))\n`
+      const idx = define('#'), to = tmp('to'), body = expr(b), type = body.type.join(' ')
+
+      out += `;; |>\n` +
+        set(idx, asFloat(expr(min))) + '\n' +
+        `(local.set $${to} ${asFloat(expr(max))})\n` +
+        body.type.map(t => `(${t}.const 0)`).join('') + '\n' + // init result values
+        `(loop (param ${type}) (result ${type}) \n` +
+          `(if (param ${type}) (result ${type}) (f64.le ${get(idx)} (local.get $${to}))\n` + // if (# < to)
+            `(then\n` +
+              `(drop)`.repeat(body.type.length) + '\n' +
+              `${body}\n` +
+              set(idx, op(`(f64.add ${get(idx)} (f64.const 1))`, 'f64')) +
+              // FIXME: step can be adjustable
+              // `(call $f64.log (global.get $${idx}))` +
+              `(br 1)\n` +
+            `)` +
+          `)` +
+        `)`
     }
-    // list <| ...
+    // list |> ...
     else {
+      err('loop over list: unimplemented')
       let aop = expr(a)
       // (a,b,c) <| ...
       if (aop.type.length > 1) {
@@ -459,9 +444,9 @@ Object.assign(expr, {
     return op(out, 'f64', {dynamic:true})
   },
 
-  // a |> (b,c)->d
-  '|>'([,a,b]) {
-
+  // a <| (b,c)->d
+  '<|'([,a,b]) {
+    err('<| unimplemented')
   },
 
   '-'([,a,b]) {
@@ -714,12 +699,11 @@ function tee (name, init) {
 
 // define variable in current scope, export if necessary; returns resolved name
 function define(name, type='f64') {
-  if (!locals) {
-    if (!globals[name]) globals[name] = {var:true, type}
+  if (locals) {
+    if (!locals[name] && !globals[name]) locals[name] = {var:true, type}
+    return name
   }
-  else {
-    if (!globals[name] && !locals[name]) locals[name] = {var:true, type}
-  }
+  if (!globals[name]) globals[name] = {var:true, type}
   return name
 }
 

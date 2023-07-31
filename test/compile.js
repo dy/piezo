@@ -494,9 +494,10 @@ t.todo('compile: break/continue', t => {
 
 })
 
-t('compile: loops basic range', t => {
-  let wat = compile(`x=[1..3]; 0..2 <| i -> x[i]=i+1; x.`)
-  let mod = compileWat(wat)
+t('compile: loops range global', t => {
+  let wat, mod
+  wat = compile(`x=[1..3]; 0..2 |> x[#]=#+1; x.`)
+  mod = compileWat(wat)
   let {__memory:memory, x} = mod.instance.exports
 
   let arr = new Float64Array(memory.buffer, x.value, 3)
@@ -506,7 +507,21 @@ t('compile: loops basic range', t => {
   is(arr[2], 3)
 })
 
-t.only('compile: loop range in range', t => {
+t('compile: loops range local', t => {
+  let wat, mod
+  wat = compile(`x=[1..3]; fill() = (0..x[] |> x[#]=#+1); fill, x.`)
+  mod = compileWat(wat)
+  let {__memory:memory, x, fill} = mod.instance.exports
+
+  let arr = new Float64Array(memory.buffer, x.value, 3)
+  is(fill(),3);
+
+  is(arr[0], 1)
+  is(arr[1], 2)
+  is(arr[2], 3)
+})
+
+t.todo('compile: loop range in range', t => {
   let wat = compile(`a=[..9], x(a,w,h)=(
     0..w <| x -> (
       1
