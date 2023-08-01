@@ -30,6 +30,7 @@ export function compileWat (code, imports={}) {
   '(func $f64.log3 (import "imports" "log") (param f64 f64 f64) (result f64 f64 f64))\n' +
   '(func $i64.log (import "imports" "log") (param i64) (result i64))\n' +
   code
+
   const wasmModule = wabt.parseWat('inline', code, {
     simd: true,
     reference_types: true,

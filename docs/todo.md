@@ -45,9 +45,11 @@
   * [ ] Clamp args
   * [x] Imports - nice `<>` syntax with href internals and options
   * [x] Units
-  * [ ] basic maths
+  * [x] basic maths
   * [ ] Group operators
-  * [ ] Comments
+  * [x] Comments
+* [x] CLI
+* [ ] Indent output (like mono)
 * [ ] Bench sobel
   * [ ] https://github.com/mattdesl/wasm-bench
 * [ ] static arrays

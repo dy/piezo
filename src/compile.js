@@ -12,7 +12,7 @@ const MAX_MEMORY = 2048
 
 export default function compile(node, obj) {
   if (typeof node === 'string') node = parse(node)
-  console.log('compile', node)
+  // console.log('compile', node)
 
   // save previous compiling context
   prevCtx = {prevCtx, includes, imports, globals, locals, slocals, funcs, func, exports, heap, mem, returns, units, config, depth};
@@ -84,7 +84,7 @@ export default function compile(node, obj) {
   for (let name in exports)
     out += `(export "${name}" (${exports[name].func ? 'func' : 'global'} $${name}))\n`
 
-  console.log(out);
+  // console.log(out);
   // console.log(...parseWat(out))
 
   // restore previous compiling context

@@ -1,4 +1,4 @@
-\\ units
+;; units
 sr = 44100;
 1s = sr;
 1ms = 0.001s;
@@ -27,7 +27,7 @@ tri(x,t,o)=1-abs(1-(((osc(x,t,o)+hpi)/pi)%2))*2;
 saw(x,t,o)=1-(((osc(x,t,o)+pi)/pi)%2);
 ramp(x,t,o)=(((osc(x,t,o)+pi)/pi)%2)-1;
 sqr(x,t,o)=ramp(x,t,o)<0?-1:1;
-\\ noise()=rand(); \\sin(osc(x)*1e7+1e7);
+;; noise()=rand(); ;; sin(osc(x)*1e7+1e7);
 sine(x,t,o)= sin(osc(x,t,o));
 expo(x)=(
   *p;
@@ -57,8 +57,8 @@ wsqr(hz)  =wt(#sqr,hz);
 wnoise(hz)=wt(#noise,hz);
 noise(hz) =wt(#noise,hz);
 wsine(hz) =wt(#sine,hz);
-\\ wexp(hz)  =wt(#exp,hz);
-\\ wexp(p)=#exp(p<0?0:p>1s-1?1s-1:p);
+;; wexp(hz)  =wt(#exp,hz);
+;; wexp(p)=#exp(p<0?0:p>1s-1?1s-1:p);
 wexp(p)=(
   p*=-1s;
   #exp(clamp(p, 0, 10s-1))
@@ -68,9 +68,9 @@ note_to_hz(x)=440*2**((x-33)/12);
 
 soft(x,amt)=(x/(1/amt+abs(x)));
 
-\\ https://github.com/thi-ng/umbrella/blob/776f08d4491787a071c74f1bbc2a36d69188c75d/packages/math/src/interval.ts#L202
-\\ https://www.desmos.com/calculator/lkyf2ag3ta
-\\ https://www.musicdsp.org/en/latest/Effects/203-fold-back-distortion.html
+;; https://github.com/thi-ng/umbrella/blob/776f08d4491787a071c74f1bbc2a36d69188c75d/packages/math/src/interval.ts#L202
+;; https://www.desmos.com/calculator/lkyf2ag3ta
+;; https://www.musicdsp.org/en/latest/Effects/203-fold-back-distortion.html
 foldback(x,e)=(
   ((x < -e) || (x > e)) ?
     (abs(
@@ -101,8 +101,8 @@ allpass(x,#)=(
   o
 );
 
-\\ combs_a = [1116,1188,1277,1356]
-\\ combs_b = [1422,1491,1557,1617]
+;; combs_a = [1116,1188,1277,1356]
+;; combs_b = [1422,1491,1557,1617]
 freeverb(x0,
   ro -< 0.01..0.999 = 0.5,
   da -< 0.01..0.999 = 0.5
@@ -305,7 +305,7 @@ hs(x0, freq[1..1000]=100.0, Q[0.01..2f]=1.0, gain[0.01..10f]=1.0)=(
   bi_ig(x0,b0,b1,b2,a0,a1,a2)
 );
 
-\\ https://cytomic.com/files/dsp/SvfLinearTrapOptimised2.pdf
+;; https://cytomic.com/files/dsp/SvfLinearTrapOptimised2.pdf
 svf_co(
   cutoff[50..22k]=3169.975,
   res[0.01..0.985]=0.556
@@ -346,11 +346,11 @@ lpf(
   (k,v1,v2,v3)=svf(v0,cutoff,res);
 
   low=v2;
-  \\ band=v1;
-  \\ high=v0-k*v1-v2;
-  \\ notch=v0-k*v1;
-  \\ peak=v0-k*v1-2*v2;
-  \\ all=v0-2*k*v1;
+  ;; band=v1;
+  ;; high=v0-k*v1-v2;
+  ;; notch=v0-k*v1;
+  ;; peak=v0-k*v1-2*v2;
+  ;; all=v0-2*k*v1;
 
   low
 );
@@ -362,12 +362,12 @@ bpf(
 )=(
   (k,v1,v2,v3)=svf(v0,cutoff,res);
 
-  \\ low=v2;
+  ;; low=v2;
   band=v1;
-  \\ high=v0-k*v1-v2;
-  \\ notch=v0-k*v1;
-  \\ peak=v0-k*v1-2*v2;
-  \\ all=v0-2*k*v1;
+  ;; high=v0-k*v1-v2;
+  ;; notch=v0-k*v1;
+  ;; peak=v0-k*v1-2*v2;
+  ;; all=v0-2*k*v1;
 
   band
 );
@@ -379,12 +379,12 @@ hpf(
 )=(
   (k,v1,v2,v3)=svf(v0,cutoff,res);
 
-  \\ low=v2;
-  \\ band=v1;
+  ;; low=v2;
+  ;; band=v1;
   high=v0-k*v1-v2;
-  \\ notch=v0-k*v1;
-  \\ peak=v0-k*v1-2*v2;
-  \\ all=v0-2*k*v1;
+  ;; notch=v0-k*v1;
+  ;; peak=v0-k*v1-2*v2;
+  ;; all=v0-2*k*v1;
 
   high
 );
@@ -396,12 +396,12 @@ notchf(
 )=(
   (k,v1,v2,v3)=svf(v0,cutoff,res);
 
-  \\ low=v2;
-  \\ band=v1;
-  \\ high=v0-k*v1-v2;
+  ;; low=v2;
+  ;; band=v1;
+  ;; high=v0-k*v1-v2;
   notch=v0-k*v1;
-  \\ peak=v0-k*v1-2*v2;
-  \\ all=v0-2*k*v1;
+  ;; peak=v0-k*v1-2*v2;
+  ;; all=v0-2*k*v1;
 
   notch
 );
@@ -413,12 +413,12 @@ peakf(
 )=(
   (k,v1,v2,v3)=svf(v0,cutoff,res);
 
-  \\ low=v2;
-  \\ band=v1;
-  \\ high=v0-k*v1-v2;
-  \\ notch=v0-k*v1;
+  ;; low=v2;
+  ;; band=v1;
+  ;; high=v0-k*v1-v2;
+  ;; notch=v0-k*v1;
   peak=v0-k*v1-2*v2;
-  \\ all=v0-2*k*v1;
+  ;; all=v0-2*k*v1;
 
   peak
 );
@@ -430,17 +430,17 @@ apf(
 )=(
   (k,v1,v2,v3)=svf(v0,cutoff,res);
 
-  \\ low=v2;
-  \\ band=v1;
-  \\ high=v0-k*v1-v2;
-  \\ notch=v0-k*v1;
-  \\ peak=v0-k*v1-2*v2;
+  ;; low=v2;
+  ;; band=v1;
+  ;; high=v0-k*v1-v2;
+  ;; notch=v0-k*v1;
+  ;; peak=v0-k*v1-2*v2;
   all=v0-2*k*v1;
 
   all
 );
 
-\\ https://github.com/mixxxdj/mixxx/blob/main/src/engine/filters/enginefiltermoogladder4.h
+;; https://github.com/mixxxdj/mixxx/blob/main/src/engine/filters/enginefiltermoogladder4.h
 
 tanha(x)=(
   x/(1f+x*x/(3f+x*x/5f))
@@ -503,7 +503,7 @@ mooglp(
   m_amf * m_postGain
 );
 
-\\ same as above
+;; same as above
 moog(
   x0,
   cut[0.1f..5k]=629.345,
@@ -522,7 +522,7 @@ mooghp(
   (x1 - 3 * az3 + 2 * az4) * m_postGain
 );
 
-\\ fract(x)=x-floor(x);
+;; fract(x)=x-floor(x);
 
 cubic(#,i)=(
   fr = fract(i);
@@ -561,35 +561,35 @@ spline(#,i)=(
 
 modwrap(x,N)=(x%N+N)%N;
 
-\\ denan(x)=x-x!=0f?0f:x;
+;; denan(x)=x-x!=0f?0f:x;
 
 sum(x,y)=x+y;
 
 idy(x)=x;
 
 daverb(x,
-  pd[1..1s]=150f, \\ predelay
-  bw[0..1f]=0.1, \\ bandwidth
-  fi[0..1f]=0.5, \\ input diffusion 1
-  si[0..1f]=0.5, \\ input diffusion 2
-  dc[0..1f]=0.5, \\ decay
-  ft[0..0.999999]=0.5, \\ decay diffusion 1
-  st[0..0.999999]=0.5, \\ decay diffusion 2
-  dp[0..1f]=0.5, \\ damping
-  ex[0..2f]=0.5, \\ excursion rate
-  ed[0..2f]=0.5, \\ excursion depth
-  dr[0..1f]=0, \\ dry
-  we[0..1f]=1 \\ wet
+  pd[1..1s]=150f, ;; predelay
+  bw[0..1f]=0.1, ;; bandwidth
+  fi[0..1f]=0.5, ;; input diffusion 1
+  si[0..1f]=0.5, ;; input diffusion 2
+  dc[0..1f]=0.5, ;; decay
+  ft[0..0.999999]=0.5, ;; decay diffusion 1
+  st[0..0.999999]=0.5, ;; decay diffusion 2
+  dp[0..1f]=0.5, ;; damping
+  ex[0..2f]=0.5, ;; excursion rate
+  ed[0..2f]=0.5, ;; excursion depth
+  dr[0..1f]=0, ;; dry
+  we[0..1f]=1 ;; wet
 )=(
-  \\ set parameters
+  ;; set parameters
   dp=1-dp;
   ex=ex/sr;
   ed=ed*sr/1000f;
 
-  \\ predelay
+  ;; predelay
   #pd:1s;
 
-  \\ delay banks
+  ;; delay banks
   #d0:0.004771345s;
   #d1:0.003595309s;
   #d2:0.012734787s;
@@ -603,12 +603,12 @@ daverb(x,
   #d10:0.089244313s;
   #d11:0.106280031s;
 
-  \\ write to predelay
+  ;; write to predelay
   #pd=x*.5;
 
   {lp1};{lp1}+=bw*(cubic(*#pd,-pd) -lp1);
 
-  \\ pre-tank
+  ;; pre-tank
   #d0=( lp1-fi*#d0(-1));
   #d1=(fi*(#d0-#d1(-1))  +#d0(-1));
   #d2=(fi* #d1+#d1(-1)-si*#d2(-1));
@@ -616,28 +616,28 @@ daverb(x,
 
   split=si*#d3+#d3(-1);
 
-  \\ excursions
+  ;; excursions
   {exc_phase};
   exc  = ed*(1f+cos(exc_phase*6.2800));
   exc2 = ed*(1f+sin(exc_phase*6.2847));
 
-  \\ left loop
-  #d4=split+dc*#d11(-1)+ft*cubic(*#d4,exc); \\ tank diffuse 1
-  #d5=cubic(*#d4,exc)-ft*#d4;               \\ long delay 1
+  ;; left loop
+  #d4=split+dc*#d11(-1)+ft*cubic(*#d4,exc); ;; tank diffuse 1
+  #d5=cubic(*#d4,exc)-ft*#d4;               ;; long delay 1
 
-  {lp2};{lp2}+=dp*(#d5(-1)-lp2); \\ damp 1
+  {lp2};{lp2}+=dp*(#d5(-1)-lp2); ;; damp 1
 
-  #d6=dc*lp2-st*#d6(-1); \\ tank diffuse 2
-  #d7=#d6(-1)+st*#d6;    \\ long delay 2
+  #d6=dc*lp2-st*#d6(-1); ;; tank diffuse 2
+  #d7=#d6(-1)+st*#d6;    ;; long delay 2
 
-  \\ right loop
-  #d8=split+dc*#d7(-1)+ft*cubic(*#d8,exc2); \\ tank diffuse 3
-  #d9=cubic(*#d8,exc2)-ft*#d8;              \\ long delay 3
+  ;; right loop
+  #d8=split+dc*#d7(-1)+ft*cubic(*#d8,exc2); ;; tank diffuse 3
+  #d9=cubic(*#d8,exc2)-ft*#d8;              ;; long delay 3
 
-  {lp3};{lp3}+=dp*#d9(-1)-lp3; \\ damp 2
+  {lp3};{lp3}+=dp*#d9(-1)-lp3; ;; damp 2
 
-  #d10=dc*lp3-st*#d10(-1); \\ tank diffuse 4
-  #d11=#d10(-1)+st*#d10;   \\ long delay 4
+  #d10=dc*lp3-st*#d10(-1); ;; tank diffuse 4
+  #d11=#d10(-1)+st*#d10;   ;; long delay 4
 
   lo=
     #d9(0.008937872s)
@@ -661,7 +661,7 @@ daverb(x,
 
   {exc_phase}+=ex;
 
-  \\ todo: stereo
+  ;; todo: stereo
     ((x*dr+lo*we)
   +  (x*dr+ro*we))
 );
@@ -683,7 +683,7 @@ diode(
   A = 1.0 + 0.5 * k;
   ah = (K - 2.0) / (K + 2.0);
   bh = 2.0 / (K + 2.0);
-  \\ a = 2 * Math.tan(0.5*a) \\ dewarping, not required with 2x oversampling
+  ;; a = 2 * Math.tan(0.5*a) ;; dewarping, not required with 2x oversampling
 
   ainv = 1.0 / a;
   a2 = a * a;
@@ -693,7 +693,7 @@ diode(
   g0 = 2.0 * a2 * a2 * c;
   g = g0 * bh;
 
-  \\ current state
+  ;; current state
   s0 =
     (a2 * a * z0 +
       a2 * b * z1 +
@@ -703,20 +703,20 @@ diode(
 
   s = bh * s0 - z4;
 
-  \\ solve feedback loop (linear)
+  ;; solve feedback loop (linear)
   y5 = (g * x0 + s) / (1.0 + g * k);
 
-  \\ input clipping
+  ;; input clipping
   y0 = soft((x0 - k * y5),sat);
   y5 = g * y0 + s;
 
-  \\ compute integrator outputs
+  ;; compute integrator outputs
   y4 = g0 * y0 + s0;
   y3 = (b * y4 - z3) * ainv;
   y2 = (b * y3 - a * y4 - z2) * ainv;
   y1 = (b * y2 - a * y3 - z1) * ainv;
 
-  \\ update filter state
+  ;; update filter state
   {z0} += 4.0 * a * (y0 - y1 + y2);
   {z1} += 2.0 * a * (y1 - 2.0 * y2 + y3);
   {z2} += 2.0 * a * (y2 - 2.0 * y3 + y4);
@@ -728,23 +728,23 @@ diode(
 
 env(
   note_on_time,
-  a[0.1..100]=15, \\ attack
-  r[0.1..100]=15  \\ release
+  a[0.1..100]=15, ;; attack
+  r[0.1..100]=15  ;; release
 )=(
-  dt=t-note_on_time; \\ time since note_on_time
-  A=1-wexp(-dt*a); \\ attack curve
-  R=wexp(-dt*r);   \\ release curve
+  dt=t-note_on_time; ;; time since note_on_time
+  A=1-wexp(-dt*a); ;; attack curve
+  R=wexp(-dt*r);   ;; release curve
   A*R
 );
 
 envco(
   note_on_time,
-  a[0.1..100]=15, \\ attack
-  r[0.1..100]=15  \\ release
+  a[0.1..100]=15, ;; attack
+  r[0.1..100]=15  ;; release
 )=(
-  dt=(t-note_on_time)/co; \\ time since note_on_time
-  A=1-wexp(-dt*a); \\ attack curve
-  R=wexp(-dt*r);   \\ release curve
+  dt=(t-note_on_time)/co; ;; time since note_on_time
+  A=1-wexp(-dt*a); ;; attack curve
+  R=wexp(-dt*r);   ;; release curve
   A*R
 );
 
@@ -819,56 +819,56 @@ distort_jfetl(x)=distort(
   0, -5, x);
 `
 
-\\ export const dly = `
-\\ dly(x, len[1..44100]=500.0, fb[0..1]=0.2)=(
-\\   ##44100;    \\ 1s buffer
-\\   {n};        \\ needle
-\\   y=#(n-len); \\ read from buffer needle minus the delay length
-\\   #n=x+y*fb;  \\ write sample to buffer at current needle position
-\\   {n}=n+1;    \\ write new needle in memory
-\\   y           \\ return the sample
-\\ )
-\\ `
+;; export const dly = `
+;; dly(x, len[1..44100]=500.0, fb[0..1]=0.2)=(
+;;   ##44100;    ;; 1s buffer
+;;   {n};        ;; needle
+;;   y=#(n-len); ;; read from buffer needle minus the delay length
+;;   #n=x+y*fb;  ;; write sample to buffer at current needle position
+;;   {n}=n+1;    ;; write new needle in memory
+;;   y           ;; return the sample
+;; )
+;; `
 
-\\ note_to_hz(x)=440*2^((x-33)/12);
+;; note_to_hz(x)=440*2^((x-33)/12);
 
-\\ dly(
-\\   x,               \\ input
-\\   len[1..sr]=sr/2, \\ length, default 0.5s
-\\   fb[0..1]=0.2     \\ feedback
-\\ )=(
-\\   #:sr;       \\ 1s buffer
-\\   y=#(-len);  \\ read from buffer needle minus the delay length
-\\   #=x+y*fb;   \\ write sample to buffer at current needle position
-\\   y           \\ return the sample
-\\ )
+;; dly(
+;;   x,               ;; input
+;;   len[1..sr]=sr/2, ;; length, default 0.5s
+;;   fb[0..1]=0.2     ;; feedback
+;; )=(
+;;   #:sr;       ;; 1s buffer
+;;   y=#(-len);  ;; read from buffer needle minus the delay length
+;;   #=x+y*fb;   ;; write sample to buffer at current needle position
+;;   y           ;; return the sample
+;; )
 
-\\ #voices:4,2; \\ voices (time,hz)
+;; #voices:4,2; ;; voices (time,hz)
 
-\\ note_on(x)=(
-\\   hz=note_to_hz(x);
-\\   #voices=t,hz;
-\\   0.0
-\\ );
+;; note_on(x)=(
+;;   hz=note_to_hz(x);
+;;   #voices=t,hz;
+;;   0.0
+;; );
 
-\\ play_voice(
-\\   vt,                 \\ voice time
-\\   hz,                 \\ voice hz
-\\   .d[0.01..20]=10,    \\ decay
-\\   .c[100..1000]=500,  \\ lp cutoff
-\\   .Q[0.1..4.0]=3.0,   \\ lp Q
-\\   .dl[1..sr]=sr/2,    \\ delay length
-\\   .fb[0..1]=0.1       \\ delay feedback
-\\   .dc[100..2000]=1000 \\ delay lp cutoff
-\\   .dQ[0.1..4.0]=1.5   \\ delay lp Q
-\\ )=(
-\\   e=exp(-(t-vt)*d); \\ envelope
-\\   s=lp(
-\\       sin(pi2*hz*t),
-\\       c+1000*e,
-\\       Q
-\\     )*e;
-\\   s+lp(dly(s*0.5,dl,fb),dc,dQ)
-\\ )
+;; play_voice(
+;;   vt,                 ;; voice time
+;;   hz,                 ;; voice hz
+;;   .d[0.01..20]=10,    ;; decay
+;;   .c[100..1000]=500,  ;; lp cutoff
+;;   .Q[0.1..4.0]=3.0,   ;; lp Q
+;;   .dl[1..sr]=sr/2,    ;; delay length
+;;   .fb[0..1]=0.1       ;; delay feedback
+;;   .dc[100..2000]=1000 ;; delay lp cutoff
+;;   .dQ[0.1..4.0]=1.5   ;; delay lp Q
+;; )=(
+;;   e=exp(-(t-vt)*d); ;; envelope
+;;   s=lp(
+;;       sin(pi2*hz*t),
+;;       c+1000*e,
+;;       Q
+;;     )*e;
+;;   s+lp(dly(s*0.5,dl,fb),dc,dQ)
+;; )
 
-\\ f()=#voices::play_voice
+;; f()=#voices::play_voice

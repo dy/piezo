@@ -398,16 +398,19 @@ See [all examples](/examples)
 
 ## Usage
 
-Lino is available as JS package.
+Lino is available as CLI or JS package.
 
 `npm i lino`
 
-<!--
-CLI:
+### CLI
+
 ```sh
-lino source.li > compiled.wasm
+lino source.lino -o dest.wasm
 ```
--->
+
+It produces compiled WASM binary.
+
+### JS
 
 ```js
 import * as lino from 'lino'
