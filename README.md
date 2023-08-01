@@ -146,13 +146,13 @@ a, b, c |> x(#);                ;; for each a, b, c do x(item)
   # < 5 ? ^;                    ;; ^ continue
 );                              ;;
 i < 10 |> x(i++);               ;; while i < 10 do x(i++)
-items |> #;                     ;; iterate over array
+items |> a(#);                  ;; iterate over array
 items |> a(#) |> b(#);          ;; pipe iterations
-0..w |> (x=#;                   ;; nest iterations
-  0..h |> (y=#; a(x,y))         ;;
+0..w |> (                       ;; nest iterations
+  x=#; 0..h |> (y=#; a(x,y))    ;;
 );                              ;;
 x = a, b, c |> #;               ;; returns last member: x == c
-a, b, c <| # * 2;               ;; returns multiple
+a, b, c <| # * 2;               ;; returns multiple members
 x[3..5] <|= # * 2;              ;; map items from range
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; import, export
