@@ -54,8 +54,10 @@
 * [ ] list comprehension
 * [x] static expressions optimization
   * [ ] static expressions for units: dynamic units
+  * [ ] static constants with usage count (ignore from output if usage is 0)
   * [x] a+0 -> a
   * [x] a**0.5
+* [ ] optimize pick for simple arg as `pick(global.get x)` - just do `(global.get)` multiple times
 * [ ] static arrays via `data` section
 * [ ] loops
   * [x] range loop in range loop

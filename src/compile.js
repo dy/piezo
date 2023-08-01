@@ -74,7 +74,7 @@ export default function compile(node, obj) {
   // run globals init, if needed
   if (init) out += `;;;;;;;;;;;;;;;;;;;;;;;;;;;; Init\n` +
   `(func $__init\n` +
-    (Object.keys(slocals).map((name)=>`(local $${name} ${slocals[name].type})`).join('') + '\n') +
+    (Object.keys(slocals).length ? Object.keys(slocals).map((name)=>`(local $${name} ${slocals[name].type})`).join('') + '\n' : '') +
     (init ? `${init}\n` : ``) +
     `(return))\n` +
   `(start $__init)\n\n`
@@ -542,7 +542,7 @@ Object.assign(expr, {
 
     return op(`(f64.mul ${asFloat(aop)} ${asFloat(bop)})`,'f64')
   },
-  '/'(){
+  '/'([,a,b]){
     let aop = expr(a), bop = expr(b)
     if (aop.static === 0) return op(`(f64.const 0)`, 'f64', {static:0})
     if (bop.static === 1) return aop
@@ -557,14 +557,17 @@ Object.assign(expr, {
     if (bop.static === 0) return op(`(f64.const 1)`, 'f64', {static: 1})
     if (aop.static === 1) return op(`(f64.const 1)`, 'f64', {static: 1})
     if (bop.static === 1) return aop
-    if (bop.static === 0.5) return op(`(f64.sqrt ${aop})`, 'f64')
-    if (bop.static === -1) return op(`(f64.div (f64.const 1) ${bop})`, 'f64')
-    if (bop.static === -0.5) return op(`(f64.div (f64.const 1) (f64.sqrt ${aop}))`, 'f64')
+    if (bop.static === 0.5) return op(`(f64.sqrt ${asFloat(aop)})`, 'f64')
+    if (bop.static === -1) return op(`(f64.div (f64.const 1) ${asFloat(bop)})`, 'f64')
+    if (bop.static === -0.5) return op(`(f64.div (f64.const 1) (f64.sqrt ${asFloat(aop)}))`, 'f64')
+    if (bop.static < 0) return op(`(f64.div (f64.const 1) ${expr(['**',a,[FLOAT, Math.abs(bop.static)]])})`, 'f64')
+    // a ** 24 -> a*a*a...*a
+    if (Number.isInteger(bop.static) && bop.static < 24) return op(`${pick(bop.static,asFloat(aop))}${`(f64.mul)`.repeat(bop.static-1)}`, 'f64')
     if (aop.static != null && bop.static != null) return op(`(f64.const ${aop.static**bop.static})`, 'f64', {static: aop.static**bop.static})
 
     // generic pow
     // ref https://chromium.googlesource.com/external/github.com/WebAssembly/musl/+/landing-branch/src/math/pow.c
-    return inc('f64.pow'), op(`(call $f64.pow ${aop} ${bop})`, 'f64')
+    return inc('f64.pow'), op(`(call $f64.pow ${asFloat(aop)} ${asFloat(bop)})`, 'f64')
   },
   '++'([,a]) { return expr(['+=',a,[INT,1]]) },
   '--'([,a]) { return expr(['-=',a,[INT,1]]) },

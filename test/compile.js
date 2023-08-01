@@ -1,6 +1,6 @@
 // test wast compiler
 
-import t, { is, not, ok, same, throws } from 'tst'
+import t, { almost, is, not, ok, same, throws } from 'tst'
 import parse from '../src/parse.js'
 import compile from '../src/compile.js'
 import Wabt from '../lib/wabt.js'
@@ -145,6 +145,14 @@ t('compile: numbers inc/dec', t => {
   is(mod.instance.exports.x.value, -1)
 })
 
+t('compile: operators - pow', t => {
+  let wat = compile(`x=2**(1/2),y=x**3,z=x**-2.`)
+  let mod = compileWat(wat)
+  is(mod.instance.exports.x.value, Math.sqrt(2))
+  is(mod.instance.exports.y.value, mod.instance.exports.x.value**3)
+  almost(mod.instance.exports.z.value, mod.instance.exports.x.value**-2)
+})
+
 t('compile: units', t => {
   let wat = compile(`
     1k = 1000; 1pi = 3.1415;
@@ -163,62 +171,6 @@ t.todo('compile: units - errors', t => {
   //
   compile(`1h=1s;1s=44800;`)
   compile(`1k=x();`)
-})
-
-t('compile: conditions or/and', t => {
-  let wat, mod
-  wat = compile(`z=1||0.`)
-  mod = compileWat(wat)
-  is(mod.instance.exports.z.value, 1)
-  wat = compile(`z=1.2||0.0.`)
-  mod = compileWat(wat)
-  is(mod.instance.exports.z.value, 1.2)
-  wat = compile(`z=1.2||0.`)
-  mod = compileWat(wat)
-  is(mod.instance.exports.z.value, 1.2)
-  wat = compile(`z=1||0.0.`)
-  mod = compileWat(wat)
-  is(mod.instance.exports.z.value, 1)
-  wat = compile(`z=1.2&&0.2.`)
-  mod = compileWat(wat)
-  is(mod.instance.exports.z.value, 0.2)
-  wat = compile(`z=1&&2.`)
-  mod = compileWat(wat)
-  is(mod.instance.exports.z.value, 2)
-})
-
-t('compile: assign/pick cases', t => {
-  let wat, mod
-  wat = compile(`a=1;b=2;c=(a,b).`)
-  mod = compileWat(wat)
-  is(mod.instance.exports.c.value, 1)
-
-  wat = compile(`a=1;b=2,c=3;(b,a)=(c,b).`)
-  mod = compileWat(wat)
-  is(mod.instance.exports.b.value, 3)
-  is(mod.instance.exports.a.value, 2)
-
-  wat = compile(`a=1;b=2;(c,b)=(a,b);a,b,c.`)
-  mod = compileWat(wat)
-  is(mod.instance.exports.c.value, 1)
-  is(mod.instance.exports.b.value, 2)
-  is(mod.instance.exports.a.value, 1)
-
-  wat = compile(`a=1;b=2;(c,a,b)=(a,b).`)
-  mod = compileWat(wat)
-  is(mod.instance.exports.c.value, 1)
-  is(mod.instance.exports.a.value, 2)
-  is(mod.instance.exports.b.value, 2)
-
-  wat = compile(`a=1;b=2;(c,d)=(a,b).`)
-  mod = compileWat(wat)
-  is(mod.instance.exports.c.value, 1)
-  is(mod.instance.exports.d.value, 2)
-
-  wat = compile(`a=1;b=2;a,(b,b)=a.`)
-  mod = compileWat(wat)
-  is(mod.instance.exports.b.value, 1)
-  is(mod.instance.exports.a.value, 1)
 })
 
 t('compile: conditions', t => {
@@ -267,6 +219,62 @@ t('compile: conditions', t => {
   mod = compileWat(wat)
   is(mod.instance.exports.x(-10), 0)
   is(mod.instance.exports.x(10), 10)
+})
+
+t('compile: conditions - or/and', t => {
+  let wat, mod
+  wat = compile(`z=1||0.`)
+  mod = compileWat(wat)
+  is(mod.instance.exports.z.value, 1)
+  wat = compile(`z=1.2||0.0.`)
+  mod = compileWat(wat)
+  is(mod.instance.exports.z.value, 1.2)
+  wat = compile(`z=1.2||0.`)
+  mod = compileWat(wat)
+  is(mod.instance.exports.z.value, 1.2)
+  wat = compile(`z=1||0.0.`)
+  mod = compileWat(wat)
+  is(mod.instance.exports.z.value, 1)
+  wat = compile(`z=1.2&&0.2.`)
+  mod = compileWat(wat)
+  is(mod.instance.exports.z.value, 0.2)
+  wat = compile(`z=1&&2.`)
+  mod = compileWat(wat)
+  is(mod.instance.exports.z.value, 2)
+})
+
+t('compile: assign cases', t => {
+  let wat, mod
+  wat = compile(`a=1;b=2;c=(a,b).`)
+  mod = compileWat(wat)
+  is(mod.instance.exports.c.value, 1)
+
+  wat = compile(`a=1;b=2,c=3;(b,a)=(c,b).`)
+  mod = compileWat(wat)
+  is(mod.instance.exports.b.value, 3)
+  is(mod.instance.exports.a.value, 2)
+
+  wat = compile(`a=1;b=2;(c,b)=(a,b);a,b,c.`)
+  mod = compileWat(wat)
+  is(mod.instance.exports.c.value, 1)
+  is(mod.instance.exports.b.value, 2)
+  is(mod.instance.exports.a.value, 1)
+
+  wat = compile(`a=1;b=2;(c,a,b)=(a,b).`)
+  mod = compileWat(wat)
+  is(mod.instance.exports.c.value, 1)
+  is(mod.instance.exports.a.value, 2)
+  is(mod.instance.exports.b.value, 2)
+
+  wat = compile(`a=1;b=2;(c,d)=(a,b).`)
+  mod = compileWat(wat)
+  is(mod.instance.exports.c.value, 1)
+  is(mod.instance.exports.d.value, 2)
+
+  wat = compile(`a=1;b=2;a,(b,b)=a.`)
+  mod = compileWat(wat)
+  is(mod.instance.exports.b.value, 1)
+  is(mod.instance.exports.a.value, 1)
 })
 
 t('compile: function oneliners', t => {
