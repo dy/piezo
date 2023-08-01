@@ -52,11 +52,13 @@
   * [ ] https://github.com/mattdesl/wasm-bench
 * [ ] static arrays
 * [ ] list comprehension
-* [ ] static expressions detection
-  * [ ] need for units
-  * [ ] a+0 -> a
+* [x] static expressions optimization
+  * [ ] static expressions for units: dynamic units
+  * [x] a+0 -> a
+  * [x] a**0.5
 * [ ] static arrays via `data` section
 * [ ] loops
+  * [x] range loop in range loop
 * [ ] comments: must put comment into a previous token, instead of stripping
 * [ ] implement means to allocate memory/array from outside & align memory API (env.memory is convention?)
   + it can allow for more compact work with arrays / global memory without array includes

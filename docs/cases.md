@@ -29,3 +29,5 @@
 * [ ] neural networklets
 * [ ] Alex Rome cases https://www.youtube.com/watch?v=mbnLqOI1yQA
 * [ ] https://github.com/gmoe/voder/
+* [ ] https://github.com/petersalomonsen/javascriptmusic#webassembly-music-in-the-browser
+* [ ] https://github.com/TimDaub/wasm-synth

@@ -7,6 +7,10 @@ export const std = {
   // just for reference - easier to just `f64.ne` directly
   "f64.isnan": "(func $f64.isnan (param f64) (result i32) (f64.ne (local.get 0) (local.get 0)))",
 
+  // a ** b generic case
+  "f64.pow": `(func $f64.pow (param f64 f64) (result f64)\n` +
+  `)`,
+
   // a %% b, also used to access buffer
   "i32.modwrap": `(func $i32.modwrap (param i32 i32) (result i32) (local $rem i32)\n` +
   `(local.set $rem (i32.rem_s (local.get 0) (local.get 1)))\n` +
@@ -15,8 +19,7 @@ export const std = {
   `))`,
 
   // increase available memory to N bytes, grow if necessary; returns ptr to allocated block
-  "malloc":
-  `(func $malloc (param i32) (result i32) (local i32 i32)\n` +
+  "malloc": `(func $malloc (param i32) (result i32) (local i32 i32)\n` +
     `(local.set 1 (global.get $__mem))\n` + // beginning of free memory
     `(global.set $__mem (i32.add (global.get $__mem) (local.get 0)))\n` + // move memory pointer
     `(local.set 2 (i32.shl (memory.size) (i32.const 16)) )\n` + // max available memory

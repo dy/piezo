@@ -116,10 +116,12 @@ function applyUnits (n, unit, ext) {
 Object.assign(expr, {
   // number primitives: 1.0, 2 etc.
   [FLOAT]([,a,unit,ext]) {
-    return op(`(f64.const ${applyUnits(a,unit,ext)})`,'f64',{static:true})
+    let v = applyUnits(a,unit,ext)
+    return op(`(f64.const ${v})`,'f64',{static:v})
   },
   [INT]([,a,unit,ext]) {
-    return op(`(i32.const ${applyUnits(a,unit,ext)})`,'i32',{static:true})
+    let v = applyUnits(a,unit,ext)
+    return op(`(i32.const ${v})`,'i32',{static:v})
   },
 
   // a; b; c;
@@ -460,17 +462,32 @@ Object.assign(expr, {
       if (a[0] == INT || a[0] == FLOAT) return expr([a[0], -a[1]])
       let res = expr(a)
       if (res.type.length > 1) err('Group negation: unimplemented')
-      if (res.type[0] === 'i32') return op(`(i32.sub (i32.const 0) ${res})`, 'i32', {static:res.static})
+
+      if (res.static != null) return op(`(${res.type}).const -${res.static}`, res.type, {static:-res.static})
+      if (res.type[0] === 'i32') return op(`(i32.sub (i32.const 0) ${res})`, 'i32')
       return op(`(f64.neg ${res})`, 'f64')
     }
 
     let aop = expr(a), bop = expr(b)
+
     if (aop.type.length > 1 || bop.type.length > 1) err('Group subtraction: unimplemented')
+
+    // static precalc
+    if (aop.static === 0) return expr(['-',b])
+    if (bop.static === 0) return aop
+    if (aop.static != null && bop.static != null) return op(`(${aop.type[0]==='i32'&&bop.type[0]==='i32'?'i32':'f64'}.const ${aop.static-bop.static})`, aop.type[0]==='i32'&&bop.type[0]==='i32'?'i32':'f64', {static:aop.static-bop.static})
+
     if (aop.type[0] === 'i32' && bop.type[0] === 'i32') return op(`(i32.sub ${aop} ${bop})`, 'i32')
     return op(`(f64.sub ${asFloat(aop)} ${asFloat(bop)})`, 'f64')
   },
   '+'([,a,b]) {
     let aop = expr(a), bop = expr(b)
+
+    // precalc static
+    if (bop.static === 0) return aop
+    if (aop.static === 0) return bop
+    if (aop.static != null && bop.static != null) return op(`(${aop.type[0]==='i32'&&bop.type[0]==='i32'?'i32':'f64'}.const ${aop.static+bop.static})`, aop.type[0]==='i32'&&bop.type[0]==='i32'?'i32':'f64', {static:aop.static+bop.static})
+
     if (aop.type[0] == 'i32' && bop.type[0] == 'i32') return op(`(i32.add ${aop} ${bop})`, 'i32')
     return op(`(f64.add ${asFloat(aop)} ${asFloat(bop)})`,'f64')
   },
@@ -518,16 +535,46 @@ Object.assign(expr, {
       err('State variable: unimplemented')
     }
     let aop = expr(a), bop = expr(b)
+    if (bop.static === 0 || aop.static === 0) return op(`(f64.const 0)`, 'f64', {static:0})
+    if (bop.static === 1) return aop
+    if (aop.static === 1) return bop
+    if (aop.static != null && bop.static != null) return op(`(f64.const ${aop.static*bop.static})`, 'f64', {static:aop.static*bop.static})
+
     return op(`(f64.mul ${asFloat(aop)} ${asFloat(bop)})`,'f64')
   },
   '/'(){
     let aop = expr(a), bop = expr(b)
+    if (aop.static === 0) return op(`(f64.const 0)`, 'f64', {static:0})
+    if (bop.static === 1) return aop
+    if (aop.static != null && bop.static != null) return op(`(f64.const ${aop.static/bop.static})`, 'f64', {static:aop.static/bop.static})
+
     return op(`(f64.div ${asFloat(aop)} ${asFloat(bop)})`,'f64')
+  },
+  '**'([,a,b]) {
+    let aop = expr(a), bop = expr(b)
+
+    // static optimizations
+    if (bop.static === 0) return op(`(f64.const 1)`, 'f64', {static: 1})
+    if (aop.static === 1) return op(`(f64.const 1)`, 'f64', {static: 1})
+    if (bop.static === 1) return aop
+    if (bop.static === 0.5) return op(`(f64.sqrt ${aop})`, 'f64')
+    if (bop.static === -1) return op(`(f64.div (f64.const 1) ${bop})`, 'f64')
+    if (bop.static === -0.5) return op(`(f64.div (f64.const 1) (f64.sqrt ${aop}))`, 'f64')
+    if (aop.static != null && bop.static != null) return op(`(f64.const ${aop.static**bop.static})`, 'f64', {static: aop.static**bop.static})
+
+    // generic pow
+    // ref https://chromium.googlesource.com/external/github.com/WebAssembly/musl/+/landing-branch/src/math/pow.c
+    return inc('f64.pow'), op(`(call $f64.pow ${aop} ${bop})`, 'f64')
   },
   '++'([,a]) { return expr(['+=',a,[INT,1]]) },
   '--'([,a]) { return expr(['-=',a,[INT,1]]) },
   '+='([,a,b]) { return expr(['=',a,['+',a,b]]) },
   '-='([,a,b]) { return expr(['=',a,['-',a,b]]) },
+  '*='([,a,b]) { return expr(['=',a,['*',a,b]]) },
+  '/='([,a,b]) { return expr(['=',a,['/',a,b]]) },
+  '%='([,a,b]) { return expr(['=',a,['%',a,b]]) },
+  '**='([,a,b]) { return expr(['=',a,['**',a,b]]) },
+  '<?='([,a,b]){ return expr(['=',a,['<?',a,b]]) },
   '%%'([,a,b]) {
     // common case of int is array index access
     if (getDesc(a).type === INT && getDesc(b).type === INT) return inc('i32.modwrap'), call('i32.modwrap', a, b)

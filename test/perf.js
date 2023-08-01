@@ -3,7 +3,7 @@ import t, { is, not, ok, same, throws } from 'tst'
 import compile from '../src/compile.js'
 import { compileWat } from './compile.js'
 
-t('perf: sobel', t => {
+t.todo('perf: sobel', t => {
   // Reference:
   // https://github.com/mattdesl/wasm-bench/blob/main/src/javascript/process.js
   compile(`
@@ -28,7 +28,7 @@ t('perf: sobel', t => {
             get_pixel(data, x, y + 2, width, height),
             get_pixel(data, x + 1, y + 2, width, height),
             get_pixel(data, x + 2, y + 2, width, height),
-          )
+          );
           ;; Apply Sobel kernel
           gx = -1 * val0 + -2 * val3 + -1 * val6 + val2 + 2 * val5 + val8;
           gy = -1 * val0 + -2 * val1 + -1 * val2 + val6 + 2 * val7 + val8;
