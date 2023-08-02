@@ -84,7 +84,7 @@ export default function compile(node, obj) {
   for (let name in exports)
     out += `(export "${name}" (${exports[name].func ? 'func' : 'global'} $${name}))\n`
 
-  // console.log(out);
+  console.log(out);
   // console.log(...parseWat(out))
 
   // restore previous compiling context
@@ -241,18 +241,20 @@ Object.assign(expr, {
 
     // (a,b) = ...
     if (a[0]===',') {
-      let [,...outputs] = a, inputs = pick(outputs.length,expr(b))
+      let [,...outputs] = a, bop=expr(b),
+          // (a,b,c)=(c,d) -> (a,b)=(c,d)
+          // (a,b,c)=d -> (a,b,c)=dup3(d)
+          count = bop.type.length === 1 ? outputs.length : Math.min(outputs.length, bop.type.length);
 
-      // (a,b,c)=(c,d) -> (a,b)=(c,d)
-      if (inputs.type.length > 1) outputs = outputs.slice(0, inputs.type.length)
+      let inputs = pick(count, bop)
 
       // set as `(i32.const 1)(i32.const 2)(local.set 1)(local.set 0)`
       return op(
         inputs + '\n'+
-        outputs.map((n,i)=> (
+        outputs.slice(0,count).map((n,i)=> (
           `${inputs.type[i] === 'i32' ? `(f64.convert_i32_s)` : ''}${set(define(n))}`
         )).reverse().join('') +
-        outputs.map(n=>get(define(n))).join(''),
+        outputs.slice(0,count).map(n=>get(define(n))).join(''),
         Array(outputs.length).fill(`f64`)
       )
     }
@@ -837,30 +839,32 @@ function inc(name) {
 }
 
 // pick N input args into stack, like (a,b,c) -> (a,b)
-// NOTE: we need various input types (not just N:M) because we use pick in various scenarios, including bool ops
 function pick(count, input) {
   let name
 
-  // if expression is 1 element, eg. (a,b,c) = d - we duplicate d to stack
+  // (a,b,c) = d - we duplicate d to stack
   if (input.type.length === 1) {
     // a = b - skip picking
     if (count === 1) return input
     // (a,b,c) = d
-    let {type} = input
-    name = `$pick/${type}_${count}`
+    name = `$dup${count}`
     if (!funcs[name]) {
-      funcs[name] = `(func ${name} (param ${type}) (result ${(type+' ').repeat(count)}) ${`(local.get 0)`.repeat(count)} (return))`
+      funcs[name] = `(func ${name} (param ${input.type}) (result${(' ' + input.type).repeat(count)}) ${`(local.get 0)`.repeat(count)} (return))`
     }
     return op(`(call ${name} ${input})`, input.type, {static: input.static})
   }
 
-  // N:M or 1:M picker - trims stack to n els
-  name = `$pick/${input.type.join('_')}_${count}`
-  if (!funcs[name]) {
-    funcs[name] = `(func ${name} (param ${input.type.join(' ')}) (result ${input.type.slice(0,count).join(' ')}) ${input.type.slice(0,count).map((o,i) => `(local.get ${i})`).join('')} (return))`
-  }
+  // (a,b) = (c,d) - avoid picking since result is directly put into stack
+  if (input.type.length === count) return input
 
-  return op(`(call ${name} ${input})`, input.type.slice(0,count), {static: input.static})
+  // (a,b) = (c,d,e) – drop redundant members
+  if (count < input.type.length) return op(input + `(drop)`.repeat(input.type.length - count), input.type.slice(0,count))
+
+  // (a,b,c) = (d,e) – pick a & b, skip c
+  if (count > input.type.length) err('Picking more members than available')
+
+  // NOTE: repeating els like (a,b,c)=(b,c,a) are not a threat
+  // putting them directly to stack is identical to passing to pick(b,c,a) as args
 }
 
 // create op result

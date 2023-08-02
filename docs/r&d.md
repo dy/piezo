@@ -2759,6 +2759,12 @@ Having wat files is more useful than direct compilation to binary form:
   + python style
   + allows shothand nice swaps
   - problem with fn arguments parsing `(a=1,b=2) => `
+  - unscoped groups make language a real line noise, very unusual pattern:
+    ```
+    y, y1, y2 = #, #+1, #+2;
+    y1, y2 >= height ? y1, y2 = height - 1;
+    ptr0, ptr1, ptr2 = y, y1, y2 * width;
+    ```
 
   2. a,b=c,d -> (a),(b=c),(d)
 
@@ -2766,6 +2772,15 @@ Having wat files is more useful than direct compilation to binary form:
   + more fluent imho
   + allows function arguments
   - forces group-assign be parenthesized (a,b,c) = (d, e, f)
+    - which is extra keystrokes
+    + that visually indicates groups better:
+    ```
+    (y, y1, y2) = (#, #+1, #+2);
+    (y1, y2) >= height ? (y1, y2) = height - 1;
+    (ptr0, ptr1, ptr2) = (y, y1, y2) * width;
+    ```
+      - maybe a bit too intensive grouping sometimes
+        + but easier to understand what's going on
   + allows comma-style operations sequence, rather than python-like meaning, eg a++, b+=2, c=4,
 
   3. Single assignment is group, multiple is seq: `a,b = c,d` vs `a=b, c=d`
@@ -2776,7 +2791,7 @@ Having wat files is more useful than direct compilation to binary form:
     - `c=d,e` as return member or elsewhere considers only `c` as return instead of `c=d, e`
   - breaks regular parsing logic
 
-## [ ] Should var scope be defined by parens `(x=1;(y=2;);y)` or by function? -> use per-function scope
+## [x] Should var scope be defined by parens `(x=1;(y=2;);y)` or by function? -> use per-function scope
 
   1. By parens: `y==undefined`
 

@@ -244,40 +244,6 @@ t('compile: conditions - or/and', t => {
   is(mod.instance.exports.z.value, 2)
 })
 
-t('compile: assign cases', t => {
-  let wat, mod
-  wat = compile(`a=1;b=2;c=(a,b).`)
-  mod = compileWat(wat)
-  is(mod.instance.exports.c.value, 1)
-
-  wat = compile(`a=1;b=2,c=3;(b,a)=(c,b).`)
-  mod = compileWat(wat)
-  is(mod.instance.exports.b.value, 3)
-  is(mod.instance.exports.a.value, 2)
-
-  wat = compile(`a=1;b=2;(c,b)=(a,b);a,b,c.`)
-  mod = compileWat(wat)
-  is(mod.instance.exports.c.value, 1)
-  is(mod.instance.exports.b.value, 2)
-  is(mod.instance.exports.a.value, 1)
-
-  wat = compile(`a=1;b=2;(c,a,b)=(a,b).`)
-  mod = compileWat(wat)
-  is(mod.instance.exports.c.value, 1)
-  is(mod.instance.exports.a.value, 2)
-  is(mod.instance.exports.b.value, 2)
-
-  wat = compile(`a=1;b=2;(c,d)=(a,b).`)
-  mod = compileWat(wat)
-  is(mod.instance.exports.c.value, 1)
-  is(mod.instance.exports.d.value, 2)
-
-  wat = compile(`a=1;b=2;a,(b,b)=a.`)
-  mod = compileWat(wat)
-  is(mod.instance.exports.b.value, 1)
-  is(mod.instance.exports.a.value, 1)
-})
-
 t('compile: function oneliners', t => {
   let wat, mod
   // no semi
@@ -346,6 +312,62 @@ t('compile: ranges basic', t => {
   mod = compileWat(wat)
   is(mod.instance.exports.clamp(11), 10)
   is(mod.instance.exports.clamp(-1), 0)
+})
+
+t.only('compile: group assign cases', t => {
+  let wat, mod
+  wat = compile(`a=1;b=2;c=(a,b).`)
+  mod = compileWat(wat)
+  is(mod.instance.exports.c.value, 1, 'c=(a,b)')
+
+  wat = compile(`a=1;b=2,c=3;(b,a)=(c,b).`)
+  mod = compileWat(wat)
+  is(mod.instance.exports.b.value, 3, '(b,a)=(c,b)')
+  is(mod.instance.exports.a.value, 2)
+
+  wat = compile(`a=1;b=2;(c,b)=(a,b);a,b,c.`)
+  mod = compileWat(wat)
+  is(mod.instance.exports.c.value, 1,'(c,b)=(a,b)')
+  is(mod.instance.exports.b.value, 2)
+  is(mod.instance.exports.a.value, 1)
+
+  wat = compile(`a=1;b=2;(c,a,b)=(a,b).`)
+  mod = compileWat(wat)
+  is(mod.instance.exports.c.value, 1, '(c,a,b)=(a,b)')
+  is(mod.instance.exports.a.value, 2)
+  is(mod.instance.exports.b.value, 2)
+
+  wat = compile(`a=1;b=2;(c,d)=(a,b).`)
+  mod = compileWat(wat)
+  is(mod.instance.exports.c.value, 1, '(c,d)=(a,b)')
+  is(mod.instance.exports.d.value, 2)
+
+  wat = compile(`a=1;b=2;a,(b,b)=a.`)
+  mod = compileWat(wat)
+  is(mod.instance.exports.b.value, 1, '(b,b)=a')
+  is(mod.instance.exports.a.value, 1)
+
+  wat = compile(`a=1;b=2,c;a,(b,c)=a.`)
+  mod = compileWat(wat)
+  is(mod.instance.exports.b.value, 1, '(b,c)=a')
+  is(mod.instance.exports.c.value, 1)
+})
+
+t.only('compile: group ops cases', t => {
+  let wat, mod
+
+  wat = compile(`f(a) = ((x, y) = (a+2,a-2); x,y).`)
+  mod = compileWat(wat);
+  is(mod.instance.exports.f(4), [6,2], `(a,b)=(c+1,c-1)`);
+
+  // wat = compile(`(y1, y2) >= h ? (y1, y2) = h - 1;`)
+  // mod = compileWat(wat)
+
+  // wat = compile(`(ptr0, ptr1, ptr2) = (y, y1, y2) * w;`)
+  // mod = compileWat(wat)
+
+  // wat = compile(`(val0, val1, val2 = data[ptr0 + (x, x1, x2)];`)
+  // mod = compileWat(wat)
 })
 
 t('compile: list basic', t => {
@@ -682,29 +704,5 @@ t.todo('compile: sine gen', t => {
   console.log(wat)
 
   is(wat, [])
-})
-
-
-
-t.todo('compile: errors', t => {
-  // undefined exports
-  throws(() =>
-    compile(parse(`a,b,c.`))
-  , /Exporting unknown/)
-
-  // fn overload: prohibited
-  throws(() => {
-
-  })
-})
-
-t.todo('compile: batch processing', t => {
-  is(compile(unbox(parse(`a([b],c) = b*c;`))),
-    ['module', '']
-  )
-
-  is(compile(unbox(parse(`a(b) = [c];`))),
-    ['module', '']
-  )
 })
 
