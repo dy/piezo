@@ -27,7 +27,7 @@ export default function compile(node, obj) {
   funcs = {}, // defined user and util functions
   // FIXME: loop ideally must be used by-reference
   exports = {}, // items to export
-  returns = null, // returned items from block (collect early returns)
+  returns = null, // returned items from block (collects early returns)
   func = null, // current function that's being initialized
   heap = 0, // heap size as number of pages (detected from max static array size)
   mem = false, // indicates if memory must be included (heap automatically enables memory)
@@ -75,7 +75,7 @@ export default function compile(node, obj) {
   if (init) out += `;;;;;;;;;;;;;;;;;;;;;;;;;;;; Init\n` +
   `(func $__init\n` +
     (Object.keys(slocals).length ? Object.keys(slocals).map((name)=>`(local $${name} ${slocals[name].type})`).join('') + '\n' : '') +
-    (init ? `${init}\n` : ``) +
+    init + `\n` +
     `(return))\n` +
   `(start $__init)\n\n`
 
@@ -135,7 +135,8 @@ Object.assign(expr, {
     return op(
       list.map((op,i) => op + `(drop)`.repeat(i===list.length-1 ? 0 : op.type.length)).join('\n'),
       list[list.length-1].type,
-      {static:list[list.length-1].static}
+      // if there are early returns - sequence cannot be static
+      !returns?.length ? {static:list[list.length-1].static} : {}
     )
   },
 
@@ -146,6 +147,7 @@ Object.assign(expr, {
     return op(list.join('\n'), list.flatMap(op=>op.type), {static:list.every(op=>op.static)})
   },
 
+  // (a)
   '('([,body]){
     // FIXME: make sure returning nothing is fine here (when empty brackets)
     if (!body) return op('')
@@ -226,10 +228,11 @@ Object.assign(expr, {
       let [,buf,idx] = a
       if (a[0] === '.') idx = [INT, parseInt(idx)]
 
-      // FIXME: add static optimization here for property - to avoid calling i32.modwrap if idx is known
+      // FIXME: static optimization property - to avoid calling i32.modwrap if idx is known
+      let iop = expr(idx)
       // FIXME: another static optimization: if length is known in advance (likely yes) - make static modwrap
 
-      return inc('arr.len'), inc('arr.set'), inc('i32.modwrap'), op(`(call $arr.tee ${expr(buf)} ${asInt(expr(idx))} ${asFloat(expr(b))})`, 'f64')
+      return inc('arr.len'), inc('arr.set'), inc('i32.modwrap'), op(`(call $arr.tee ${expr(buf)} ${asInt(iop)} ${asFloat(expr(b))})`, 'f64')
     }
 
     // a = b,  a = (b,c),   a = (b;c,d)
@@ -342,9 +345,9 @@ Object.assign(expr, {
 
       // init body - expressions write themselves to body
       funcs[name] = `(func $${name} ${dfn.join(' ')}` +
-        (prepare.length ? `\n;; prepare\n${prepare.join('\n')}` : ``) +
-        (result ? `\n;; body\n${result}` : ``) +
-        (defer.length ? `\n;; defer\n${defer.join(' ')}` : ``) +
+        (prepare.length ? `\n${prepare.join('\n')}` : ``) +
+        (result ? `\n${result}` : ``) +
+        (defer.length ? `\n${defer.join(' ')}` : ``) +
       `)`
 
       func = prevFunc
@@ -571,6 +574,18 @@ Object.assign(expr, {
     // ref https://chromium.googlesource.com/external/github.com/WebAssembly/musl/+/landing-branch/src/math/pow.c
     return inc('f64.pow'), op(`(call $f64.pow ${asFloat(aop)} ${asFloat(bop)})`, 'f64')
   },
+  '|'([,a,b]) {
+    // 0 | b -> b | 0
+    if (a[0] === INT && a[1] === 0) [a,b]=[b,a]
+
+    let aop = expr(a), bop = expr(b);
+
+    if (bop.static === 0) return asInt(aop);
+    if (aop.static != null && bop.static !== null) return op(`(i32.const ${aop.static|bop.static})`, 'i32', {static:aop.static|bop.static})
+
+    return op(`(i32.or ${asInt(aop)} ${asInt(bop)})`,'i32')
+  },
+
   '++'([,a]) { return expr(['+=',a,[INT,1]]) },
   '--'([,a]) { return expr(['-=',a,[INT,1]]) },
   '+='([,a,b]) { return expr(['=',a,['+',a,b]]) },
@@ -585,16 +600,6 @@ Object.assign(expr, {
     if (getDesc(a).type === INT && getDesc(b).type === INT) return inc('i32.modwrap'), call('i32.modwrap', a, b)
     return inc('f64.modwrap'), expr(['()','f64.modwrap', [',',a, b]])
   },
-  // a | b
-  '|'([,a,b]) {
-    // console.log('|',a,b)
-    // 0 | b -> b | 0
-    if (a[0] === INT && a[1] === 0) [a,b]=[b,a]
-
-    let aop = expr(a), bop = expr(b);
-    return op(`(i32.or ${asInt(aop)} ${asInt(bop)})`,'i32')
-  },
-
   // comparisons
   '<'([,a,b]) {
     let aop = expr(a), bop = expr(b)
@@ -640,6 +645,7 @@ Object.assign(expr, {
     if (bop.type[0]=='i32') return op(`${pick(2,aop)}(if (param i32) (result i32) (then (drop) ${bop}))`,'i32')
     return op(`${pick(2,aop)}(if (param i32) (result f64) (then (f64.convert_i32_s) (drop) ${asFloat(bop)}))`,'f64')
   },
+
   // parsing alias ? -> ?:
   '?'([,a,b]) {return expr['?:'](['?:',a,b,[FLOAT,0]])},
   '?:'([,a,b,c]) {
@@ -708,11 +714,6 @@ Object.assign(expr, {
   '.'([,a,b]) {
     // a.b
     if (b) {
-      // @lib.prop
-      if (a[0]==='@') {
-        console.log(a,b)
-      }
-
       // a.0 - index access - doesn't require modwrap
       let idx = isNaN(Number(b)) ? err('Alias access is unimplemented') : Number(b)
       return op(`(f64.load (i32.add ${asInt(expr(a))} (i32.const ${idx << 3})))`, 'f64')
@@ -822,14 +823,13 @@ function buf(inits) {
 // wrap expression to float, if needed
 function asFloat(o) {
   if (o.type[0] === 'f64') return o
-  // avoid unnecessary const converters
-  if (o.startsWith('(i32.const')) return op(o.replace('(i32','(f64'), 'f64')
+  if (o.static != null) return op(`(f64.const ${o.static})`, 'f64', {static:o.static})
   return op(`(f64.convert_i32_s ${o})`, 'f64')
 }
 // cast expr to int
 function asInt(o) {
   if (o.type[0] === 'i32') return o
-  // return op(`(i32.trunc_sat_f64_s ${o})`, 'i32')
+  if (o.static != null) return op(`(i32.const ${o.static|0})`, 'i32')
   return op(`(i32.trunc_f64_s ${o})`, 'i32')
 }
 
