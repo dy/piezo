@@ -635,12 +635,30 @@ Object.assign(expr, {
   // logical - we put value twice to the stack and then just drop if not needed
   '||'([,a,b]) {
     let aop = expr(a), bop = expr(b)
+
+    // 0 || a
+    if (aop.static === 0) return bop
+    // a || 0
+    if (bop.static === 0) return aop
+    // 1 || b, a || 1
+    if (aop.static || bop.static) return aop
+
     if (aop.type[0]=='f64') return op(`${pick(2,aop)}(if (param f64) (result f64) (f64.ne (f64.const 0)) (then) (else (drop) ${asFloat(bop)}))`,'f64')
     if (bop.type[0]=='i32') return op(`${pick(2,aop)}(if (param i32) (result i32) (then) (else (drop) ${bop}))`,'i32')
     return op(`${pick(2,aop)}(if (param i32) (result f64) (then (f64.convert_i32_s)) (else (drop) ${asFloat(bop)}))`,'f64')
   },
   '&&'([,a,b]) {
     let aop = expr(a), bop = expr(b)
+
+    // 0 && b
+    if (aop.static === 0) return aop
+    // a && 0
+    if (bop.static === 0) return bop
+    // 1 && b
+    if (aop.static) return bop
+    // a && 1
+    if (bop.static) return aop
+
     if (aop.type[0]=='f64') return op(`${pick(2,aop)}(if (param f64) (result f64) (f64.ne (f64.const 0)) (then (drop) ${asFloat(bop)}))`,'f64')
     if (bop.type[0]=='i32') return op(`${pick(2,aop)}(if (param i32) (result i32) (then (drop) ${bop}))`,'i32')
     return op(`${pick(2,aop)}(if (param i32) (result f64) (then (f64.convert_i32_s) (drop) ${asFloat(bop)}))`,'f64')
@@ -649,8 +667,16 @@ Object.assign(expr, {
   // parsing alias ? -> ?:
   '?'([,a,b]) {return expr['?:'](['?:',a,b,[FLOAT,0]])},
   '?:'([,a,b,c]) {
-    if (!c) c=b, b=[FLOAT,0]; // parsing alias
+    if (!c) c=b, b=[FLOAT,0]; // parsing alias for a ?: b
     let aop = expr(a), bop = expr(b), cop = expr(c)
+
+    if (aop.static === 0) return cop
+    if (aop.static) return bop
+
+    // FIXME: (a,b) ? c : d
+    // FIXME: (a,b) ? (c,d) : (e,f)
+    // FIXME: a ? (b,c) : (d,e)
+
     return op(`(if (result f64) ${aop.type[0]=='i32'?aop:`(f64.ne ${aop} (f64.const 0))`} (then ${asFloat(bop)}) (else ${asFloat(cop)}))`, 'f64')
   },
 

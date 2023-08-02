@@ -353,20 +353,20 @@ t('compile: group assign cases', t => {
   is(mod.instance.exports.c.value, 1)
 })
 
-t.todo('compile: group ops cases', t => {
+t.only('compile: group ops cases', t => {
   let wat, mod
 
   wat = compile(`f(a) = ((x, y) = (a+2,a-2); x,y).`)
   mod = compileWat(wat);
   is(mod.instance.exports.f(4), [6,2], `(a,b)=(c+1,c-1)`);
 
-  wat = compile(`f(a,b,h) = (a>=h, b>=h) ? (a=h-1, b=h-1).`)
-  mod = compileWat(wat)
-  is(mod.instance.exports.f(2,3,3), [6,2], `(a,b)=(c+1,c-1)`);
+  // wat = compile(`f(a,b,h) = (a>=h, b>=h) ? (a=h-1, b=h-1).`)
+  // mod = compileWat(wat)
+  // is(mod.instance.exports.f(2,3,3), [6,2], `(a,b)=(c+1,c-1)`);
 
-  wat = compile(`f(a,b,h) = (a,b) >= h ? (a,b) = h-1.`)
-  mod = compileWat(wat)
-  is(mod.instance.exports.f(2,3,3), [6,2], `(a,b)=(c+1,c-1)`);
+  // wat = compile(`f(a,b,h) = (a,b) >= h ? (a,b) = h-1.`)
+  // mod = compileWat(wat)
+  // is(mod.instance.exports.f(2,3,3), [6,2], `(a,b)=(c+1,c-1)`);
 
   // wat = compile(`(ptr0, ptr1, ptr2) = (y, y1, y2) * w;`)
   // mod = compileWat(wat)
