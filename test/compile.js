@@ -353,12 +353,20 @@ t('compile: group assign cases', t => {
   is(mod.instance.exports.c.value, 1)
 })
 
-t.only('compile: group ops cases', t => {
+t('compile: group ops cases', t => {
   let wat, mod
 
   wat = compile(`f(a) = ((x, y) = (a+2,a-2); x,y).`)
   mod = compileWat(wat);
   is(mod.instance.exports.f(4), [6,2], `(a,b)=(c+1,c-1)`);
+
+  // wat = compile(`f(a,b,h) = (a, b) * h.`)
+  // mod = compileWat(wat)
+  // is(mod.instance.exports.f(2,3,3), [6,9], `(a, b) * h`);
+
+  // wat = compile(`f(a,b,h) = (a, b) * (c, d).`)
+  // mod = compileWat(wat)
+  // is(mod.instance.exports.f(2,3,3), [6,2], `(a,b)=(c+1,c-1)`);
 
   // wat = compile(`f(a,b,h) = (a>=h, b>=h) ? (a=h-1, b=h-1).`)
   // mod = compileWat(wat)
@@ -456,11 +464,11 @@ t('compile: lists - nested static', t => {
 })
 
 t.todo('compile: list comprehension', t => {
-  let wat = compile(`x = [1..3 <| # * 2]`)
+  let wat = compile(`x = [1..3 <| @ * 2]`)
 })
 
 t.todo('compile: list nested comprehension', t => {
-  let wat = compile(`x = [1..3 <| [0..# <| ## * 2]]`)
+  let wat = compile(`x = [1..3 <| [0..@ <| @ * 2]]`)
 })
 
 t('compile: list simple write', t => {
@@ -532,7 +540,7 @@ t.todo('compile: break/continue', t => {
 
 t('compile: loops range global', t => {
   let wat, mod
-  wat = compile(`x=[1..3]; 0..2 |> x[#]=#+1; x.`)
+  wat = compile(`x=[1..3]; 0..2 |> x[@]=@+1; x.`)
   mod = compileWat(wat)
   let {__memory:memory, x} = mod.instance.exports
 
@@ -545,7 +553,7 @@ t('compile: loops range global', t => {
 
 t('compile: loops range local', t => {
   let wat, mod
-  wat = compile(`x=[1..3]; fill() = (0..x[] |> x[#]=#+1); fill, x.`)
+  wat = compile(`x=[1..3]; fill() = (0..x[] |> x[@]=@+1); fill, x.`)
   mod = compileWat(wat)
   let {__memory:memory, x, fill} = mod.instance.exports
 
@@ -559,8 +567,8 @@ t('compile: loops range local', t => {
 
 t('compile: loop range in range', t => {
   let wat = compile(`a=[..9], f(a,w,h)=(
-    0..w |> (x=#;
-      0..h |> (y=#;
+    0..w |> (x=@;
+      0..h |> (y=@;
         a[y*w + x] = x+y*w
       )
     )

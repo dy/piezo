@@ -41,7 +41,7 @@ PREC_CALL=27, // a(b), a.b, a[b], a[]
 PREC_TOKEN=28 // [a,b] etc
 
 // make id support #@
-parse.id = n => skip(char => isId(char) || char === HASH || char === AT)
+parse.id = n => skip(char => isId(char) || char === HASH)
 
 const isNum = c => c >= _0 && c <= _9
 const num = (a) => {
@@ -81,6 +81,9 @@ const numTypes = {
 for (let i = 0; i<=9; i++) lookup[_0+i] = num;
 // .1
 lookup[PERIOD] = a=>!a && num();
+
+// @, @@, @@@
+lookup[AT] = a => !a && skip(c => c == AT);
 
 // export is parsed as last-resort period operator, conditioned it's last in the code
 unary('.', PREC_EXPORT, true)
@@ -195,6 +198,5 @@ token('(', PREC_CALL, (a,b) => a && (b = expr(0, CPAREN), b ? ['()', a, b] : ['(
 
 // <a#b,c>
 token('<', PREC_TOKEN, (a,b) => !a && (b = skip(c => c !== GT), skip(), b ? ['<>', b] : err('Empty import statement')))
-
 // comments
 // token(';;', PREC_TOKEN, (a, prec) => (skip(c => c >= SPACE), skip(), console.log(a), a))

@@ -1119,10 +1119,19 @@ Having wat files is more useful than direct compilation to binary form:
   + lisp, scheme, clojure, racket, asm style
   + clean & minimalistic, easier to read
   - `;; xxx` or `(;....;)` is valid actual syntax
-    - eg. `sin(x)(; explainer ;)` is confusable with `sin(x)()`
+    - eg. `sin(x)(; explainer ;)` is equivalent to `sin(x)()`
       ~+ kind-of equivalent to "nothing", eg. `x(a, (; some description;))` === `x(a,)`
     ~ `0..10<|(x,i)->sin(x);;i;;+sin(x*2)`
   + `;;` is safer & softer, not as spiky / scratchy, more familiar
+  - creates conflict `a();;;some action` - comment might start at `a();;...` which will produce invalid code
+    - in other words, such comments are not easy to strip
+  - conflict with direct code, eg. `(;;;)` is valid code piece, but comment will strip it out
+
+  1.1 should we allow merge of `fn();;do something`
+    + less symbols
+    + nice alternative to simple semicolon
+    - can deform code if used for-real, since mandatory semi will migrate to comment
+      - in other words stripping such comments will break code
 
   2. `//`
   + // associates besides C+/Java/JS with F#, which is pipy
@@ -3227,6 +3236,7 @@ Having wat files is more useful than direct compilation to binary form:
       + `#` is almost perfect for topic/reference, associates with `#`th item
         - needs prohibiting variables starting from # though
           - which is problematic for mono buffers `#tri = [..1s] ::= tri(@ * 2)`
+      -~ interferes with `<math#a,b,c>`
     * `list :: &*2`
       + & is almost-character, feels more like an id
       - has weird connotation as binary
@@ -3236,11 +3246,16 @@ Having wat files is more useful than direct compilation to binary form:
       + relatively safe
       + associates with id / character quite a bit
       + is not overused by other meanings, except for import
-      - conflicts with import
+      + allows reserved name, no var name `#` shadowing
+      + `items |> filter(@)` looks softer than `items |> filter(#)`
+      ~- unusual convention (no such precedence)
+      - ~~conflicts with import~~
     * `list :: ~ * 2`
       + hints at "iteratee"
     * `list :: () * 2`
     * `list :: . * 2`
+      - conflicts with export
+      - field is taken by `..`, `.` as export, `x.2` as prop, `.2` as float
 
   ? ALT: `a < 10 |> i++`, `list | item -> item*2`, pipe as `list |= i -> i * 2 | i -> filter(i)`?
     + keeps the notion of "producing"

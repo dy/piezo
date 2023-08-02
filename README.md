@@ -37,7 +37,7 @@ true = 0b1, false = 0b0;        ;; alias booleans
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; variables
 foo=1, bar=2.0;                 ;; declare vars
-Ab_C_F#, $0, Δx, _;             ;; names permit alnum, unicodes, #_$@
+Ab_C_F#, $0, Δx, _;             ;; names permit alnum, unicodes, #_$
 fooBar123 == FooBar123;         ;; names are case-insensitive
 default=1, eval=fn, else=0;     ;; lino has no reserved words
 
@@ -127,33 +127,33 @@ m = [1,2,3,4];                  ;; array of 4
 m = [n[..]];                    ;; copy n
 m = [1, 2..4, 5];               ;; mixed definition
 m = [1, [2, 3, [4]]];           ;; nested arrays (tree)
-m = [0..4 <| # * 2];            ;; comprehension
+m = [0..4 <| @ * 2];            ;; comprehension
 m.0, m.1;                       ;; get by static index (fast)
 (first, last) = (m[0], m[-1]);  ;; get by calculated index
 (second, ..last) = m[1, 2..];   ;; get multiple values
 length = m[];                   ;; get length
 m[0] = 1;                       ;; set value
 m[2..] = (1, 2..4, n[1..3]);    ;; set multiple values from offset 2
-m[0..] = 0..4 <| # * 2          ;; set via iteration
+m[0..] = 0..4 <| @ * 2          ;; set via iteration
 m[1,2] = m[2,1];                ;; rearrange
 m[0..] = m[-1..0];              ;; reverse order
 m[0..] = m[1..,0];              ;; rotate
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; loops
-a, b, c |> x(#);                ;; for each a, b, c do x(item)
+a, b, c |> x(@);                ;; for each a, b, c do x(item)
 10.. |> (                       ;; iterate over range
-  # < 3 ? ^^;                   ;; ^^ break
-  # < 5 ? ^;                    ;; ^ continue
+  @ < 3 ? ^^;                   ;; ^^ break
+  @ < 5 ? ^;                    ;; ^ continue
 );                              ;;
 i < 10 |> x(i++);               ;; while i < 10 do x(i++)
-items |> a(#);                  ;; iterate over array
-items |> a(#) |> b(#);          ;; pipe iterations
+items |> a(@);                  ;; iterate over array
+items |> a(@) |> b(@);          ;; pipe iterations
 0..w |> (                       ;; nest iterations
-  x=#; 0..h |> (y=#; a(x,y))    ;;
+  x=@; 0..h |> (y=@; a(x,y))    ;;
 );                              ;;
-x = a, b, c |> #;               ;; returns last member: x == c
-a, b, c <| # * 2;               ;; returns multiple members
-x[3..5] <|= # * 2;              ;; map items from range
+x = a, b, c |> @;               ;; returns last member: x == c
+a, b, c <| @ * 2;               ;; returns multiple members
+x[3..5] <|= @ * 2;              ;; map items from range
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; import, export
 <math#pi,sin>;                  ;; import (into global scope)
@@ -194,10 +194,10 @@ gain(                               ;; define a function with block, volume argu
   block,                            ;; block is a list argument
   volume <= 0..100                  ;; volume is limited to 0..100 range
 ) = (
-  block <|= # * volume;             ;; map each sample by multiplying by value
+  block <|= @ * volume;             ;; map each sample by multiplying by value
 );
 
-gain([0..5 <| # * 0.1], 2);         ;; 0, .2, .4, .6, .8, 1
+gain([0..5 <| @ * 0.1], 2);         ;; 0, .2, .4, .6, .8, 1
 
 gain.                               ;; export gain function
 ```
@@ -240,7 +240,7 @@ lpf(                                ;; per-sample processing function
   y0                                ;; return y0
 );
 
-;; (0, .1, .3) <| lpf(#, 108, 5)
+;; (0, .1, .3) <| lpf(@, 108, 5)
 
 lpf.                                ;; export lpf function, end program
 ```
@@ -298,8 +298,8 @@ coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
   t = i / 1s;
 
   out <|= oscillator[shape](phase)
-      <| adsr(#, 0, 0, .06, .24)
-      <| curve(#, 1.82)
+      <| adsr(@, 0, 0, .06, .24)
+      <| curve(@, 1.82)
 
   i++
   phase += (freq + (t > delay ? jump : 0)) * 2pi / 1s;

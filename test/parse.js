@@ -111,7 +111,7 @@ t('parse: lists', t => {
   // NOTE: we don't support labels/aliases
   // is(parse('list = [l:2, r:4]'), ['=','list',['[',[',',[':','l',[INT,2]], [':','r',[INT,4]]]]],'list with aliases')
   is(parse('[0..10]'), ['[',['..',[INT,0],[INT,10]]],'list from range')
-  is(parse('[0..8 <| #*2]'), ['[',['<|', ['..',[INT,0],[INT,8]], ['*', '#', [INT, 2]]]],'list comprehension')
+  is(parse('[0..8 <| @*2]'), ['[',['<|', ['..',[INT,0],[INT,8]], ['*', '@', [INT, 2]]]],'list comprehension')
   // is(parse('[2]list = list1'), ['=',['[',[INT,2],'list'],'list1'], '(sub)list of fixed size')
   is(parse('list.0, list.1'), [',',['.','list','0'],['.','list','1']],'short index access notation')
   is(parse('list.l = 2'), ['=',['.','list','l'], [INT, 2]],'alias index access')
@@ -208,8 +208,8 @@ t('parse: loops', t => {
     '<|', ['<','i',[INT,3]], ['=',['[]','x','i'],['++','i']]
   ], '<| precedence vs =')
 
-  is(parse('a<|#'),['<|','a','#'])
-  is(parse('a<|#<|#'),['<|','a','#','#'])
+  is(parse('a<|@'),['<|','a','@'])
+  is(parse('a<|@<|@'),['<|','a','@','@'])
 })
 
 t('parse: functions', () => {
