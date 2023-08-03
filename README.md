@@ -71,7 +71,7 @@ a = b ? c;                      \ if b then a = c, else a = 0
 (x-1)..(x+1);                   \ calculated ranges
 x <= 0..10;                     \ is x in 0..10 range (10 inclusive)
 x <? ..10, x <? 0..;            \ min(x, 10), max(x, 0)
-x <? 0..10;                     \ clamo(x, 0, 10)
+x <? 0..10;                     \ clamp(x, 0, 10)
 x <?= 0..10;                    \ x = clamp(x, 0, 10)
 a,b,c = 0..2;                   \ a==0, b==1, c==2
 (-10..10)[];                    \ span is 20

@@ -3065,7 +3065,7 @@ Having wat files is more useful than direct compilation to binary form:
   * Optional args must be detected statically in fn callsite for perfect performance
     - makes exported functions require all params
 
-## [x] Precedence hurdle: |, (<|, |>), (=, +=) -> let's make `| ->` a ternary and keep `|` precedence as is
+## [x] Precedence hurdle: |, (<|, |>), (=, +=) -> don't use `|`, keep `|` precedence as is
 
   * it seems loop/fold, assign and BOR must be right-assoc same-precedence operator
   * otherwise there are tradeoffs like `i<|x[i] = 1` or `a=b | c` or `a <| b|c |> d`
@@ -3132,7 +3132,7 @@ Having wat files is more useful than direct compilation to binary form:
   * Rotate as `/ a = [1..,0];` via memory copy ops
     ? how efficient is that?
 
-## [x] Arrays: neg-index access or no? -> let's try modwrap
+## [x] Arrays: neg-index access or no? -> let's try modwrap + static optimization
 
   + handy & complacent with slicing
   - suboptimal performance, since enforces (idx % len) operation = reading array length
@@ -3171,7 +3171,7 @@ Having wat files is more useful than direct compilation to binary form:
     * likely can be `osc=[sin(x)=...x,tri(x)=...x]`
   + resolves the issue of scope (above): no need to make all vars global since no scope recursion
 
-## [ ] Replace `<|`, `|`, `|>`? -> ~~Let's try `::` for loop/generator and `list -> item ::` for extended loop/tranformer~~ ~~let's use `<|`, `|>` for map/reduce,~~ `<|` and `|>` for loop (multiple/single arg), `#` for member placeholder, ~~`x -> x*2` for mapping function~~
+## [x] Replace `<|`, `|`, `|>`? -> ~~Let's try `::` for loop/generator and `list -> item ::` for extended loop/tranformer~~ ~~let's use `<|`, `|>` for map/reduce,~~ `<|` and `|>` for loop (multiple/single arg), `@` for member placeholder, ~~`x -> x*2` for mapping function~~
 
   + Less problems with overloading `|`
   + Fold operator is likely not as useful
@@ -3431,11 +3431,11 @@ Having wat files is more useful than direct compilation to binary form:
     - nah: `x = ~list`
   ? ALT: `x <~ list : `
 
-## [x] What's the difference of `list <| # * 2` vs `list |> # * 2`? -> multiple vs single return
+## [x] What's the difference of `list <| @ * 2` vs `list |> @ * 2`? -> multiple vs single return
 
   ? First one returns multiple members, last one returns single (last) value
     ? can we detect that by-use-case?
-      - unlikely, same use-case can include both `[0,1,2<|#*2, 0,1,2|>#*2]`
+      - unlikely, same use-case can include both `[0,1,2<|@*2, 0,1,2|>@*2]`
     + first uses heap, the second doesn't (is faster)
 
 ## [x] `list <| x` vs `a < 1 <| x` - how do we know left side type? -> from boolean operator result or by-syntax
@@ -3560,7 +3560,7 @@ Having wat files is more useful than direct compilation to binary form:
     + we can represent them single-var via just id, not actual pointer
     - we can do infinite slices, storing all of them as ids is impossible
 
-## [ ] Prohibit dynamic arrays `a()=(x=[1,2,3])`?
+## [x] Prohibit dynamic arrays `a()=(x=[1,2,3])`? -> keep them, but dispose immediately once ref is lost, statically
 
   + ensures static memory: doesn't grow cept comprehension
   -? we can track & dispose them by the end of function call ourselves...
@@ -3568,8 +3568,9 @@ Having wat files is more useful than direct compilation to binary form:
   + we can track all arrays, including stateful, static-time
     ?+ callsite is supposedly fully predictive: there's no chance for arbitrary new callsites, is there?
   + we can slice existing memory easily
+  - we can declare memory size in advance by just `[1,2,3]`
 
-## [ ] List comprehension: how? -> last memory slot is dynamic, and length is increased every time array gets an item
+## [x] List comprehension: how? -> via heap
 
   * The size of final list is unknown in advance. It requires dynamic-size mem allocation.
   ? Can we detect size in advance somehow?
@@ -3579,11 +3580,11 @@ Having wat files is more useful than direct compilation to binary form:
   3. Just create new array and push members to it, increasing array's length. We suggest there's only one dynamic array at-a-time created, so it's safe to increase length on creating time.
     -> Or better just write length after the array is created, eg. somewhere in dynamic `$alloc` method.
 
-## [ ] Should loops return multiple arguments? How to maintain the heap?
+## [x] Should loops return multiple arguments? How to maintain the heap? -> `<|` returns multiple members to heap
 
-  + allows `fn(list <| # * 2)`
-  + allows `[(a,b,c) <| # * 2]`
-  - internal lists `list <| (0..# <| 2)` becomes problematic to create in memory
+  + allows `fn(list <| @ * 2)`
+  + allows `[(a,b,c) <| @ * 2]`
+  - internal lists `list <| (0..@ <| 2)` becomes problematic to create in memory
 
   * ALT: We don't make loops return multiple arguments and just one (last argument)
     + solves issue of dynamic args
@@ -3667,7 +3668,6 @@ Having wat files is more useful than direct compilation to binary form:
 
   * Mixed no-heap as much as possible, otherwise heap
 
-
 ## [x] Import into function scope? -> no, too big of a workaround for wasm imports
 
   * `saw() = (<math#pi>; pi*2+...)`
@@ -3686,12 +3686,13 @@ Having wat files is more useful than direct compilation to binary form:
     + makes `#` part of var names
     + allows avoiding quotes
 
-## [ ] Should we make memory importable, instead of exportable?
+## [x] Should we make memory importable, instead of exportable? -> can be any
 
   + naturally enables shared memory
   ? can help with question of naming memory?
   + can be, yes, as `compile(src, {memory})`
   ~+ we gotta need to provide means to work directly with memory
+  -> can be defined via config
 
 ## [x] Directly call imported items as `@math.pi`? -> no: makes code unnecessarily verbose
 
@@ -3820,6 +3821,7 @@ Having wat files is more useful than direct compilation to binary form:
 ## [x] Should we make dot part of name, eg. `x.1`, `x.2`? -> no, it can be `a . 0`
 
   - likely no, since we use it in `@math.pi`
+  - we don't really need member access generally
 
 ## [x] Overdeclaring local variables -> shadowing is not nice anyways
 
@@ -3859,7 +3861,7 @@ Having wat files is more useful than direct compilation to binary form:
   * `x /< a..b` for smoothstep
   * `x -| a..b` for step?
 
-## [ ] how do we represent infinity?
+## [x] how do we represent infinity? -> `1/0`, `0/0`
 
   * `oo`
   * `~~`
@@ -3868,8 +3870,11 @@ Having wat files is more useful than direct compilation to binary form:
   * `><`
   * `..[-1]`, `..[0]`
     + technically correct
+  * `0/0`
+    + even simpler and more mathy
+    + reminds actual infinity sign
 
-## [x] exclusive / non-inclusive range: how? -> use `0..10` as exclusive (by default), `0..=10` as inclusive (waiting if needed)
+## [x] exclusive / non-inclusive range: how? -> use `0..10` as exclusive, `0..=10` as inclusive
 
   * `0..<10`, `0<..10`
     - `0 > ..10`, `0.. < 10`
@@ -3891,8 +3896,9 @@ Having wat files is more useful than direct compilation to binary form:
     - `=` has wrong association, there must be `<`
     + `Rust` has that
     + open-right range seems to be ubiquotous & mathematically standard
-    - clamp is weird: `x <? 0..=10` - very unnatural
+    -~ clamp is weird: `x <? 0..=10`
       ~ `x <=? 0..10` ?
+        - nah, introduces 2 operators
       ~ or we can keep clamping to normal values `x <? 0..10` and keep range "exclusive" only for range constructor
     + follows the logic of `<` and `<=`
   * inclusive as `0...10`, exclusive as `0..<10`?
@@ -3902,7 +3908,6 @@ Having wat files is more useful than direct compilation to binary form:
   * `0..+10` for inclusive range, `0..10` for exclusive
     + `+` has no meaning as operator anyways
     - `10..-+10` vs `10..+-10` is weird,vs `10..=-10`
-
 
 ## [x] replace `x -< 0..10` with `x =< 0..10`? -> clamp is `x <? 0..10`
 
@@ -3954,6 +3959,8 @@ Having wat files is more useful than direct compilation to binary form:
     ? logically clamp is `a > 10 ? 10 : a < 0 ? 0 : a` -> `a <?> 0..10` or `a >?< 0..10` or `a <>? 0..10`
       * or `a <? 10 >? 0` -> `a <? 0..10` meaning within, or less than
       + `a >? 0..10` means outside, not clear though which side
+    - introduces `a <=? ..10` for inclusive test
+      ? should we use `..=10` then instead?
 
 ## [x] Create empty array - how? -> `[..10]` since range is exclusive
 
@@ -4201,7 +4208,7 @@ Having wat files is more useful than direct compilation to binary form:
                   + we can pass fn refs as floats as well - it seems trivial to store all funcs in a table
                     + that allows calling directly or indirectly
 
-## [ ] State variables logic - how to map callsite to memory address? ->
+## [ ] State variables logic - how to map callsite to memory address? -> see implementation
 
   ```
   sin(f, (; scope-id ;)) = (*phase=0;>phase+=f;...);
@@ -4371,7 +4378,7 @@ Having wat files is more useful than direct compilation to binary form:
   + we cannot dynamically declare local variables within loop. Static-size loop would make it possible to declare all variables in advance...
     - it would require thousands of local variables...
 
-## [x] Loop vs fold: no difference -> returns list or last
+## [x] Loop vs fold: no difference -> returns list <| or last |>
 
   * `sum=0; xs <| (x) -> (sum += x)`
   * `xs |> (x, sum) -> sum + x`
@@ -4381,12 +4388,39 @@ Having wat files is more useful than direct compilation to binary form:
 
   * Must not introduce any dynamic tax
 
-  1. Componentizer: translates group ops recursively to component ops
+  1. Simple members: deconstruct to component ops
     * `(a,b) >= h ? (a,b) = h-1`
     * `(a>=h, b>=h) ? (a=h-1,b=h-1)`
     * `(a>=h ? a=h-1, b>=h ? b=h-1)`
 
-  2. Complex multiple members, eg.
-    * (x ? a,b : c,d) * (y ? e,f : g,h);
-    * (... (x ? ^^a,b); ...; c,d) * y(); ;; where y returns multiple values also
-    * (a <| @) * (b <| @);
+  2. Complex multiple members: write to heap and multiply from it
+    * `(x ? a,b : c,d) * (y ? e,f : g,h);`
+    * `(... (x ? ^^a,b); ...; c,d) * y();` - where y returns multiple values also
+    * `(a <| @) * (b <| @);`
+
+## [ ] pow, stdlib
+
+  1. https://chromium.googlesource.com/external/github.com/WebAssembly/musl/+/landing-branch/src/math
+    + musl, standard good impl
+    - requires compiling to wasm
+    - redundant
+  2. https://github.com/jdh8/metallic/tree/master/src/math/double
+    + what we need
+    + minimal
+  3. zig
+  4. AssemblyScript + https://gist.github.com/stagas/d5de1a8dd82a397391caea31a4b75b3a
+    + back via https://webassembly.github.io/wabt/demo/wasm2wat/
+    - arbitrary memory addresses
+
+## [x] Expose internal variables under `@` prefix? -> no, introduces reserved words and is unnecessary
+  + `@memory[100]` defines memory of 100 members
+    - reserved word
+    + `@memory[10]` can read from memory
+    + exports internal variable without need to customize config
+    - can be declared via `[100]` (array disposes immediately but memory remains)
+  + `@heap[100]` defines heap of 100 members
+    - reserved word
+    - can be customized via config
+    - can be figured out from code
+    - we don't track exact size, we measure in pages
+  + `@` is current array member

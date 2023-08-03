@@ -8,7 +8,42 @@ export const std = {
   "f64.isnan": "(func $f64.isnan (param f64) (result i32) (f64.ne (local.get 0) (local.get 0)))",
 
   // a ** b generic case
+  // ref: https://github.com/jdh8/metallic/blob/master/src/math/double/pow.c
   "f64.pow": `(func $f64.pow (param f64 f64) (result f64)\n` +
+  `
+      uint64_t sign = 0;
+
+      if (y == 0) return 1;
+
+      if (signbit(x) && rint(y) == y) {
+          x = -x;
+          sign = (uint64_t)(rint(y / 2) != y / 2) << 63;
+      }
+
+      double unsigned_;
+
+      if (x == 1) unsigned_ = 1;
+
+      else if (x == 0) unsigned_ =  signbit(y) ? HUGE_VAL : 0;
+
+      else if (isinf(x)) unsigned_ =  signbit(y) ? 0 : HUGE_VAL;
+
+      else if (signbit(x)) unsigned_ =  NAN;
+
+      else if (isinf(y)) unsigned_ = signbit(y) ^ (x < 1) ? 0 : HUGE_VAL;
+
+      else {
+        double t1;
+        double t0 = log2_(normalize_(reinterpret(int64_t, x)), &t1);
+        double y0 = truncate_(y, 32);
+
+        unsigned_ =  exp2_(y0 * t0, (y - y0) * t0 + y * t1);
+      }
+
+      uint64_t magnitude = reinterpret(uint64_t, unsigned_);
+
+      return reinterpret(double, magnitude | sign);
+  ` +
   `)`,
 
   // a %% b, also used to access buffer
