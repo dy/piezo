@@ -46,10 +46,12 @@
   * [x] Imports - nice `<>` syntax with href internals and options
   * [x] Units
   * [x] basic maths
-  * [ ] Group operators
   * [x] Comments
+* [ ] Group operators
+  * [x] multiply
 * [x] CLI
 * [x] get rid of a.1: we can do that via static knowledge
+* [ ] format output (via watr?)
 * [ ] dispose static arrays once ref is lost `[1,2,3]`
 * [ ] better error messages phrasing (via chatgpt)
 * [ ] Indent output (like mono)

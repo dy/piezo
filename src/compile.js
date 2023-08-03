@@ -3,6 +3,7 @@ import { FLOAT, INT } from './const.js';
 import parse from './parse.js';
 import stdlib from './stdlib.js';
 import stringify from './stringify.js';
+// import {parse as parseWat} from 'watr';
 
 let prevCtx, includes, imports, globals, locals, slocals, funcs, func, exports, heap, mem, returns, units, config, depth;
 
