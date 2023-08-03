@@ -4,7 +4,7 @@ process(data, width, height) = (
     (y1, y2) >= height ? (y1, y2) = height - 1;
     (ptr0, ptr1, ptr2) = (y, y1, y2) * width;
 
-    0..width <| (
+    0..width |> (
       (x, x1, x2) = (@, @+1, @+2);
       (x1, x2) >= width ? (x1, x2) = width - 1;
 
@@ -18,7 +18,7 @@ process(data, width, height) = (
         (val7 - val1) * 2 + (val6 + val8) - (val0 + val2)
       );
 
-      mag <?= (gx * gx + gy * gy) ** 0.5 .. 1;
+      mag <?= ((gx * gx + gy * gy) ** 0.5) ..= 1;
       data[ptr0 + x] = mag;
     )
   )

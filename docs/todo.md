@@ -41,6 +41,12 @@
 * [x] Per-function vars scope: we don't need parens as scope
 * [x] Change `,` precedence to be under `=` to allow `^a,b,c`, `x?1,2,3:4,5,6`, `a,b<|x,i->x,i`
 * [ ] Include config params properly
+* [ ] Bench sobel https://github.com/mattdesl/wasm-bench
+  * [ ] `(y1, y2) >= height ? (y1, y2) = height - 1` group ops
+  * [ ] `(val0, val1) = data[ptr0 + (x, x1)];`
+  * [ ] `\` comments
+  * [ ] optimized array prop access
+  * [ ] `..=` inclusive ranges
 * [ ] Bench biquad
   * [ ] Clamp args
   * [x] Imports - nice `<>` syntax with href internals and options
@@ -49,14 +55,18 @@
   * [x] Comments
 * [ ] Group operators
   * [x] multiply
+  * [ ] floats
+  * [ ] ints
+  * [ ] binary
+  * [ ] logical
+  * [ ] conditions
+* [ ] Group operators with unmatching number of args
+* [ ] Complex group operators (via heap)
 * [x] CLI
 * [x] get rid of a.1: we can do that via static knowledge
-* [ ] format output (via watr?)
 * [ ] dispose static arrays once ref is lost `[1,2,3]`
 * [ ] better error messages phrasing (via chatgpt)
-* [ ] Indent output (like mono)
-* [ ] Bench sobel
-  * [ ] https://github.com/mattdesl/wasm-bench
+* [ ] Indent/format output (like mono via watr)
 * [ ] static arrays
 * [ ] list comprehension
 * [x] static expressions optimization
@@ -69,19 +79,17 @@
 * [ ] loops
   * [x] range loop in range loop
 * [ ] comments: must put comment into a previous token, instead of stripping
-* [ ] implement means to allocate memory/array from outside & align memory API (env.memory is convention?)
-  + it can allow for more compact work with arrays / global memory without array includes
+* [ ] release static arrays if ref is lost, to allocate memory eg `[..100]`
 * [x] implement no-ptr buffer lengths: either i64 or 2 values in stack
 * [x] ~~refactor `pick(N,arg)` into `dup(arg,3)`~~
-* [ ] more complex group conditionals: `a,b,c || d,e`, `a,b * c,d`
 * [x] implement computed ranges in lists creation
 * [x] ~~implement scopes as either tmp functions or blocks~~ -> just resolve variables
 * [x] Implement storing buffer items
 * [x] Make all `local.set` / `global.set` a `set(name, value)` function: we don't need to know about tmp/define etc.
   * [x] ~~Think if we need to expose fully-js API for building wasm code, similar to wasmati~~ no
-* [ ] Test nested scopes variables `(x=0;(y=1);y)`
-* [ ] `(a=1,c; (b=2; c=a+b;); c)` test
-* [ ] Extend i32 to i64 whereever possible
+* [x] ~~Test nested scopes variables `(x=0;(y=1);y)`~~
+* [x] ~~`(a=1,c; (b=2; c=a+b;); c)` test~~
+* [x] ~~Extend i32 to i64 whereever possible~~ why?
 * [ ] Test optional arguments
 * [ ] Test a,,c = d,e,f; a,b,c = d,,f
 * [x] Test if memory grows properly
@@ -93,15 +101,15 @@
 * [ ] All lang reference cases
 * [ ] Nice errors: line number to AST nodes?
 * [ ] Stub all wrong syntax error cases, like `++a=123;` etc - any operators on the lhs of `=` etc., all permutations
-* [ ] math: sin, cos, pow, mod etc - from mono https://github.com/stagas/mono
+* [ ] pow operator
+* [ ] maths: sin, cos, log, pow etc.
 * [x] *state
   * [x] `*x=[0..10]`
   * [x] `x()=(*i);y()=(x())`
   * [ ] `x()=(*(a,b,c))`
   * [ ] `x(_sin)=(sin() + _sin())`
 * [ ] Make `br_if` loops everywhere - it doesn't create control block (more lightweight)
-* [ ] Test in-loop variables `xs <| (x) -> (y;x+=y;)`
-* [ ] pass fns by reference `x(a,_osc)=(osc(a)+_osc(a))`
+* [ ] Pass fns by reference `x(a,_osc)=(osc(a)+_osc(a))`
 * [ ] Readme examples
   * [ ] Audio gain example
   * [ ] Sine gen example
