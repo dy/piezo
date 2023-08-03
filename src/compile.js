@@ -542,32 +542,43 @@ Object.assign(expr, {
     let aop = expr(a), bop = expr(b)
 
     // group multiply
-    // FIXME: complex multiple members, eg.
-    // (x ? a,b : c,d) * (y ? e,f : g,h);
-    // (... (x ? ^^a,b); ...; c,d) * y(); ;; where y returns multiple values also
-    // (a <| @) * (b <| @);
-    if (aop.type.length > 1) {
+    if (aop.type.length > 1 || bop.type.length > 1) {
       if (a[0] === '(' && a[1]?.[0] === ',') {
         // (a0,a1) * (b0,b1); -> (a0 * b0, a1 * b1)
         const [, ...as] = a[1]
         if (b[0] === '(' && b[1]?.[0] === ',') {
           const [, ...bs] = b[1]
           if (as.length !== bs.length) err(`Mismatched group operation sizes`)
-          return expr(['(', [',', ...as.map((a, i) => [x, as[i], bs[i]])]])
+          return expr(['(', [',', ...as.map((a, i) => ['*', as[i], bs[i]])]])
         }
 
         // (a0, a1) * b -> (a0 * b, a1 * b)
-        return op(`${pick(as.length, expr(b))}${`(f64.mult)`}`)
-        return expr(['(', [',', ...as.map((a, i) => [x, a, b])]])
+        if (bop.type.length === 1) {
+          const tmp = define(`__mul`, 'f64', true)
+          return op(
+            `(local.set $${tmp} ${asFloat(bop)})${as.map(a => `(f64.mul ${asFloat(expr(a))} (local.get $${tmp}))`).join('')}`,
+            Array(aop.type.length).fill('f64'),
+            {static: aop.static != null && bop.static != null ? aop.static.map(a=>a*bop.static) : null }
+          )
+        }
       }
 
       // a * (b0, b1) -> (a * b0, a * b1)
-      if (b[0] === '(' && b[1]?.[0] === ',') {
+      else if (b[0] === '(' && b[1]?.[0] === ',') {
         const [, ...bs] = b[1]
-
+        const tmp = define(`__mul`, 'f64', true)
+        return op(
+          `(local.set $${tmp} ${asFloat(aop)})${bs.map(b => `(f64.mul (local.get $${tmp}) ${asFloat(expr(b))})`).join('')}`,
+          Array(bop.type.length).fill('f64'),
+          {static: aop.static != null && bop.static != null ? bop.static.map(b=>b*aop.static) : null }
+        )
       }
 
       err('Complex group multiplication is not supported')
+      // FIXME: complex multiple members, eg.
+      // (x ? a,b : c,d) * (y ? e,f : g,h);
+      // (... (x ? ^^a,b); ...; c,d) * y(); ;; where y returns multiple values also
+      // (a <| @) * (b <| @);
     }
 
     // static optimizations
