@@ -26,7 +26,7 @@ true = 0b1, false = 0b0;        \ alias booleans
 && || ! ?: ?                    \ logical (boolean)
 > >= < <= == !=                 \ comparisons (boolean)
 & | ^ ~ >> <<                   \ binary (integer)
-. []                            \ member access
+[]                              \ member access, length
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ extended operators
 ** // %%                        \ power, floor div, unsigned mod (wraps negatives)
@@ -55,17 +55,13 @@ foo();                          \ semi-colons at end of line are mandatory
 (a ? (b ? ^^c) : d);            \ break 2 scopes
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ conditions
-sign = a < 0 ? -1 : +1;         \ inline ternary
-(2+2 >= 4) ?                    \ multiline ternary
-  log(1)                        \
-: 3 <= 1..2 ?                   \ else if
-  log(2)                        \
-: (                             \ else
-  log(3);                       \
-);                              \
+sign = a < 0 ? -1 : +1;         \ ternary
+(2+2 >= 4) ? log(1) :           \ multiline/switch
+3 <= 1..2 ? log(2) :            \ else if
+log(3)                          \ else
 a || b ? c;                     \ if a or b then c
-a && b ?: c;                    \ elvis: if not a and b then c
 a = b ? c;                      \ if b then a = c, else a = 0
+(a, b) ? (c, d);                \ group condition: (a ? c, b ? d)
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ ranges
 0..10;                          \ from 1 to 9 (1 inclusive, 10 exclusive)
@@ -87,7 +83,7 @@ a, b=1, c=2;                    \ define multiple values
 (a,b,c) = (d,e,f);              \ assign multiple elements: a=d, b=e, c=f
 (a,b) = (b,a);                  \ swap: temp=a; a=b; b=temp;
 (a,b) + (c,d);                  \ ops act on members: (a+c, b+d)
-(a,b).1 = (c,d)[2];             \ (a.1=c[2], b.1=d[2]);
+(a,b)[1] = (c,d)[2];            \ (a[1]=c[2], b[1]=d[2]);
 (a,b) = (c,d,e);                \ drop extra: (a=c, b=d);
 (a,b,c) = d;                    \ duplicate: (a=d, b=d, c=d);
 (a,,b) = (c,d,e);               \ skip: (a=c, d, b=e);
@@ -112,7 +108,7 @@ a(), a();                       \ 1, 2
 fib() = (                       \
   *i=[1,0,0];                   \ local memory of 3 items
   i[1..] = i[0..];              \ shift memory
-  i.0 = i.1 + i.2;              \ sum prev 2 items
+  i[0] = i[1] + i[2];           \ sum prev 2 items
 );                              \
 fib(), fib(), fib();            \ 1, 2, 3
 c() = (fib(), fib(), fib());    \ state is defined by function scope
@@ -128,8 +124,7 @@ m = [n[..]];                    \ copy n
 m = [1, 2..4, 5];               \ mixed definition
 m = [1, [2, 3, [4]]];           \ nested arrays (tree)
 m = [0..4 <| @ * 2];            \ comprehension
-m.0, m.1;                       \ get by static index (fast)
-(first, last) = (m[0], m[-1]);  \ get by calculated index
+(first, last) = (m[0], m[-1]);  \ get by index
 (second, ..last) = m[1, 2..];   \ get multiple values
 length = m[];                   \ get length
 m[0] = 1;                       \ set value
@@ -240,7 +235,7 @@ lpf(                                \ per-sample processing function
   y0                                \ return y0
 );
 
-\ (0, .1, .3) <| lpf(@, 108, 5)
+\ (0, .1, .3) <| lpf(@, 108, 5);
 
 lpf.                                \ export lpf function, end program
 ```

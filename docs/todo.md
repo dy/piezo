@@ -49,6 +49,7 @@
   * [ ] Group operators
   * [x] Comments
 * [x] CLI
+* [ ] get rid of a.1: we can do that via static knowledge
 * [ ] Indent output (like mono)
 * [ ] Bench sobel
   * [ ] https://github.com/mattdesl/wasm-bench
