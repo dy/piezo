@@ -540,20 +540,17 @@ Object.assign(expr, {
       err('State variable: unimplemented')
     }
 
-    // primitive static group unwrap
-    if (a[0]==='(' && a[1][0] === ',') {
-      // (a,b,c) * (d,e) -> (a*d, b*d, c)
-      if (b[0]==='(' && b[1][0] === ',') {
-
-      }
-    }
-
     let aop = expr(a), bop = expr(b)
 
-    // FIXME: complex multiple members, eg.
-    // (x ? a,b : c,d) * (y ? e,f : g,h);
-    // (... (x ? ^^a,b); ...; c,d) * y(); ;; where y returns multiple values also
-    // (a <| &) * (b <| &);
+    // (a,b) * c; (a,b) * (c,d); ((a,b)+1) * c;
+    if (aop.type.length > 1) {
+      // FIXME: complex multiple members, eg.
+      // (x ? a,b : c,d) * (y ? e,f : g,h);
+      // (... (x ? ^^a,b); ...; c,d) * y(); ;; where y returns multiple values also
+      // (a <| @) * (b <| @);
+
+    }
+
 
     // static optimizations
     if (bop.static === 0 || aop.static === 0) return op(`(f64.const 0)`, 'f64', {static:0})

@@ -1094,7 +1094,7 @@ Having wat files is more useful than direct compilation to binary form:
   + `x -<= 0..10` is just a nice construct
   -  `x <- y` vs `x < -y`
 
-## [ ] Comments: `//`, `/*` vs `;;` and `(; ;)` → `;;`
+## [ ] Comments: `//`, `/*` vs `;;` and `(; ;)` → `\`
 
   1. `;;`
   + ;; make more sense, since ; is separator, and everything behind it doesn't matter
@@ -1155,14 +1155,17 @@ Having wat files is more useful than direct compilation to binary form:
     + \ is almost never used in langs & that's unique
     + reminds `//`
     - sort-of constant footgun to confuse with `//`
+      + that's why `\`
     + it's short
     + association with "escape" sequence in strings
     + cooler than `;;`
+      + `\` is cool
     + looks fresh directionally, shadow effect `\\\\\\\\\\\\\\\\\\\\\\\\\`
-    - possible conflict with string escapes
+    ~ possible conflict with string escapes
       + can be resolved with `\\`
         + creates clear separation of "comments" area
       + `;;` can as well have conflict with strings, that's not a feature of this comment
+      + strings in JS/anywhere ignore comments
     - syntax highlighters don't know that
       ~ neither `;;`
     - takes primary semantic meaning, rather than "safe" secondary meaning
@@ -4058,11 +4061,13 @@ Having wat files is more useful than direct compilation to binary form:
   * `[0..0.5..+10]`
     - `[20..0.5..+-20]`
   * `[0..10:0.5]`
-    - conflicts with
-  * `[0..20 <| x -> x*0.5]`
+    - ~~conflicts with~~
+    + possible, : is free now
+  * `[0..20 <| @*0.5]`
     - very verbose
   * `[0..10 / 0.01]`
     + recommended by gpt
+    - divides each item from range by 0.01
 
 ## [ ] Range modifiers: how, when?
 
@@ -4196,7 +4201,7 @@ Having wat files is more useful than direct compilation to binary form:
                   + we can pass fn refs as floats as well - it seems trivial to store all funcs in a table
                     + that allows calling directly or indirectly
 
-## [ ] State variables logic - how to map callsite to memory address? -> see 4.1 - via array argument
+## [ ] State variables logic - how to map callsite to memory address? ->
 
   ```
   sin(f, (; scope-id ;)) = (*phase=0;>phase+=f;...);
@@ -4356,7 +4361,7 @@ Having wat files is more useful than direct compilation to binary form:
     + doesn't require fake arguments
     + allows tracking function state in a standalone way
 
-## [ ] Prohibit dynamic-size list comprehensions
+## [ ] Prohibit dynamic-size list comprehensions ->
 
   + Solves issue of state vars logic: we can precalculate addresses
   + Likely we don't need heap: can be fully static memory
@@ -4366,8 +4371,22 @@ Having wat files is more useful than direct compilation to binary form:
   + we cannot dynamically declare local variables within loop. Static-size loop would make it possible to declare all variables in advance...
     - it would require thousands of local variables...
 
-## [ ] Loop vs fold: no difference
+## [x] Loop vs fold: no difference -> returns list or last
 
   * `sum=0; xs <| (x) -> (sum += x)`
   * `xs |> (x, sum) -> sum + x`
   * Folds seem to be more efficient than loops: they create single value as result, loop creates multiple values (heap?).
+
+## [ ] Group ops: how?
+
+  * Must not introduce any dynamic tax
+
+  1. Componentizer: translates group ops recursively to component ops
+    * `(a,b) >= h ? (a,b) = h-1`
+    * `(a>=h, b>=h) ? (a=h-1,b=h-1)`
+    * `(a>=h ? a=h-1, b>=h ? b=h-1)`
+
+  2. Complex multiple members, eg.
+    * (x ? a,b : c,d) * (y ? e,f : g,h);
+    * (... (x ? ^^a,b); ...; c,d) * y(); ;; where y returns multiple values also
+    * (a <| @) * (b <| @);

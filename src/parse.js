@@ -82,9 +82,6 @@ for (let i = 0; i<=9; i++) lookup[_0+i] = num;
 // .1
 lookup[PERIOD] = a=>!a && num();
 
-// @, @@, @@@
-lookup[AT] = a => !a && skip(c => c == AT);
-
 // export is parsed as last-resort period operator, conditioned it's last in the code
 unary('.', PREC_EXPORT, true)
 
@@ -155,6 +152,9 @@ token('--', PREC_UNARY, a => a && ['+',['--',a],[INT,1]])
 token('^', PREC_TOKEN, (a,b) => !a && (b=expr(PREC_RETURN), b ? ['^',b] : ['^'])) // continue: ^
 token('^^', PREC_TOKEN, (a,b) => !a && (b=expr(PREC_RETURN), b ? ['^^',b] : ['^^'])) // break: ^^
 
+// @
+token('@', PREC_TOKEN, (a,b) => !a && '@')
+
 // a..b, ..b, a..
 token('..', PREC_RANGE, a => ['..', a, expr(PREC_RANGE)])
 token('..=', PREC_RANGE, a => ['..=', a, expr(PREC_RANGE)])
@@ -165,12 +165,6 @@ token('.', PREC_CALL, (a,b) => a && (b=skip(isId)) && ['.', a, b])
 
 // *a
 unary('*', PREC_STATE)
-
-// >a
-// unary('>', PREC_STATE)
-
-// @ 'ab'
-// unary('@', PREC_TOKEN)
 
 // a?b, a?:b
 // NOTE: unlike || && this one doesn't return item
