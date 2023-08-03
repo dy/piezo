@@ -7,44 +7,63 @@ export const std = {
   // just for reference - easier to just `f64.ne` directly
   "f64.isnan": "(func $f64.isnan (param f64) (result i32) (f64.ne (local.get 0) (local.get 0)))",
 
+  // Comppute 2^(a + b) where a ≥ b ≥ 0 or a ≤ b ≤ 0
+  "f64.exp2": `
+  static double exp2_(double a, double b)
+  {
+      const double ln2[] = { 0x1.62e42ffp-1, -0x1.718432a1b0e26p-35 };
+
+      double s = a + b;
+
+      if (s > 1024 || (s == 1024 && b > s - a))
+          return HUGE_VAL;
+
+      if (s < -1075 || (s == -1075 && b < s - a))
+          return 0;
+
+      double n = rint(s);
+      double t = s - n;
+      double t0 = truncate_(t, 32);
+      double u = t0 * ln2[0];
+      double v = t * ln2[1] + (a - (n + t0) + b) * ln2[0];
+      int64_t i = reinterpret(int64_t, kernel_expb_(u, v) + 1) + ((int64_t)n << 52);
+
+      if (s < -1020)
+          return 0x1p-1020 * reinterpret(double, i + 0x3FC0000000000000);
+
+      return reinterpret(double, i);
+  }`,
+
   // a ** b generic case
   // ref: https://github.com/jdh8/metallic/blob/master/src/math/double/pow.c
-  "f64.pow": `(func $f64.pow (param f64 f64) (result f64)\n` +
-  `
-      uint64_t sign = 0;
+  "f64.pow": `(func $f64.pow (param $x f64) (param $y f64) (result f64)
+      (local $sign i64)
+      (if (f64.eq (local.get $y) (f64.const 0)) (then (return (f64.const 1))))
+      (if (i32.and (f64.lt (local.get $x) (f64.const 0)) (f64.eq (f64.nearest (local.get $y)) (local.get $y)) )
+        (then
+          (local.set $x (f64.neg (local.get $x)))
+          (local.set $sign
+            (i64.shl (i64.extend_i32_u (f64.ne (f64.nearest (f64.div (local.get $y) (f64.const 2))) (f64.div (local.get $y) (f64.const 2))) ) (i64.const 63))
+          )
+        )
+      )
+      (return (f64.const -1))
 
-      if (y == 0) return 1;
-
-      if (signbit(x) && rint(y) == y) {
-          x = -x;
-          sign = (uint64_t)(rint(y / 2) != y / 2) << 63;
-      }
-
-      double unsigned_;
-
-      if (x == 1) unsigned_ = 1;
-
-      else if (x == 0) unsigned_ =  signbit(y) ? HUGE_VAL : 0;
-
-      else if (isinf(x)) unsigned_ =  signbit(y) ? 0 : HUGE_VAL;
-
-      else if (signbit(x)) unsigned_ =  NAN;
-
-      else if (isinf(y)) unsigned_ = signbit(y) ^ (x < 1) ? 0 : HUGE_VAL;
-
-      else {
-        double t1;
-        double t0 = log2_(normalize_(reinterpret(int64_t, x)), &t1);
-        double y0 = truncate_(y, 32);
-
-        unsigned_ =  exp2_(y0 * t0, (y - y0) * t0 + y * t1);
-      }
-
-      uint64_t magnitude = reinterpret(uint64_t, unsigned_);
-
-      return reinterpret(double, magnitude | sign);
-  ` +
-  `)`,
+      ;; _unsigned
+      ;; if (x == 1) unsigned_ = 1;
+      ;; else if (x == 0) unsigned_ =  signbit(y) ? HUGE_VAL : 0;
+      ;; else if (isinf(x)) unsigned_ =  signbit(y) ? 0 : HUGE_VAL;
+      ;; else if (signbit(x)) unsigned_ =  NAN;
+      ;; else if (isinf(y)) unsigned_ = signbit(y) ^ (x < 1) ? 0 : HUGE_VAL;
+      ;; else {
+      ;;   double t1;
+      ;;   double t0 = log2_(normalize_(reinterpret(int64_t, x)), &t1);
+      ;;   double y0 = truncate_(y, 32);
+      ;;   unsigned_ =  exp2_(y0 * t0, (y - y0) * t0 + y * t1);
+      ;; }
+      ;; uint64_t magnitude = reinterpret(uint64_t, unsigned_);
+      ;; return reinterpret(double, magnitude | sign);
+  )`,
 
   // a %% b, also used to access buffer
   "i32.modwrap": `(func $i32.modwrap (param i32 i32) (result i32) (local $rem i32)\n` +
@@ -67,10 +86,11 @@ export const std = {
   `)`,
 
   // fill mem area at offset with range values from, to via step param; returns ptr to last address
-  "range": `(func $range (param i32 f64 f64 f64) (result i32)\n` +
-    `(local.get 0)(local.get 1)(local.get 2)(local.get 3)` +
-    `(if (param i32 f64 f64 f64) (result i32) (f64.gt (local.get 2)(local.get 1))` +
-      `(then (call $range.asc))(else (call $range.dsc))` +
+  "range":
+  `(func $range (param i32 f64 f64 f64) (result i32)\n` +
+    `(local.get 0)(local.get 1)(local.get 2)(local.get 3)\n` +
+    `(if (param i32 f64 f64 f64) (result i32) (f64.gt (local.get 2)(local.get 1))\n` +
+      `(then (call $range.asc))(else (call $range.dsc))\n` +
     `)` +
   `)\n` +
   `(func $range.asc (param i32 f64 f64 f64) (result i32)`  +
@@ -100,7 +120,7 @@ export const std = {
     `(local.get 0)` +
   `)`,
 
-  // create reference to memory address (in bytes) with length (# of f64 items) - doesn't allocate memory, just creates ref
+  // create reference to mem address (in bytes) with length (# of f64 items) - doesn't allocate memory, just creates ref
   "arr.ref":
   `(func $arr.ref (param i32 i32) (result f64)\n` +
     `(f64.reinterpret_i64 (i64.or\n` +

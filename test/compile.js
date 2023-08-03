@@ -147,11 +147,18 @@ t('compile: numbers inc/dec', t => {
 })
 
 t('compile: operators - pow', t => {
-  let wat = compile(`x=2**(1/2),y=x**3,z=x**-2.`)
+  // static
+  let wat = compile(`x=2**(1/2),y=x**3,z=x**-2,w=x**23.`)
   let mod = compileWat(wat)
   is(mod.instance.exports.x.value, Math.sqrt(2))
   is(mod.instance.exports.y.value, mod.instance.exports.x.value**3)
   almost(mod.instance.exports.z.value, mod.instance.exports.x.value**-2)
+  almost(mod.instance.exports.w.value, mod.instance.exports.x.value**23)
+
+  // complex
+  wat = compile(`pow(x,y)=(x**y).`)
+  mod = compileWat(wat)
+  is(mod.instance.exports.pow(1,0), 1)
 })
 
 t('compile: units', t => {
