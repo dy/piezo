@@ -12,7 +12,7 @@ const MAX_MEMORY = 2048
 
 export default function compile(node, obj) {
   if (typeof node === 'string') node = parse(node)
-  // console.log('compile', node)
+  console.log('compile', node)
 
   // save previous compiling context
   prevCtx = { prevCtx, includes, imports, globals, locals, slocals, funcs, func, exports, heap, mem, returns, units, config, depth };
@@ -95,6 +95,7 @@ export default function compile(node, obj) {
 // processess global statements, returns nothing, only modifies globals, inits, out, memory
 function expr(statement) {
   if (!statement) return ''
+
   // a; - just declare in proper scope
   // FIXME: funcs may need returning something meaningful
   if (typeof statement === 'string') {
@@ -102,8 +103,12 @@ function expr(statement) {
     statement = define(statement);
     return get(statement)
   }
-  if (statement[0] in expr) return expr[statement[0]](statement) || ''
-  err('Unknown operation `' + statement[0] + '`', statement)
+
+  // cached
+  if (statement.__op) return statement.__op
+  if (statement[0] in expr) return statement.__op = expr[statement[0]](statement) || ''
+
+  err(`Unknown operation ${statement}`)
 }
 
 // convert unit node to value
@@ -144,7 +149,11 @@ Object.assign(expr, {
     let list = [];
     for (let s of statements) list.push(expr(s));
     list = list.filter(Boolean)
-    return op(list.join(''), list.flatMap(op => op.type), { static: list.every(op => op.static) })
+    return op(
+      list.join(''),
+      list.flatMap(op => op.type),
+      { static: list.every(op=>op.static!=null) ? list.map(op => op.static) : null }
+    )
   },
 
   // (a)
@@ -182,6 +191,7 @@ Object.assign(expr, {
     return op(`(return ${asFloat(aop)})`, aop.type)
   },
 
+  // a()
   '()'([, name, args]) {
     args = !args ? [] : args[0] === ',' ? args.slice(1) : [args]
 
@@ -540,41 +550,14 @@ Object.assign(expr, {
       err('State variable: unimplemented')
     }
 
-    let aop = expr(a), bop = expr(b)
+    // a = regroup(a), b = regroup(b)
 
     // group multiply
-    if (aop.type.length > 1 || bop.type.length > 1) {
-      if (a[0] === '(' && a[1]?.[0] === ',') {
         // (a0,a1) * (b0,b1); -> (a0 * b0, a1 * b1)
-        const [, ...as] = a[1]
-        if (b[0] === '(' && b[1]?.[0] === ',') {
-          const [, ...bs] = b[1]
-          if (as.length !== bs.length) err(`Mismatched group operation sizes`)
-          return expr(['(', [',', ...as.map((a, i) => ['*', as[i], bs[i]])]])
-        }
+    let aop = expr(a), bop = expr(b)
 
-        // (a0, a1) * b -> (a0 * b, a1 * b)
-        if (bop.type.length === 1) {
-          const tmp = define(`__mul`, 'f64', true)
-          return op(
-            `(local.set $${tmp} ${asFloat(bop)})${as.map(a => `(f64.mul ${asFloat(expr(a))} (local.get $${tmp}))`).join('')}`,
-            Array(aop.type.length).fill('f64'),
-            {static: aop.static != null && bop.static != null ? aop.static.map(a=>a*bop.static) : null }
-          )
-        }
-      }
-
-      // a * (b0, b1) -> (a * b0, a * b1)
-      else if (b[0] === '(' && b[1]?.[0] === ',') {
-        const [, ...bs] = b[1]
-        const tmp = define(`__mul`, 'f64', true)
-        return op(
-          `(local.set $${tmp} ${asFloat(aop)})${bs.map(b => `(f64.mul (local.get $${tmp}) ${asFloat(expr(b))})`).join('')}`,
-          Array(bop.type.length).fill('f64'),
-          {static: aop.static != null && bop.static != null ? bop.static.map(b=>b*aop.static) : null }
-        )
-      }
-
+    console.log(a, aop, b, bop)
+    if (aop.type.length > 1 || bop.type.length > 1) {
       err('Complex group multiplication is not supported')
       // FIXME: complex multiple members, eg.
       // (x ? a,b : c,d) * (y ? e,f : g,h);
@@ -810,6 +793,39 @@ Object.assign(expr, {
     return res
   },
 })
+
+// check if a,b contain multiple elements to allow regrouping
+// FIXME: we need to figure out how to make regrouping properly, so that it regroups from children up
+function regroup([operator, a, b]) {
+  if (a[0] === '(' && a[1]?.[0] === ',') {
+    // (a0,a1) * (b0,b1); -> (a0 * b0, a1 * b1)
+    const [, ...as] = a[1]
+    if (b[0] === '(' && b[1]?.[0] === ',') {
+      const [, ...bs] = b[1]
+      if (as.length !== bs.length) err(`Mismatched group operation sizes`)
+      return ['(', [',', ...as.map((a, i) => [operator, a, bs[i]])]]
+    }
+
+    // (a0, a1) * b -> tmp=b; (a0 * tmp, a1 * tmp)
+    const bop = expr(b)
+    if (bop.type.length === 1) {
+      // if (bop.static)
+      return ['(', [',', ...as.map(a => [operator, a, b])]]
+      // FIXME: more complex case
+      const tmp = define('__tmp','f64',true)
+      return [';',['=',tmp,b], ['(', [',', ...as.map(a => [operator, a, tmp])]]]
+    }
+  }
+
+  // a * (b0, b1) -> tmp=a; (a * b0, a * b1)
+  if (expr(a).type.length === 1 && b[0] === '(' && b[1]?.[0] === ',') {
+    const [, ...bs] = b[1]
+    return ['(', [',', ...bs.map(b => [operator, a, b])]]
+
+    // const tmp = define('__tmp','f64',true)
+    // return [';',['=',tmp,a], ['(', [',', ...bs.map(b => [operator, tmp, b])]]]
+  }
+}
 
 // return (local.set) or (global.set) (if no init - takes from stack)
 function set(name, init = '') {

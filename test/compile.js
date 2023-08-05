@@ -360,7 +360,7 @@ t('compile: group assign cases', t => {
   is(mod.instance.exports.c.value, 1)
 })
 
-t('compile: group ops cases', t => {
+t.only('compile: group ops cases', t => {
   let wat, mod
 
   wat = compile(`f(a) = ((x, y) = (a+2,a-2); x,y).`)
@@ -378,6 +378,10 @@ t('compile: group ops cases', t => {
   wat = compile(`f(a,b,c,d) = (a, b) * (c, d).`)
   mod = compileWat(wat)
   is(mod.instance.exports.f(2,3,4,5), [8,15], `(a,b)*(c,d)`);
+
+  wat = compile(`f(a,b) = 2 * (a, b) * 3.`)
+  mod = compileWat(wat)
+  is(mod.instance.exports.f(2,3), [12, 18], `2 * (a, b) * 3`);
 
   // wat = compile(`f(a,b,h) = (a>=h, b>=h) ? (a=h-1, b=h-1).`)
   // mod = compileWat(wat)
