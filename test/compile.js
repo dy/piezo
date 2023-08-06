@@ -205,26 +205,13 @@ t('compile: conditions', t => {
   mod = compileWat(wat)
   is(mod.instance.exports.c.value, 2.1)
 
-  wat = compile(`a=1;b=2;a?:c=b;c.`)
-  mod = compileWat(wat)
-  is(mod.instance.exports.c.value, 0)
+  throws(() => {
+    wat = compile(`a=0.0;b=2.1;c=a?b.`)
+  }, /void/)
 
-  wat = compile(`a=0;b=2;a?:c=b;c.`)
-  mod = compileWat(wat)
-  is(mod.instance.exports.c.value, 2)
-
-  wat = compile(`a=0.0;b=2.1;a?:c=b;c.`)
-  mod = compileWat(wat)
-  is(mod.instance.exports.c.value, 2.1)
-
-  wat = compile(`a=0.0;b=2.1;c=a?b.`)
-  mod = compileWat(wat)
-  is(mod.instance.exports.c.value, 0)
-
-  wat = compile(`a=0.1;b=2.1;c=a?b.`)
-  mod = compileWat(wat)
-  is(mod.instance.exports.c.value, 2.1)
-
+  throws(() => {
+    wat = compile(`a=0.1;b=2.1;c=a?b.`)
+  }, /void/)
   wat = compile(`x(px) = (px < 0 ? px = 0; px).`)
   mod = compileWat(wat)
   is(mod.instance.exports.x(-10), 0)

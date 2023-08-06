@@ -146,9 +146,6 @@ t('parse: conditions', t => {
   is(parse('a > b ? ++b'), ['?',['>','a','b'], ['++','b']], 'if operator')
   is(parse('a = b ? c'), ['=','a',['?','b','c']], 'if operator precedence')
   is(parse('a ? b = c'), ['?','a',['=','b','c']], 'if operator precedence')
-  is(parse('a > b ?: ++b'), ['?:', ['>','a','b'], ['++','b']], 'elvis operator (else if)')
-  is(parse('a ?: b = c'), ['?:','a',['=','b','c']], 'elvis operator precedence')
-  is(parse('a = b ?: c'), ['=','a',['?:','b','c']], 'elvis operator precedence')
   is(parse('a = b ? c : d'), ['=','a',['?:','b','c','d']], 'ternary precedence')
   is(parse('a ? b = c : d'), ['?:','a',['=','b','c'],'d'], 'ternary precedence')
   // FIXME: confusable with a > -b

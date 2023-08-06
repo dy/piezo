@@ -26,6 +26,10 @@ Object.assign(expr, {
     if (a[0] === '(') return a
   },
 
+  '='([,a,b]) {
+
+  },
+
   // FIXME: move it to parser, ++ for a++, += for ++a
   '++'([, a]) { return ['+=', a, [INT, 1]] },
   '--'([, a]) { return ['-=', a, [INT, 1]] },

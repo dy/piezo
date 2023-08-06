@@ -1,4 +1,4 @@
-// compile source/ast/ir to WAST
+// compile source/ast to WAST
 import { FLOAT, INT } from './const.js';
 import parse from './parse.js';
 import stdlib from './stdlib.js';
@@ -250,7 +250,9 @@ Object.assign(expr, {
     if (typeof a === 'string') {
       if (globals[a]?.func) err(`Redefining function '${a}' is not allowed`)
       a = define(a)
-      return tee(a, pick(1, asFloat(expr(b))))
+      const bop = expr(b)
+      if (!bop.type?.length) err(`Cannot use void operator \`${b[0]}\` as right-side value`)
+      return tee(a, pick(1, asFloat(bop)))
     }
 
     // (a,b) = ...
@@ -678,9 +680,12 @@ Object.assign(expr, {
   },
 
   // parsing alias ? -> ?:
-  '?'([, a, b]) { return expr['?:'](['?:', a, b, [FLOAT, 0]]) },
+  '?'([, a, b]) {
+    let aop = expr(a), bop = expr(b)
+    return op(`(if ${aop.type[0] == 'i32' ? aop : `(f64.ne ${aop} (f64.const 0))`} (then ${asFloat(bop)}(drop) ))`, null)
+  },
   '?:'([, a, b, c]) {
-    // FIXME: bring to compiler
+    // FIXME: bring to precompiler
     if (!c) c = b, b = [FLOAT, 0]; // parsing alias for a ?: b
     let aop = expr(a), bop = expr(b), cop = expr(c)
 

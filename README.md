@@ -57,10 +57,9 @@ foo();                          \ semi-colons at end of line are mandatory
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ conditions
 sign = a < 0 ? -1 : +1;         \ ternary
 (2+2 >= 4) ? log(1) :           \ multiline/switch
-3 <= 1..2 ? log(2) :            \ else if
-log(3)                          \ else
+  3 <= 1..2 ? log(2) :          \ else if
+  log(3);                       \ else
 a || b ? c;                     \ if a or b then c
-a = b ? c;                      \ if b then a = c, else a = 0
 (a, b) ? (c, d);                \ group condition: (a ? c, b ? d)
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ ranges

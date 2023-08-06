@@ -166,10 +166,9 @@ token('.', PREC_CALL, (a,b) => a && (b=skip(isId)) && ['.', a, b])
 // *a
 unary('*', PREC_STATE)
 
-// a?b, a?:b
-// NOTE: unlike || && this one doesn't return item
+// a?b
+// NOTE: unlike || && this operator is void
 binary('?', PREC_IF, true)
-binary('?:', PREC_IF, true)
 
 // a?b:c
 token('?', PREC_IF, (a, b, c) => (
