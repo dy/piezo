@@ -17,20 +17,13 @@
 
 * [x] Add proper scope mechanism (streamline compiler)
 * [ ] case-insensitive
-* [x] Replace `temp` with `wat/fn` includes:
-  * [x] `and`/`or` must be implemented via stack, not tmp values nor function
-  + helper functions naturally isolate temp scope variables () for storing (no names conflict)
-  + [x] swizzling like `pick3(a,b,c,d)` (returns 3 arguments)
-  + loop easily returns result
-  + standardized non-standard operators
-  + we keep analyzer code clean
-  + inliner on optimizing stage can take care of everything else
 * [x] merge analyzer into compile
   + the difference between them is unclear, compiler can map expression results
   + compiler follows scopes anyways, easier to merge scope vars if needed
   + we use desc anyways from analyser all the time
   + we don't test analyser anyways, it's not stable
   + simplifies parent state management
+* [ ] precompile
 * [x] use f64 everywhere
 * [x] implement array pointer as float64
 * [x] ~~`x=1; x=1.0` - add float dup~~

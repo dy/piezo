@@ -5,6 +5,7 @@ import parse from '../src/parse.js'
 import compile from '../src/compile.js'
 import Wabt from '../lib/wabt.js'
 import precompile from '../src/precompile.js'
+import {INT,FLOAT} from '../src/const.js'
 // import Wabt from 'wabt'
 
 
@@ -368,21 +369,29 @@ t('compile: group ops cases', t => {
   mod = compileWat(wat);
   is(mod.instance.exports.f(4), [6,2], `(a,b)=(c+1,c-1)`);
 
-  // wat = compile(`f(a,b,h) = (a, b) * h.`)
-  // mod = compileWat(wat)
-  // is(mod.instance.exports.f(2,3,3), [6,9], `(a, b) * h`);
+  wat = compile(`f(a,b,h) = (a, b) * h.`)
+  mod = compileWat(wat)
+  is(mod.instance.exports.f(2,3,3), [6,9], `(a, b) * h`);
 
-  // wat = compile(`f(a,b,h) = h * (a, b).`)
-  // mod = compileWat(wat)
-  // is(mod.instance.exports.f(2,3,3), [6,9], `h * (a, b)`);
+  wat = compile(`f(a,b,h) = h * (a, b).`)
+  mod = compileWat(wat)
+  is(mod.instance.exports.f(2,3,3), [6,9], `h * (a, b)`);
 
-  // wat = compile(`f(a,b,c,d) = (a, b) * (c, d).`)
-  // mod = compileWat(wat)
-  // is(mod.instance.exports.f(2,3,4,5), [8,15], `(a,b)*(c,d)`);
+  wat = compile(`f(a,b,c,d) = (a, b) * (c, d).`)
+  mod = compileWat(wat)
+  is(mod.instance.exports.f(2,3,4,5), [8,15], `(a,b)*(c,d)`);
 
-  // wat = compile(`f(a,b) = 2 * (a, b) * 3.`)
-  // mod = compileWat(wat)
-  // is(mod.instance.exports.f(2,3), [12, 18], `2 * (a, b) * 3`);
+  wat = compile(`f(a,b) = 2 * (a, b) * 3.`)
+  mod = compileWat(wat)
+  is(mod.instance.exports.f(2,3), [12, 18], `2 * (a, b) * 3`);
+
+  wat = compile(`f(a,b,c,d) = (2 * (a, b)) * (c, d).`)
+  mod = compileWat(wat)
+  is(mod.instance.exports.f(2,3,4,5), [16, 30], `(2 * (a, b)) * (c, d)`);
+
+  wat = compile(`f(a,b,c,d) = ((2 * (a, b) * 3) * (c,d)).`)
+  mod = compileWat(wat)
+  is(mod.instance.exports.f(2,3,3,2), [36, 36], `(2 * (a, b) * 3) * (c, d)`);
 
   // wat = compile(`f(a,b,h) = (a>=h, b>=h) ? (a=h-1, b=h-1).`)
   // mod = compileWat(wat)

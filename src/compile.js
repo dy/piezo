@@ -3,6 +3,7 @@ import { FLOAT, INT } from './const.js';
 import parse from './parse.js';
 import stdlib from './stdlib.js';
 import stringify from './stringify.js';
+import precompile from './precompile.js';
 // import {parse as parseWat} from 'watr';
 
 let prevCtx, includes, imports, globals, locals, slocals, funcs, func, exports, heap, mem, returns, units, config, depth;
@@ -12,6 +13,9 @@ const MAX_MEMORY = 2048
 
 export default function compile(node, obj) {
   if (typeof node === 'string') node = parse(node)
+
+  node = precompile(node);
+
   console.log('compile', node)
 
   // save previous compiling context
@@ -161,9 +165,6 @@ Object.assign(expr, {
     // FIXME: make sure returning nothing is fine here (when empty brackets)
     if (!body) return op('')
 
-    // ((a)) -> a
-    while (body[0] === '(') body = body[1]
-
     // FIXME: detect block type, if it needs early return - then we ought to wrap it
     let parentReturns = returns;
     returns = [];
@@ -231,7 +232,7 @@ Object.assign(expr, {
   },
 
   '='([, a, b]) {
-    while (a[0] === '(') a = a[1]; // unbracket
+    if (a[0] === '(') a = a[1]; // unbracket
 
     // x[y]=1, x.y=1
     if (a[0] === '[]' || a[0] === '.') {
@@ -474,7 +475,6 @@ Object.assign(expr, {
   '-'([, a, b]) {
     // [-, [int, a]] -> (i32.const -a)
     if (!b) {
-      if (a[0] == INT || a[0] == FLOAT) return expr([a[0], -a[1]])
       let res = expr(a)
       if (res.type.length > 1) err('Group negation: unimplemented')
 
@@ -550,13 +550,9 @@ Object.assign(expr, {
       err('State variable: unimplemented')
     }
 
-    // a = regroup(a), b = regroup(b)
-
     // group multiply
-        // (a0,a1) * (b0,b1); -> (a0 * b0, a1 * b1)
     let aop = expr(a), bop = expr(b)
 
-    console.log(a, aop, b, bop)
     if (aop.type.length > 1 || bop.type.length > 1) {
       err('Complex group multiplication is not supported')
       // FIXME: complex multiple members, eg.
@@ -612,15 +608,6 @@ Object.assign(expr, {
     return op(`(i32.or ${asInt(aop)} ${asInt(bop)})`, 'i32')
   },
 
-  '++'([, a]) { return expr(['+=', a, [INT, 1]]) },
-  '--'([, a]) { return expr(['-=', a, [INT, 1]]) },
-  '+='([, a, b]) { return expr(['=', a, ['+', a, b]]) },
-  '-='([, a, b]) { return expr(['=', a, ['-', a, b]]) },
-  '*='([, a, b]) { return expr(['=', a, ['*', a, b]]) },
-  '/='([, a, b]) { return expr(['=', a, ['/', a, b]]) },
-  '%='([, a, b]) { return expr(['=', a, ['%', a, b]]) },
-  '**='([, a, b]) { return expr(['=', a, ['**', a, b]]) },
-  '<?='([, a, b]) { return expr(['=', a, ['<?', a, b]]) },
   '%%'([, a, b]) {
     // common case of int is array index access
     if (getDesc(a).type === INT && getDesc(b).type === INT) return inc('i32.modwrap'), call('i32.modwrap', a, b)
@@ -793,39 +780,6 @@ Object.assign(expr, {
     return res
   },
 })
-
-// check if a,b contain multiple elements to allow regrouping
-// FIXME: we need to figure out how to make regrouping properly, so that it regroups from children up
-function regroup([operator, a, b]) {
-  if (a[0] === '(' && a[1]?.[0] === ',') {
-    // (a0,a1) * (b0,b1); -> (a0 * b0, a1 * b1)
-    const [, ...as] = a[1]
-    if (b[0] === '(' && b[1]?.[0] === ',') {
-      const [, ...bs] = b[1]
-      if (as.length !== bs.length) err(`Mismatched group operation sizes`)
-      return ['(', [',', ...as.map((a, i) => [operator, a, bs[i]])]]
-    }
-
-    // (a0, a1) * b -> tmp=b; (a0 * tmp, a1 * tmp)
-    const bop = expr(b)
-    if (bop.type.length === 1) {
-      // if (bop.static)
-      return ['(', [',', ...as.map(a => [operator, a, b])]]
-      // FIXME: more complex case
-      const tmp = define('__tmp','f64',true)
-      return [';',['=',tmp,b], ['(', [',', ...as.map(a => [operator, a, tmp])]]]
-    }
-  }
-
-  // a * (b0, b1) -> tmp=a; (a * b0, a * b1)
-  if (expr(a).type.length === 1 && b[0] === '(' && b[1]?.[0] === ',') {
-    const [, ...bs] = b[1]
-    return ['(', [',', ...bs.map(b => [operator, a, b])]]
-
-    // const tmp = define('__tmp','f64',true)
-    // return [';',['=',tmp,a], ['(', [',', ...bs.map(b => [operator, tmp, b])]]]
-  }
-}
 
 // return (local.set) or (global.set) (if no init - takes from stack)
 function set(name, init = '') {
