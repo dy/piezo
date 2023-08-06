@@ -235,9 +235,8 @@ Object.assign(expr, {
     if (a[0] === '(') a = a[1]; // unbracket
 
     // x[y]=1, x.y=1
-    if (a[0] === '[]' || a[0] === '.') {
+    if (a[0] === '[]') {
       let [, buf, idx] = a
-      if (a[0] === '.') idx = [INT, parseInt(idx)]
 
       // FIXME: static optimization property - to avoid calling i32.modwrap if idx is known
       let iop = expr(idx)

@@ -80,8 +80,8 @@ t('parse: groups', t => {
   is(parse('(a,b,c) = (d,e,f)'), ['=',['(',[',','a','b','c']],['(',[',','d','e','f']]], 'assign: a=d, b=e, c=f')
   is(parse('(a,b) = (b,a)'), ['=', ['(',[',','a','b']], ['(',[',', 'b', 'a']]], 'swap: temp=a; a=b; b=temp;')
   is(parse('(a,b) + (c,d)'), ['+',['(',[',','a','b']],['(',[',','c','d']]], 'operations: (a+c, b+d)')
-  is(parse('(a,b).x'), ['.',['(',[',','a','b']],'x'], '(a.x, b.x);')
-  is(parse('(a,b).x()'), ['()',['.',['(',[',','a','b']],'x']], '(a.x(), b.x());')
+  // is(parse('(a,b).x'), ['.',['(',[',','a','b']],'x'], '(a.x, b.x);')
+  // is(parse('(a,b).x()'), ['()',['.',['(',[',','a','b']],'x']], '(a.x(), b.x());')
   is(parse('(a,b,c) = (d,e,f)'), ['=',['(',[',','a','b','c']],['(',[',','d','e','f']]], 'a=d, b=e, c=f')
   is(parse('(a,b,c) = d'), ['=',['(',[',','a','b','c']],'d'], 'a=d, b=d, c=d')
   is(parse('a = b, c = d'), [',',['=','a','b'],['=','c','d']], 'a=b, c=d')
@@ -113,8 +113,8 @@ t('parse: lists', t => {
   is(parse('[0..10]'), ['[',['..',[INT,0],[INT,10]]],'list from range')
   is(parse('[0..8 <| @*2]'), ['[',['<|', ['..',[INT,0],[INT,8]], ['*', '@', [INT, 2]]]],'list comprehension')
   // is(parse('[2]list = list1'), ['=',['[',[INT,2],'list'],'list1'], '(sub)list of fixed size')
-  is(parse('list.0, list.1'), [',',['.','list','0'],['.','list','1']],'short index access notation')
-  is(parse('list.l = 2'), ['=',['.','list','l'], [INT, 2]],'alias index access')
+  // is(parse('list.0, list.1'), [',',['.','list',[INT,0]],['.','list',[INT,1]]],'short index access notation')
+  // is(parse('list.l = 2'), ['=',['.','list','l'], [INT, 2]],'alias index access')
   is(parse('list[0]'), ['[]','list',[INT,0]],'positive indexing from first element [0]: 2')
   is(parse('list[-2]=5'), ['=',['[]','list',['-',[INT,2]]],[INT,5]],'negative indexing from last element [-1]: list becomes [2,4,5,8]')
   is(parse('list[]'), ['[]','list'], 'length')
@@ -241,12 +241,12 @@ t('parse: stateful variables', t => {
   // is(parse('*[4]i'), ['*',['[',[INT,4],'i']], 'memory')
   is(parse(`b() = (                   ;;
     *i=[..4];                   ;; memory of 4 items
-    i.0 = i.1+1;                ;; read previous value
-    i.0                         ;; return currrent value
+    i[0] = i[1]+1;                ;; read previous value
+    i[0]                         ;; return currrent value
   );`),[';',['=',['()','b'],[ '(', [';',
     ['*',['=','i',['[',['..',undefined,[INT,4]]]]],
-    ['=',['.','i','0'],['+',['.','i','1'],[INT,1]]],
-    ['.','i','0']
+    ['=',['[]','i',[INT,0]],['+',['[]','i',[INT,1]],[INT,1]]],
+    ['[]','i',[INT,0]]
   ]]],,])
   is(parse('b(), b(), b();'),[';',[',',['()','b'],['()','b'],['()','b']],,], '1, 2, 3')
 })
@@ -307,8 +307,8 @@ t('parse: endings', t => {
   `), ['=', ['()', 'x'], ['(',[';', ['&&','a',['^','b']],'c']]], 'f')
 
   is(parse(`
-    x() = (a&&b.c)
-  `), ['=', ['()', 'x'], ['(',['&&','a',['.','b','c']]]], 'g')
+    x() = (a&&b[c])
+  `), ['=', ['()', 'x'], ['(',['&&','a',['[]','b','c']]]], 'g')
 })
 
 t('parse: semicolon', t => {

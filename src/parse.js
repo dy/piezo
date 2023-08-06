@@ -161,7 +161,8 @@ token('..=', PREC_RANGE, a => ['..=', a, expr(PREC_RANGE)])
 
 // a.b
 // NOTE: we don't parse expression to avoid 0..1 recognizing as 0[.1]
-token('.', PREC_CALL, (a,b) => a && (b=skip(isId)) && ['.', a, b])
+// NOTE: for now we disable prop access since we don't have alias and just static index can be done via x[0]
+// token('.', PREC_CALL, (a,b) => a && (b=skip(isId)) && ['.', a, b])
 
 // *a
 unary('*', PREC_STATE)

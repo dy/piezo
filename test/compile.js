@@ -117,7 +117,7 @@ t('compile: globals multiple', () => {
 })
 
 t('compile: export - no junk exports', () => {
-  let wat = compile(`w()=(); y=[1]; x()=(*i=0), z=[y.0, v=[1]].`)
+  let wat = compile(`w()=(); y=[1]; x()=(*i=0), z=[y[0], v=[1]].`)
   let mod = compileWat(wat)
   same(Object.keys(mod.instance.exports), ['__memory','x','z'])
 })
@@ -452,7 +452,7 @@ t.todo('compile: lists from invalid ranges', t => {
       wat = compile(`x=[..-2]`)
 })
 
-t('compile: lists - nested static', t => {
+t('compile: lists nested static', t => {
   let wat = compile(`x=[1, y=[2, z=[3]]], y, z, w=[1,2], xl=x[], yl=y[], zl=z[], wl=w[].`)
   // let wat = compile(`x=[1,[2]].`)
   // console.log(wat)
@@ -484,7 +484,7 @@ t.todo('compile: list nested comprehension', t => {
 })
 
 t('compile: list simple write', t => {
-  let wat = compile(`x = [..3]; x[0]=1; x.1=2; x[-1]=x[]; x.`)
+  let wat = compile(`x = [..3]; x[0]=1; x[1]=2; x[-1]=x[]; x.`)
   // console.log(wat)
   let mod = compileWat(wat)
   let {__memory:memory, x} = mod.instance.exports
@@ -495,7 +495,7 @@ t('compile: list simple write', t => {
 })
 
 t('compile: list wrap index', t => {
-  let wat = compile(`x = [1, 2, 3]; a=x.0,b=x.1,c=x[2],d=x[-1].`)
+  let wat = compile(`x = [1, 2, 3]; a=x[0],b=x[1],c=x[2],d=x[-1].`)
   // console.log(wat)
   let mod = compileWat(wat)
   let {a,b,c,d} = mod.instance.exports
@@ -650,7 +650,7 @@ t('compile: state variable - scope', t => {
 })
 
 t('compile: state variable - array init', t => {
-  let wat = compile(`x()=(*i=[..2]; i.0++ + i.1++), y()=x().`)
+  let wat = compile(`x()=(*i=[..2]; i[0]++ + i[1]++), y()=x().`)
   let mod = compileWat(wat)
   let {x,y} = mod.instance.exports
   is(x(),0)
