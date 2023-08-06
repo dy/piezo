@@ -4424,3 +4424,17 @@ Having wat files is more useful than direct compilation to binary form:
     - can be figured out from code
     - we don't track exact size, we measure in pages
   + `@` is current array member
+
+## [ ] Static precompilation step
+  + removes static checks
+  + unrolls group operations
+  + normalizes typecast (ideally no `asFloat`, `asInt` in compile)
+  + dedupes/denormalizes a * (b,c)
+  + simplifies `=`
+  + unwraps/normalizes brackets
+  +? possibly optimizations for `(drop)`
+  + `++`,`*=` ops
+  +? ranges
+  +? includes
+  + static errors detection
+  * everything that can be statically precalculated
