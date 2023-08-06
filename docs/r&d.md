@@ -4428,7 +4428,6 @@ Having wat files is more useful than direct compilation to binary form:
 ## [ ] Static precompilation step
   + removes static checks
   + unrolls group operations
-  + normalizes typecast (ideally no `asFloat`, `asInt` in compile)
   + dedupes/denormalizes a * (b,c)
   + simplifies `=`
   + unwraps/normalizes brackets

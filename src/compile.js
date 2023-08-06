@@ -680,6 +680,7 @@ Object.assign(expr, {
   // parsing alias ? -> ?:
   '?'([, a, b]) { return expr['?:'](['?:', a, b, [FLOAT, 0]]) },
   '?:'([, a, b, c]) {
+    // FIXME: bring to compiler
     if (!c) c = b, b = [FLOAT, 0]; // parsing alias for a ?: b
     let aop = expr(a), bop = expr(b), cop = expr(c)
 
@@ -689,8 +690,7 @@ Object.assign(expr, {
     // FIXME: (a,b) ? c : d
     // FIXME: (a,b) ? (c,d) : (e,f)
     // FIXME: a ? (b,c) : (d,e)
-
-    return op(`(if (result f64) ${aop.type[0] == 'i32' ? aop : `(f64.ne ${aop} (f64.const 0))`} (then ${asFloat(bop)}) (else ${asFloat(cop)}))`, 'f64')
+    return op(`(if (result f64) ${aop.type[0] == 'i32' ? aop : `(f64.ne ${aop} (f64.const 0))`} (then ${asFloat(bop)} ) (else ${asFloat(cop)}))`, 'f64')
   },
 
   // a <? range - clamp a to indicated range

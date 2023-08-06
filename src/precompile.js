@@ -25,6 +25,7 @@ Object.assign(expr, {
     // ((x)) -> (a)
     if (a[0] === '(') return a
   },
+
   // FIXME: move it to parser, ++ for a++, += for ++a
   '++'([, a]) { return ['+=', a, [INT, 1]] },
   '--'([, a]) { return ['-=', a, [INT, 1]] },
@@ -48,7 +49,30 @@ Object.assign(expr, {
     return unroll('*', a, b)
   },
   '/'([, a, b]) { return unroll('/', a, b) },
-  '%'([, a, b]) { return unroll('%', a, b) }
+  '%'([, a, b]) { return unroll('%', a, b) },
+
+  '%%'([, a, b]) { return unroll('%%', a, b) },
+  '**'([, a, b]) { return unroll('**', a, b) },
+  '//'([, a, b]) { return unroll('//', a, b) },
+
+  '&'([, a, b]) { return unroll('&', a, b) },
+  '|'([, a, b]) { return unroll('|', a, b) },
+  '~'([, a, b]) { return unroll('~', a, b) },
+  // '^'([, a, b]) { return unroll('^', a, b) },
+
+  '>'([, a, b]) { return unroll('>', a, b) },
+  '>='([, a, b]) { return unroll('>=', a, b) },
+  '<'([, a, b]) { return unroll('<', a, b) },
+  '<='([, a, b]) { return unroll('<=', a, b) },
+  '=='([, a, b]) { return unroll('==', a, b) },
+  '!='([, a, b]) { return unroll('!=', a, b) },
+
+  '&&'([, a, b]) { return unroll('&&', a, b) },
+  '||'([, a, b]) { return unroll('||', a, b) },
+  '<<'([, a, b]) { return unroll('<<', a, b) },
+  '>>'([, a, b]) { return unroll('>>', a, b) },
+  '!'([, a, b]) { return unroll('!', a, b) },
+  '?'([, a, b]) { return unroll('?', a, b) },
 })
 
 // if a,b contain multiple elements - try regrouping to simple ops
