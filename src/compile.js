@@ -684,8 +684,6 @@ Object.assign(expr, {
     return op(`(if ${aop.type[0] == 'i32' ? aop : `(f64.ne ${aop} (f64.const 0))`} (then ${asFloat(bop)}(drop) ))`, null)
   },
   '?:'([, a, b, c]) {
-    // FIXME: bring to precompiler
-    if (!c) c = b, b = [FLOAT, 0]; // parsing alias for a ?: b
     let aop = expr(a), bop = expr(b), cop = expr(c)
 
     if (aop.static === 0) return cop

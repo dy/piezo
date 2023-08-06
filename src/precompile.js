@@ -11,7 +11,7 @@ function expr(node) {
   if (Array.isArray(node)) {
     node = node.map((e,i) => i ? expr(e) : e)
     let newNode
-    while (newNode = expr[node[0]]?.(node)) node = newNode;
+    while ((newNode = expr[node[0]]?.(node)) != null) node = newNode;
   }
 
   return node
@@ -20,6 +20,9 @@ function expr(node) {
 // expr receives optimized components and expects to return optimized result (no need to internally call expr)
 // returning undefined means node is good to go
 Object.assign(expr, {
+  [FLOAT]([,v]){  },
+  [INT]([,v]){  },
+
   '('([,a]) {
     if (!a) return
     // ((x)) -> (a)
@@ -62,7 +65,7 @@ Object.assign(expr, {
   '&'([, a, b]) { return unroll('&', a, b) },
   '|'([, a, b]) { return unroll('|', a, b) },
   '~'([, a, b]) { return unroll('~', a, b) },
-  // '^'([, a, b]) { return unroll('^', a, b) },
+  '^'([, a, b]) { return unroll('^', a, b) },
 
   '>'([, a, b]) { return unroll('>', a, b) },
   '>='([, a, b]) { return unroll('>=', a, b) },
