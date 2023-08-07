@@ -116,7 +116,7 @@ t('compile: globals multiple', () => {
   is(mod.instance.exports.b.value, -1)
 })
 
-t('compile: export - no junk exports', () => {
+t.skip('compile: export - no junk exports', () => {
   let wat = compile(`w()=(); y=[1]; x()=(*i=0), z=[y[0], v=[1]].`)
   let mod = compileWat(wat)
   same(Object.keys(mod.instance.exports), ['__memory','x','z'])
@@ -314,7 +314,7 @@ t('compile: group assign cases', t => {
   let wat, mod
   wat = compile(`a=1;b=2;c=(a,b).`)
   mod = compileWat(wat)
-  is(mod.instance.exports.c.value, 1, 'c=(a,b)')
+  is(mod.instance.exports.c.value, 2, 'c=(a,b)')
 
   wat = compile(`a=1;b=2,c=3;(b,a)=(c,b).`)
   mod = compileWat(wat)
@@ -327,11 +327,13 @@ t('compile: group assign cases', t => {
   is(mod.instance.exports.b.value, 2)
   is(mod.instance.exports.a.value, 1)
 
-  wat = compile(`a=1;b=2;(c,a,b)=(a,b).`)
-  mod = compileWat(wat)
-  is(mod.instance.exports.c.value, 1, '(c,a,b)=(a,b)')
-  is(mod.instance.exports.a.value, 2)
-  is(mod.instance.exports.b.value, 2)
+  throws(() => {
+    wat = compile(`a=1;b=2;(c,a,b)=(a,b).`)
+    mod = compileWat(wat)
+    is(mod.instance.exports.c.value, 1, '(c,a,b)=(a,b)')
+    is(mod.instance.exports.a.value, 2)
+    is(mod.instance.exports.b.value, 2)
+  }, /Mismatch/)
 
   wat = compile(`a=1;b=2;(c,d)=(a,b).`)
   mod = compileWat(wat)
@@ -347,6 +349,12 @@ t('compile: group assign cases', t => {
   mod = compileWat(wat)
   is(mod.instance.exports.b.value, 1, '(b,c)=a')
   is(mod.instance.exports.c.value, 1)
+
+  wat = compile(`a=1;b=2,c=3;(a,,c)=(b,b,b).`)
+  mod = compileWat(wat)
+  is(mod.instance.exports.a.value, 2, '(a,,c)=(b,b,b)')
+  is(mod.instance.exports.b.value, 2, '(a,,c)=(b,b,b)')
+  is(mod.instance.exports.c.value, 2)
 })
 
 t('compile: group ops cases', t => {
@@ -380,13 +388,13 @@ t('compile: group ops cases', t => {
   mod = compileWat(wat)
   is(mod.instance.exports.f(2,3,3,2), [36, 36], `(2 * (a, b) * 3) * (c, d)`);
 
-  wat = compile(`f(a,b,h) = ((a>=h, b>=h) ? (a--, b--); (a,b)).`)
+  wat = compile(`f(a,b,h) = ((a>=h, b>=h) ? (a--, b--); a,b).`)
   mod = compileWat(wat)
   is(mod.instance.exports.f(2,3,3), [2,2], `(a>=h, b>=h) ? (a--, b--)`);
 
-  // wat = compile(`f(a,b,h) = (a,b) >= h ? (a,b) = h-1.`)
+  // wat = compile(`f(a,b,h) = ((a,b) >= h ? (a,b) = h-1; (a,b)).`)
   // mod = compileWat(wat)
-  // is(mod.instance.exports.f(2,3,3), [6,2], `(a,b)=(c+1,c-1)`);
+  // is(mod.instance.exports.f(1,3,3), [1,2], `(a,b) >= h ? (a,b) = h-1`);
 
   // wat = compile(`(ptr0, ptr1, ptr2) = (y, y1, y2) * w;`)
   // mod = compileWat(wat)

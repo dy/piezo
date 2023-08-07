@@ -14,11 +14,9 @@ const OPAREN=40, CPAREN=41, OBRACK=91, CBRACK=93, SPACE=32, QUOTE=39, DQUOTE=34,
 // precedences
 const PREC_SEMI=1,
 PREC_EXPORT=2,
-PREC_LABEL=4, // a:b = 2,  a:b, b:c,   a: b&c
 PREC_RETURN=4, // x ? ^a : y
 PREC_STATE=4, // *(a,b,c)
 PREC_LOOP=5, // <| |>
-PREC_MAP=6, // ->
 // NOTE: these halves are sensitive since subscript for rassoc uses 0.5 precedence shift
 PREC_SEQUENCE=7.75, //  ^a,b,c;  a, b ? c,d : e,f;
 PREC_IF=8,    // a ? b=c;  a = b?c;
@@ -134,7 +132,6 @@ binary('<<', PREC_SHIFT)
 binary('<?', PREC_CLAMP) // a <? b
 nary('<|', PREC_LOOP)
 nary('|>', PREC_LOOP)
-binary('->', PREC_MAP)
 
 // unaries
 unary('+', PREC_UNARY)

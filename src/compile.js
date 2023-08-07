@@ -2,8 +2,8 @@
 import { FLOAT, INT } from './const.js';
 import parse from './parse.js';
 import stdlib from './stdlib.js';
-import stringify from './stringify.js';
 import precompile from './precompile.js';
+import {ids, stringify, err} from './util.js';
 // import {parse as parseWat} from 'watr';
 
 let prevCtx, includes, imports, globals, locals, slocals, funcs, func, exports, heap, mem, returns, units, config, depth;
@@ -109,8 +109,8 @@ function expr(statement) {
   }
 
   // cached
-  if (statement.__op) return statement.__op
-  if (statement[0] in expr) return statement.__op = expr[statement[0]](statement) || ''
+  if (statement.expr) return statement.expr
+  if (statement[0] in expr) return statement.expr = expr[statement[0]](statement) || ''
 
   err(`Unknown operation ${statement}`)
 }
@@ -232,8 +232,6 @@ Object.assign(expr, {
   },
 
   '='([, a, b]) {
-    if (a[0] === '(') a = a[1]; // unbracket
-
     // x[y]=1, x.y=1
     if (a[0] === '[]') {
       let [, buf, idx] = a
@@ -252,26 +250,6 @@ Object.assign(expr, {
       const bop = expr(b)
       if (!bop.type?.length) err(`Cannot use void operator \`${b[0]}\` as right-side value`)
       return tee(a, pick(1, asFloat(bop)))
-    }
-
-    // (a,b) = ...
-    if (a[0] === ',') {
-      let [, ...outputs] = a, bop = expr(b),
-        // (a,b,c)=(c,d) -> (a,b)=(c,d)
-        // (a,b,c)=d -> (a,b,c)=dup3(d)
-        count = bop.type.length === 1 ? outputs.length : Math.min(outputs.length, bop.type.length);
-
-      let inputs = pick(count, bop)
-
-      // set as `(i32.const 1)(i32.const 2)(local.set 1)(local.set 0)`
-      return op(
-        inputs + '\n' +
-        outputs.slice(0, count).map((n, i) => (
-          `${inputs.type[i] === 'i32' ? `(f64.convert_i32_s)` : ''}${set(define(n))}`
-        )).reverse().join('') +
-        outputs.slice(0, count).map(n => get(define(n))).join(''),
-        Array(outputs.length).fill(`f64`)
-      )
     }
 
     // x(a,b) = y
@@ -340,7 +318,7 @@ Object.assign(expr, {
       // alloc state, if required
       if (globals[name].state) {
         // state is just region of memory storing sequence of i32s - pointers to memory holding actual state values
-        define(name + '.state', 'i32', false)
+        define(name + '.state', 'i32')
         inc('malloc'), mem = true
         initState = op(`(global.set $${name}.state (call $malloc (i32.const ${globals[name].state.length << 2})))`)
       }
@@ -389,8 +367,8 @@ Object.assign(expr, {
       // i = from; to; while (i < to) {@ = i; ...; i++}
       const [, min, max] = a
       const cur = define('@', 'f64'),
-        idx = define(`idx.${depth}`, 'f64', true),
-        end = define(`end.${depth}`, 'f64', true),
+        idx = define(`idx:${depth}`, 'f64'),
+        end = define(`end:${depth}`, 'f64'),
         body = expr(b), type = body.type.join(' ')
 
       const out = `;; |>:${depth}\n` +
@@ -681,10 +659,13 @@ Object.assign(expr, {
   // parsing alias ? -> ?:
   '?'([, a, b]) {
     let aop = expr(a), bop = expr(b)
+    if (aop.type.length > 1) err('Group condition is not supported.')
     return op(`(if ${aop.type[0] == 'i32' ? aop : `(f64.ne ${aop} (f64.const 0))`} (then ${asFloat(bop)}(drop) ))`, null)
   },
   '?:'([, a, b, c]) {
     let aop = expr(a), bop = expr(b), cop = expr(c)
+
+    if (aop.type.length > 1) err('Group condition is not supported.')
 
     if (aop.static === 0) return cop
     if (aop.static) return bop
@@ -765,19 +746,8 @@ Object.assign(expr, {
 
     let res = expr(a)
 
-    const exported = (a) => {
-      // a
-      if (typeof a === 'string') exports[a] = globals[a] || err('Unknown export member `' + a + `'`)
-      // a,b; a=1,b=2;
-      else if (a[0] === ',') for (let i of a.slice(1)) exported(i)
-      // a=1. (a,b,c)=(1,2,3).
-      // (a,b,c)
-      // [a,b,c]
-      // a(); a()=()
-      else if (['(', '=', '[', '()'].includes(a[0])) exported(a[1])
-      else err('Unknown export expression `' + stringify(a) + '`');
-    }
-    exported(a)
+    // generic exports, excluding private names
+    for (let id of ids(a)) if (!id.includes(':')) exports[id] = globals[id] || err('Unknown export member `' + id + `'`)
 
     return res
   },
@@ -796,10 +766,11 @@ function tee(name, init) {
   return op(locals?.[name] || slocals?.[name] ? `(local.tee $${name} ${init})` : `(global.set $${name} ${init})(global.get $${name})`, init.type)
 }
 
-// define variable in current scope (local or global, alt - start fn local), export if necessary; returns resolved name
-function define(name, type = 'f64', sloc = false) {
+// define variable in current scope, export if necessary; returns resolved name
+// if name includes `:` - it enforces local name (in start local function)
+function define(name, type = 'f64') {
   if (locals?.[name] || slocals?.[name] || globals?.[name]) return name;
-  ; (locals || (sloc ? slocals : globals))[name] = { var: true, type }
+  ; (locals || (name.includes(':') ? slocals : globals))[name] = { var: true, type }
   return name
 }
 
@@ -808,7 +779,7 @@ function define(name, type = 'f64', sloc = false) {
 function buf(inits) {
   depth++
 
-  let src = define(`src.${depth}`, 'i32', true), dst = define(`dst.${depth}`, 'i32', true), size = define(`size.${depth}`, 'i32', true)
+  let src = define(`src:${depth}`, 'i32'), dst = define(`dst:${depth}`, 'i32'), size = define(`size:${depth}`, 'i32')
 
   heap = Math.max(heap, 1); // min heap is 8192 elements
 
@@ -892,7 +863,7 @@ function pick(count, input) {
     // a = b - skip picking
     if (count === 1) return input
     // (a,b,c) = d - duplicating via tmp var is tentatively faster & more compact than calling a dup function
-    const name = define(`__dup${input.type[0]}`, input.type[0], true)
+    const name = define(`dup:${input.type[0]}`, input.type[0])
     return op(
       `(local.set $${name} ${input})${`(local.get $${name})`.repeat(count)}`,
       Array(count).fill(input.type[0]),
@@ -923,13 +894,6 @@ function op(str = '', type, info = {}) {
   if (!type) type = []
   else if (typeof type === 'string') type = [type]
   return Object.assign(str, { type, ...info })
-}
-
-// show error meaningfully
-function err(msg) {
-  // Promise.resolve().then(() => {
-  throw Error((msg || 'Bad syntax'))
-  // })
 }
 
 // fetch source file by path - uses import maps algorighm

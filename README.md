@@ -77,13 +77,11 @@ a,b,c = 0..2;                   \ a==0, b==1, c==2
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ groups
 a, b=1, c=2;                    \ define multiple values
-(a, b, c)++;                    \ increment multiple elements: (a++, b++, c++)
-(a, (b, c));                    \ groups are always flat: (a, b, c)
-(a,b,c) = (d,e,f);              \ assign multiple elements: a=d, b=e, c=f
-(a,b) = (b,a);                  \ swap: temp=a; a=b; b=temp;
-(a,b) + (c,d);                  \ ops act on members: (a+c, b+d)
-(a,b)[1] = (c,d)[2];            \ (a[1]=c[2], b[1]=d[2]);
-(a,b) = (c,d,e);                \ drop extra: (a=c, b=d);
+(a, b, c)++;                    \ increment multiple: (a++, b++, c++)
+(a,b,c) = (d,e,f);              \ assign multiple: a=d, b=e, c=f
+(a,b) = (b,a);                  \ swap
+(a,b) + (c,d);                  \ operator for multiple members: (a+c, b+d)
+(a,b)[1] = c[2,3];              \ multiple props: (a[1]=c[2], b[1]=c[3])
 (a,b,c) = d;                    \ duplicate: (a=d, b=d, c=d);
 (a,,b) = (c,d,e);               \ skip: (a=c, d, b=e);
 

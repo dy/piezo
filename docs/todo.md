@@ -25,11 +25,11 @@
   + simplifies parent state management
 * [ ] precompile
   * [ ] static precalc (no FLOAT/INT in compiler)
+  * [ ] no pick in compiler
   * [ ] includes
   * [ ] ranges
   * [ ] `(drop)` collapse
   * [ ] units
-  * [ ] analysis: arity, args, orig node, if drop needed,
 * [x] use f64 everywhere
 * [x] implement array pointer as float64
 * [x] ~~`x=1; x=1.0` - add float dup~~
