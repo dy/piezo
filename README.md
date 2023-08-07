@@ -83,7 +83,7 @@ a, b=1, c=2;                    \ define multiple values
 (a,b) = (b,a);                  \ swap
 (a,b) + (c,d);                  \ operator for multiple members: (a+c, b+d)
 (a,b)[1] = c[2,3];              \ multiple props: (a[1]=c[2], b[1]=c[3])
-(a,b,c) = d;                    \ duplicate: (a=d, b=d, c=d);
+(a,b,c) = d;                    \ duplicate: (a, b, c) = (d, d, d);
 (a,,b) = (c,d,e);               \ skip: (a=c, d, b=e);
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ functions
