@@ -19,7 +19,6 @@ Low-level microlanguage with common syntax, linear/static memory and compiling t
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ numbers
 16, 0x10, 0b0;                  \ int, hex or binary
 16.0, .1, 1e3, 2e-3;            \ float
-true = 0b1, false = 0b0;        \ alias booleans
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ standard operators
 + - * / % -- ++                 \ arithmetical (float)
@@ -29,7 +28,7 @@ true = 0b1, false = 0b0;        \ alias booleans
 []                              \ member access, length
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ extended operators
-** // %%                        \ power, floor div, unsigned mod (wraps negatives)
+** // %%                        \ power, floor div, unsigned mod
 <? <?= ..                       \ clamp/min/max, range
 |> <| <|=                       \ loop, map
 *                               \ state variable
@@ -40,6 +39,8 @@ foo=1, bar=2.0;                 \ declare vars
 Ab_C_F#, $0, Δx, _;             \ names permit alnum, unicodes, #_$
 fooBar123 == FooBar123;         \ names are case-insensitive
 default=1, eval=fn, else=0;     \ lino has no reserved words
+true = 0b1, false = 0b0;        \ alias bools
+inf = 1/0, nan = 0/0;           \ alias infinity, NaN
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ units
 1k = 1000; 1pi = 3.1415926;     \ define units

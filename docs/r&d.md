@@ -4425,7 +4425,7 @@ Having wat files is more useful than direct compilation to binary form:
     - we don't track exact size, we measure in pages
   + `@` is current array member
 
-## [ ] Static precompilation step
+## [x] Static precompilation step -> yes
   + removes static checks
   + unrolls group operations
   + dedupes/denormalizes a * (b,c)
@@ -4437,3 +4437,28 @@ Having wat files is more useful than direct compilation to binary form:
   +? includes
   + static errors detection
   * everything that can be statically precalculated
+
+## [x] `(a,b) ? (a,b)=h++` problem - what does it transform to? -> let's simply duplicate (most obvious)
+
+  1. `(a ? a = h++, b ? b = h++)`
+    - duplicates calculation
+    + can actually be correct approach: loop also invokes rhs code multiple times
+    + the most obvious
+    -> let's do this
+
+  2. `(a,b) ? (tmp=h++; a=tmp, b=tmp)`
+    -? doesn't unroll obviously
+
+  3. `(a ? a = tmp ||= h++, b ? b = tmp ||= h++)`
+    -~ duplicated code, but gated
+    -? `tmp` is `0` by default, not sure how to make it `??=`
+
+  4. `tmp=0/0; (a ? (tmp==nan?tmp=h++; a=tmp), b ? (tmp==nan?tmp=h++; b=tmp)`
+    -~ duplicated code, but gated
+    - extra condition per
+
+## [x] should we introduce `??` and `??=` for init states -> nah
+
+  -~ works on `nan` only: there's no `undefined` state
+  -? should all undefined numbers become `nan`s?
+  - discrepancy with JS: `NaN ?? 1` gives `NaN`

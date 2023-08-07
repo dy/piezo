@@ -31,16 +31,18 @@ Object.assign(expr, {
   },
 
   '='([,a,b]) {
+    // ignore fns a()
+    if (a[0]==='()') return
+
     // if b contains some members of a
-    // (a,b)=(b,c) -> (t0=b,t1=c);(a=t0,b=t1);
+    // (a,b)=(b,a) -> (t0=b,t1=a;a=t0,b=t1);
     if (a[0]==='(' && a[1][0] ===',' && intersect(ids(a), ids(b))) {
       const n = a[1].length - 1
-      return [';',
+      return ['(',[';',
         unroll('=', ['(',[',',...Array.from({length:n},(b,i)=>`t:${i}`)]], b),
         unroll('=', a, ['(',[',',...Array.from({length:n},(a,i)=>`t:${i}`)]])
-      ]
+      ]]
     }
-
     return unroll('=',a,b)
   },
 
@@ -120,9 +122,7 @@ function unroll(op, a, b) {
     }
 
     // (a0, a1) * b -> (a0 * b, a1 * b)
-    if (typeof b === 'string' || b[0] === INT || b[0] === FLOAT) {
-      return ['(', [',', ...as.map(a => [op, a, b])]]
-    }
+    return ['(', [',', ...as.map(a => [op, a, b])]]
 
     // FIXME: to make more complex mapping we have to know arity of internal result
     // (a0, a1) * expr() -> tmp=b; (a0 * tmp, a1 * tmp)
@@ -130,7 +130,7 @@ function unroll(op, a, b) {
   }
 
   // a * (b0, b1) -> tmp=a; (a * b0, a * b1)
-  if ((typeof a === 'string' || a[0] === INT || a[0] === FLOAT) && b[0] === '(' && b[1]?.[0] === ',') {
+  if (b[0] === '(' && b[1]?.[0] === ',') {
     const [, ...bs] = b[1]
     return ['(', [',', ...bs.map(b => [op, a, b])]]
   }

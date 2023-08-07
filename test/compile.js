@@ -392,9 +392,13 @@ t('compile: group ops cases', t => {
   mod = compileWat(wat)
   is(mod.instance.exports.f(2,3,3), [2,2], `(a>=h, b>=h) ? (a--, b--)`);
 
-  // wat = compile(`f(a,b,h) = ((a,b) >= h ? (a,b) = h-1; (a,b)).`)
-  // mod = compileWat(wat)
-  // is(mod.instance.exports.f(1,3,3), [1,2], `(a,b) >= h ? (a,b) = h-1`);
+  wat = compile(`f(a,b,h) = ((a,b) * (h + 1)).`)
+  mod = compileWat(wat)
+  is(mod.instance.exports.f(2,3,1), [4,6], `((a,b) * (h + 1))`);
+
+  wat = compile(`f(a,b,h) = ((a,b) >= h ? (a,b) = h-1; (a,b)).`)
+  mod = compileWat(wat)
+  is(mod.instance.exports.f(1,3,3), [1,2], `(a,b) >= h ? (a,b) = h-1`);
 
   // wat = compile(`(ptr0, ptr1, ptr2) = (y, y1, y2) * w;`)
   // mod = compileWat(wat)
