@@ -126,11 +126,11 @@ Object.assign(expr, {
   // number primitives: 1.0, 2 etc.
   [FLOAT]([, a, unit, ext]) {
     let v = applyUnits(a, unit, ext)
-    return op(`(f64.const ${v})`, 'f64', { static: v })
+    return op(`(f64.const ${v})`, 'f64')
   },
   [INT]([, a, unit, ext]) {
     let v = applyUnits(a, unit, ext)
-    return op(`(i32.const ${v})`, 'i32', { static: v })
+    return op(`(i32.const ${v})`, 'i32')
   },
 
   // a; b; c;
@@ -143,9 +143,7 @@ Object.assign(expr, {
 
     return op(
       list.map((op, i) => op + `(drop)`.repeat(i === list.length - 1 ? 0 : op.type.length)).join('\n'),
-      list[list.length - 1].type,
-      // if there are early returns - sequence cannot be static
-      !returns?.length ? { static: list[list.length - 1].static } : {}
+      list[list.length - 1].type
     )
   },
 
@@ -154,9 +152,8 @@ Object.assign(expr, {
     for (let s of statements) list.push(expr(s));
     list = list.filter(Boolean)
     return op(
-      list.join(''),
-      list.flatMap(op => op.type),
-      { static: list.every(op=>op.static!=null) ? list.map(op => op.static) : null }
+      list.join('\n'),
+      list.flatMap(op => op.type)
     )
   },
 
@@ -456,8 +453,6 @@ Object.assign(expr, {
     if (!b) {
       let res = expr(a)
       if (res.type.length > 1) err('Group negation: unimplemented')
-
-      if (res.static != null) return op(`(${res.type}).const -${res.static}`, res.type, { static: -res.static })
       if (res.type[0] === 'i32') return op(`(i32.sub (i32.const 0) ${res})`, 'i32')
       return op(`(f64.neg ${res})`, 'f64')
     }
@@ -465,22 +460,11 @@ Object.assign(expr, {
     let aop = expr(a), bop = expr(b)
 
     if (aop.type.length > 1 || bop.type.length > 1) err('Group subtraction: unimplemented')
-
-    // static precalc
-    if (aop.static === 0) return expr(['-', b])
-    if (bop.static === 0) return aop
-    if (aop.static != null && bop.static != null) return op(`(${aop.type[0] === 'i32' && bop.type[0] === 'i32' ? 'i32' : 'f64'}.const ${aop.static - bop.static})`, aop.type[0] === 'i32' && bop.type[0] === 'i32' ? 'i32' : 'f64', { static: aop.static - bop.static })
-
     if (aop.type[0] === 'i32' && bop.type[0] === 'i32') return op(`(i32.sub ${aop} ${bop})`, 'i32')
     return op(`(f64.sub ${asFloat(aop)} ${asFloat(bop)})`, 'f64')
   },
   '+'([, a, b]) {
     let aop = expr(a), bop = expr(b)
-
-    // precalc static
-    if (bop.static === 0) return aop
-    if (aop.static === 0) return bop
-    if (aop.static != null && bop.static != null) return op(`(${aop.type[0] === 'i32' && bop.type[0] === 'i32' ? 'i32' : 'f64'}.const ${aop.static + bop.static})`, aop.type[0] === 'i32' && bop.type[0] === 'i32' ? 'i32' : 'f64', { static: aop.static + bop.static })
 
     if (aop.type[0] == 'i32' && bop.type[0] == 'i32') return op(`(i32.add ${aop} ${bop})`, 'i32')
     return op(`(f64.add ${asFloat(aop)} ${asFloat(bop)})`, 'f64')
@@ -540,50 +524,24 @@ Object.assign(expr, {
       // (a <| @) * (b <| @);
     }
 
-    // static optimizations
-    if (bop.static === 0 || aop.static === 0) return op(`(f64.const 0)`, 'f64', { static: 0 })
-    if (bop.static === 1) return aop
-    if (aop.static === 1) return bop
-    if (aop.static != null && bop.static != null) return op(`(f64.const ${aop.static * bop.static})`, 'f64', { static: aop.static * bop.static })
-
     return op(`(f64.mul ${asFloat(aop)} ${asFloat(bop)})`, 'f64')
   },
   '/'([, a, b]) {
     let aop = expr(a), bop = expr(b)
-    if (aop.static === 0) return op(`(f64.const 0)`, 'f64', { static: 0 })
-    if (bop.static === 1) return aop
-    if (aop.static != null && bop.static != null) return op(`(f64.const ${aop.static / bop.static})`, 'f64', { static: aop.static / bop.static })
-
     return op(`(f64.div ${asFloat(aop)} ${asFloat(bop)})`, 'f64')
+  },
+  // sqrt
+  '/*'([, a]) {
+    return op(`(f64.sqrt ${asFloat(expr(a))})`, 'f64')
   },
   '**'([, a, b]) {
     let aop = expr(a), bop = expr(b)
-
-    // static optimizations
-    if (bop.static === 0) return op(`(f64.const 1)`, 'f64', { static: 1 })
-    if (aop.static === 1) return op(`(f64.const 1)`, 'f64', { static: 1 })
-    if (bop.static === 1) return aop
-    if (bop.static === 0.5) return op(`(f64.sqrt ${asFloat(aop)})`, 'f64')
-    if (bop.static === -1) return op(`(f64.div (f64.const 1) ${asFloat(bop)})`, 'f64')
-    if (bop.static === -0.5) return op(`(f64.div (f64.const 1) (f64.sqrt ${asFloat(aop)}))`, 'f64')
-    if (bop.static < 0) return op(`(f64.div (f64.const 1) ${expr(['**', a, [FLOAT, Math.abs(bop.static)]])})`, 'f64')
-    // a ** 24 -> a*a*a...*a
-    if (Number.isInteger(bop.static) && bop.static < 24) return op(`${pick(bop.static, asFloat(aop))}${`(f64.mul)`.repeat(bop.static - 1)}`, 'f64')
-    if (aop.static != null && bop.static != null) return op(`(f64.const ${aop.static ** bop.static})`, 'f64', { static: aop.static ** bop.static })
-
-    // generic pow
-    // ref https://chromium.googlesource.com/external/github.com/WebAssembly/musl/+/landing-branch/src/math/pow.c
     return inc('f64.pow'), op(`(call $f64.pow ${asFloat(aop)} ${asFloat(bop)})`, 'f64')
   },
   '|'([, a, b]) {
-    // 0 | b -> b | 0
-    if (a[0] === INT && a[1] === 0) [a, b] = [b, a]
-
     let aop = expr(a), bop = expr(b);
-
-    if (bop.static === 0) return asInt(aop);
-    if (aop.static != null && bop.static !== null) return op(`(i32.const ${aop.static | bop.static})`, 'i32', { static: aop.static | bop.static })
-
+    // x | 0
+    if (b[1] === 0) return asInt(aop);
     return op(`(i32.or ${asInt(aop)} ${asInt(bop)})`, 'i32')
   },
 
@@ -627,30 +585,12 @@ Object.assign(expr, {
   // logical - we put value twice to the stack and then just drop if not needed
   '||'([, a, b]) {
     let aop = expr(a), bop = expr(b)
-
-    // 0 || a
-    if (aop.static === 0) return bop
-    // a || 0
-    if (bop.static === 0) return aop
-    // 1 || b, a || 1
-    if (aop.static || bop.static) return aop
-
     if (aop.type[0] == 'f64') return op(`${pick(2, aop)}(if (param f64) (result f64) (f64.ne (f64.const 0)) (then) (else (drop) ${asFloat(bop)}))`, 'f64')
     if (bop.type[0] == 'i32') return op(`${pick(2, aop)}(if (param i32) (result i32) (then) (else (drop) ${bop}))`, 'i32')
     return op(`${pick(2, aop)}(if (param i32) (result f64) (then (f64.convert_i32_s)) (else (drop) ${asFloat(bop)}))`, 'f64')
   },
   '&&'([, a, b]) {
     let aop = expr(a), bop = expr(b)
-
-    // 0 && b
-    if (aop.static === 0) return aop
-    // a && 0
-    if (bop.static === 0) return bop
-    // 1 && b
-    if (aop.static) return bop
-    // a && 1
-    if (bop.static) return aop
-
     if (aop.type[0] == 'f64') return op(`${pick(2, aop)}(if (param f64) (result f64) (f64.ne (f64.const 0)) (then (drop) ${asFloat(bop)}))`, 'f64')
     if (bop.type[0] == 'i32') return op(`${pick(2, aop)}(if (param i32) (result i32) (then (drop) ${bop}))`, 'i32')
     return op(`${pick(2, aop)}(if (param i32) (result f64) (then (f64.convert_i32_s) (drop) ${asFloat(bop)}))`, 'f64')
@@ -666,9 +606,6 @@ Object.assign(expr, {
     let aop = expr(a), bop = expr(b), cop = expr(c)
 
     if (aop.type.length > 1) err('Group condition is not supported.')
-
-    if (aop.static === 0) return cop
-    if (aop.static) return bop
 
     // FIXME: (a,b) ? c : d
     // FIXME: (a,b) ? (c,d) : (e,f)
@@ -835,13 +772,12 @@ function buf(inits) {
 // wrap expression to float, if needed
 function asFloat(o) {
   if (o.type[0] === 'f64') return o
-  if (o.static != null) return op(`(f64.const ${o.static})`, 'f64', { static: o.static })
+  if (o.startsWith('(i32.const')) return op(o.replace('(i32.const', '(f64.const'), 'f64')
   return op(`(f64.convert_i32_s ${o})`, 'f64')
 }
 // cast expr to int
 function asInt(o) {
   if (o.type[0] === 'i32') return o
-  if (o.static != null) return op(`(i32.const ${o.static | 0})`, 'i32')
   return op(`(i32.trunc_f64_s ${o})`, 'i32')
 }
 
@@ -866,8 +802,7 @@ function pick(count, input) {
     const name = define(`dup:${input.type[0]}`, input.type[0])
     return op(
       `(local.set $${name} ${input})${`(local.get $${name})`.repeat(count)}`,
-      Array(count).fill(input.type[0]),
-      { static: input.static != null ? Array(count).fill(input.static) : null }
+      Array(count).fill(input.type[0])
     )
   }
 

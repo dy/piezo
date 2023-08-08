@@ -36,6 +36,7 @@ export const std = {
 
   // a ** b generic case
   // ref: https://github.com/jdh8/metallic/blob/master/src/math/double/pow.c
+  // ref https://chromium.googlesource.com/external/github.com/WebAssembly/musl/+/landing-branch/src/math/pow.c
   "f64.pow": `(func $f64.pow (param $x f64) (param $y f64) (result f64)
       (local $sign i64)
       (if (f64.eq (local.get $y) (f64.const 0)) (then (return (f64.const 1))))

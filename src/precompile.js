@@ -26,8 +26,10 @@ Object.assign(expr, {
 
   '('([,a]) {
     if (!a) return
-    // ((x)) -> (a)
+    // ((x)) -> (x)
     if (a[0] === '(') return a
+    // (0.5) -> 0.5
+    if (typeof a[1] === 'number') return a
   },
 
   '='([,a,b]) {
@@ -57,26 +59,75 @@ Object.assign(expr, {
   '**='([, a, b]) { return ['=', a, ['**', a, b]] },
   '<?='([, a, b]) { return ['=', a, ['<?', a, b]] },
 
-  '+'([, a, b]) { return unroll('+', a, b) },
+  '+'([, a, b]) {
+    return unroll('+', a, b) || (
+      typeof b[1] === 'number' && typeof a[1] === 'number' ? [a[0]===INT&&b[0]===INT?INT:FLOAT, a[1]+b[1]] :
+      b[1] === 0 ? a :
+      a[1] === 0 ? b :
+      null
+    )
+  },
   '-'([,a,b]) {
     // [-,[INT,1]] -> [INT,-1]
-    if (!b) if (a[0] == INT || a[0] == FLOAT) return [a[0], -a[1]]
+    if (!b) {
+      if (typeof a[1] === 'number') return [a[0], -a[1]]
+      return
+    }
 
-    return unroll('-', a, b)
+    return unroll('-', a, b) || (
+      typeof a[1] === 'number' && typeof b[1] === 'number' ? [a[0]===INT&&b[0]===INT?INT:FLOAT, a[1]-b[1]] :
+      a[1] === 0 ? ['-', b] :
+      b[1] === 0 ? a :
+      null
+    )
   },
   '*'([, a, b]) {
     if (!b) return unroll('*', a)
-    return unroll('*', a, b)
+    return unroll('*', a, b) || (
+      (typeof a[1] === 'number' && typeof b[1] === 'number') ? [FLOAT, a[1] * b[1]] :
+      a[1] === 0 || b[1] === 0 ? [FLOAT, 0] :
+      b[1] === 1 ? a :
+      a[1] === 1 ? b :
+      null
+    )
   },
-  '/'([, a, b]) { return unroll('/', a, b) },
+  '/'([, a, b]) {
+    return unroll('/', a, b) || (
+      (typeof a[1] === 'number' && typeof b[1] === 'number') ? [FLOAT, a[1] / b[1]] :
+      a[1] === 0 ? [FLOAT, 0] : // 0 / x
+      b[1] === 1 ? a : // x / 1
+      null
+    )
+  },
   '%'([, a, b]) { return unroll('%', a, b) },
 
   '%%'([, a, b]) { return unroll('%%', a, b) },
-  '**'([, a, b]) { return unroll('**', a, b) },
+  '**'([, a, b]) {
+    return unroll('**', a, b) || (
+      (typeof a[1] === 'number' && typeof b[1] === 'number') ? [FLOAT, a[1] ** b[1]] :
+      (b[1] === 0) ? [FLOAT, 1] :
+      (a[1] === 1) ? [FLOAT, 1] :
+      (b[1] === 1) ? a :
+      (b[1] === 0.5) ? ['/*',a] :
+      (b[1] === -1) ? ['/',[FLOAT,1], b] :
+      (b[1] === -0.5) ? ['/',[FLOAT,1],['/*',a]] :
+      // FIXME: here we exceptionally handle internal expr. Maybe we should generally handle expressions like that?
+      (typeof b[1] === 'number' && b[1] < 0) ? ['/',[FLOAT,1], expr(['**', a, [FLOAT, Math.abs(b[1])]])] :
+      // a ** 24 -> a*[a*[a...*a]]
+      (b[1]%1 === 0 && b[1] < 24) ? Array(b[1]).fill(a).reduce((prev,a) => ['*',a,prev]) :
+      null
+    );
+  },
   '//'([, a, b]) { return unroll('//', a, b) },
 
   '&'([, a, b]) { return unroll('&', a, b) },
-  '|'([, a, b]) { return unroll('|', a, b) },
+  '|'([, a, b]) { return unroll('|', a, b) || (
+    // 0 | a -> a | 0
+    (a[1] === 0) ? ['|', b, a] :
+    (typeof a[1] === 'number' && typeof b[1] === 'number') ? [INT, a[1] | b[1]] :
+      null
+    )
+  },
   '~'([, a, b]) { return unroll('~', a, b) },
   '^'([, a, b]) { return unroll('^', a, b) },
 
@@ -87,12 +138,33 @@ Object.assign(expr, {
   '=='([, a, b]) { return unroll('==', a, b) },
   '!='([, a, b]) { return unroll('!=', a, b) },
 
-  '&&'([, a, b]) { return unroll('&&', a, b) },
-  '||'([, a, b]) { return unroll('||', a, b) },
+  '&&'([, a, b]) { return unroll('&&', a, b) || (
+    // 0 && b
+    a[1] === 0 ? a :
+    // a && 0
+    b[1] === 0 ? b :
+    // 1 && b
+    (typeof a[1] === 'number' && a[1]) ? b :
+    // a && 1
+    (typeof b[1] === 'number' && b[1]) ? a :
+    null
+  ) },
+  '||'([, a, b]) { return unroll('||', a, b) || (
+    // 0 || a
+    a[1] === 0 ? b :
+    // a || 0
+    b[1] === 0 ? a :
+    // 1 || b
+    typeof a[1] === 'number' && a[1] ? b :
+    // a || 1
+    typeof b[1] === 'number' && b[1] ? a :
+    null
+  ) },
   '<<'([, a, b]) { return unroll('<<', a, b) },
   '>>'([, a, b]) { return unroll('>>', a, b) },
   '!'([, a, b]) { return unroll('!', a, b) },
   '?'([, a, b]) { return unroll('?', a, b) },
+  '?:'([, a, b, c]) { return a[1] === 0 ? c : (typeof a[1] === 'number' && a[1]) ? b : null }
 })
 
 // if a,b contain multiple elements - try regrouping to simple ops

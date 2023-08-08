@@ -24,12 +24,12 @@
   + we don't test analyser anyways, it's not stable
   + simplifies parent state management
 * [ ] precompile
-  * [ ] static precalc (no FLOAT/INT in compiler)
+  * [x] static precalc (no FLOAT/INT in compiler)
+  * [ ] units
   * [ ] no pick in compiler
   * [ ] includes
   * [ ] ranges
   * [ ] `(drop)` collapse
-  * [ ] units
 * [x] use f64 everywhere
 * [x] implement array pointer as float64
 * [x] ~~`x=1; x=1.0` - add float dup~~
