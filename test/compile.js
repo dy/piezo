@@ -165,7 +165,8 @@ t('compile: operators - pow', t => {
 
 t('compile: units', t => {
   let wat = compile(`
-    1k = 1000; 1pi = 3.1415;
+    pi = 3.1415;
+    1k = 1000; 1pi = pi;
     1s = 44100; 1m=60s; 1h=60m; 1ms = 0.001s;
     a=10.1k, b=2pi, c=1h2m3.5s.
   `)

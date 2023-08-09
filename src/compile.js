@@ -6,7 +6,7 @@ import precompile from './precompile.js';
 import {ids, stringify, err} from './util.js';
 // import {parse as parseWat} from 'watr';
 
-let prevCtx, includes, imports, globals, locals, slocals, funcs, func, exports, heap, mem, returns, units, config, depth;
+let prevCtx, includes, imports, globals, locals, slocals, funcs, func, exports, heap, mem, returns, config, depth;
 
 // limit of memory is defined as: (max array length i24) / (number of f64 per memory page i13)
 const MAX_MEMORY = 2048
@@ -19,7 +19,7 @@ export default function compile(node, obj) {
   console.log('compile', node)
 
   // save previous compiling context
-  prevCtx = { prevCtx, includes, imports, globals, locals, slocals, funcs, func, exports, heap, mem, returns, units, config, depth };
+  prevCtx = { prevCtx, includes, imports, globals, locals, slocals, funcs, func, exports, heap, mem, returns, config, depth };
 
   // init compiling context
   // FIXME: make temp vars just part of local scope
@@ -35,7 +35,6 @@ export default function compile(node, obj) {
     func = null, // current function that's being initialized
     heap = 0, // heap size as number of pages (detected from max static array size)
     mem = false, // indicates if memory must be included (heap automatically enables memory)
-    units = {}, // holds currently defined units (inserted as direct constants)
     depth = 0, // current loop/nested block counter
     config = obj || {}
 
@@ -92,7 +91,7 @@ export default function compile(node, obj) {
   // console.log(...parseWat(out))
 
   // restore previous compiling context
-  ; ({ prevCtx, includes, imports, globals, funcs, func, locals, slocals, exports, heap, mem, returns, units, config, depth } = prevCtx);
+  ({ prevCtx, includes, imports, globals, funcs, func, locals, slocals, exports, heap, mem, returns, config, depth } = prevCtx);
   return out
 }
 
@@ -115,22 +114,13 @@ function expr(statement) {
   err(`Unknown operation ${statement}`)
 }
 
-// convert unit node to value
-function applyUnits(n, unit, ext) {
-  if (unit) n *= units[unit] || err(`Unknown unit \`${unit}\``);
-  if (ext) n += applyUnits(...ext.slice(1))
-  return n
-}
-
 Object.assign(expr, {
   // number primitives: 1.0, 2 etc.
-  [FLOAT]([, a, unit, ext]) {
-    let v = applyUnits(a, unit, ext)
-    return op(`(f64.const ${v})`, 'f64')
+  [FLOAT]([, a]) {
+    return op(`(f64.const ${a})`, 'f64')
   },
-  [INT]([, a, unit, ext]) {
-    let v = applyUnits(a, unit, ext)
-    return op(`(i32.const ${v})`, 'i32')
+  [INT]([, a]) {
+    return op(`(i32.const ${a})`, 'i32')
   },
 
   // a; b; c;
@@ -340,15 +330,6 @@ Object.assign(expr, {
       func = prevFunc
 
       return initState
-    }
-
-    // 1k = ... - define units
-    if ((a[0] === INT || a[0] === FLOAT) && a[2]) {
-      // FIXME: here can be full-fledged static expression like 1pi * 3 etc.
-      if (b[0] !== INT && b[0] !== FLOAT) err(`Invalid unit definition \`${stringify(['=', a, b])}\``)
-      let [, n, unit] = a, [, value, bUnit] = b
-      units[unit] = applyUnits(value, bUnit) / n
-      return
     }
 
     err(`Unknown assignment left value \`${stringify(a)}\``)
