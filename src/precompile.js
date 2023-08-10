@@ -76,11 +76,12 @@ Object.assign(expr, {
   },
 
   // [1,2,3]
-  // '['([,inits]) {
-  //   // normalize to [,] form
-  //   inits = !inits ? [,] : inits[0] === ',' ? inits : [',',inits]
-  //   return ['[',inits]
-  // },
+  '['([,inits]) {
+    inits = expr(inits)
+    // normalize to [,] form
+    inits = !inits ? [,] : inits[0] === ',' ? inits : [',',inits]
+    return ['[',inits]
+  },
 
   '='([,a,b]) {
     b = expr(b)
@@ -92,12 +93,16 @@ Object.assign(expr, {
       b = b[0] === '(' ? b : ['(', b]
       b[1] = !b[1] ? [';'] : b[1][0] === ';' ? b[1] : [';', b[1]]
 
-      return ['=',a,b]
+      // normalize args list
+      let [,name,args] = a
+      args = !args ? [,] : args[0] === ',' ? args : [',',args];
+
+      return ['=',['()',name,args],b]
     }
 
     // 1k = expr - define units
     if ((a[0] === INT || a[0] === FLOAT) && a[2]) {
-      let [, n, unit, ext] = a
+      let [, n, unit] = a
       units[unit] = expr(['/', b, [FLOAT, n]])
       return
     }

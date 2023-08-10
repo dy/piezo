@@ -197,10 +197,8 @@ Object.assign(expr, {
   },
 
   // [1,2,3]
-  '['([, inits]) {
+  '['([, [,...inits]]) {
     // NOTE: this expects heap pointer in stack
-    inits = !inits ? [] : inits[0] !== ',' ? [inits] : inits.slice(1)
-
     // return buffer initializer
     return buf(inits)
   },
@@ -239,7 +237,7 @@ Object.assign(expr, {
 
     // x(a,b) = y
     if (a[0] === '()') {
-      let [, name, args] = a, body = b, inits = [], result, dfn = [], prepare = [], defer = []
+      let [, name, [,...args]] = a, body = b, inits = [], result, dfn = [], prepare = [], defer = []
 
       // functions defined within scope of other functions, `x()=(y(a)=a;)`
       if (locals) err('Declaring local function `' + name + '`: not allowed');
@@ -251,9 +249,6 @@ Object.assign(expr, {
       func = name
 
       locals = {}
-
-      // get args list
-      args = !args ? [] : args[0] === ',' ? args.slice(1) : [args];
 
       // detect optional / clamped args
       args = args.map(arg => {
