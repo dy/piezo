@@ -25,11 +25,12 @@
   + simplifies parent state management
 * [ ] precompile
   * [x] static precalc (no FLOAT/INT in compiler)
-  * [ ] units
-  * [ ] no pick in compiler
+  * [x] units
+  * [ ] normalize args/array cases (), (a), (a,b)
   * [ ] includes
   * [ ] ranges
   * [ ] `(drop)` collapse
+  * [ ] get rid of `pick` in compiler
 * [x] use f64 everywhere
 * [x] implement array pointer as float64
 * [x] ~~`x=1; x=1.0` - add float dup~~

@@ -180,9 +180,7 @@ Object.assign(expr, {
   },
 
   // a()
-  '()'([, name, args]) {
-    args = !args ? [] : args[0] === ',' ? args.slice(1) : [args]
-
+  '()'([, name, [,...args]]) {
     if (!globals[name]) err('Unknown function call: ' + name)
 
     // FIXME: make sure default args are gotten values?
@@ -236,7 +234,7 @@ Object.assign(expr, {
       a = define(a)
       const bop = expr(b)
       if (!bop.type?.length) err(`Cannot use void operator \`${b[0]}\` as right-side value`)
-      return tee(a, pick(1, asFloat(bop)))
+      return tee(a, asFloat(bop))
     }
 
     // x(a,b) = y
@@ -253,10 +251,6 @@ Object.assign(expr, {
       func = name
 
       locals = {}
-
-      // normalize body to (a;b;) form
-      body = body[0] === '(' ? body : ['(', body]
-      body[1] = !body[1] ? [';'] : body[1][0] === ';' ? body[1] : [';', body[1]]
 
       // get args list
       args = !args ? [] : args[0] === ',' ? args.slice(1) : [args];
