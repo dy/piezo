@@ -26,7 +26,7 @@
 * [ ] precompile
   * [x] static precalc (no FLOAT/INT in compiler)
   * [x] units
-  * [ ] normalize args/array cases (), (a), (a,b)
+  * [x] normalize args/array cases (), (a), (a,b)
   * [ ] includes
   * [ ] ranges
   * [ ] `(drop)` collapse
@@ -44,7 +44,7 @@
 * [ ] Bench sobel https://github.com/mattdesl/wasm-bench
   * [ ] `(y1, y2) >= height ? (y1, y2) = height - 1` group ops
   * [ ] `(val0, val1) = data[ptr0 + (x, x1)];`
-  * [ ] `\` comments
+  * [x] `\` comments
   * [ ] optimized array prop access
   * [ ] `..=` inclusive ranges
 * [ ] Bench biquad

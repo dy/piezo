@@ -67,9 +67,9 @@ export function compileWat (code, imports={}) {
 t('compile: comments', t => {
   let wat = compile(`x(a,w,h)=(
     a=1
-    ;; a=2
+    \\ a=2
   ), y()=(
-    ;;(
+    \\ (
   ).`)
   let mod = compileWat(wat)
   let {x} = mod.instance.exports

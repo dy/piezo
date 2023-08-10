@@ -3,8 +3,6 @@ import parse, { lookup, skip, cur, idx, err, expr, token, unary, binary, nary, i
 import { FLOAT, INT } from './const.js'
 
 export default (str) => (
-  // FIXME: if there's more meaningful way remove comments
-  str = str.replace(/;;[^\n]*/g,''),
   parse(str)
 )
 
@@ -189,5 +187,6 @@ token('(', PREC_CALL, (a,b) => a && (b = expr(0, CPAREN), b ? ['()', a, b] : ['(
 
 // <a#b,c>
 token('<', PREC_TOKEN, (a,b) => !a && (b = skip(c => c !== GT), skip(), b ? ['<>', b] : err('Empty import statement')))
-// comments
-// token(';;', PREC_TOKEN, (a, prec) => (skip(c => c >= SPACE), skip(), console.log(a), a))
+
+// \comments
+token('\\', PREC_TOKEN, (a, prec) => ( skip(c => c >= SPACE), skip(), a || expr(prec) || [';']))

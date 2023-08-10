@@ -1,7 +1,8 @@
 import {INT,FLOAT} from './const.js';
 import { err, ids, intersect } from './util.js';
 
-// Static optimizations, denormalizations
+// Static optimizations, denormalizations etc.
+// Prepares tree for compiler.
 
 let units, prev
 
@@ -59,9 +60,9 @@ Object.assign(expr, {
   },
 
   '('([,a]) {
+    a = expr(a)
     // a=() -> a=()
     if (!a) return ['(']
-    a = expr(a)
     // ((x)) -> (x)
     if (a[0] === '(') return a
     // (0.5) -> 0.5
