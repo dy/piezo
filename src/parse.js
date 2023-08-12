@@ -92,7 +92,7 @@ const string = q => (qc, c, str='') => {
   return [String.fromCharCode(q),str]
 },
 escape = {n:'\n', r:'\r', t:'\t', b:'\b', f:'\f', v:'\v'}
-// lookup[DQUOTE] = string(DQUOTE)
+lookup[DQUOTE] = string(DQUOTE)
 // lookup[QUOTE] = string(QUOTE)
 
 // sequences

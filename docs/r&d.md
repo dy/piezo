@@ -243,16 +243,17 @@ Having wat files is more useful than direct compilation to binary form:
     → sets can be listed as `(a,b,c)` ()
       ⇒ or even better, as functional languages do: `type in a|b|c`
 
-## [ ] Strings:
+## [ ] Strings -> let's try
 
   * Erlang-like "hello" === [104,101,108,108,111]
     + Standard
-    - Case-sensitivize code
-  * Base32
-  * hex only
-    + standard form
-    + easy to convert memory
-    - not as useful, no way to preview content
+  - Case-sensitivize code
+  + Floatbeats use strings
+  + Static precompiler can convert static arrays to strings
+  + Map directly to data
+  - convert to arrays
+    - `string + string` is pointless
+    -
 
 ## [ ] !? atoms: 'hello' (not string)
   * Atoms are useful for referencing:

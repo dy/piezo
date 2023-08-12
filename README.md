@@ -132,6 +132,10 @@ m[1,2] = m[2,1];                \ rearrange
 m[0..] = m[-1..0];              \ reverse order
 m[0..] = m[1..,0];              \ rotate
 
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ strings
+hi="hello";                     \ alias for static array
+"\u0020", "\x20";               \ unicode or ascii codes
+
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ loops
 a, b, c |> x(@);                \ for each a, b, c do x(item)
 10.. |> (                       \ iterate over range
@@ -154,27 +158,20 @@ x, y, z.                        \ export (from global scope)
 ```
 
 <!--
-
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ strings
-\ NOTE: can be not trivial to
-hi="hello";                     \ strings
-string="{hi} world";            \ interpolated string: "hello world"
-"\u0020", "\x20";               \ unicode or ascii codes
-string[1]; string.1;            \ positive indexing from first element [0]: 'e'
+string="{hi} world";            \ interpolate: "hello world"
+string[1];                      \ positive indexing from first element [0]: 'e'
 string[-3];                     \ negative indexing from last element [-1]: 'r'
 string[2..10];                  \ substring
 string[1, 2..10, -1];           \ slice/pick multiple elements
 string[-1..0];                  \ reverse
 string[];                       \ length
-string == string;               \ comparison (==,!=,>,<)
-string + string;                \ concatenation: "hello worldhello world"
+string == string;               \ compare (==,!=,>,<)
+string + string;                \ concat: "hello worldhello world"
 string - string;                \ removes all occurences of the right string in the left string: ""
 string / string;                \ split: "a b" / " " = ["a", "b"]
 string * list;                  \ join: " " * ["a", "b"] = "a b"
 string * 2;                     \ repeat: "abc" * 2 = "abcabc"
-NOTE: indexOf can be done as `string | (x,i) -> (x == "l" ? i)`
 -->
-
 
 ## Examples
 

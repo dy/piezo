@@ -87,21 +87,21 @@ t('parse: groups', t => {
   is(parse('a = b, c = d'), [',',['=','a','b'],['=','c','d']], 'a=b, c=d')
 })
 
-t.skip('parse: strings', t => {
+t('parse: strings', t => {
   is(parse('hi="hello"'),['=','hi',['"','hello']], 'strings')
   is(parse('string="{hi} world"'),['=','string',['"','{hi} world']], 'interpolated string: "hello world"')
   is(parse('"\u0020", "\x20"'),[',',['"','\u0020'],['"','\x20']], 'unicode or ascii codes')
-  is(parse('string[1]; string.1'),[';',['[]','string',[INT,1]],['.','string','1']], 'positive indexing from first element [0]: \'e\'')
+  is(parse('string[1]'),['[]','string',[INT,1]], 'positive indexing from first element [0]: \'e\'')
   is(parse('string[-3]'),['[]','string',['-',[INT,3]]],[], 'negative indexing from last element [-1]: \'r\'')
   is(parse('string[2..10]'),['[]','string',['..',[INT,2],[INT,10]]], 'substring')
   is(parse('string[1, 2..10, -1]'),['[]','string',[',',[INT,1],['..',[INT,2],[INT,10]],['-',[INT,1]]]], 'slice/pick multiple elements')
   is(parse('string[-1..0]'),['[]','string',['..',['-',[INT,1]],[INT,0]]], 'reverse')
   is(parse('string[]'),['[]','string'], 'length')
-  is(parse('string == string'),['==','string','string'], 'comparison (==,!=,>,<)')
-  is(parse('string + string'),['+','string','string'], 'concatenation: "hello worldhello world"')
-  is(parse('string - string'),['-','string','string'], 'removes all occurences of the right string in the left string: ""')
-  is(parse('string / string'),['/','string','string'], 'split: "a b" / " " = ["a", "b"]')
-  is(parse('string * list'),['*','string','list'], 'join: " " * ["a", "b"] = "a b"')
+  // is(parse('string == string'),['==','string','string'], 'comparison (==,!=,>,<)')
+  // is(parse('string + string'),['+','string','string'], 'concatenation: "hello worldhello world"')
+  // is(parse('string - string'),['-','string','string'], 'removes all occurences of the right string in the left string: ""')
+  // is(parse('string / string'),['/','string','string'], 'split: "a b" / " " = ["a", "b"]')
+  // is(parse('string * list'),['*','string','list'], 'join: " " * ["a", "b"] = "a b"')
   // is(parse('string ~> "l"'),['~>','string',['"','l']], 'indexOf: 2')
   // is(parse('string ~< "l"'),['~<','string',['"','l']], 'rightIndexOf: -2')
 })
@@ -224,6 +224,7 @@ t('parse: functions', () => {
   is(parse('clamp(v <? 0..10) = v'), ['=',['()','clamp',['<?','v',['..',[INT,0],[INT,10]]]],'v'],    'clamp argument')
   is(parse('x() = (1,2,3)'), ['=',['()','x'],['(',[',',[INT,1],[INT,2],[INT,3]]]],              'return group (multiple values)')
 })
+
 t('parse: argument cases', t => {
   is(parse('a(a,b) = a'), ['=',['()', 'a', [',','a','b']], 'a'], 'inline function')
   is(parse('a(a=1,b) = a'), ['=', ['()', 'a', [',',['=','a',[INT,1]],'b']], 'a'], 'inline function')

@@ -210,6 +210,11 @@ Object.assign(expr, {
     // a[] - length
     if (!b) return op(`(call $arr.len ${expr(a)})`, 'i32')
 
+    // a[0] - static index read
+    if (typeof b[1] === 'number') {
+      console.log('read', a, b)
+    }
+
     // a[b] - regular access
     return inc('arr.get'), op(`(call $arr.get ${expr(a)} ${expr(b)})`, 'f64')
   },
@@ -219,11 +224,11 @@ Object.assign(expr, {
     if (a[0] === '[]') {
       let [, buf, idx] = a
 
-      // FIXME: static optimization property - to avoid calling i32.modwrap if idx is known
-      let iop = expr(idx)
+      // a[0] - static index read
+      // FIXME: static optimization property - to avoid calling i32.modwrap if idx/len is known
       // FIXME: another static optimization: if length is known in advance (likely yes) - make static modwrap
 
-      return inc('arr.len'), inc('arr.set'), inc('i32.modwrap'), op(`(call $arr.tee ${expr(buf)} ${asInt(iop)} ${asFloat(expr(b))})`, 'f64')
+      return inc('arr.len'), inc('arr.set'), inc('i32.modwrap'), op(`(call $arr.tee ${expr(buf)} ${asInt(expr(idx))} ${asFloat(expr(b))})`, 'f64')
     }
 
     // a = b,  a = (b,c),   a = (b;c,d)

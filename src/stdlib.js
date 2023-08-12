@@ -139,6 +139,7 @@ export const std = {
   "arr.len": `(func $arr.len (param f64) (result i32) (i32.wrap_i64 (i64.and (i64.const 0x0000000000ffffff) (i64.reinterpret_f64 (local.get 0)))))`,
 
   // arr.set(ref, pos, val): writes $val into array, $idx is position in array (not mem address). Returns array ref (for chaining).
+  // FIXME: throw if setting value < length
   "arr.set": `(func $arr.set (param f64 i32 f64) (result f64)\n` +
     // wrap negative idx: if idx < 0 idx = idx %% ref[]
     `(if (i32.lt_s (local.get 1) (i32.const 0)) (then (local.set 1 (call $i32.modwrap (local.get 1) (call $arr.len (local.get 0))))))\n` +

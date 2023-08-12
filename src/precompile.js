@@ -83,6 +83,19 @@ Object.assign(expr, {
     inits = !inits ? [,] : inits[0] === ',' ? inits : [',',inits]
     return ['[',inits]
   },
+  // a[0]
+  '[]'([,a,b]){
+    a=expr(a)
+
+    if (!b) return ['[]',a]
+
+    b=expr(b)
+
+    // a[0,1] -> a[0], a[1]
+    return unroll('[]', a, b) || (
+      ['[]',a,b]
+    )
+  },
 
   '='([,a,b]) {
     b = expr(b)
@@ -116,6 +129,12 @@ Object.assign(expr, {
         unroll('=', ['(',[',',...Array.from({length:n},(b,i)=>`t:${i}`)]], b),
         unroll('=', a, ['(',[',',...Array.from({length:n},(a,i)=>`t:${i}`)]])
       ]]
+    }
+
+    if (a[0]==='[]') {
+      let [,arr,idx]=a
+      idx = expr(idx)
+      a=['[]',arr,idx]
     }
 
     return unroll('=',a,b) || ['=',a,b]

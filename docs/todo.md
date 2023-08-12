@@ -16,7 +16,7 @@
 ## Stage 1
 
 * [x] Add proper scope mechanism (streamline compiler)
-* [ ] case-insensitive
+* [ ] case-insensitive variables
 * [x] merge analyzer into compile
   + the difference between them is unclear, compiler can map expression results
   + compiler follows scopes anyways, easier to merge scope vars if needed
@@ -27,10 +27,13 @@
   * [x] static precalc (no FLOAT/INT in compiler)
   * [x] units
   * [x] normalize args/array cases (), (a), (a,b)
-  * [ ] includes
-  * [ ] ranges
   * [ ] `(drop)` collapse
   * [ ] get rid of `pick` in compiler
+* [ ] strings
+* [ ] static arrays as strings
+* [ ] group read with prop access
+* [ ] group write with prop access
+* [ ] pow operator
 * [x] use f64 everywhere
 * [x] implement array pointer as float64
 * [x] ~~`x=1; x=1.0` - add float dup~~
@@ -42,7 +45,7 @@
 * [x] Change `,` precedence to be under `=` to allow `^a,b,c`, `x?1,2,3:4,5,6`, `a,b<|x,i->x,i`
 * [ ] Include config params properly
 * [ ] Bench sobel https://github.com/mattdesl/wasm-bench
-  * [ ] `(y1, y2) >= height ? (y1, y2) = height - 1` group ops
+  * [x] `(y1, y2) >= height ? (y1, y2) = height - 1` group ops
   * [ ] `(val0, val1) = data[ptr0 + (x, x1)];`
   * [x] `\` comments
   * [ ] optimized array prop access
@@ -53,14 +56,16 @@
   * [x] Units
   * [x] basic maths
   * [x] Comments
-* [ ] Group operators
+* [x] Group operators
   * [x] multiply
-  * [ ] floats
-  * [ ] ints
-  * [ ] binary
-  * [ ] logical
-  * [ ] conditions
+  * [x] floats
+  * [x] ints
+  * [x] binary
+  * [x] logical
+  * [x] conditions
 * [ ] Group operators with unmatching number of args
+* [ ] Group operators with skipped values
+* [ ] Group operators with range
 * [ ] Complex group operators (via heap)
 * [x] CLI
 * [x] get rid of a.1: we can do that via static knowledge
@@ -78,7 +83,7 @@
 * [ ] static arrays via `data` section
 * [ ] loops
   * [x] range loop in range loop
-* [ ] comments: must put comment into a previous token, instead of stripping
+* [x] comments: must put comment into a previous token, instead of stripping
 * [ ] release static arrays if ref is lost, to allocate memory eg `[..100]`
 * [x] implement no-ptr buffer lengths: either i64 or 2 values in stack
 * [x] ~~refactor `pick(N,arg)` into `dup(arg,3)`~~
@@ -101,7 +106,6 @@
 * [ ] All lang reference cases
 * [ ] Nice errors: line number to AST nodes?
 * [ ] Stub all wrong syntax error cases, like `++a=123;` etc - any operators on the lhs of `=` etc., all permutations
-* [ ] pow operator
 * [ ] maths: sin, cos, log, pow etc.
 * [x] *state
   * [x] `*x=[0..10]`
