@@ -133,8 +133,7 @@ m[0..] = m[-1..0];              \ reverse order
 m[0..] = m[1..,0];              \ rotate
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ strings
-hi="hello";                     \ alias for static array
-"\u0020", "\x20";               \ unicode or ascii codes
+hi="Hello, World!\n\t\x22\x27"; \ creates static array (uint8)
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ loops
 a, b, c |> x(@);                \ for each a, b, c do x(item)

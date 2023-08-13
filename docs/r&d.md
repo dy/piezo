@@ -253,7 +253,22 @@ Having wat files is more useful than direct compilation to binary form:
   + Map directly to data
   - convert to arrays
     - `string + string` is pointless
-    -
+
+### [ ] String is array of uint8, but lino supports only f64 numbers. How to read as uint8s?
+
+  1. discard uint8 and just do f64 instead?
+    ~ since strings are static, we at-part know what type it has.
+      - it can be fn argument
+    + the fastest way
+    - non-compact memory to store value
+    - returned UInt8Array doesn't contain string, needs Float64Array
+    + allows easier unicodes store, up to u16
+
+  2. We can write type info into array data: we don't need i32 array addresses.
+    + allows uint8 arrays
+    + we need just 1 bit for that info
+    -~ slows down array access/write a bit
+      - can be a trouble reading big amounts
 
 ## [ ] !? atoms: 'hello' (not string)
   * Atoms are useful for referencing:
@@ -4071,6 +4086,8 @@ Having wat files is more useful than direct compilation to binary form:
   * `[0..10:0.5]`
     - ~~conflicts with~~
     + possible, : is free now
+    + similar to type definition, but more meaningful
+    ? can be used as stride in mem reading as uint8? `x = y[2:ui8]`
   * `[0..20 <| @*0.5]`
     - very verbose
   * `[0..10 / 0.01]`

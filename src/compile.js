@@ -6,7 +6,7 @@ import precompile from './precompile.js';
 import {ids, stringify, err} from './util.js';
 // import {parse as parseWat} from 'watr';
 
-let prevCtx, includes, imports, globals, locals, slocals, funcs, func, exports, heap, mem, returns, config, depth;
+let prevCtx, includes, imports, globals, locals, slocals, funcs, func, exports, datas, heap, mem, returns, config, depth;
 
 // limit of memory is defined as: (max array length i24) / (number of f64 per memory page i13)
 const MAX_MEMORY = 2048
@@ -19,7 +19,7 @@ export default function compile(node, obj) {
   console.log('compile', node)
 
   // save previous compiling context
-  prevCtx = { prevCtx, includes, imports, globals, locals, slocals, funcs, func, exports, heap, mem, returns, config, depth };
+  prevCtx = { prevCtx, includes, imports, globals, locals, slocals, funcs, func, exports, datas, heap, mem, returns, config, depth };
 
   // init compiling context
   // FIXME: make temp vars just part of local scope
@@ -34,8 +34,9 @@ export default function compile(node, obj) {
     returns = null, // returned items from block (collects early returns)
     func = null, // current function that's being initialized
     heap = 0, // heap size as number of pages (detected from max static array size)
-    mem = false, // indicates if memory must be included (heap automatically enables memory)
+    mem = 0, // indicates if memory must be included and how much bytes (heap automatically enables memory)
     depth = 0, // current loop/nested block counter
+    datas = {}, // static-size data sections
     config = obj || {}
 
   // run global in start function
@@ -49,9 +50,16 @@ export default function compile(node, obj) {
   }
 
   if (heap) out += `;;;;;;;;;;;;;;;;;;;;;;;;;;;; Memory: ${heap * 64}Kb heap\n` +
-    `(memory (export "__memory") ${heap} ${MAX_MEMORY})\n(global $__heap (mut i32) (i32.const 0))\n(global $__mem (mut i32) (i32.const ${heap << 16}))\n\n`
+    `(memory (export "__memory") ${heap + Math.ceil(mem / 65536)} ${MAX_MEMORY})\n(global $__heap (mut i32) (i32.const 0))\n(global $__mem (mut i32) (i32.const ${(heap << 16) + mem}))\n\n`
   else if (mem) out += `;;;;;;;;;;;;;;;;;;;;;;;;;;;; Memory\n` +
-    `(memory (export "__memory") 0 ${MAX_MEMORY})\n(global $__mem (mut i32) (i32.const 0))\n\n`
+    `(memory (export "__memory") ${Math.ceil(mem / 65536)} ${MAX_MEMORY})\n(global $__mem (mut i32) (i32.const ${mem}))\n\n`;
+
+  // declare datas
+  for (let data in datas) {out += `;;;;;;;;;;;;;;;;;;;;;;;;;;;; Data\n`; break}
+  for (let data in datas) {
+    out += `(data (i32.const ${data}) "${datas[data]}")\n`
+  }
+  for (let data in datas) {out += `\n`; break}
 
   // declare includes
   if (includes.length) out += `;;;;;;;;;;;;;;;;;;;;;;;;;;;; Includes\n`;
@@ -91,7 +99,7 @@ export default function compile(node, obj) {
   // console.log(...parseWat(out))
 
   // restore previous compiling context
-  ({ prevCtx, includes, imports, globals, funcs, func, locals, slocals, exports, heap, mem, returns, config, depth } = prevCtx);
+  ({ prevCtx, includes, imports, globals, funcs, func, locals, slocals, exports, datas, heap, mem, returns, config, depth } = prevCtx);
   return out
 }
 
@@ -198,9 +206,30 @@ Object.assign(expr, {
 
   // [1,2,3]
   '['([, [,...inits]]) {
+    // if all members are static - create static array
+    // FIXME: make work with nested static arrays as well
+    if (inits.every(x => typeof x[1] === 'number')) {
+      const f64s = new Float64Array(inits.map(x => x[1]))
+      datas[mem] = String.fromCharCode(...(new Uint8Array(f64s.buffer)))
+      const out = op(`(call $arr.ref (i32.const ${mem}) (i32.const ${inits.length}))`, 'f64');
+      mem += inits.length << 3
+      return inc('arr.ref'), out
+    }
+
     // NOTE: this expects heap pointer in stack
     // return buffer initializer
     return buf(inits)
+  },
+
+  '"'([, str]) {
+    // create static array in memory
+    // FIXME: handle unicodes
+    // FIXME: handle escapes
+    // we convert string from uint8 to f64 chars
+    datas[mem] = [...(new TextEncoder()).encode(str)]
+    const out = op(`(call $arr.ref ${mem} ${str.length})`, 'f64')
+    mem += (str.length << 3)
+    return out
   },
 
   // a[b] or a[]
@@ -300,7 +329,7 @@ Object.assign(expr, {
       if (globals[name].state) {
         // state is just region of memory storing sequence of i32s - pointers to memory holding actual state values
         define(name + '.state', 'i32')
-        inc('malloc'), mem = true
+        inc('malloc'), mem = true // FIXME: create proper memory size
         initState = op(`(global.set $${name}.state (call $malloc (i32.const ${globals[name].state.length << 2})))`)
       }
 
@@ -695,7 +724,7 @@ function buf(inits) {
 
   heap = Math.max(heap, 1); // min heap is 8192 elements
 
-  let out = `(global.get $__heap)(local.set $${src})\n` // put heap ptr to stack
+  let out = `(local.set $${src} (global.get $__heap))\n` // put heap ptr to stack
 
   // TODO: if inits don't contain computed ranges or comprehension, we can init memory directly via data section
 
@@ -726,8 +755,9 @@ function buf(inits) {
       // out += `(i32.add ${lop})`;
       // TODO: comprehension - expects heap address in stack, puts loop results into heap
     }
-    // [x*2] - single value (reuses dst as temp holder)
-    else out += `(global.get $__heap)(local.tee $${dst})(f64.store ${asFloat(expr(init))}) (i32.add (local.get $${dst}) (i32.const 8))(global.set $__heap)\n`
+    // [x*2, y] - single value (reuses dst as temp holder)
+    else out += `(f64.store (local.tee $${dst} (global.get $__heap)) ${asFloat(expr(init))})` +
+      `(global.set $__heap (i32.add (local.get $${dst}) (i32.const 8)))\n`
   }
 
   // move buffer to static memory: references static address, deallocates heap tail

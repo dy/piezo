@@ -29,8 +29,9 @@
   * [x] normalize args/array cases (), (a), (a,b)
   * [ ] `(drop)` collapse
   * [ ] get rid of `pick` in compiler
-* [ ] strings
-* [ ] static arrays as strings
+* [ ] strings ~ not sure how
+* [ ] static arrays
+  * [ ] unwrap static ranges as plain sequences
 * [ ] group read with prop access
 * [ ] group write with prop access
 * [ ] pow operator
