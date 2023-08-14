@@ -4480,3 +4480,20 @@ Having wat files is more useful than direct compilation to binary form:
   -~ works on `nan` only: there's no `undefined` state
   -? should all undefined numbers become `nan`s?
   - discrepancy with JS: `NaN ?? 1` gives `NaN`
+
+## [x] should we make heap precompilable, rather than compilable? -> let's try end-allocate strategy
+
+  * `@heap=[..1024], @heap.cur=0`
+  + allows customizing heap via code
+  + allows accessing heap as `@heap[10]`
+  + allows customizing/accessing memory as `@memory=[..100]`
+  + removes need in offsets math
+  + heap is just address in memory, not some hardcoded low-level structure
+  + heap can be dynamic (disposable) - eg. for temporary arrays etc.
+    - if heap is after mem part, then nested dynamic arrays create too many memcpy ops
+    + dynamic heaps extend nested memory limits
+
+  ALT: not sure about precompilable, but we can allocate arrays at the end
+    + end-allocation has worst-case same memory as max heap-size arrays would require
+    + it doesn't require memcopy for flat dynamic arrays
+    + it requires same or less amount of memcopy than head-heap would, since first layer is skipped

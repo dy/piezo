@@ -52,8 +52,15 @@ Object.assign(expr, {
     return list.length > 1 ? [';', ...list] : list[0]
   },
   ','(node) {
-    for (let i = 1; i < node.length; i++) node[i] = expr(node[i])
-    return node
+    return node.flatMap((a,i) => {
+      if (!i) return [a]
+      a = expr(a)
+      if (a[0]==='(') {
+        // (a,b,(c,d)) -> (a,b,c,d)
+        if (a[0][1] === ',') return a[0][1].slice(1)
+      }
+      return [a]
+    })
   },
   '.'([,a]) {
     return ['.',expr(a)]
@@ -67,6 +74,8 @@ Object.assign(expr, {
     if (a[0] === '(') return a
     // (0.5) -> 0.5
     if (typeof a[1] === 'number') return a
+    // (0..10) -> 0..10
+    if (a[1]==='..') return a
     return ['(',a]
   },
 
@@ -79,10 +88,45 @@ Object.assign(expr, {
   // [1,2,3]
   '['([,inits]) {
     inits = expr(inits)
+
     // normalize to [,] form
     inits = !inits ? [,] : inits[0] === ',' ? inits : [',',inits]
+
+    // FIXME: [0..10 <| xxx, 0..4, (1,2,3) <| xxx] - convert to static inits
+
+    // FIXME
+    // detect if array has dynamic-length parts: [a <| ..., (0..10 <| ^;), a ? x,y : x,y,z, a..b, ..b]
+    // if (inits.some(a => (a[0]==='<|' && typeof a[1][1] === 'number') || (a[0]==='..') ))
+    // in other words: if elements are something but static numbers
+    // [1, x*2, 3, [2]] -> [1, , 3, ][1,3] = (x*2, [2])
+    // const post = [], pre = []
+    // for (let i = 0; i < inits; i++) {
+    //   const item = inits[i]
+    //   if (typeof item[0] !== 'number')
+    // }
+    // NOTE: it can be problematic to introduce tmp variables, mb it's better to just do in compiler direct write to memory
+
     return ['[',inits]
   },
+
+  '..'([,a,b]) {
+    // ..b
+    if (!a) return ['..',[FLOAT,-Infinity],expr(b)]
+    // a..
+    if (!b) return ['..',expr(a),[FLOAT,Infinity]]
+    // a..b
+    a=expr(a), b=expr(b)
+    return ['..',a,b]
+  },
+  '<|'([,a,b]) {
+    a = expr(a), b = expr(b)
+
+    // FIXME: 1..10 -> 1,2,3,4,5,6,7,8,9
+    // if (typeof a[1] === 'number' && typeof b[1] === 'number' && Math.abs(b[1]-a[1]) < 108) {
+    // }
+    return ['<|', a, b]
+  },
+
   // a[0]
   '[]'([,a,b]){
     a=expr(a)

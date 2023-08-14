@@ -9,15 +9,6 @@ import {INT,FLOAT} from '../src/const.js'
 // import Wabt from 'wabt'
 
 
-function clean (str) {
-	if (Array.isArray(str)) str = String.raw.apply(String, arguments)
-	return str.trim()
-    .replace(/^\s*\n/gm, '') //remove empty lines
-    .replace(/^\s*/gm, '') //remove indentation/tabulation
-    .replace(/[\n\r]+/g, '\n') //transform all \r to \n
-    .replace(/(\s)\s+/g, '$1') //replace duble spaces/tabs to single ones
-}
-
 // convert wast code to binary
 const wabt = await Wabt()
 export function compileWat (code, imports={}) {
@@ -62,6 +53,13 @@ export function compileWat (code, imports={}) {
 
   // async instance
   // return WebAssembly.instantiate(binary.buffer, config)
+}
+
+// get length or an array
+function len(n) {
+  let data = new DataView(new ArrayBuffer(8))
+  data.setFloat64(0, n)
+  return data.getInt32(4)
 }
 
 t('compile: comments', t => {
@@ -268,16 +266,15 @@ t('compile: function shadows global args', t => {
   is(mod.instance.exports.a.value, 1)
 })
 
-t.todo('debugs', t => {
+t.skip('debugs', t => {
   const memory = new WebAssembly.Memory({ initial: 1 });
   const importObject = { x: { y: ()=>123, z:123 }};
   let {instance} = compileWat(`
-    (import "x" "y" (func $xy (result i32)))
-    (import "x" "z" (global $xy i32))
     (memory (export "__memory") 1 2048)
-    (export "xy" (func $xy))
-  `, importObject)
-  console.log(instance)
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;; Data
+    (data (i32.const 0) "\\")`, importObject)
+  console.log(new Uint8Array(instance.exports.__memory.buffer))
   // instance.exports.x(instance.exports.x(instance.exports.cb))
 })
 
@@ -405,22 +402,33 @@ t('compile: group ops cases', t => {
   // mod = compileWat(wat)
 })
 
-t('compile: list basic', t => {
-  let wat = compile(`x = [1, 2, 3], y = [4,5,6,7]; x,y,xl=x[],yl=y[].`)
+t.todo('compile: strings', t => {
+  let wat = compile(`x = "abc".`)
   // console.log(wat)
   let mod = compileWat(wat)
+  let {__memory:memory, x} = mod.instance.exports
+
+  let xarr = new Uint8Array(memory.buffer, x.value, 3)
+
+  is(xarr[0], 21,'a')
+  is(xarr[1], 22,'b')
+})
+
+t('compile: list basic', t => {
+  let wat = compile(`x = [1.1, 2.22, 3.333], y = [4.1234,5.54321,654321.123456,7.7777777]; x,y,xl=x[],yl=y[].`)
+  let mod = compileWat(wat)
   let {__memory:memory, x, y, xl, yl} = mod.instance.exports
+  console.log(new Uint8Array(memory.buffer))
   let xarr = new Float64Array(memory.buffer, x.value, 3)
-  // let i32s = new Int32Array(memory.buffer, 0)
-  is(xarr[0], 1,'x0')
-  is(xarr[1], 2,'x1')
-  is(xarr[2], 3,'x2')
+  is(xarr[0], 1.1,'x0')
+  is(xarr[1], 2.22,'x1')
+  is(xarr[2], 3.333,'x2')
   is(xl.value,3,'xlen')
   let yarr = new Float64Array(memory.buffer, y.value, 4)
-  is(yarr[0], 4,'y0')
-  is(yarr[1], 5,'y1')
-  is(yarr[2], 6,'y2')
-  is(yarr[3], 7,'y3')
+  is(yarr[0], 4.1234,'y0')
+  is(yarr[1], 5.54321,'y1')
+  is(yarr[2], 654321.123456,'y2')
+  is(yarr[3], 7.7777777,'y3')
   is(yl.value,4,'ylen')
 })
 
@@ -463,26 +471,27 @@ t.todo('compile: lists from invalid ranges', t => {
 })
 
 t('compile: lists nested static', t => {
-  let wat = compile(`x=[1, y=[2, z=[3]]], y, z, w=[1,2], xl=x[], yl=y[], zl=z[], wl=w[].`)
-  // let wat = compile(`x=[1,[2]].`)
+  let wat = compile(`x=[1, y=[2, [3,3.14]]], w=[4,5].`)
+  // let wat = compile(`y=[2], x=[1, y], w=[4,5].`)
   // console.log(wat)
   let mod = compileWat(wat)
-  let {__memory:memory, x, y, z, xl, yl, zl, w, wl} = mod.instance.exports
+  let {__memory:memory, x, y, w} = mod.instance.exports
+  console.log(new Float64Array(memory.buffer))
   let xarr = new Float64Array(memory.buffer, x.value, 10)
   is(xarr[0], 1,'x0')
   is(xarr[1], y.value,'x1')
-  is(xl.value, 2,'xlen')
+  is(len(x.value), 2,'xlen')
   let yarr = new Float64Array(memory.buffer, y.value, 3)
   is(yarr[0], 2,'y0')
-  is(yarr[1], z.value,'y1')
-  is(yl.value, 2,'ylen')
-  let zarr = new Float64Array(memory.buffer, z.value, 3)
+  is(len(y.value), 2,'ylen')
+  let zarr = new Float64Array(memory.buffer, yarr[1], 3)
   is(zarr[0], 3,'z0')
-  is(zl.value, 1,'zlen')
+  is(zarr[1], 3.14,'z1')
+  is(len(yarr[1]), 2,'zlen')
   let warr = new Float64Array(memory.buffer, w.value, 3)
-  is(warr[0], 1,'w0')
-  is(warr[1], 2,'w1')
-  is(wl.value, 2,'wlen')
+  is(len(w.value), 2,'wlen')
+  is(warr[0], 4,'w0')
+  is(warr[1], 5,'w1')
 })
 
 t.todo('compile: list comprehension', t => {
