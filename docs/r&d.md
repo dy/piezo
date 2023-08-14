@@ -250,11 +250,13 @@ Having wat files is more useful than direct compilation to binary form:
   - Case-sensitivize code
   + Floatbeats use strings
   + Static precompiler can convert static arrays to strings
+    - not really, it converts them to data sections, which is not string
   + Map directly to data
   - convert to arrays
-    - `string + string` is pointless
-    - many overloaded ops is impossible to implement
-    - `\\ab\\bc` is same as `[0xab,0xbc]`
+  - `string + string` is pointless
+  - many overloaded ops is impossible to implement
+  - `\\ab\\bc` in wat is same as `[0xab,0xbc]`
+  - not clear how to maintain uint8 array, since it is what string creates. Implementation complexity
 
   ALT: can we introduce alternative syntax for HEX/data?
     * `{0xabaababa13241abbabaabbabab123451236546389}` or something like
