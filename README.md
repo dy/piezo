@@ -132,9 +132,6 @@ m[1,2] = m[2,1];                \ rearrange
 m[0..] = m[-1..0];              \ reverse order
 m[0..] = m[1..,0];              \ rotate
 
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ strings
-hi="Hello, World!\n\t\x22\x27"; \ creates static array (uint8)
-
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ loops
 a, b, c |> x(@);                \ for each a, b, c do x(item)
 10.. |> (                       \ iterate over range
@@ -157,6 +154,8 @@ x, y, z.                        \ export (from global scope)
 ```
 
 <!--
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ strings
+hi="Hello, World!\n\t\x22\x27"; \ creates static array (uint8)
 string="{hi} world";            \ interpolate: "hello world"
 string[1];                      \ positive indexing from first element [0]: 'e'
 string[-3];                     \ negative indexing from last element [-1]: 'r'

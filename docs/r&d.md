@@ -243,7 +243,7 @@ Having wat files is more useful than direct compilation to binary form:
     → sets can be listed as `(a,b,c)` ()
       ⇒ or even better, as functional languages do: `type in a|b|c`
 
-## [ ] Strings -> let's try
+## [ ] Strings ->
 
   * Erlang-like "hello" === [104,101,108,108,111]
     + Standard
@@ -253,6 +253,11 @@ Having wat files is more useful than direct compilation to binary form:
   + Map directly to data
   - convert to arrays
     - `string + string` is pointless
+    - many overloaded ops is impossible to implement
+    - `\\ab\\bc` is same as `[0xab,0xbc]`
+
+  ALT: can we introduce alternative syntax for HEX/data?
+    * `{0xabaababa13241abbabaabbabab123451236546389}` or something like
 
 ### [ ] String is array of uint8, but lino supports only f64 numbers. How to read as uint8s?
 

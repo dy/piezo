@@ -29,12 +29,12 @@
   * [x] normalize args/array cases (), (a), (a,b)
   * [ ] `(drop)` collapse
   * [ ] get rid of `pick` in compiler
-* [ ] strings ~ not sure how
-* [ ] static arrays
+* [x] static arrays
   * [ ] unwrap static ranges as plain sequences
 * [ ] group read with prop access
 * [ ] group write with prop access
 * [ ] pow operator
+* [ ] strings ~ not sure how, besides downside for i18l code
 * [x] use f64 everywhere
 * [x] implement array pointer as float64
 * [x] ~~`x=1; x=1.0` - add float dup~~
@@ -49,7 +49,7 @@
   * [x] `(y1, y2) >= height ? (y1, y2) = height - 1` group ops
   * [ ] `(val0, val1) = data[ptr0 + (x, x1)];`
   * [x] `\` comments
-  * [ ] optimized array prop access
+  * [ ] optimized array prop access (track static vars / static-length arrays)
   * [ ] `..=` inclusive ranges
 * [ ] Bench biquad
   * [ ] Clamp args
