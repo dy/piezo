@@ -86,7 +86,7 @@ export const std = {
     `(local.get 1)\n` +
   `)`,
 
-  // fill mem area at offset with range values from, to via step param; returns ptr to last address
+  // fill mem area at @offset with range values @from, @to via @step param; returns ptr to address after range
   "range":
   `(func $range (param i32 f64 f64 f64) (result i32)\n` +
     `(local.get 0)(local.get 1)(local.get 2)(local.get 3)\n` +

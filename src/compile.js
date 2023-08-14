@@ -31,7 +31,7 @@ export default function compile(node, obj) {
   exports = {}, // items to export
   returns = null, // returned items from block (collects early returns)
   func = null, // current function that's being initialized
-  mem = 0, // indicates if memory must be included and how much bytes
+  mem = false, // indicates if memory must be included and how much bytes
   depth = 0, // current loop/nested block counter
   datas = {}, // static-size data sections
   config = obj || {}
@@ -46,7 +46,7 @@ export default function compile(node, obj) {
     out += `\n`
   }
 
-  if (mem) out += `;;;;;;;;;;;;;;;;;;;;;;;;;;;; Memory\n` +
+  if (mem !== false) out += `;;;;;;;;;;;;;;;;;;;;;;;;;;;; Memory\n` +
     `(memory (export "__memory") ${Math.ceil(mem / 65536)} ${MAX_MEMORY})\n(global $__mem (mut i32) (i32.const ${mem}))\n\n`;
 
   // declare datas
@@ -201,11 +201,16 @@ Object.assign(expr, {
 
   // [1,2,3]
   '['([, [,...inits]]) {
+    mem ||= 0
+
+    // [] - skip
+    if (!inits.length) return op('(f64.const 0)','f64')
+
     depth++
 
-    // if all members are static - create static array
+    // [1,2,3] - static array
     // FIXME: make work with nested static arrays as well: [1,[2,x=[3,]]]
-    if ((function isStatic ([,...inits]) {
+    if ((function isStatic (inits) {
       return inits.every(x => typeof x[1] === 'number' || (x[0] === '[' && isStatic(x.slice(1)), false))
     })(inits)) {
       const f64s = new Float64Array(inits.map(x => x[1]))
@@ -224,22 +229,18 @@ Object.assign(expr, {
     for (let init of inits) {
       // [a..b], [..b]
       if (init[0] === '..') {
-        err('Unimplemented')
         let [, min, max] = init
-        if (!max) err('Arrays cannot be constructed from right-open ranges, TODO passed')
+        if (max[1] === Infinity) err('Arrays cannot be constructed from right-open ranges, TODO passed')
 
         // [..1] - just skips heap
-        if (!min && typeof max[1] === 'number') {
-          out += `(global.get $__heap)(i32.add (i32.shl (i32.const ${max[1]}) (i32.const 3)))(global.set $__heap)\n`
-          heap = Math.max(heap, (max[1] - 1 >> 13) + 1) // increase heap
+        if (min[1] === -Infinity && typeof max[1] === 'number') {
+          out += `(local.set $${end} (i32.add (local.get $${end})(i32.const ${max[1] << 3})))\n`
         }
         // [x..y] - generic computed range
         else {
           inc('range')
-          // increase heap
-          if (typeof min[1] === 'number' && typeof max[1] === 'number') heap = Math.max(heap, ((max[1] - min[1] - 1) >> 13) + 1)
           // create range in memory from ptr in stack
-          out += `(global.get $__heap)(call $range ${asFloat(expr(min))} ${asFloat(expr(max))} (f64.const 1))(global.set $__heap)\n`
+          out += `(local.set $${end} (call $range (local.get $${end}) ${asFloat(expr(min))} ${asFloat(expr(max))} (f64.const 1)))\n`
         }
       }
       // [a..b <| ...] - comprehension
@@ -255,7 +256,7 @@ Object.assign(expr, {
     }
 
     // move buffer to static memory: references static address, deallocates heap tail
-    inc('malloc'), inc('arr.ref'), mem ||= 0
+    inc('malloc'), inc('arr.ref')
 
     out +=
       // deallocate memory
