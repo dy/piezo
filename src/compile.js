@@ -222,8 +222,8 @@ Object.assign(expr, {
       return inc('arr.ref'), out
     }
 
-    let start = define(`start:${depth}`, 'i32'), end = define(`end:${depth}`, 'i32')
-    let out = `(local.set $${end} (local.tee $${start} (call $malloc (i32.const ${HEAP_SIZE}))))\n` // allocate array of HEAP_SIZE (trimmed after)
+    let start = define(`start:${depth}`, 'i32'), cur = define(`cur:${depth}`, 'i32')
+    let out = `(local.set $${cur} (local.tee $${start} (call $malloc (i32.const ${HEAP_SIZE}))))\n` // allocate array of HEAP_SIZE (trimmed after)
 
     // each element saves value to memory and increases heap pointer in stack
     for (let init of inits) {
@@ -234,13 +234,13 @@ Object.assign(expr, {
 
         // [..1] - just skips heap
         if (min[1] === -Infinity && typeof max[1] === 'number') {
-          out += `(local.set $${end} (i32.add (local.get $${end})(i32.const ${max[1] << 3})))\n`
+          out += `(local.set $${cur} (i32.add (local.get $${cur})(i32.const ${max[1] << 3})))\n`
         }
         // [x..y] - generic computed range
         else {
           inc('range')
           // create range in memory from ptr in stack
-          out += `(local.set $${end} (call $range (local.get $${end}) ${asFloat(expr(min))} ${asFloat(expr(max))} (f64.const 1)))\n`
+          out += `(local.set $${cur} (call $range (local.get $${cur}) ${asFloat(expr(min))} ${asFloat(expr(max))} (f64.const 1)))\n`
         }
       }
       // [a..b <| ...] - comprehension
@@ -251,8 +251,8 @@ Object.assign(expr, {
         // TODO: comprehension - expects heap address in stack, puts loop results into heap
       }
       // [x*2, y] - single value
-      // FIXME: can be unwrapped in precompiler as @memory[end++] = init;
-      else out += `(f64.store (i32.sub (local.tee $${end} (i32.add (local.get $${end}) (i32.const 8))) (i32.const 8)) ${asFloat(expr(init))})\n`
+      // FIXME: can be unwrapped in precompiler as @memory[cur++] = init;
+      else out += `(f64.store (i32.sub (local.tee $${cur} (i32.add (local.get $${cur}) (i32.const 8))) (i32.const 8)) ${asFloat(expr(init))})\n`
     }
 
     // move buffer to static memory: references static address, deallocates heap tail
@@ -260,9 +260,9 @@ Object.assign(expr, {
 
     out +=
       // deallocate memory
-      `(global.set $__mem (local.get $${end}))\n` +
+      `(global.set $__mem (local.get $${cur}))\n` +
       // create array reference
-      `(call $arr.ref (local.get $${start}) (i32.shr_u (i32.sub (local.get $${end}) (local.get $${start})) (i32.const 3)))\n`
+      `(call $arr.ref (local.get $${start}) (i32.shr_u (i32.sub (local.get $${cur}) (local.get $${start})) (i32.const 3)))\n`
 
     // FIXME: defragment (move) internal arrays, now each array has heap size
 
