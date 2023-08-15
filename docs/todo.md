@@ -34,7 +34,6 @@
 * [ ] group read with prop access
 * [ ] group write with prop access
 * [ ] pow operator
-* [ ] strings ~ not sure how, besides downside for i18l code
 * [x] use f64 everywhere
 * [x] implement array pointer as float64
 * [x] ~~`x=1; x=1.0` - add float dup~~
