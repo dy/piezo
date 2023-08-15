@@ -3,7 +3,7 @@ import { FLOAT, INT } from './const.js';
 import parse from './parse.js';
 import stdlib from './stdlib.js';
 import precompile from './precompile.js';
-import {ids, stringify, err, u82s} from './util.js';
+import { ids, stringify, err, u82s } from './util.js';
 // import {parse as parseWat} from 'watr';
 
 let prevCtx, includes, imports, globals, locals, slocals, funcs, func, exports, datas, mem, returns, config, depth;
@@ -23,18 +23,18 @@ export default function compile(node, obj) {
 
   // init compiling context
   globals = {}, // global scope (as name props)
-  slocals = {}, // start fn local scope
-  locals = null, // current fn local scope
-  includes = [], // pieces of wasm to inject
-  imports = [], // imported statements (regardless of libs) - funcs/globals/memory
-  funcs = {}, // defined user and util functions
-  exports = {}, // items to export
-  returns = null, // returned items from block (collects early returns)
-  func = null, // current function that's being initialized
-  mem = false, // indicates if memory must be included and how much bytes
-  depth = 0, // current loop/nested block counter
-  datas = {}, // static-size data sections
-  config = obj || {}
+    slocals = {}, // start fn local scope
+    locals = null, // current fn local scope
+    includes = [], // pieces of wasm to inject
+    imports = [], // imported statements (regardless of libs) - funcs/globals/memory
+    funcs = {}, // defined user and util functions
+    exports = {}, // items to export
+    returns = null, // returned items from block (collects early returns)
+    func = null, // current function that's being initialized
+    mem = false, // indicates if memory must be included and how much bytes
+    depth = 0, // current loop/nested block counter
+    datas = {}, // static-size data sections
+    config = obj || {}
 
   // run global in start function
   let init = expr(node).trim(), out = ``
@@ -50,11 +50,11 @@ export default function compile(node, obj) {
     `(memory (export "__memory") ${Math.ceil(mem / 65536)} ${MAX_MEMORY})\n(global $__mem (mut i32) (i32.const ${mem}))\n\n`;
 
   // declare datas
-  for (let data in datas) {out += `;;;;;;;;;;;;;;;;;;;;;;;;;;;; Data\n`; break}
+  for (let data in datas) { out += `;;;;;;;;;;;;;;;;;;;;;;;;;;;; Data\n`; break }
   for (let data in datas) {
     out += `(data (i32.const ${data}) "${datas[data]}")\n`
   }
-  for (let data in datas) {out += `\n`; break}
+  for (let data in datas) { out += `\n`; break }
 
   // declare includes
   if (includes.length) out += `;;;;;;;;;;;;;;;;;;;;;;;;;;;; Includes\n`;
@@ -183,7 +183,7 @@ Object.assign(expr, {
   },
 
   // a()
-  '()'([, name, [,...args]]) {
+  '()'([, name, [, ...args]]) {
     if (!globals[name]) err('Unknown function call: ' + name)
 
     // FIXME: make sure default args are gotten values?
@@ -191,8 +191,8 @@ Object.assign(expr, {
 
     // if internal call is stateful, the current function becomes stateful either
     if (state) {
-      const callerState = globals[func].state ||= []
-        ; (globals[func].substate ||= {})[name] = callerState.length // save offset within caller state
+      const callerState = globals[func].state ||= [];
+      ; (globals[func].substate ||= {})[name] = callerState.length // save offset within caller state
       callerState.length += state.length
     }
 
@@ -200,26 +200,37 @@ Object.assign(expr, {
   },
 
   // [1,2,3]
-  '['([, [,...inits]]) {
+  '['([, [, ...inits]]) {
     mem ||= 0
 
     // [] - skip
-    if (!inits.length) return op('(f64.const 0)','f64')
+    if (!inits.length) return op('(f64.const 0)', 'f64')
 
     depth++
 
     // [1,2,3] - static array
     // FIXME: make work with nested static arrays as well: [1,[2,x=[3,]]]
-    if ((function isStatic (inits) {
+    if ((function isStatic(inits) {
       return inits.every(x => typeof x[1] === 'number' || (x[0] === '[' && isStatic(x.slice(1)), false))
     })(inits)) {
       const f64s = new Float64Array(inits.map(x => x[1]))
       const offset = mem
       mem += f64s.length << 3
       datas[offset] = u82s(new Uint8Array(f64s.buffer))
-      const out = op(`(call $arr.ref (i32.const ${offset}) (i32.const ${f64s.length}))`, 'f64');
+
       depth--
-      return inc('arr.ref'), out
+      // x()=([1,2,3]) must allocate new instance every time
+      if (func) {
+        let tmp = define(`arr:${depth}`,'i32')
+        return inc('malloc'), inc('arr.ref'), op(
+          `(local.set $${tmp} (call $malloc (i32.const ${f64s.length << 3})))` +
+          `(memory.copy (local.get $${tmp}) (i32.const ${offset}) (i32.const ${f64s.length << 3}))` +
+          `(call $arr.ref (local.get $${tmp}) (i32.const ${f64s.length}))`
+        , 'f64')
+      }
+      else  {
+        return inc('arr.ref'), op(`(call $arr.ref (i32.const ${offset}) (i32.const ${f64s.length}))`, 'f64')
+      }
     }
 
     let start = define(`start:${depth}`, 'i32'), cur = define(`cur:${depth}`, 'i32')
@@ -290,7 +301,8 @@ Object.assign(expr, {
 
     // a[0] - static index read
     if (typeof b[1] === 'number') {
-      console.log('read', a, b)
+      if (b[1] >= 0) return op(`(f64.load (i32.add (i32.trunc_f64_u ${expr(a)}) (i32.const ${b[1] << 3})))`, 'f64')
+      // FIXME: read negative number if array length is known
     }
 
     // a[b] - regular access
@@ -320,7 +332,7 @@ Object.assign(expr, {
 
     // x(a,b) = y
     if (a[0] === '()') {
-      let [, name, [,...args]] = a, body = b, inits = [], result, dfn = [], prepare = [], defer = []
+      let [, name, [, ...args]] = a, body = b, inits = [], result, dfn = [], prepare = [], defer = []
 
       // functions defined within scope of other functions, `x()=(y(a)=a;)`
       if (locals) err('Declaring local function `' + name + '`: not allowed');
@@ -426,17 +438,17 @@ Object.assign(expr, {
         `(local.set $${end} ${asFloat(expr(max))})\n` +
         body.type.map(t => `(${t}.const 0)`).join('') + '\n' + // init result values
         `(loop (param ${type}) (result ${type})\n` +
-          `(if (param ${type}) (result ${type}) (f64.le ${get(idx)} (local.get $${end}))\n` + // if (@ < end)
-            `(then\n` +
-              `${`(drop)`.repeat(body.type.length)}\n` +
-              `${set(cur, get(idx))} \n` +
-              `${body}\n` +
-              `${set(idx, op(`(f64.add ${get(idx)} (f64.const 1))`, 'f64'))}\n` +
-              // FIXME: step can be adjustable
-              // `(call $f64.log (global.get $${idx}))` +
-              `(br 1)\n` +
-            `)` +
-          `)` +
+        `(if (param ${type}) (result ${type}) (f64.le ${get(idx)} (local.get $${end}))\n` + // if (@ < end)
+        `(then\n` +
+        `${`(drop)`.repeat(body.type.length)}\n` +
+        `${set(cur, get(idx))} \n` +
+        `${body}\n` +
+        `${set(idx, op(`(f64.add ${get(idx)} (f64.const 1))`, 'f64'))}\n` +
+        // FIXME: step can be adjustable
+        // `(call $f64.log (global.get $${idx}))` +
+        `(br 1)\n` +
+        `)` +
+        `)` +
         `)`
 
       depth--
@@ -483,10 +495,10 @@ Object.assign(expr, {
           `(locals.tee $${item} (call $arr.get (local.get $${src}) (local.get $${idx})))\n` +
           `(if (param f64) (result f64) (i32.le_u (local.get $${idx}) (local.get $${len}))\n` +
           `(then\n` +
-            `${expr(b)}\n` +
-            `(local.set $${idx} (i32.add (local.get $${idx}) (i32.const 1)))\n` +
-            // `(call $f64.log (global.get $${item}))` +
-            `(br 1)\n` +
+          `${expr(b)}\n` +
+          `(local.set $${idx} (i32.add (local.get $${idx}) (i32.const 1)))\n` +
+          // `(call $f64.log (global.get $${item}))` +
+          `(br 1)\n` +
           `)\n` +
           `))\n`
       }
@@ -526,6 +538,7 @@ Object.assign(expr, {
     // stateful variable
     if (!b) {
       if (!func) err('State variable declared outside of function')
+
       const state = globals[func].state ||= []
 
       // *i;
@@ -534,34 +547,37 @@ Object.assign(expr, {
         state.push(a)
         return;
       }
+
       // *i=10; *i=[0..10];
       if (a[0] === '=') {
         let [, name, init] = a
         name = define(name);
         inc('malloc'), mem ||= 0
 
-        let ptr = define(name + '.adr', 'i32'), // ptr stores variable memory address
+        let ptr = define(name + '.cur', 'i32'), // i.cur points to state instance + offset
+          adr = define(name + '.adr', 'i32'), // i.adr stores address of variable value
           stateName = func + `.state`,
           res =
             // first calculate state cell
-            `(local.set $${ptr} (i32.add (global.get $${stateName}) (i32.const ${state.length << 2})))\n` +
+            `(local.set $${adr} ${ state.length ? `(i32.add (global.get $${stateName}) (i32.const ${state.length << 2}))` : `(global.get $${stateName})` })\n` +
             // if pointer is zero - init state
-            `(if (result f64) (i32.eqz (i32.load (local.get $${ptr})))\n` +
+            `(if (result f64) (i32.eqz (i32.load (local.get $${adr})))\n` +
             `(then\n` +
             // allocate memory for a single variable
-            `(i32.store (local.get $${ptr}) (local.tee $${ptr} (call $malloc (i32.const 8))))\n` +
+            `(i32.store (local.get $${adr}) (local.tee $${adr} (call $malloc (i32.const 8))))\n` +
             // initialize value in that location (saved to memory by fn defer)
             `(local.tee $${name} ${asFloat(expr(init))})\n` +
             `)\n` +
             `(else \n` +
             // local variable from state ptr
-            `(local.tee $${name} (f64.load (local.tee $${ptr} (i32.load (local.get $${ptr})))))\n` +
+            `(local.tee $${name} (f64.load (local.tee $${adr} (i32.load (local.get $${adr})))))\n` +
             `)` +
             `)\n`
 
         state.push(name);
         return op(res, 'f64');
       }
+
       // *(i,j)=10,20;
       err('State variable: unimplemented')
     }

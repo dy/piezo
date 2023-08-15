@@ -1,4 +1,4 @@
-import {INT,FLOAT} from './const.js';
+import { INT, FLOAT } from './const.js';
 import { err, ids, intersect } from './util.js';
 
 // Static optimizations, denormalizations etc.
@@ -6,11 +6,11 @@ import { err, ids, intersect } from './util.js';
 
 let units, prev
 
-export default function precompile (node) {
-  prev = {units};
+export default function precompile(node) {
+  prev = { units };
   units = {}; // currently defined units
   const result = expr(node);
-  ({units} = prev);
+  ({ units } = prev);
   return result
 }
 
@@ -37,11 +37,11 @@ function applyUnits(n, unit, ext) {
 // + allows simpler optimized walk-through
 // + allows more precise errors
 Object.assign(expr, {
-  [FLOAT]([,n,unit,ext]){
+  [FLOAT]([, n, unit, ext]) {
     if (unit) return applyUnits(n, unit, ext)
     return [FLOAT, n]
   },
-  [INT]([,n,unit,ext]){
+  [INT]([, n, unit, ext]) {
     if (unit) return applyUnits(n, unit, ext)
     return [INT, n]
   },
@@ -52,21 +52,21 @@ Object.assign(expr, {
     return list.length > 1 ? [';', ...list] : list[0]
   },
   ','(node) {
-    return node.flatMap((a,i) => {
+    return node.flatMap((a, i) => {
       if (!i) return [a]
       a = expr(a)
-      if (a[0]==='(') {
+      if (a[0] === '(') {
         // (a,b,(c,d)) -> (a,b,c,d)
         if (a[0][1] === ',') return a[0][1].slice(1)
       }
       return [a]
     })
   },
-  '.'([,a]) {
-    return ['.',expr(a)]
+  '.'([, a]) {
+    return ['.', expr(a)]
   },
 
-  '('([,a]) {
+  '('([, a]) {
     a = expr(a)
     // a=() -> a=()
     if (!a) return ['(']
@@ -75,50 +75,50 @@ Object.assign(expr, {
     // (0.5) -> 0.5
     if (typeof a[1] === 'number') return a
     // (0..10) -> 0..10
-    if (a[1]==='..') return a
-    return ['(',a]
+    if (a[1] === '..') return a
+    return ['(', a]
   },
 
   // f(a,b,c)
-  '()'([,name,args]) {
-    args = !args ? [,] : args[0] === ',' ? args : [',',args]
+  '()'([, name, args]) {
+    args = !args ? [,] : args[0] === ',' ? args : [',', args]
     return ['()', name, args]
   },
 
   // [1,2,3]
-  '['([,inits]) {
+  '['([, inits]) {
     inits = expr(inits)
 
     // normalize to [,] form
-    inits = !inits ? [,] : inits[0] === ',' ? inits : [',',inits]
+    inits = !inits ? [,] : inits[0] === ',' ? inits : [',', inits]
 
-    // FIXME: [0..10 <| xxx, 0..4, (1,2,3) <| xxx] - convert to static inits
+    // FIXME: [0..10 <| xxx, (1,2,3) <| xxx] - can be converted to static inits
+    inits = inits.flatMap((el, i) => {
+      if (!i) return [el]
+      // [1..4] -> [1,2,3]
+      if (el[0] === '..' && typeof el[1][1] === 'number' && typeof el[2][1] === 'number' && Math.abs(el[2][1] - el[1][1]) < 108) {
+        let from = el[1][1], to = el[2][1], step = 1, els = []
+        if (from === -Infinity) for (let i = 0; i < to; i += step) els.push([FLOAT, 0])
+        else if (from < to) for (let i = from; i < to; i += step) els.push([FLOAT, i])
+        else for (let i = from; i > to; i -= step) els.push([FLOAT, i])
+        return els
+      }
+      return [el]
+    })
 
-    // FIXME
-    // detect if array has dynamic-length parts: [a <| ..., (0..10 <| ^;), a ? x,y : x,y,z, a..b, ..b]
-    // if (inits.some(a => (a[0]==='<|' && typeof a[1][1] === 'number') || (a[0]==='..') ))
-    // in other words: if elements are something but static numbers
-    // [1, x*2, 3, [2]] -> [1, , 3, ][1,3] = (x*2, [2])
-    // const post = [], pre = []
-    // for (let i = 0; i < inits; i++) {
-    //   const item = inits[i]
-    //   if (typeof item[0] !== 'number')
-    // }
-    // NOTE: it can be problematic to introduce tmp variables, mb it's better to just do in compiler direct write to memory
-
-    return ['[',inits]
+    return ['[', inits]
   },
 
-  '..'([,a,b]) {
+  '..'([, a, b]) {
     // ..b
-    if (!a) return ['..',[FLOAT,-Infinity],expr(b)]
+    if (!a) return ['..', [FLOAT, -Infinity], expr(b)]
     // a..
-    if (!b) return ['..',expr(a),[FLOAT,Infinity]]
+    if (!b) return ['..', expr(a), [FLOAT, Infinity]]
     // a..b
-    a=expr(a), b=expr(b)
-    return ['..',a,b]
+    a = expr(a), b = expr(b)
+    return ['..', a, b]
   },
-  '<|'([,a,b]) {
+  '<|'([, a, b]) {
     a = expr(a), b = expr(b)
 
     // FIXME: 1..10 -> 1,2,3,4,5,6,7,8,9
@@ -128,34 +128,34 @@ Object.assign(expr, {
   },
 
   // a[0]
-  '[]'([,a,b]){
-    a=expr(a)
+  '[]'([, a, b]) {
+    a = expr(a)
 
-    if (!b) return ['[]',a]
+    if (!b) return ['[]', a]
 
-    b=expr(b)
+    b = expr(b)
 
     // a[0,1] -> a[0], a[1]
     return unroll('[]', a, b) || (
-      ['[]',a,b]
+      ['[]', a, b]
     )
   },
 
-  '='([,a,b]) {
+  '='([, a, b]) {
     b = expr(b)
 
     // ignore fns a()
     // FIXME: can handle better: collect args, returns etc.
-    if (a[0]==='()') {
+    if (a[0] === '()') {
       // normalize body to (a;b;) form
       b = b[0] === '(' ? b : ['(', b]
       b[1] = !b[1] ? [';'] : b[1][0] === ';' ? b[1] : [';', b[1]]
 
       // normalize args list
-      let [,name,args] = a
-      args = !args ? [,] : args[0] === ',' ? args : [',',args];
+      let [, name, args] = a
+      args = !args ? [,] : args[0] === ',' ? args : [',', args];
 
-      return ['=',['()',name,args],b]
+      return ['=', ['()', name, args], b]
     }
 
     // 1k = expr - define units
@@ -167,21 +167,21 @@ Object.assign(expr, {
 
     // if b contains some members of a
     // (a,b)=(b,a) -> (t0=b,t1=a;a=t0,b=t1);
-    if (a[0]==='(' && a[1][0] ===',' && intersect(ids(a), ids(b))) {
+    if (a[0] === '(' && a[1][0] === ',' && intersect(ids(a), ids(b))) {
       const n = a[1].length - 1
-      return ['(',[';',
-        unroll('=', ['(',[',',...Array.from({length:n},(b,i)=>`t:${i}`)]], b),
-        unroll('=', a, ['(',[',',...Array.from({length:n},(a,i)=>`t:${i}`)]])
+      return ['(', [';',
+        unroll('=', ['(', [',', ...Array.from({ length: n }, (b, i) => `t:${i}`)]], b),
+        unroll('=', a, ['(', [',', ...Array.from({ length: n }, (a, i) => `t:${i}`)]])
       ]]
     }
 
-    if (a[0]==='[]') {
-      let [,arr,idx]=a
+    if (a[0] === '[]') {
+      let [, arr, idx] = a
       idx = expr(idx)
-      a=['[]',arr,idx]
+      a = ['[]', arr, idx]
     }
 
-    return unroll('=',a,b) || ['=',a,b]
+    return unroll('=', a, b) || ['=', a, b]
   },
 
   // FIXME: move it to parser, ++ for a++, += for ++a
@@ -196,164 +196,176 @@ Object.assign(expr, {
   '<?='([, a, b]) { return expr(['=', a, ['<?', a, b]]) },
 
   '+'([, a, b]) {
-    a=expr(a),b=expr(b);
+    a = expr(a), b = expr(b);
     return unroll('+', a, b) || (
-      typeof b[1] === 'number' && typeof a[1] === 'number' ? [a[0]===INT&&b[0]===INT?INT:FLOAT, a[1]+b[1]] :
-      b[1] === 0 ? a :
-      a[1] === 0 ? b :
-      ['+', a, b]
+      typeof b[1] === 'number' && typeof a[1] === 'number' ? [a[0] === INT && b[0] === INT ? INT : FLOAT, a[1] + b[1]] :
+        b[1] === 0 ? a :
+          a[1] === 0 ? b :
+            ['+', a, b]
     )
   },
-  '-'([,a,b]) {
+  '-'([, a, b]) {
     // [-,[INT,1]] -> [INT,-1]
     if (!b) {
-      a=expr(a)
+      a = expr(a)
       if (typeof a[1] === 'number') return [a[0], -a[1]]
-      return ['-',a]
+      return ['-', a]
     }
 
-    a=expr(a),b=expr(b);
+    a = expr(a), b = expr(b);
     return unroll('-', a, b) || (
-      typeof a[1] === 'number' && typeof b[1] === 'number' ? [a[0]===INT&&b[0]===INT?INT:FLOAT, a[1]-b[1]] :
-      a[1] === 0 ? ['-', b] :
-      b[1] === 0 ? a :
-      ['-', a, b]
+      typeof a[1] === 'number' && typeof b[1] === 'number' ? [a[0] === INT && b[0] === INT ? INT : FLOAT, a[1] - b[1]] :
+        a[1] === 0 ? ['-', b] :
+          b[1] === 0 ? a :
+            ['-', a, b]
     )
   },
   '*'([, a, b]) {
-    a=expr(a)
+    a = expr(a)
 
     // *a
     if (!b) return unroll('*', a) || ['*', a]
 
-    b=expr(b);
+    b = expr(b);
     return unroll('*', a, b) || (
       (typeof a[1] === 'number' && typeof b[1] === 'number') ? [FLOAT, a[1] * b[1]] :
-      a[1] === 0 || b[1] === 0 ? [FLOAT, 0] :
-      b[1] === 1 ? a :
-      a[1] === 1 ? b :
-      ['*',a,b]
+        a[1] === 0 || b[1] === 0 ? [FLOAT, 0] :
+          b[1] === 1 ? a :
+            a[1] === 1 ? b :
+              ['*', a, b]
     )
   },
   '/'([, a, b]) {
-    a=expr(a),b=expr(b);
+    a = expr(a), b = expr(b);
     return unroll('/', a, b) || (
       (typeof a[1] === 'number' && typeof b[1] === 'number') ? [FLOAT, a[1] / b[1]] :
-      a[1] === 0 ? [FLOAT, 0] : // 0 / x
-      b[1] === 1 ? a : // x / 1
-      ['/',a,b]
+        a[1] === 0 ? [FLOAT, 0] : // 0 / x
+          b[1] === 1 ? a : // x / 1
+            ['/', a, b]
     )
   },
   '%'([, a, b]) {
-    a=expr(a),b=expr(b);
+    a = expr(a), b = expr(b);
     return unroll('%', a, b) || (
       (typeof a[1] === 'number' && typeof b[1] === 'number') ? [FLOAT, a[1] % b[1]] :
-      ['%',a,b]
+        ['%', a, b]
     )
   },
 
   '%%'([, a, b]) {
-    a=expr(a),b=expr(b);
+    a = expr(a), b = expr(b);
     return unroll('%%', a, b) || (
       // FIXME
       // (typeof a[1] === 'number' && typeof b[1] === 'number') ? [FLOAT, a[1] %% b[1]] :
-      ['%%',a,b]
+      ['%%', a, b]
     )
   },
   '**'([, a, b]) {
-    a=expr(a),b=expr(b);
+    a = expr(a), b = expr(b);
     return unroll('**', a, b) || (
       (typeof a[1] === 'number' && typeof b[1] === 'number') ? [FLOAT, a[1] ** b[1]] :
-      (b[1] === 0) ? [FLOAT, 1] :
-      (a[1] === 1) ? [FLOAT, 1] :
-      (b[1] === 1) ? a :
-      // FIXME: rename to something like @sqrt
-      (b[1] === 0.5) ? ['/*',a] :
-      (b[1] === -1) ? ['/',[FLOAT,1], b] :
-      (b[1] === -0.5) ? ['/',[FLOAT,1],['/*',a]] :
-      (typeof b[1] === 'number' && b[1] < 0) ? ['/',[FLOAT,1], expr(['**', a, [FLOAT, Math.abs(b[1])]])] :
-      // a ** 24 -> a*[a*[a...*a]]
-      (typeof a === 'string' && typeof b[1] === 'number' && b[1]%1 === 0 && b[1] < 24) ? Array(b[1]).fill(a).reduce((prev,a) => ['*',a,prev]) :
-      ['**',a,b]
+        (b[1] === 0) ? [FLOAT, 1] :
+          (a[1] === 1) ? [FLOAT, 1] :
+            (b[1] === 1) ? a :
+              // FIXME: rename to something like @sqrt
+              (b[1] === 0.5) ? ['/*', a] :
+                (b[1] === -1) ? ['/', [FLOAT, 1], b] :
+                  (b[1] === -0.5) ? ['/', [FLOAT, 1], ['/*', a]] :
+                    (typeof b[1] === 'number' && b[1] < 0) ? ['/', [FLOAT, 1], expr(['**', a, [FLOAT, Math.abs(b[1])]])] :
+                      // a ** 24 -> a*[a*[a...*a]]
+                      (typeof a === 'string' && typeof b[1] === 'number' && b[1] % 1 === 0 && b[1] < 24) ? Array(b[1]).fill(a).reduce((prev, a) => ['*', a, prev]) :
+                        ['**', a, b]
     );
   },
   '//'([, a, b]) {
-    a=expr(a),b=expr(b);
+    a = expr(a), b = expr(b);
     return unroll('//', a, b) || (
       (typeof a[1] === 'number' && typeof b[1] === 'number') ? [FLOAT, Math.floor(a[1] / b[1])] :
-      a[1] === 0 ? [FLOAT, 0] : // 0 // x
-      b[1] === 1 ? a : // x // 1
-      ['//',a,b]
+        a[1] === 0 ? [FLOAT, 0] : // 0 // x
+          b[1] === 1 ? a : // x // 1
+            ['//', a, b]
     )
   },
 
-  '&'([, a, b]) { a=expr(a),b=expr(b); return unroll('&', a, b) || (
-    typeof a[1] === 'number' && typeof b[1] === 'number' ? [INT, a[1] & b[1]] :
-    // a & 0 -> 0
-    a[1] === 0 || b[1] === 0 ? [INT, 0] :
-    ['&', a, b]
-  ) },
-  '|'([, a, b]) { a=expr(a),b=expr(b); return unroll('|', a, b) || (
-    (typeof a[1] === 'number' && typeof b[1] === 'number') ? [INT, a[1] | b[1]] :
-    // FIXME: a | 0 -> asInt(a)
-    // (a[1] === 0 || b[1] === 0) ? ['|', b, a] :
-    ['|', a, b]
-  ) },
+  '&'([, a, b]) {
+    a = expr(a), b = expr(b); return unroll('&', a, b) || (
+      typeof a[1] === 'number' && typeof b[1] === 'number' ? [INT, a[1] & b[1]] :
+        // a & 0 -> 0
+        a[1] === 0 || b[1] === 0 ? [INT, 0] :
+          ['&', a, b]
+    )
+  },
+  '|'([, a, b]) {
+    a = expr(a), b = expr(b); return unroll('|', a, b) || (
+      (typeof a[1] === 'number' && typeof b[1] === 'number') ? [INT, a[1] | b[1]] :
+        // FIXME: a | 0 -> asInt(a)
+        // (a[1] === 0 || b[1] === 0) ? ['|', b, a] :
+        ['|', a, b]
+    )
+  },
 
   '^'([, a, b]) {
     // ^a, ^^a
     if (!b) return ['^', expr(a)]
 
-    a=expr(a),b=expr(b)
+    a = expr(a), b = expr(b)
 
     return unroll('^', a, b) || (
       typeof a[1] === 'number' && typeof b[1] === 'number' ? [INT, a[1] ^ b[1]] :
-      ['^', a, b]
+        ['^', a, b]
     )
   },
 
-  '<<'([, a, b]) { a=expr(a),b=expr(b); return unroll('<<', a, b) || (
-    typeof a[1] === 'number' && typeof b[1] === 'number' ? [INT, a[1] << b[1]] :
-    ['<<', a, b]
-  ) },
-  '>>'([, a, b]) { a=expr(a),b=expr(b); return unroll('>>', a, b) || (
-    typeof a[1] === 'number' && typeof b[1] === 'number' ? [INT, a[1] >> b[1]] :
-    ['>>', a, b]
-  ) },
-  '~'([, a]) { a=expr(a); return unroll('~', a) || (typeof a[1] === 'number' ? [INT, ~a[1]] : ['~', a]) },
+  '<<'([, a, b]) {
+    a = expr(a), b = expr(b); return unroll('<<', a, b) || (
+      typeof a[1] === 'number' && typeof b[1] === 'number' ? [INT, a[1] << b[1]] :
+        ['<<', a, b]
+    )
+  },
+  '>>'([, a, b]) {
+    a = expr(a), b = expr(b); return unroll('>>', a, b) || (
+      typeof a[1] === 'number' && typeof b[1] === 'number' ? [INT, a[1] >> b[1]] :
+        ['>>', a, b]
+    )
+  },
+  '~'([, a]) { a = expr(a); return unroll('~', a) || (typeof a[1] === 'number' ? [INT, ~a[1]] : ['~', a]) },
 
-  '>'([, a, b]) { a=expr(a),b=expr(b); return unroll('>', a, b) || ['>', a, b] },
-  '>='([, a, b]) { a=expr(a),b=expr(b); return unroll('>=', a, b) || ['>=', a, b] },
-  '<'([, a, b]) { a=expr(a),b=expr(b); return unroll('<', a, b) || ['<', a, b] },
-  '<='([, a, b]) { a=expr(a),b=expr(b); return unroll('<=', a, b) || ['<=', a, b] },
-  '=='([, a, b]) { a=expr(a),b=expr(b); return unroll('==', a, b) || ['==', a, b] },
-  '!='([, a, b]) { a=expr(a),b=expr(b); return unroll('!=', a, b) || ['!=', a, b] },
+  '>'([, a, b]) { a = expr(a), b = expr(b); return unroll('>', a, b) || ['>', a, b] },
+  '>='([, a, b]) { a = expr(a), b = expr(b); return unroll('>=', a, b) || ['>=', a, b] },
+  '<'([, a, b]) { a = expr(a), b = expr(b); return unroll('<', a, b) || ['<', a, b] },
+  '<='([, a, b]) { a = expr(a), b = expr(b); return unroll('<=', a, b) || ['<=', a, b] },
+  '=='([, a, b]) { a = expr(a), b = expr(b); return unroll('==', a, b) || ['==', a, b] },
+  '!='([, a, b]) { a = expr(a), b = expr(b); return unroll('!=', a, b) || ['!=', a, b] },
 
-  '&&'([, a, b]) { a=expr(a),b=expr(b); return unroll('&&', a, b) || (
-    // 0 && b
-    a[1] === 0 ? a :
-    // a && 0
-    b[1] === 0 ? b :
-    // 1 && b
-    (typeof a[1] === 'number' && a[1]) ? b :
-    // a && 1
-    (typeof b[1] === 'number' && b[1]) ? a :
-    ['&&', a, b]
-  ) },
-  '||'([, a, b]) { a=expr(a),b=expr(b); return unroll('||', a, b) || (
-    // 0 || b
-    a[1] === 0 ? b :
-    // a || 0
-    b[1] === 0 ? a :
-    // 1 || b
-    typeof a[1] === 'number' && a[1] ? b :
-    // a || 1
-    typeof b[1] === 'number' && b[1] ? a :
-    ['||', a, b]
-  ) },
-  '?'([, a, b]) { a=expr(a),b=expr(b); return unroll('?', a, b) || ['?', a, b] },
-  '!'([, a]) { a=expr(a); return unroll('!', a) || ['!', a] },
-  '?:'([, a, b, c]) { a=expr(a); return a[1] === 0 ? expr(c) : (typeof a[1] === 'number' && a[1]) ? expr(b) : ['?:', a, expr(b), expr(c)] }
+  '&&'([, a, b]) {
+    a = expr(a), b = expr(b); return unroll('&&', a, b) || (
+      // 0 && b
+      a[1] === 0 ? a :
+        // a && 0
+        b[1] === 0 ? b :
+          // 1 && b
+          (typeof a[1] === 'number' && a[1]) ? b :
+            // a && 1
+            (typeof b[1] === 'number' && b[1]) ? a :
+              ['&&', a, b]
+    )
+  },
+  '||'([, a, b]) {
+    a = expr(a), b = expr(b); return unroll('||', a, b) || (
+      // 0 || b
+      a[1] === 0 ? b :
+        // a || 0
+        b[1] === 0 ? a :
+          // 1 || b
+          typeof a[1] === 'number' && a[1] ? b :
+            // a || 1
+            typeof b[1] === 'number' && b[1] ? a :
+              ['||', a, b]
+    )
+  },
+  '?'([, a, b]) { a = expr(a), b = expr(b); return unroll('?', a, b) || ['?', a, b] },
+  '!'([, a]) { a = expr(a); return unroll('!', a) || ['!', a] },
+  '?:'([, a, b, c]) { a = expr(a); return a[1] === 0 ? expr(c) : (typeof a[1] === 'number' && a[1]) ? expr(b) : ['?:', a, expr(b), expr(c)] }
 })
 
 // if a,b contain multiple elements - try regrouping to simple ops
@@ -377,12 +389,12 @@ function unroll(op, a, b) {
       const [, ...bs] = b[1]
       if (as.length !== bs.length) err(`Mismatching number of elements in \`${op}\` operation`)
       return ['(', [',',
-        ...Array.from({length:Math.max(as.length,bs.length)}, (_,i) => [op, expr(as[i]||bs[i]), expr(bs[i]||as[i]) ])
+        ...Array.from({ length: Math.max(as.length, bs.length) }, (_, i) => [op, expr(as[i] || bs[i]), expr(bs[i] || as[i])])
       ]]
     }
 
     // (a0, a1) * b -> (a0 * b, a1 * b)
-    return (b=expr(b), ['(', [',', ...as.map(a => [op, expr(a), b])]])
+    return (b = expr(b), ['(', [',', ...as.map(a => [op, expr(a), b])]])
 
     // FIXME: to make more complex mapping we have to know arity of internal result
     // (a0, a1) * expr() -> tmp=b; (a0 * tmp, a1 * tmp)
@@ -392,6 +404,6 @@ function unroll(op, a, b) {
   // a * (b0, b1) -> tmp=a; (a * b0, a * b1)
   if (b[0] === '(' && b[1]?.[0] === ',') {
     const [, ...bs] = b[1]
-    return a=expr(a), ['(', [',', ...bs.map(b => [op, a, expr(b)])]]
+    return a = expr(a), ['(', [',', ...bs.map(b => [op, a, expr(b)])]]
   }
 }

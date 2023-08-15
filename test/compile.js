@@ -14,14 +14,14 @@ const wabt = await Wabt()
 export function compileWat (code, imports={}) {
   code =
   '(func $funcref.log (import "imports" "log") (param funcref))\n' +
-  '(func $externref.log (import "imports" "log") (param externref) (result externref))\n' +
-  '(func $i32.log (import "imports" "log") (param i32) (result i32))\n' +
-  '(func $i32.log2 (import "imports" "log") (param i32 i32) (result i32 i32))\n' +
-  '(func $i32.log3 (import "imports" "log") (param i32 i32 i32) (result i32 i32 i32))\n' +
-  '(func $f64.log (import "imports" "log") (param f64) (result f64))\n' +
-  '(func $f64.log2 (import "imports" "log") (param f64 f64) (result f64 f64))\n' +
-  '(func $f64.log3 (import "imports" "log") (param f64 f64 f64) (result f64 f64 f64))\n' +
-  '(func $i64.log (import "imports" "log") (param i64) (result i64))\n' +
+  '(func $externref.log (import "imports" "log") (param externref))\n' +
+  '(func $i32.log (import "imports" "log") (param i32))\n' +
+  '(func $i32.log2 (import "imports" "log") (param i32 i32))\n' +
+  '(func $i32.log3 (import "imports" "log") (param i32 i32 i32))\n' +
+  '(func $f64.log (import "imports" "log") (param f64))\n' +
+  '(func $f64.log2 (import "imports" "log") (param f64 f64))\n' +
+  '(func $f64.log3 (import "imports" "log") (param f64 f64 f64))\n' +
+  '(func $i64.log (import "imports" "log") (param i64))\n' +
   code
 
   const wasmModule = wabt.parseWat('inline', code, {
@@ -432,11 +432,22 @@ t('compile: list basic', t => {
   is(yl.value,4,'ylen')
 })
 
+t('compile: list basic local', t => {
+  let wat = compile(`x() = [1, 2].`)
+  let mod = compileWat(wat)
+  let {__memory:memory, x} = mod.instance.exports
+  let x0 = new Float64Array(memory.buffer, x(), 2)
+  is(x0[0], 1,'x0')
+  is(x0[1], 2,'x1')
+  not(x(), x(), 'each instance is new')
+  // console.log(new Float64Array(memory.buffer))
+})
+
 t('compile: list from static range', t => {
-  let wat = compile(`x=[..3], y=[0..4]; x,y,xl=x[],yl=y[].`)
+  let wat = compile(`x=[..3], y=[0..4]; z=[4..0], x,y,xl=x[],yl=y[].`)
   // console.log(wat)
   let mod = compileWat(wat)
-  let {__memory:memory, x, y, xl, yl} = mod.instance.exports
+  let {__memory:memory, x, y, xl, yl, z} = mod.instance.exports
   let xarr = new Float64Array(memory.buffer, x.value, 10)
   is(xarr[0], 0,'x0')
   is(xarr[1], 0,'x1')
@@ -448,6 +459,11 @@ t('compile: list from static range', t => {
   is(yarr[2], 2,'y2')
   is(yarr[3], 3,'y3')
   is(yl.value,4,'ylen')
+  let zarr = new Float64Array(memory.buffer, z.value, 4)
+  is(zarr[0], 4,'z0')
+  is(zarr[1], 3,'z1')
+  is(zarr[2], 2,'z2')
+  is(zarr[3], 1,'z3')
 })
 
 t('compile: list from dynamic range', t => {
@@ -671,11 +687,15 @@ t('compile: state variable - scope', t => {
 t('compile: state variable - array init', t => {
   let wat = compile(`x()=(*i=[..2]; i[0]++ + i[1]++), y()=x().`)
   let mod = compileWat(wat)
-  let {x,y} = mod.instance.exports
+  let {x,y,__memory} = mod.instance.exports
   is(x(),0)
+  console.log(new Float64Array(__memory.buffer))
   is(x(),2)
+  console.log(new Float64Array(__memory.buffer))
   is(x(),4)
+  console.log(new Float64Array(__memory.buffer))
   is(y(),0)
+  console.log(new Float64Array(__memory.buffer))
   is(y(),2)
   is(y(),4)
 })

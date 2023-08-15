@@ -30,7 +30,7 @@
   * [ ] `(drop)` collapse
   * [ ] get rid of `pick` in compiler
 * [x] static arrays
-  * [ ] unwrap static ranges as plain sequences
+  * [x] unwrap static ranges as plain sequences
 * [ ] group read with prop access
 * [ ] group write with prop access
 * [ ] pow operator
