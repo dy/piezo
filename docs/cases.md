@@ -31,3 +31,4 @@
 * [ ] https://github.com/gmoe/voder/
 * [ ] https://github.com/petersalomonsen/javascriptmusic#webassembly-music-in-the-browser
 * [ ] https://github.com/TimDaub/wasm-synth
+* [ ] https://github.com/ryohey/signal
