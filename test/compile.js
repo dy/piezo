@@ -146,7 +146,7 @@ t('compile: numbers inc/dec', t => {
   is(mod.instance.exports.x.value, -1)
 })
 
-t('compile: operators - pow', t => {
+t.only('compile: operators - pow', t => {
   // static
   let wat = compile(`x=2**(1/2),y=x**3,z=x**-2,w=x**23.`)
   let mod = compileWat(wat)
@@ -158,7 +158,26 @@ t('compile: operators - pow', t => {
   // complex
   wat = compile(`pow(x,y)=(x**y).`)
   mod = compileWat(wat)
-  is(mod.instance.exports.pow(1, 0), 1)
+  is(mod.instance.exports.pow(1, 0), 1, '1**0')
+  is(mod.instance.exports.pow(-1, 0), 1, `-1**0`)
+  is(mod.instance.exports.pow(1, 1), 1, `1**1`)
+  is(mod.instance.exports.pow(1, 108), 1, `1**108`)
+
+  is(mod.instance.exports.pow(-1, 1), -1, `-1**1`)
+  is(mod.instance.exports.pow(-1, 2), 1, `-1**2`)
+  is(mod.instance.exports.pow(-1, 3), -1, `-1**3`)
+
+  is(mod.instance.exports.pow(0, 10), 0, `0**10`)
+  is(mod.instance.exports.pow(0, -10), Infinity, `0**-10`)
+
+  is(mod.instance.exports.pow(Infinity, 10), Infinity, `+inf**10`)
+  is(mod.instance.exports.pow(Infinity, -10), 0, `inf**-10`)
+
+  is(mod.instance.exports.pow(-1.2, 3.4), NaN, `-1.2 ** 3.4`)
+  is(mod.instance.exports.pow(-1.2, -3.4), NaN, `-1.2 ** -3.4`)
+
+  is(mod.instance.exports.pow(2, Infinity), Infinity, `2**inf`)
+  is(mod.instance.exports.pow(2, -Infinity), 0, `2**-inf`)
 })
 
 t('compile: units', t => {
