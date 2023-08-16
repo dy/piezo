@@ -56,34 +56,36 @@ export const std = {
         )
       )
     )\n` +
-    // uint64_t magnitude = reinterpret(uint64_t, unsigned_(x, y));
-    `(local.set $magnitude (i64.reinterpret_f64 (call $f64.pow.unsigned (local.get $x) (local.get $y))))\n` +
-    // return reinterpret(double, magnitude | sign);
-    `(return (f64.reinterpret_i64 (i64.or (local.get $magnitude) (local.get $sign))) )` +
-    `)\n` +
-    // static double unsigned_(double x, double y)
-    `(func $f64.pow.unsigned (param $x f64) (param $y f64) (result f64)` +
+
+    // (inline) double unsigned_(double x, double y)
+    `(block (result f64)` +
     //     if (x == 1) return 1;
-    `(if (f64.eq (local.get $x) (f64.const 1)) (return (f64.const 1)))` +
+    `(if (f64.eq (local.get $x) (f64.const 1)) (br 1 (f64.const 1)))` +
     //     if (x == 0) return signbit(y) ? HUGE_VAL : 0;
     `(if (f64.eq (local.get $x) (f64.const 0))
-      (return (if (result f64) (f64.lt (local.get $y) (f64.const 0)) (then (f64.const +inf)) (else (f64.const 0))) )
+      (br 1 (if (result f64) (f64.lt (local.get $y) (f64.const 0)) (then (f64.const +inf)) (else (f64.const 0))) )
     )` +
     //     if (isinf(x)) return signbit(y) ? 0 : HUGE_VAL;
     `(if (f64.eq (local.get $x) (f64.const +inf))
-      (return (if (result f64) (f64.lt (local.get $y) (f64.const 0)) (then (f64.const 0)) (else (f64.const +inf))))
+      (br 1 (if (result f64) (f64.lt (local.get $y) (f64.const 0)) (then (f64.const 0)) (else (f64.const +inf))))
     )` +
     //     if (signbit(x)) return NAN;
-    `(if (f64.lt (local.get $x) (f64.const 0)) (return (f64.const nan)))` +
+    `(if (f64.lt (local.get $x) (f64.const 0)) (br 1 (f64.const nan)))` +
     //     if (isinf(y)) return signbit(y) ^ (x < 1) ? 0 : HUGE_VAL;
-    `(if (f64.eq (local.get $y) (f64.const inf)) (return (f64.const inf)))` +
-    `(if (f64.eq (local.get $y) (f64.const -inf)) (return (f64.const 0)))` +
+    `(if (f64.eq (local.get $y) (f64.const inf)) (br 1 (f64.const inf)))` +
+    `(if (f64.eq (local.get $y) (f64.const -inf)) (br 1 (f64.const 0)))` +
     //     double t1;
     //     double t0 = log2_(normalize_(reinterpret(int64_t, x)), &t1);
     //     double y0 = truncate_(y, 32);
     //     return exp2_(y0 * t0, (y - y0) * t0 + y * t1);
     `(f64.const -123)` +
-    `)`
+    `)\n` +
+
+    // uint64_t magnitude = reinterpret(uint64_t, unsigned_(x, y));
+    `(local.set $magnitude (i64.reinterpret_f64))\n` +
+    // return reinterpret(double, magnitude | sign);
+    `(return (f64.reinterpret_i64 (i64.or (local.get $magnitude) (local.get $sign))) )` +
+    `)\n`
   ,
 
   // a %% b, also used to access buffer
