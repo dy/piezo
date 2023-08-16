@@ -221,14 +221,14 @@ Object.assign(expr, {
       depth--
       // x()=([1,2,3]) must allocate new instance every time
       if (func) {
-        let tmp = define(`arr:${depth}`,'i32')
+        let tmp = define(`arr:${depth}`, 'i32')
         return inc('malloc'), inc('arr.ref'), op(
           `(local.set $${tmp} (call $malloc (i32.const ${f64s.length << 3})))` +
           `(memory.copy (local.get $${tmp}) (i32.const ${offset}) (i32.const ${f64s.length << 3}))` +
           `(call $arr.ref (local.get $${tmp}) (i32.const ${f64s.length}))`
-        , 'f64')
+          , 'f64')
       }
-      else  {
+      else {
         return inc('arr.ref'), op(`(call $arr.ref (i32.const ${offset}) (i32.const ${f64s.length}))`, 'f64')
       }
     }
@@ -408,7 +408,8 @@ Object.assign(expr, {
       funcs[name] = `(func $${name} ${dfn.join(' ')}` +
         (prepare.length ? `\n${prepare.join('\n')}` : ``) +
         (result ? `\n${result}` : ``) +
-        (defer.length ? `\n${defer.join(' ')}` : ``) +
+        (defer.length ? `\n${defer.join(' ')}` : ``) + // defers have 0 stack outcome, so result is still there
+        // FIXME: if preliminary return - defers won't work
         `)`
 
       func = prevFunc
@@ -559,7 +560,7 @@ Object.assign(expr, {
           stateName = func + `.state`,
           res =
             // first calculate state cell
-            `(local.set $${adr} ${ state.length ? `(i32.add (global.get $${stateName}) (i32.const ${state.length << 2}))` : `(global.get $${stateName})` })\n` +
+            `(local.set $${adr} ${state.length ? `(i32.add (global.get $${stateName}) (i32.const ${state.length << 2}))` : `(global.get $${stateName})`})\n` +
             // if pointer is zero - init state
             `(if (result f64) (i32.eqz (i32.load (local.get $${adr})))\n` +
             `(then\n` +

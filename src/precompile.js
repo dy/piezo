@@ -56,8 +56,7 @@ Object.assign(expr, {
       if (!i) return [a]
       a = expr(a)
       if (a[0] === '(') {
-        // (a,b,(c,d)) -> (a,b,c,d)
-        if (a[0][1] === ',') return a[0][1].slice(1)
+        // FIXME: if internal expr returns groups - must turn full group into heap expr
       }
       return [a]
     })
@@ -67,6 +66,8 @@ Object.assign(expr, {
   },
 
   '('([, a]) {
+    // NOTE: we make sure parens are present only if internal condition is dynamic
+    // otherwise parents are unwrapped
     a = expr(a)
     // a=() -> a=()
     if (!a) return ['(']
@@ -76,6 +77,8 @@ Object.assign(expr, {
     if (typeof a[1] === 'number') return a
     // (0..10) -> 0..10
     if (a[1] === '..') return a
+    // (a,b,c) -> a,b,c
+    if (a[0] === ',') return a
     return ['(', a]
   },
 
@@ -142,7 +145,7 @@ Object.assign(expr, {
   },
 
   '='([, a, b]) {
-    b = expr(b)
+    a = expr(a), b = expr(b)
 
     // ignore fns a()
     // FIXME: can handle better: collect args, returns etc.
@@ -167,11 +170,11 @@ Object.assign(expr, {
 
     // if b contains some members of a
     // (a,b)=(b,a) -> (t0=b,t1=a;a=t0,b=t1);
-    if (a[0] === '(' && a[1][0] === ',' && intersect(ids(a), ids(b))) {
+    if (a[0] === ',' && intersect(ids(a), ids(b))) {
       const n = a[1].length - 1
       return ['(', [';',
-        unroll('=', ['(', [',', ...Array.from({ length: n }, (b, i) => `t:${i}`)]], b),
-        unroll('=', a, ['(', [',', ...Array.from({ length: n }, (a, i) => `t:${i}`)]])
+        unroll('=', [',', ...Array.from({ length: n }, (b, i) => `t:${i}`)], b),
+        unroll('=', a, [',', ...Array.from({ length: n }, (a, i) => `t:${i}`)])
       ]]
     }
 
@@ -372,29 +375,29 @@ Object.assign(expr, {
 function unroll(op, a, b) {
   if (!b) {
     // -(a,b) -> (-a,-b)
-    if (a[0] === '(' && a[1]?.[0] === ',') {
-      const [, ...as] = a[1]
-      return ['(', [',', ...as.map((a) => [op, expr(a)])]]
+    if (a[0] === ',') {
+      const [, ...as] = a
+      return [',', ...as.map((a) => [op, expr(a)])]
     }
     return
   }
 
-  if (a[0] === '(' && a[1]?.[0] === ',') {
+  if (a[0] === ',') {
     // (a0,a1) * (b0,b1); -> (a0 * b0, a1 * b1)
     // (a0,a1,a2) * (b0,b1) -> (a0*b0, a1*b1, a2)
     // (a0,a1) * (b0,b1,b2) -> (a0*b0, a1*b1, b2)
     // (a0,,a2) * (b0,b1,b2) -> (a0*b0, b1, a2*b2)
-    const [, ...as] = a[1]
-    if (b[0] === '(' && b[1]?.[0] === ',') {
-      const [, ...bs] = b[1]
+    const [, ...as] = a
+    if (b[0] === ',') {
+      const [, ...bs] = b
       if (as.length !== bs.length) err(`Mismatching number of elements in \`${op}\` operation`)
-      return ['(', [',',
+      return [',',
         ...Array.from({ length: Math.max(as.length, bs.length) }, (_, i) => [op, expr(as[i] || bs[i]), expr(bs[i] || as[i])])
-      ]]
+      ]
     }
 
     // (a0, a1) * b -> (a0 * b, a1 * b)
-    return (b = expr(b), ['(', [',', ...as.map(a => [op, expr(a), b])]])
+    return (b = expr(b), [',', ...as.map(a => [op, expr(a), b])])
 
     // FIXME: to make more complex mapping we have to know arity of internal result
     // (a0, a1) * expr() -> tmp=b; (a0 * tmp, a1 * tmp)
@@ -402,8 +405,8 @@ function unroll(op, a, b) {
   }
 
   // a * (b0, b1) -> tmp=a; (a * b0, a * b1)
-  if (b[0] === '(' && b[1]?.[0] === ',') {
-    const [, ...bs] = b[1]
-    return a = expr(a), ['(', [',', ...bs.map(b => [op, a, expr(b)])]]
+  if (b[0] === ',') {
+    const [, ...bs] = b
+    return a = expr(a), [',', ...bs.map(b => [op, a, expr(b)])]
   }
 }

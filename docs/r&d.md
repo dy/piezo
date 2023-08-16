@@ -3761,7 +3761,7 @@ Having wat files is more useful than direct compilation to binary form:
     * `(..x,..y,..z)=@math`?
     * `x,y,z @ math`?
 
-## [x] Labels `a:1, b:2` vs imports `a: b,c` -> we need neither of them, but let's raise `,` precedence;
+## [x] Labels `a:1, b:2` vs imports `a: b,c` -> we need neither of them
 
   - ~~`[a:1, b:2]`~~, `fn(a:1, b:2)` and ~~`(a:1, b:2) = x`~~ "hold hostage" the following operators:
     * `list: a,b,c`
@@ -3788,6 +3788,19 @@ Having wat files is more useful than direct compilation to binary form:
     ? we could do them as group `osc((t:3s), (f:1000hz))`, `adsr((a:1),(d:2),(s:3),(r:4))`
       ~ so `label:` works more as part of block/group as `(name: a,b,c)` rather than individual items.
         + which makes sense in terms of importing `@modul:a,b,c`
+
+## [ ] Raise `,` precedence?
+
+  - not having `()` around sequence can be misleading, `()` nicely delineates group
+  + `^ a,b,c`
+  + `a,b,c <|`, `a,b,c |>`
+  + ~~`a,b,c -> a,b,c`~~
+    * we don't have arrow function anymore
+  + `x ? a,b,c;`
+  - `*a,b,c, d=1` vs `*(a,b,c), d=1;`
+    - `*` elements cannot be part of sequence
+  * generally `,` can be above all operators which don't cannot be part of group, eg. `^(a,b),c` is impossible, as well as `a,b`
+
 
 ## [x] Is it worthy introducing `:` only for importing members, ie. -> no, we use href as `<math#a,b>`
 
@@ -4100,6 +4113,9 @@ Having wat files is more useful than direct compilation to binary form:
   * `[0..10 / 0.01]`
     + recommended by gpt
     - divides each item from range by 0.01
+  * `[0..10 + 0.01]`
+    + compatible with range modifiers
+    - can be confusable with `(0,1,2,3,4,...) + 0.01`
 
 ## [ ] Range modifiers: how, when?
 
@@ -4371,7 +4387,7 @@ Having wat files is more useful than direct compilation to binary form:
     ;; converts to
 
     sin.state = [..1];
-    sin(f)=(phase=mem[sin.ptr];...;st[sin.ptr]=phase);
+    sin(f)=(phase=mem[sin.adr];...;st[sin.ptr]=phase);
     x.state = [..2];
     x(f)=(
       sin.prev=sin.state;sin.state=x.state.sub(0);
@@ -4393,6 +4409,40 @@ Having wat files is more useful than direct compilation to binary form:
     + doesn't require fake arguments
     + allows tracking function state in a standalone way
 
+  6. fn.state holds ptr to fn state, fn.adr (current implementation)
+
+  ```
+    sin(f)=(*phase=0;...);
+    x(f)=(sin(f)+sin(f)+cos(f));
+    y(f) = (0..10 |> x(@*108) + sin(54));
+
+    ;; converts to
+
+    sin.state = malloc(1); \ alloc state for 1 variable
+    sin(f)=(
+      phase.ptr=mem[sin.state + 0] || malloc(1); \ load phase address or allocate if needed
+      phase=mem[phate.ptr]; \ load value
+      ...;
+      mem[phase.ptr]=phase; \ save value
+    );
+
+    x.state = malloc(2)
+    x(f)=(
+      \ not sure if we need to save and restore prev state here:
+      \ it's slower and it seems we're fine loading that directly
+      sin.state=subarray(x.state, 0);
+      cos.state=subarray(x.state, 1);
+      sin(f)+sin(f)+cos(f);
+    )
+
+    y.state = malloc(3);
+    y(f)=(
+      x.state=subarray(y.state, 0);
+      sin.state=subarray(y.state, 3);
+      0..10 |> x(@*108) + sin(54)
+    );
+  ```
+
 ## [ ] Prohibit dynamic-size list comprehensions ->
 
   + Solves issue of state vars logic: we can precalculate addresses
@@ -4409,7 +4459,7 @@ Having wat files is more useful than direct compilation to binary form:
   * `xs |> (x, sum) -> sum + x`
   * Folds seem to be more efficient than loops: they create single value as result, loop creates multiple values (heap?).
 
-## [ ] Group ops: how?
+## [x] Group ops: how? deconstruct to per-component ops with duplication
 
   * Must not introduce any dynamic tax
 
