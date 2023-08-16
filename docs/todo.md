@@ -32,7 +32,7 @@
 * [x] static arrays
   * [x] unwrap static ranges as plain sequences
 * [x] group read with prop access
-* [ ] group write with prop access
+* [x] group write with prop access
 * [ ] pow operator
 * [x] use f64 everywhere
 * [x] implement array pointer as float64

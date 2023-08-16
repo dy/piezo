@@ -551,6 +551,17 @@ t('compile: list group read', t => {
   is(c.value, 3)
 })
 
+t('compile: list group write', t => {
+  let wat = compile(`x = [..3]; x[0,1,2]=(1,2,3).`)
+  // console.log(wat)
+  let mod = compileWat(wat)
+  let { x, __memory } = mod.instance.exports
+  const mem = new Float64Array(__memory.buffer, x.value, 3)
+  is(mem[0], 1)
+  is(mem[1], 2)
+  is(mem[2], 3)
+})
+
 
 t.todo('compile: sublist', t => {
   let wat = compile(`x = [1,2,3], y = [x].`)
