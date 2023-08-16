@@ -400,7 +400,7 @@ t('compile: group ops cases', t => {
 
   wat = compile(`x=[1,2,3]; (a, b, c) = x[0,1,2].`)
   mod = compileWat(wat)
-  is([mod.instance.exports.a, mod.instance.exports.b, mod.instance.exports.c], [1, 2, 3], `(a,b,c)=x[0,1,2]`);
+  is([mod.instance.exports.a.value, mod.instance.exports.b.value, mod.instance.exports.c.value], [1, 2, 3], `(a,b,c)=x[0,1,2]`);
 })
 
 t.todo('compile: strings', t => {

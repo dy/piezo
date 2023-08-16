@@ -53,7 +53,7 @@ Object.assign(expr, {
   },
   ','(node) {
     return node.flatMap((a, i) => {
-      if (!i) return [a]
+      if (!i || !a) return [a]
       a = expr(a)
       if (a[0] === '(') {
         // FIXME: if internal expr returns groups - must turn full group into heap expr
@@ -145,7 +145,7 @@ Object.assign(expr, {
   },
 
   '='([, a, b]) {
-    a = expr(a), b = expr(b)
+    b = expr(b)
 
     // ignore fns a()
     // FIXME: can handle better: collect args, returns etc.
@@ -168,16 +168,19 @@ Object.assign(expr, {
       return
     }
 
+    a = expr(a)
+
     // if b contains some members of a
     // (a,b)=(b,a) -> (t0=b,t1=a;a=t0,b=t1);
     if (a[0] === ',' && intersect(ids(a), ids(b))) {
-      const n = a[1].length - 1
+      const n = a.length - 1
       return ['(', [';',
         unroll('=', [',', ...Array.from({ length: n }, (b, i) => `t:${i}`)], b),
         unroll('=', a, [',', ...Array.from({ length: n }, (a, i) => `t:${i}`)])
       ]]
     }
 
+    // x[b]=b
     if (a[0] === '[]') {
       let [, arr, idx] = a
       idx = expr(idx)

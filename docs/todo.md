@@ -31,7 +31,7 @@
   * [ ] get rid of `pick` in compiler
 * [x] static arrays
   * [x] unwrap static ranges as plain sequences
-* [ ] group read with prop access
+* [x] group read with prop access
 * [ ] group write with prop access
 * [ ] pow operator
 * [x] use f64 everywhere
