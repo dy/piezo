@@ -57,8 +57,11 @@
     + produces line noise
     + matches `mono`
     + lino is beginning of "linotype"
-    - .son extension is missing
-        + .lin extension is pretty cool too, like flax
+    - npm is taken and dispute is hard
+    - good thing (for God) cannot be called bad words...
+    - `.son` extension is missing
+      + `.lin` extension is pretty cool too, like flax
+    - `.lin` vs `.ln` vs `.li` vs `.lino`
 
   * lisa
     ~+ like lino
@@ -66,6 +69,25 @@
     + reminds Julia lang
     + file can be named literally mono.lisa
     - already exists: https://github.com/Somainer/lisa-lang
+
+  * auriel
+    + available
+    + refers to arch-angel
+    + patron of arts
+    + starts with "au" for "audio"
+    + ends with "l" for "language"
+    + "aurum" means gold
+    ~ aural, aurum, auriel, aurea, aurel
+    - too biblical
+    - too long
+    + .au extension
+  * aurie, aury
+  * aureil
+    + AUdio REInterpretation Language
+    + ...from auriel
+  * gloss
+  * onna, ona, oha,
+  * auna
 
 ## [ ] Free (nice) operators
 
@@ -1710,7 +1732,6 @@ Having wat files is more useful than direct compilation to binary form:
     + floatbeat is just t === index.
     + unleashes batches to any function
 
-
 ## [x] Instantiation of sound → no instantiation, use function state for manual tracking time/params.
 
   1. ? Instantiate sound externally via module instance?
@@ -3257,32 +3278,6 @@ Having wat files is more useful than direct compilation to binary form:
 
   ? how to implement in-place modifier, like `x |= x -> abc` -> `a ::= & * 2`
 
-  ? what's the best character for placeholder?
-    * `list :: #*2`
-      + `#` is almost perfect for topic/reference, associates with `#`th item
-        - needs prohibiting variables starting from # though
-          - which is problematic for mono buffers `#tri = [..1s] ::= tri(@ * 2)`
-      -~ interferes with `<math#a,b,c>`
-    * `list :: &*2`
-      + & is almost-character, feels more like an id
-      - has weird connotation as binary
-      - makes `list :: ^^&&&` a valid construct, ugh
-      - there's too much meaning for `&` character as `&`, `&&` already
-    * `list :: @ * 2`
-      + relatively safe
-      + associates with id / character quite a bit
-      + is not overused by other meanings, except for import
-      + allows reserved name, no var name `#` shadowing
-      + `items |> filter(@)` looks softer than `items |> filter(#)`
-      ~- unusual convention (no such precedence)
-      - ~~conflicts with import~~
-    * `list :: ~ * 2`
-      + hints at "iteratee"
-    * `list :: () * 2`
-    * `list :: . * 2`
-      - conflicts with export
-      - field is taken by `..`, `.` as export, `x.2` as prop, `.2` as float
-
   ? ALT: `a < 10 |> i++`, `list | item -> item*2`, pipe as `list |= i -> i * 2 | i -> filter(i)`?
     + keeps the notion of "producing"
     + less mental load, `|>` and `| i ->` are similar
@@ -3453,6 +3448,54 @@ Having wat files is more useful than direct compilation to binary form:
   ? ALT: `x =~ list`
     - nah: `x = ~list`
   ? ALT: `x <~ list : `
+
+### [ ] What's the best character for placeholder?
+
+  * `list |> #*2`, `list |> #>2?^^#:^#;`
+    + `#` is almost perfect for topic/reference, associates with `#`th item
+    - has more meaning as "number of" rather than i-th number
+    - needs prohibiting variables starting from # though
+      - which is problematic for mono buffers `#tri = [..1s] |>= tri(@ * 2)`
+    -~ interferes with `<math#a,b,c>`
+  * `list |> &*2`, `list |> &>2?^^&:^&;`
+    + & is almost-character, feels more like an id
+    - has weird connotation as binary
+    - makes `list |> ^^&&&` a valid construct, ugh
+    - there's too much meaning for `&` character as `&`, `&&` already
+  * `list |> @ * 2`, `list |> @>2?^^@:^@`
+    + relatively safe
+    + associates with id / character quite a bit
+    + is not overused by other meanings, except for import
+    + allows reserved name, no var name `#` shadowing
+    + `items |> filter(@)` looks softer than `items |> filter(#)`
+    ~- unusual convention (no such precedence)
+    - ~~conflicts with import~~ import is `<>` for now
+    - makefile denotes `$@` as target file (exports?), and `$^` as current file
+  * `list |> ^ * 2`
+    - conflicts with `^` for return `list |> ^>2?^^^:^^;`
+  * `list |> ~ * 2`
+  * `list |> () * 2`
+  * `list |> . * 2`
+    - conflicts with export
+    - field is taken by `..`, `.` as export, `x.2` as prop, `.2` as float
+  * `list:x |> x * 2`, `list:x |> x>2?^^x:^x`;
+    - conflict-ish with step `0..10:0.5:x |> x * 2`
+      ? `0..10 + 0.5 : x |> x * 2`
+    - conflicts with condition `a ? x : y |> z`
+    ? not clear for individual items `(a,b,c):x |> x * 2`
+  * `list<x> |> x*2`, `a,b,c<x> |> x*2`, `0..10<x> |> x*2`
+    + Sercy sneezed
+    + matches graphics of loop
+    + allows defining multiple variables `a,b,c <x,i>`
+    - syntactically horrific
+    - reminds type templates from C, which it is not
+  * `<list:x> x*2`, `<0..10 : x> x*2`
+    -~ `<list: (x>x*2);`
+  * `list <x> x*2`, `a,b,c <x> x*2`, `0..10 <x> x*2`
+    - `(list < x) > x*2`
+  * `list |x> x*2`, `a,b,c |x> x*2`, `0..10 |x> x*2`
+    - `list | (x > x*2)`
+
 
 ## [x] What's the difference of `list <| @ * 2` vs `list |> @ * 2`? -> multiple vs single return
 
@@ -4473,7 +4516,7 @@ Having wat files is more useful than direct compilation to binary form:
     * `(... (x ? ^^a,b); ...; c,d) * y();` - where y returns multiple values also
     * `(a <| @) * (b <| @);`
 
-## [ ] pow, stdlib
+## [x] pow, stdlib -> compiled
 
   1. https://chromium.googlesource.com/external/github.com/WebAssembly/musl/+/landing-branch/src/math
     + musl, standard good impl
@@ -4486,6 +4529,14 @@ Having wat files is more useful than direct compilation to binary form:
   4. AssemblyScript + https://gist.github.com/stagas/d5de1a8dd82a397391caea31a4b75b3a
     + back via https://webassembly.github.io/wabt/demo/wasm2wat/
     - arbitrary memory addresses
+  ...
+
+  How to compile:
+  ```
+  clang --target=wasm32 -pipe -O3 -Wall -flto  -I path/to/include -c ./pow.c -o ./pow.o
+  llvm-lto ./pow.o -o ./pow.wasm --exported-symbol=pow
+  wasm2wat -f ./pow.wasm
+  ```
 
 ## [x] Expose internal variables under `@` prefix? -> no, introduces reserved words and is unnecessary
   + `@memory[100]` defines memory of 100 members

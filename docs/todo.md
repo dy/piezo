@@ -33,7 +33,7 @@
   * [x] unwrap static ranges as plain sequences
 * [x] group read with prop access
 * [x] group write with prop access
-* [ ] pow operator
+* [x] pow operator
 * [x] use f64 everywhere
 * [x] implement array pointer as float64
 * [x] ~~`x=1; x=1.0` - add float dup~~

@@ -146,7 +146,7 @@ t('compile: numbers inc/dec', t => {
   is(mod.instance.exports.x.value, -1)
 })
 
-t.only('compile: operators - pow', t => {
+t('compile: operators - pow', t => {
   // static
   let wat = compile(`x=2**(1/2),y=x**3,z=x**-2,w=x**23.`)
   let mod = compileWat(wat)
@@ -178,6 +178,10 @@ t.only('compile: operators - pow', t => {
 
   is(mod.instance.exports.pow(2, Infinity), Infinity, `2**inf`)
   is(mod.instance.exports.pow(2, -Infinity), 0, `2**-inf`)
+
+  is(mod.instance.exports.pow(1.2, 3.4), 1.2 ** 3.4, `1.2**3.4`)
+  is(mod.instance.exports.pow(1.2, -3.4), 1.2 ** -3.4, `1.2**-3.4`)
+  is(mod.instance.exports.pow(1.23456789, 9.87654321), 1.23456789 ** 9.87654321, `1.23456789 ** 9.87654321`)
 })
 
 t('compile: units', t => {

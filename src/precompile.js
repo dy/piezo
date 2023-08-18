@@ -278,8 +278,8 @@ Object.assign(expr, {
                 (b[1] === -1) ? ['/', [FLOAT, 1], b] :
                   (b[1] === -0.5) ? ['/', [FLOAT, 1], ['/*', a]] :
                     (typeof b[1] === 'number' && b[1] < 0) ? ['/', [FLOAT, 1], expr(['**', a, [FLOAT, Math.abs(b[1])]])] :
-                      // a ** 24 -> a*[a*[a...*a]]
-                      (typeof a === 'string' && typeof b[1] === 'number' && b[1] % 1 === 0 && b[1] < 24) ? Array(b[1]).fill(a).reduce((prev, a) => ['*', a, prev]) :
+                      // a ** 3 -> a*a*a
+                      (typeof a === 'string' && typeof b[1] === 'number' && b[1] % 1 === 0 && b[1] <= 3) ? Array(b[1]).fill(a).reduce((prev, a) => ['*', a, prev]) :
                         ['**', a, b]
     );
   },
