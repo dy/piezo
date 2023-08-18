@@ -23,12 +23,11 @@
   + we use desc anyways from analyser all the time
   + we don't test analyser anyways, it's not stable
   + simplifies parent state management
-* [ ] precompile
+* [x] precompile
   * [x] static precalc (no FLOAT/INT in compiler)
   * [x] units
   * [x] normalize args/array cases (), (a), (a,b)
-  * [ ] `(drop)` collapse
-  * [ ] get rid of `pick` in compiler
+* [ ] `(drop)` collapse
 * [x] static arrays
   * [x] unwrap static ranges as plain sequences
 * [x] group read with prop access
@@ -75,12 +74,12 @@
 * [ ] static arrays
 * [ ] list comprehension
 * [x] static expressions optimization
-  * [ ] static expressions for units: dynamic units
+  * [x] static expressions for units: dynamic units
   * [ ] static constants with usage count (ignore from output if usage is 0)
   * [x] a+0 -> a
   * [x] a**0.5
 * [ ] optimize pick for simple arg as `pick(global.get x)` - just do `(global.get)` multiple times
-* [ ] static arrays via `data` section
+* [x] static arrays via `data` section
 * [ ] loops
   * [x] range loop in range loop
 * [x] comments: must put comment into a previous token, instead of stripping
@@ -100,9 +99,6 @@
 * [x] Test if memory grows properly
 * [x] Simple loops
 * [x] Track memory via runtime variable: check against array len/address
-* [ ] Dispose references to immediate arrays `[1,2,3]` if not saved anywhere
-  * [ ] Can be also disposed once variable is out of reach
-    * [ ] Need detection when vars are out of reach
 * [ ] All lang reference cases
 * [ ] Nice errors: line number to AST nodes?
 * [ ] Stub all wrong syntax error cases, like `++a=123;` etc - any operators on the lhs of `=` etc., all permutations
