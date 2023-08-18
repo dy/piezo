@@ -8,436 +8,126 @@ export const std = {
   "f64.isnan": "(func $f64.isnan (param f64) (result i32) (f64.ne (local.get 0) (local.get 0)))",
 
   // a ** b generic case
-  // ref: https://github.com/jdh8/metallic/blob/master/src/math/double/pow.c
-  "f64.pow": `(func $f64.pow (param f64 f64) (result f64)
-    (local f64 i64 i64 i64 f64 f64 f64 f64 f64 f64)
-    (local.set 2
-      (f64.const 0x1p+0 (;=1;)))
-    (block  ;; label = @1
-      (br_if 0 (;@1;)
-        (f64.eq
-          (local.get 1)
-          (f64.const 0x0p+0 (;=0;))))
-      (local.set 3
-        (i64.const 0))
-      (block  ;; label = @2
-        (br_if 0 (;@2;)
-          (i64.gt_s
-            (i64.reinterpret_f64
-              (local.get 0))
-            (i64.const -1)))
-        (br_if 0 (;@2;)
-          (f64.ne
-            (f64.nearest
-              (local.get 1))
-            (local.get 1)))
-        (local.set 3
+  // used ref: https://github.com/jdh8/metallic/blob/master/src/math/double/pow.c
+  // ref 2: https://chromium.googlesource.com/external/github.com/WebAssembly/musl/+/landing-branch/src/math/pow.c
+  // ref 3: https://github.com/vlang/v/blob/master/vlib/math/pow.v
+  "f64.pow": `(func $f64.pow (param $x f64) (param $y f64) (result f64)` +
+    `(local $sign i64)(local $t0 f64)(local $t1 f64)(local $y0 f64)` +
+    // if (y == 0) return 1;
+    `(if (f64.eq (local.get $y) (f64.const 0)) (return (f64.const 1)))\n` +
+    // if (signbit(x) && rint(y) == y) {
+    //     x = -x;
+    //     sign = (uint64_t)(rint(y / 2) != y / 2) << 63;
+    // }
+    `(if (i32.and (f64.lt (local.get $x) (f64.const 0)) (f64.eq (f64.nearest (local.get $y)) (local.get $y)) )
+      (then
+        (local.set $x (f64.neg (local.get $x)))
+        (local.set $sign
           (i64.shl
-            (i64.extend_i32_u
-              (f64.ne
-                (f64.nearest
-                  (local.tee 2
-                    (f64.mul
-                      (local.get 1)
-                      (f64.const 0x1p-1 (;=0.5;)))))
-                (local.get 2)))
-            (i64.const 63)))
-        (local.set 0
-          (f64.neg
-            (local.get 0))))
-      (local.set 2
-        (f64.const 0x1p+0 (;=1;)))
-      (block  ;; label = @2
-        (br_if 0 (;@2;)
-          (f64.eq
-            (local.get 0)
-            (f64.const 0x1p+0 (;=1;))))
-        (block  ;; label = @3
-          (br_if 0 (;@3;)
-            (f64.ne
-              (local.get 0)
-              (f64.const 0x0p+0 (;=0;))))
-          (local.set 2
-            (select
-              (f64.const inf (;=inf;))
-              (f64.const 0x0p+0 (;=0;))
-              (i64.lt_s
-                (i64.reinterpret_f64
-                  (local.get 1))
-                (i64.const 0))))
-          (br 1 (;@2;)))
-        (block  ;; label = @3
-          (br_if 0 (;@3;)
-            (f64.ne
-              (f64.abs
-                (local.get 0))
-              (f64.const inf (;=inf;))))
-          (local.set 2
-            (select
-              (f64.const 0x0p+0 (;=0;))
-              (f64.const inf (;=inf;))
-              (i64.lt_s
-                (i64.reinterpret_f64
-                  (local.get 1))
-                (i64.const 0))))
-          (br 1 (;@2;)))
-        (block  ;; label = @3
-          (br_if 0 (;@3;)
-            (i64.ge_s
-              (local.tee 4
-                (i64.reinterpret_f64
-                  (local.get 0)))
-              (i64.const 0)))
-          (local.set 2
-            (f64.const nan (;=nan;)))
-          (br 1 (;@2;)))
-        (block  ;; label = @3
-          (br_if 0 (;@3;)
-            (f64.ne
-              (f64.abs
-                (local.get 1))
-              (f64.const inf (;=inf;))))
-          (local.set 2
-            (select
-              (f64.const inf (;=inf;))
-              (f64.const 0x0p+0 (;=0;))
-              (i32.eq
-                (i32.wrap_i64
-                  (i64.shr_u
-                    (i64.reinterpret_f64
-                      (local.get 1))
-                    (i64.const 63)))
-                (f64.lt
-                  (local.get 0)
-                  (f64.const 0x1p+0 (;=1;))))))
-          (br 1 (;@2;)))
-        (block  ;; label = @3
-          (br_if 0 (;@3;)
-            (i64.gt_u
-              (local.get 4)
-              (i64.const 4503599627370495)))
-          (local.set 4
-            (i64.sub
-              (i64.shl
-                (local.get 4)
-                (local.tee 5
-                  (i64.add
-                    (i64.clz
-                      (local.get 4))
-                    (i64.const -11))))
-              (i64.shl
-                (local.get 5)
-                (i64.const 52)))))
-        (local.set 2
-          (f64.const inf (;=inf;)))
-        (br_if 0 (;@2;)
-          (f64.gt
-            (local.tee 1
-              (f64.add
-                (local.tee 10
-                  (f64.mul
-                    (local.tee 6
-                      (f64.reinterpret_i64
-                        (i64.and
-                          (i64.reinterpret_f64
-                            (local.get 1))
-                          (i64.const -4294967296))))
-                    (local.tee 0
-                      (f64.reinterpret_i64
-                        (i64.and
-                          (i64.reinterpret_f64
-                            (f64.add
-                              (f64.add
-                                (local.tee 7
-                                  (f64.mul
-                                    (local.tee 0
-                                      (f64.reinterpret_i64
-                                        (i64.and
-                                          (i64.reinterpret_f64
-                                            (f64.add
-                                              (local.tee 11
-                                                (f64.mul
-                                                  (local.tee 0
-                                                    (f64.reinterpret_i64
-                                                      (i64.and
-                                                        (i64.reinterpret_f64
-                                                          (local.tee 9
-                                                            (f64.div
-                                                              (local.tee 7
-                                                                (f64.add
-                                                                  (f64.reinterpret_i64
-                                                                    (i64.sub
-                                                                      (local.get 4)
-                                                                      (i64.and
-                                                                        (local.tee 5
-                                                                          (i64.add
-                                                                            (local.get 4)
-                                                                            (i64.const -4604544271217802189)))
-                                                                        (i64.const -4503599627370496))))
-                                                                  (f64.const -0x1p+0 (;=-1;))))
-                                                              (local.tee 8
-                                                                (f64.add
-                                                                  (local.get 7)
-                                                                  (f64.const 0x1p+1 (;=2;)))))))
-                                                        (i64.const -134217728))))
-                                                  (local.tee 0
-                                                    (f64.reinterpret_i64
-                                                      (i64.and
-                                                        (i64.reinterpret_f64
-                                                          (f64.add
-                                                            (f64.add
-                                                              (local.tee 10
-                                                                (f64.mul
-                                                                  (local.get 0)
-                                                                  (local.get 0)))
-                                                              (local.tee 8
-                                                                (f64.add
-                                                                  (f64.mul
-                                                                    (local.tee 7
-                                                                      (f64.div
-                                                                        (f64.sub
-                                                                          (f64.sub
-                                                                            (local.get 7)
-                                                                            (f64.mul
-                                                                              (local.get 0)
-                                                                              (local.tee 11
-                                                                                (f64.reinterpret_i64
-                                                                                  (i64.and
-                                                                                    (i64.reinterpret_f64
-                                                                                      (local.get 8))
-                                                                                    (i64.const -4294967296))))))
-                                                                          (f64.mul
-                                                                            (local.get 0)
-                                                                            (f64.add
-                                                                              (local.get 7)
-                                                                              (f64.sub
-                                                                                (f64.const 0x1p+1 (;=2;))
-                                                                                (local.get 11)))))
-                                                                        (local.get 8)))
-                                                                    (f64.add
-                                                                      (local.get 9)
-                                                                      (local.get 0)))
-                                                                  (f64.mul
-                                                                    (f64.mul
-                                                                      (local.tee 0
-                                                                        (f64.mul
-                                                                          (local.get 9)
-                                                                          (local.get 9)))
-                                                                      (local.get 0))
-                                                                    (f64.add
-                                                                      (f64.mul
-                                                                        (f64.add
-                                                                          (f64.mul
-                                                                            (f64.add
-                                                                              (f64.mul
-                                                                                (f64.add
-                                                                                  (f64.mul
-                                                                                    (f64.add
-                                                                                      (f64.mul
-                                                                                        (f64.add
-                                                                                          (f64.mul
-                                                                                            (local.get 0)
-                                                                                            (f64.const 0x1.91a4911cbce5ap-3 (;=0.196115;)))
-                                                                                          (f64.const 0x1.97a897f8e6cap-3 (;=0.199052;)))
-                                                                                        (local.get 0))
-                                                                                      (f64.const 0x1.d8a9d6a7940bp-3 (;=0.230793;)))
-                                                                                    (local.get 0))
-                                                                                  (f64.const 0x1.1745bc213e72fp-2 (;=0.272727;)))
-                                                                                (local.get 0))
-                                                                              (f64.const 0x1.5555557cccac1p-2 (;=0.333333;)))
-                                                                            (local.get 0))
-                                                                          (f64.const 0x1.b6db6db6b8d5fp-2 (;=0.428571;)))
-                                                                        (local.get 0))
-                                                                      (f64.const 0x1.3333333333385p-1 (;=0.6;)))))))
-                                                            (f64.const 0x1.8p+1 (;=3;))))
-                                                        (i64.const -67108864))))))
-                                              (local.tee 9
-                                                (f64.add
-                                                  (f64.mul
-                                                    (local.get 7)
-                                                    (local.get 0))
-                                                  (f64.mul
-                                                    (local.get 9)
-                                                    (f64.add
-                                                      (local.get 8)
-                                                      (f64.add
-                                                        (local.get 10)
-                                                        (f64.sub
-                                                          (f64.const 0x1.8p+1 (;=3;))
-                                                          (local.get 0)))))))))
-                                          (i64.const -4294967296))))
-                                    (f64.const 0x1.ec709dc4p-1 (;=0.961797;))))
-                                (local.tee 9
-                                  (f64.add
-                                    (f64.mul
-                                      (local.get 0)
-                                      (f64.const -0x1.7f00a2d80faabp-35 (;=-4.35423e-11;)))
-                                    (f64.mul
-                                      (f64.add
-                                        (local.get 9)
-                                        (f64.sub
-                                          (local.get 11)
-                                          (local.get 0)))
-                                      (f64.const 0x1.ec709dc3a03fdp-1 (;=0.961797;))))))
-                              (local.tee 8
-                                (f64.convert_i64_s
-                                  (i64.shr_s
-                                    (local.get 5)
-                                    (i64.const 52))))))
-                          (i64.const -2097152))))))
-                (local.tee 0
-                  (f64.add
-                    (f64.mul
-                      (f64.sub
-                        (local.get 1)
-                        (local.get 6))
-                      (local.get 0))
-                    (f64.mul
-                      (f64.add
-                        (local.get 9)
-                        (f64.add
-                          (local.get 7)
-                          (f64.sub
-                            (local.get 8)
-                            (local.get 0))))
-                      (local.get 1))))))
-            (f64.const 0x1p+10 (;=1024;))))
-        (local.set 9
-          (f64.sub
-            (local.get 1)
-            (local.get 10)))
-        (block  ;; label = @3
-          (br_if 0 (;@3;)
-            (f64.ne
-              (local.get 1)
-              (f64.const 0x1p+10 (;=1024;))))
-          (br_if 1 (;@2;)
-            (f64.lt
-              (local.get 9)
-              (local.get 0))))
-        (local.set 2
-          (f64.const 0x0p+0 (;=0;)))
-        (br_if 0 (;@2;)
-          (f64.lt
-            (local.get 1)
-            (f64.const -0x1.0ccp+10 (;=-1075;))))
-        (block  ;; label = @3
-          (br_if 0 (;@3;)
-            (f64.ne
-              (local.get 1)
-              (f64.const -0x1.0ccp+10 (;=-1075;))))
-          (br_if 1 (;@2;)
-            (f64.gt
-              (local.get 9)
-              (local.get 0))))
-        (local.set 4
-          (i64.reinterpret_f64
-            (f64.add
-              (f64.add
-                (local.tee 8
-                  (f64.mul
-                    (local.tee 7
-                      (f64.reinterpret_i64
-                        (i64.and
-                          (i64.reinterpret_f64
-                            (local.tee 2
-                              (f64.sub
-                                (local.get 1)
-                                (local.tee 9
-                                  (f64.nearest
-                                    (local.get 1))))))
-                          (i64.const -4294967296))))
-                    (f64.const 0x1.62e42ffp-1 (;=0.693147;))))
-                (f64.add
-                  (local.tee 2
-                    (f64.add
-                      (f64.mul
-                        (local.get 2)
-                        (f64.const -0x1.718432a1b0e26p-35 (;=-4.20092e-11;)))
-                      (f64.mul
-                        (f64.add
-                          (local.get 0)
-                          (f64.sub
-                            (local.get 10)
-                            (f64.add
-                              (local.get 9)
-                              (local.get 7))))
-                        (f64.const 0x1.62e42ffp-1 (;=0.693147;)))))
-                  (f64.div
-                    (f64.mul
-                      (local.tee 0
-                        (f64.add
-                          (local.get 8)
-                          (local.get 2)))
-                      (local.tee 2
-                        (f64.sub
-                          (local.get 0)
-                          (f64.mul
-                            (local.tee 2
-                              (f64.mul
-                                (local.get 0)
-                                (local.get 0)))
-                            (f64.add
-                              (f64.mul
-                                (local.get 2)
-                                (f64.add
-                                  (f64.mul
-                                    (local.get 2)
-                                    (f64.add
-                                      (f64.mul
-                                        (local.get 2)
-                                        (f64.add
-                                          (f64.mul
-                                            (local.get 2)
-                                            (f64.const 0x1.63f2a09c94b4cp-25 (;=4.14378e-08;)))
-                                          (f64.const -0x1.bbd53273e8fb7p-20 (;=-1.65341e-06;))))
-                                      (f64.const 0x1.1566ab5c2ba0dp-14 (;=6.61376e-05;))))
-                                  (f64.const -0x1.6c16c16c0ac3cp-9 (;=-0.00277778;))))
-                              (f64.const 0x1.5555555555553p-3 (;=0.166667;)))))))
-                    (f64.sub
-                      (f64.const 0x1p+1 (;=2;))
-                      (local.get 2)))))
-              (f64.const 0x1p+0 (;=1;)))))
-        (block  ;; label = @3
-          (block  ;; label = @4
-            (br_if 0 (;@4;)
-              (i32.eqz
-                (f64.lt
-                  (f64.abs
-                    (local.get 9))
-                  (f64.const 0x1p+63 (;=9.22337e+18;)))))
-            (local.set 5
-              (i64.trunc_f64_s
-                (local.get 9)))
-            (br 1 (;@3;)))
-          (local.set 5
-            (i64.const -9223372036854775808)))
-        (local.set 2
-          (select
-            (f64.mul
-              (f64.reinterpret_i64
-                (i64.add
-                  (local.tee 4
-                    (i64.add
-                      (i64.shl
-                        (local.get 5)
-                        (i64.const 52))
-                      (local.get 4)))
-                  (i64.const 4593671619917905920)))
-              (f64.const 0x1p-1020 (;=8.9003e-308;)))
-            (f64.reinterpret_i64
-              (local.get 4))
-            (f64.lt
-              (local.get 1)
-              (f64.const -0x1.fep+9 (;=-1020;))))))
-      (local.set 2
-        (f64.reinterpret_i64
-          (i64.or
-            (local.get 3)
-            (i64.reinterpret_f64
-              (local.get 2))))))
-    (local.get 2))
-  `,
+            (i64.extend_i32_u (f64.ne (f64.nearest (f64.div (local.get $y) (f64.const 2))) (f64.div (local.get $y) (f64.const 2))) )
+            (i64.const 63)
+          )
+        )
+      )
+    )\n` +
+    // (inline) double unsigned_(double x, double y)
+    `(block (result f64)` +
+    // if (x == 1) return 1;
+    `(if (f64.eq (local.get $x) (f64.const 1)) (br 1 (f64.const 1)))` +
+    // if (x == 0) return signbit(y) ? HUGE_VAL : 0;
+    `(if (f64.eq (local.get $x) (f64.const 0))
+      (br 1 (if (result f64) (f64.lt (local.get $y) (f64.const 0)) (then (f64.const +inf)) (else (f64.const 0))) )
+    )` +
+    // if (isinf(x)) return signbit(y) ? 0 : HUGE_VAL;
+    `(if (f64.eq (local.get $x) (f64.const +inf))
+      (br 1 (if (result f64) (f64.lt (local.get $y) (f64.const 0)) (then (f64.const 0)) (else (f64.const +inf))))
+    )` +
+    // if (signbit(x)) return NAN;
+    `(if (f64.lt (local.get $x) (f64.const 0)) (br 1 (f64.const nan)))` +
+    // if (isinf(y)) return signbit(y) ^ (x < 1) ? 0 : HUGE_VAL;
+    `(if (f64.eq (local.get $y) (f64.const inf)) (br 1 (f64.const inf)))` +
+    `(if (f64.eq (local.get $y) (f64.const -inf)) (br 1 (f64.const 0)))` +
+    // double t0 = log2_(normalize_(reinterpret(int64_t, x)), &t1);
+    `(call $f64.pow:norm (i64.reinterpret_f64 (local.get $x)))` +
+    // (inline) double log2_(int64_t i, double residue[static 1])
+    `(block (param i64) (result f64)` +
+    // const double log8e2[] = { 0x1.ec709dc4p-1, -0x1.7f00a2d80faabp-35 };
+    // int64_t exponent = (i - 0x3FE6A09E667F3BCD) >> 52;
+    // double x = reinterpret(double, i - (exponent << 52)) - 1;
+    // double w = truncate_(x + 2, 32);
+    // double z = x / (x + 2);
+    // double z0 = truncate_(z, 27);
+    // double z1 = (x - z0 * w - z0 * (2 - w + x)) / (x + 2);
+    // double h = z0 * z0;
+    // double r = log_kernel_(z) + z1 * (z0 + z);
+    // double t = truncate_(h + r + 3, 26);
+    // double a = z0 * t;
+    // double b = z1 * t + z * (3 - t + h + r);
+    // double s = truncate_(a + b, 32);
+    // double u = s * log8e2[0];
+    // double v = s * log8e2[1] + (a - s + b) * (log8e2[0] + log8e2[1]);
+    // double y = truncate_(u + v + exponent, 21);
+    // *residue = exponent - y + u + v;
+    // return y
+    `(drop)(f64.const 0)` +
+    `)` +
+    `(local.set $t0)` +
+    // double y0 = truncate_(y, 32);
+    `(local.set $y0 (call $f64.pow:trunc (local.get $y) (i64.const 32)))` +
+    // return exp2_(y0 * t0, (y - y0) * t0 + y * t1);
+    `(call $f64.pow:exp2
+      (f64.mul (local.get $y0) (local.get $t0))
+      (f64.add (f64.mul (f64.sub (local.get $y) (local.get $y0)) (local.get $t0)) (f64.mul (local.get $y) (local.get $t1)))
+    )` +
+    `)\n` +
+    // uint64_t magnitude = reinterpret(uint64_t, unsigned_(x, y));
+    // return reinterpret(double, magnitude | sign);
+    `(return (f64.reinterpret_i64 (i64.or (i64.reinterpret_f64) (local.get $sign))) )` +
+    `)\n` +
+    // static int64_t normalize_(int64_t i) {
+    //     if (i < 0x0010000000000000) {
+    //         int64_t shift = __builtin_clzll(i) - 11;
+    //         return (i << shift) - (shift << 52);
+    //     }
+    // return i; }
+    `(func $f64.pow:norm (param i64) (result i64) (local i64)
+      (if (i64.lt_u (local.get 0) (i64.const 0x0010000000000000))
+        (then
+          (local.set 1 (i64.sub (i64.clz (local.get 0)) (i64.const 11)))
+          (return (i64.sub (i64.shl (local.get 0) (local.get 1)) (i64.shl (local.get 1) (i64.const 52))))
+        )
+      )
+      (local.get 0)
+    )\n` +
+    // static double truncate_(double x, int bits) {
+    // uint64_t i = reinterpret(uint64_t, x) & (uint64_t)-1 << bits;
+    // return reinterpret(double, i); }
+    `(func $f64.pow:trunc (param f64 i64) (result f64)
+      (f64.reinterpret_i64 (i64.and
+        (i64.reinterpret_f64 (local.get 0))
+        (i64.shl (i64.const -1) (local.get 1))
+      ))
+    )\n` +
+    `(func $f64.pow:exp2 (param f64 f64) (result f64)
+      (local.get 0)
+    )\n` +
+    // static double log_kernel_(double x) {
+    //   const double c[] = {
+    //       0.60000000000000910393,
+    //       0.42857142856356307074,
+    //       0.33333333563056661945,
+    //       0.27272695496468461223,
+    //       0.23079269122036327328,
+    //       0.19905203560197025739,
+    //       0.19611466759635016238
+    //   };
+    //   x *= x;
+    //   return x * x * ((((((c[6] * x + c[5]) * x + c[4]) * x + c[3]) * x + c[2]) * x + c[1]) * x + c[0]);
+    // }
+    `(func $f64.pow:log_kernel (param $x f64) (result f64)
+    (f64.const 0)
+    )`
+  ,
 
   // a %% b, also used to access buffer
   "i32.modwrap": `(func $i32.modwrap (param i32 i32) (result i32) (local $rem i32)\n` +
