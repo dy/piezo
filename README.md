@@ -452,21 +452,17 @@ Config object specifies behaviour of imports, memory and other aspects.
   // memory: false, exported name string or imported WebAssembly.Memory instance
   memory: "__memory",
 
-  // heap size: false, auto or exact number of pages (64Kb each)
-  heap: false,
-
-  // enable static optimizations
-  optimize: false
+  // heap size, in bytes
+  heap: false
 }
 ```
 
 ## Motivation
 
-In general, audio processing doesn't have cross-platform solution, many environments lack audio features.<br/>
-In particular, JS _Web Audio API_ is not suitable for audio purposes – unpredictable pauses, glitches and so on. It's better handled in worklet with WASM.<br/>
-_Lino_ addresses these points, hopefully making audio code more accessible and robust.
+Audio processing doesn't have general cross-platform solution, many environments lack audio features.
+JS _Web Audio API_ in particular is not suitable for audio purposes: unpredictable pauses, glitches and so on. It's better handled in worklet with WASM. _Lino_ addresses these points, making audio code more accessible and robust.
 
-Speaking personally, that's my wish to rethink some JS parts and secure language area. Someone can find lino a *li*ne *no*ise, but I find it beautiful.
+That's my personal wish to rethink some JS parts and secure language ground.
 
 <!--
 It targets browsers, [audio worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, Python, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) etc.<br/>
