@@ -146,7 +146,7 @@ t('compile: numbers inc/dec', t => {
   is(mod.instance.exports.x.value, -1)
 })
 
-t.only('compile: operators - pow', t => {
+t('compile: operators - pow', t => {
   // static
   let wat = compile(`x=2**(1/2),y=x**3,z=x**-2.`)
   let mod = compileWat(wat)

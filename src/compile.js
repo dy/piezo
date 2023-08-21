@@ -4,7 +4,7 @@ import parse from './parse.js';
 import stdlib from './stdlib.js';
 import precompile from './precompile.js';
 import { ids, stringify, err, u82s } from './util.js';
-// import {parse as parseWat} from 'watr';
+import { print } from 'watr';
 
 let prevCtx, includes, imports, globals, locals, slocals, funcs, func, exports, datas, mem, returns, config, depth;
 
@@ -59,7 +59,7 @@ export default function compile(node, obj) {
   // declare includes
   if (includes.length) out += `;;;;;;;;;;;;;;;;;;;;;;;;;;;; Includes\n`;
   for (let include of includes)
-    if (stdlib[include]) out += stdlib[include] + '\n\n';
+    if (stdlib[include]) out += print(stdlib[include], { indent: '  ', newline: '\n' }) + '\n\n';
     else err('Unknown include `' + include + '`')
 
   // declare variables
@@ -74,16 +74,17 @@ export default function compile(node, obj) {
   // declare funcs
   for (let name in funcs) { out += `;;;;;;;;;;;;;;;;;;;;;;;;;;;; Functions\n`; break }
   for (let name in funcs) {
-    out += funcs[name] + '\n\n'
+    out += print(funcs[name], { indent: '  ', newline: '\n' }) + '\n\n'
   }
 
   // run globals init, if needed
   if (init) out += `;;;;;;;;;;;;;;;;;;;;;;;;;;;; Init\n` +
-    `(func $__init\n` +
-    (Object.keys(slocals).length ? Object.keys(slocals).map((name) => `(local $${name} ${slocals[name].type})`).join('') + '\n' : '') +
-    init + `\n` +
-    `(return))\n` +
-    `(start $__init)\n\n`
+    print(`(func $__init
+    ${(Object.keys(slocals).length ? Object.keys(slocals).map((name) => `(local $${name} ${slocals[name].type})`).join('') + '\n' : '')}
+    ${init}
+    (return))`
+      , { indent: '  ', newline: '\n' }) +
+    `\n(start $__init)\n\n`
 
   // provide exports
   for (let name in exports) { out += `;;;;;;;;;;;;;;;;;;;;;;;;;;;; Exports\n`; break }

@@ -70,7 +70,7 @@
 * [x] get rid of a.1: we can do that via static knowledge
 * [ ] dispose static arrays once ref is lost `[1,2,3]`
 * [ ] better error messages phrasing (via chatgpt)
-* [ ] Indent/format output (like mono via watr)
+* [x] Indent/format output (like mono via watr)
 * [ ] static arrays
 * [ ] list comprehension
 * [x] static expressions optimization
