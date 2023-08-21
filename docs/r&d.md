@@ -61,7 +61,7 @@
     - good thing (for God) cannot be called bad words...
     - `.son` extension is missing
       + `.lin` extension is pretty cool too, like flax
-    - `.lin` vs `.ln` vs `.li` vs `.lino`
+    - `.lin` vs `.ln` vs `.li` vs `.lino`, `.l`
 
   * lisa
     ~+ like lino
@@ -3215,7 +3215,7 @@ Having wat files is more useful than direct compilation to binary form:
     * likely can be `osc=[sin(x)=...x,tri(x)=...x]`
   + resolves the issue of scope (above): no need to make all vars global since no scope recursion
 
-## [x] Replace `<|`, `|`, `|>`? -> ~~Let's try `::` for loop/generator and `list -> item ::` for extended loop/tranformer~~ ~~let's use `<|`, `|>` for map/reduce,~~ `<|` and `|>` for loop (multiple/single arg), `@` for member placeholder, ~~`x -> x*2` for mapping function~~
+## [x] Replace `<|`, `|`, `|>`? -> ~~Let's try `::` for loop/generator and `list -> item ::` for extended loop/tranformer~~ ~~let's use `<|`, `|>` for map/reduce,~~ `<|` and `|>` for loop (multiple/single arg), `_` for member placeholder, ~~`x -> x*2` for mapping function~~
 
   + Less problems with overloading `|`
   + Fold operator is likely not as useful
@@ -3471,13 +3471,23 @@ Having wat files is more useful than direct compilation to binary form:
     ~- unusual convention (no such precedence)
     - ~~conflicts with import~~ import is `<>` for now
     - makefile denotes `$@` as target file (exports?), and `$^` as current file
+  * `list |> _ * 2`, `list |> _>2?^^_:^_`
+    + less mystery than with `@`
+    + more conventional (Elixir, Julia, Scala, Perl, PowerShell)
+    - not as distinguished from code: can have select-all problem
+    - has tinge of "throwaway variable"
+    - has tinge of "private variable"
+    + literally means "placeholder", for "placeholder" variable
   * `list |> ^ * 2`
     - conflicts with `^` for return `list |> ^>2?^^^:^^;`
+    + compatible with js proposal; compatible with makefile;
   * `list |> ~ * 2`
   * `list |> () * 2`
   * `list |> . * 2`
     - conflicts with export
     - field is taken by `..`, `.` as export, `x.2` as prop, `.2` as float
+    - hard to select-all
+    - reminds tits `a(.)`
   * `list:x |> x * 2`, `list:x |> x>2?^^x:^x`;
     - conflict-ish with step `0..10:0.5:x |> x * 2`
       ? `0..10 + 0.5 : x |> x * 2`

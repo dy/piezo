@@ -36,7 +36,7 @@ Microlanguage with common syntax, linear/static memory and compiling to 0-runtim
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ variables
 foo=1, bar=2.0;                 \ declare vars
-Ab_C_F#, $0, Δx, _;             \ names permit alnum, unicodes, #_$
+Ab_C_F#, $0, Δx, _, @1;         \ names permit alnum, unicodes, #_$@
 fooBar123 == FooBar123;         \ names are case-insensitive
 default=1, eval=fn, else=0;     \ lino has no reserved words
 true = 0b1, false = 0b0;        \ alias bools
@@ -64,7 +64,7 @@ a || b ? c;                     \ if a or b then c
 (a, b) ? (c, d);                \ group condition: (a ? c, b ? d)
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ ranges
-0..10;                          \ from 1 to 9 (1 inclusive, 10 exclusive)
+0..10;                          \ from 1 to 9 (10 exclusive)
 0.., ..10, ..;                  \ open ranges
 10..1;                          \ reverse range
 1.08..108.0;                    \ float range
@@ -88,7 +88,7 @@ a, b=1, c=2;                    \ define multiple values
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ functions
 double(n) = n*2;                \ define function
-times(m = 1, n <= 1..) = (      \ optional, clamped args
+times(m = 1, n < 1..) = (       \ optional, clamped args
   n == 0 ? ^n;                  \ early return
   m*n                           \ default return
 );                              \
@@ -121,32 +121,32 @@ m = [1,2,3,4];                  \ array of 4
 m = [n[..]];                    \ copy n
 m = [1, 2..4, 5];               \ mixed definition
 m = [1, [2, 3, [4]]];           \ nested arrays (tree)
-m = [0..4 <| @ * 2];            \ comprehension
+m = [0..4 <| _ * 2];            \ comprehension
 (first, last) = (m[0], m[-1]);  \ get by index
 (second, ..last) = m[1, 2..];   \ get multiple values
 length = m[];                   \ get length
 m[0] = 1;                       \ set value
 m[2..] = (1, 2..4, n[1..3]);    \ set multiple values from offset 2
-m[0..] = 0..4 <| @ * 2          \ set via iteration
+m[0..] = 0..4 <| _ * 2          \ set via iteration
 m[1,2] = m[2,1];                \ rearrange
 m[0..] = m[-1..0];              \ reverse order
 m[0..] = m[1..,0];              \ rotate
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ loops
-a, b, c |> x(@);                \ for each a, b, c do x(item)
+a, b, c |> x(_);                \ for each a, b, c do x(item)
 10.. |> (                       \ iterate over range
-  @ < 3 ? ^^;                   \ ^^ break
-  @ < 5 ? ^;                    \ ^ continue
+  _ < 3 ? ^^;                   \ ^^ break
+  _ < 5 ? ^;                    \ ^ continue
 );                              \
 i < 10 |> x(i++);               \ while i < 10 do x(i++)
-items |> a(@);                  \ iterate over array
-items |> a(@) |> b(@);          \ pipe iterations
+items |> a(_);                  \ iterate over array
+items |> a(_) |> b(_);          \ pipe iterations
 0..w |> (                       \ nest iterations
-  x=@; 0..h |> (y=@; a(x,y))    \
+  x=_; 0..h |> (y=_; a(x,y))    \
 );                              \
-x = a, b, c |> @;               \ returns last member: x == c
-a, b, c <| @ * 2;               \ returns multiple members
-x[3..5] <|= @ * 2;              \ map items from range
+x = a, b, c |> _;               \ returns last member: x == c
+a, b, c <| _ * 2;               \ returns multiple members
+x[3..5] <|= _ * 2;              \ map items from range
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ import, export
 <math#pi,sin>;                  \ import (into global scope)
@@ -182,10 +182,10 @@ gain(                               \ define a function with block, volume argum
   block,                            \ block is a list argument
   volume <= 0..100                  \ volume is limited to 0..100 range
 ) = (
-  block <|= @ * volume;             \ map each sample by multiplying by value
+  block <|= _ * volume;             \ map each sample by multiplying by value
 );
 
-gain([0..5 <| @ * 0.1], 2);         \ 0, .2, .4, .6, .8, 1
+gain([0..5 <| _ * 0.1], 2);         \ 0, .2, .4, .6, .8, 1
 
 gain.                               \ export gain function
 ```
@@ -228,7 +228,7 @@ lpf(                                \ per-sample processing function
   y0                                \ return y0
 );
 
-\ (0, .1, .3) <| lpf(@, 108, 5);
+\ (0, .1, .3) <| lpf(_, 108, 5);
 
 lpf.                                \ export lpf function, end program
 ```
@@ -286,8 +286,8 @@ coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
   t = i / 1s;
 
   out <|= oscillator[shape](phase)
-      <| adsr(@, 0, 0, .06, .24)
-      <| curve(@, 1.82)
+      <| adsr(_, 0, 0, .06, .24)
+      <| curve(_, 1.82)
 
   i++
   phase += (freq + (t > delay ? jump : 0)) * 2pi / 1s;
@@ -393,10 +393,10 @@ Lino is available as CLI or JS package.
 ### CLI
 
 ```sh
-lino source.lino -o dest.wasm
+lino source.l -o dest.wasm
 ```
 
-It produces compiled WASM binary.
+This produces compiled WASM binary.
 
 ### JS
 
@@ -460,9 +460,10 @@ Config object specifies behaviour of imports, memory and other aspects.
 ## Motivation
 
 Audio processing doesn't have general cross-platform solution, many environments lack audio features.
-JS _Web Audio API_ in particular is not suitable for audio purposes: unpredictable pauses, glitches and so on. It's better handled in worklet with WASM. _Lino_ addresses these points, making audio code more accessible and robust.
+JS _Web Audio API_ in particular is not suitable for audio purposes: unpredictable pauses, glitches and so on. It's better handled in worklet with WASM.<br/>
+_Lino_ addresses these points, making audio code more accessible and robust.
 
-That's my personal wish to rethink some JS parts and secure language ground.
+That's personal attempt to rethink some JS parts and secure language ground.
 
 <!--
 It targets browsers, [audio worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, Python, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) etc.<br/>
