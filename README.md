@@ -1,4 +1,4 @@
-# auro<sup><sup><sub><sub> 🎧🏵️</sub></sub></sup></sup>
+# auro<sub><sup> 🎧🏵️</sup></sub>
 
 Microlanguage with ergonimic syntax, linear memory and compiling to 0-runtime WASM.<br>
 Made for the purpose of audio/signal processing.
