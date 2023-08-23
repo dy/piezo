@@ -1,9 +1,8 @@
-<h1 align="center">🎧🏵️<br/>auro</h1>
+<h1 align="left">🎧🏵️<br/>auro</h1>
 
-<p align="center">
 Microlanguage with ergonimic syntax, linear memory and compiling to 0-runtime WASM.<br>
 Made for the purpose of audio/signal processing.
-</p><!-- It also has smooth operator and organic sugar. -->
+<!-- It also has smooth operator and organic sugar. -->
 
 <!--[Motivation](./docs/motivation.md)  |  [Documentation](./docs/reference.md)  |  [Examples](./docs/examples.md).-->
 
