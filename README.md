@@ -1,4 +1,4 @@
-# 🎧🏵️ auro
+# auro 🎧🏵️
 
 Microlanguage with common syntax, linear/static memory and compiling to 0-runtime WASM, made for the purpose of audio processing. <!-- It also has smooth operator and organic sugar. -->
 

@@ -1,4 +1,4 @@
-## [x] name -> lino
+## [x] name -> auro
 
   * soufn, sofn, sofun, so-fun, funzo, zfun
   * sound-fu, zound-fu, zo-fu
@@ -88,22 +88,25 @@
   * gloss
   * onna, ona, oha,
   * auna
+
   * auro
     + lino, mono, auriel, aura, aural
     + auro-bindo (red lotus)
     + auro - God of Gold, golden
     + .au, .a
+    + AUdio ROsette 🎧🏵️
 
-## [ ] Free (nice) operators
+## [ ] Free operators
 
   * `<>`, `><`
+    ~-- not always available
   * `::`
   * `-<`, `=<`, `~<`
   * `-/`, `=/`, `~/`
   * `-|`, `=|`, `~|`
   * `-\`, `=\`, `~\`
   * `=>`, `~>`
-  * `''`, `""`
+  * `''`, `""`, ``
   * `?=`, `~=`
 
 ## [x] WAT, WASM? All targets
@@ -3454,7 +3457,7 @@ Having wat files is more useful than direct compilation to binary form:
     - nah: `x = ~list`
   ? ALT: `x <~ list : `
 
-### [ ] What's the best character for placeholder?
+### [x] What's the best character for placeholder? -> within `_#$%^@&` `@` seems most safe
 
   * `list |> #*2`, `list |> #>2?^^#:^#;`
     + `#` is almost perfect for topic/reference, associates with `#`th item
@@ -3480,13 +3483,12 @@ Having wat files is more useful than direct compilation to binary form:
   * `list |> _ * 2`, `list |> _>2?^^_:^_`
     + less mystery than with `@`
     + more conventional (Elixir, Julia, Scala, Perl, PowerShell)
-    - not as distinguished from code
-      - select-all problem, bigger than may expect, since default separator in vars is `_`, like `sin_w`
+    - not as distinguished from code, not so cool as `^@#&`
+    - select-all problem, esp. since default separator in vars is `_`, like `sin_w`
     - has tinge of "throwaway variable"
       ~+ we don't need throwaways in lino, since we support skipped args `(,,)`
     - has tinge of "private variable"
     + literally means "placeholder", for "placeholder" variable
-    - not so cool as `^@#&`
   * `list |> ^ * 2`
     - conflicts with `^` for return `list |> ^>2?^^^:^^;`
     + compatible with js proposal; compatible with makefile;
@@ -3514,7 +3516,6 @@ Having wat files is more useful than direct compilation to binary form:
     - `(list < x) > x*2`
   * `list |x> x*2`, `a,b,c |x> x*2`, `0..10 |x> x*2`
     - `list | (x > x*2)`
-
 
 ## [x] What's the difference of `list <| @ * 2` vs `list |> @ * 2`? -> multiple vs single return
 
@@ -3862,7 +3863,6 @@ Having wat files is more useful than direct compilation to binary form:
   - `*a,b,c, d=1` vs `*(a,b,c), d=1;`
     - `*` elements cannot be part of sequence
   * generally `,` can be above all operators which don't cannot be part of group, eg. `^(a,b),c` is impossible, as well as `a,b`
-
 
 ## [x] Is it worthy introducing `:` only for importing members, ie. -> no, we use href as `<math#a,b>`
 
