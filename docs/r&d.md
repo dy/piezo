@@ -88,6 +88,11 @@
   * gloss
   * onna, ona, oha,
   * auna
+  * auro
+    + lino, mono, auriel, aura, aural
+    + auro-bindo (red lotus)
+    + auro - God of Gold, golden
+    + .au, .a
 
 ## [ ] Free (nice) operators
 
@@ -3215,7 +3220,7 @@ Having wat files is more useful than direct compilation to binary form:
     * likely can be `osc=[sin(x)=...x,tri(x)=...x]`
   + resolves the issue of scope (above): no need to make all vars global since no scope recursion
 
-## [x] Replace `<|`, `|`, `|>`? -> ~~Let's try `::` for loop/generator and `list -> item ::` for extended loop/tranformer~~ ~~let's use `<|`, `|>` for map/reduce,~~ `<|` and `|>` for loop (multiple/single arg), `_` for member placeholder, ~~`x -> x*2` for mapping function~~
+## [x] Replace `<|`, `|`, `|>`? -> ~~Let's try `::` for loop/generator and `list -> item ::` for extended loop/tranformer~~ ~~let's use `<|`, `|>` for map/reduce,~~ `<|` and `|>` for loop (multiple/single arg), `_` for topic token, ~~`x -> x*2` for mapping function~~
 
   + Less problems with overloading `|`
   + Fold operator is likely not as useful
@@ -3471,13 +3476,17 @@ Having wat files is more useful than direct compilation to binary form:
     ~- unusual convention (no such precedence)
     - ~~conflicts with import~~ import is `<>` for now
     - makefile denotes `$@` as target file (exports?), and `$^` as current file
+    + matches `au-` from language name, also looks like aura around a
   * `list |> _ * 2`, `list |> _>2?^^_:^_`
     + less mystery than with `@`
     + more conventional (Elixir, Julia, Scala, Perl, PowerShell)
-    - not as distinguished from code: can have select-all problem
+    - not as distinguished from code
+      - select-all problem, bigger than may expect, since default separator in vars is `_`, like `sin_w`
     - has tinge of "throwaway variable"
+      ~+ we don't need throwaways in lino, since we support skipped args `(,,)`
     - has tinge of "private variable"
     + literally means "placeholder", for "placeholder" variable
+    - not so cool as `^@#&`
   * `list |> ^ * 2`
     - conflicts with `^` for return `list |> ^>2?^^^:^^;`
     + compatible with js proposal; compatible with makefile;
