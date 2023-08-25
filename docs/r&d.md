@@ -91,10 +91,22 @@
 
   * auro
     + lino, mono, auriel, aura, aural
-    + auro-bindo (red lotus)
+    + auro-bindo (red lotus), auro-ville
     + auro - God of Gold, golden
     + .au, .a
     + AUdio ROsette 🎧🏵️
+      ~ not as meaningful
+    +~ AUdio pROcessing
+    ~- not distinguished enough
+    + slight reference to Gaura
+    + auro- as prefix, like mono-auro-phonic, auro-scope
+
+  * gaur, gauro, gour
+    + free
+    + gauranga - reference to Holiest person
+      ~ too saintly reference, to the point of forgetting the language
+    + golden
+
 
 ## [ ] Free operators
 

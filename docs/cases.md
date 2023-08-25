@@ -32,3 +32,4 @@
 * [ ] https://github.com/petersalomonsen/javascriptmusic#webassembly-music-in-the-browser
 * [ ] https://github.com/TimDaub/wasm-synth
 * [ ] https://github.com/ryohey/signal
+* [ ] https://github.com/austintheriot/hand-crafted-wasm

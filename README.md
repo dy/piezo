@@ -1,4 +1,4 @@
-# lino<sub><sup> 🎧🏵️</sup></sub>
+# auro
 
 Microlanguage with ergonimic syntax, linear memory and compiling to 0-runtime WASM.<br>
 Made for the purpose of audio/signal processing.
@@ -388,7 +388,7 @@ See [all examples](/examples)
 
 ## Usage
 
-Auro is available as CLI or JS package.
+_auro_ is available as CLI or JS package.
 
 `npm i auro`
 
@@ -465,7 +465,7 @@ Audio processing doesn't have general cross-platform solution, many environments
 JS _Web Audio API_ in particular is not suitable for audio purposes: unpredictable pauses, glitches and so on. It's better handled in worklet with WASM.<br/>
 _Auro_ addresses these points, making audio code more accessible and robust.
 
-That's personal attempt to rethink some JS parts and secure language ground. Someone may find it a line noise, but I find it beautiful.
+That's personal attempt to rethink some JS parts and secure language ground. Someone may find it a line noise, but I find it beautiful. 🎧🏵️
 
 <!--
 It targets browsers, [audio worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, Python, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) etc.<br/>
