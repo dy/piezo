@@ -6,14 +6,6 @@ Made for the purpose of audio/signal processing.
 
 <!--[Motivation](./docs/motivation.md)  |  [Documentation](./docs/reference.md)  |  [Examples](./docs/examples.md).-->
 
-<!--
-## Projects using auro
-
-* [web-audio-api](https://github.com/audiojs/web-audio-api)
-* [audiojs](https://github.com/audiojs/)
-* [sonr](https://github.com/sonr/)
--->
-
 
 ## Reference
 
@@ -379,9 +371,9 @@ Features:
 
 ### Other examples
 
-* [Freeverb](/examples/freeverb.li)
-* [Floatbeat](/examples/floatbeat.li)
-* [Complete ZZFX](/examples/zzfx.li)
+* [Freeverb](/examples/freeverb.auro)
+* [Floatbeat](/examples/floatbeat.auro)
+* [Complete ZZFX](/examples/zzfx.auro)
 
 See [all examples](/examples)
 
@@ -395,7 +387,7 @@ _auro_ is available as CLI or JS package.
 ### CLI
 
 ```sh
-auro source.l -o dest.wasm
+auro source.auro -o dest.wasm
 ```
 
 This produces compiled WASM binary.
@@ -484,6 +476,14 @@ It targets browsers, [audio worklets](https://developer.mozilla.org/en-US/docs/W
 * _Low-level_: no fancy features beyond math and buffers.
 * _Static/Linear memory_: no garbage to collect, static-size heap.
 * _Readability_: produced WASM must be readable.
+-->
+
+<!--
+## Projects using auro
+
+* [web-audio-api](https://github.com/audiojs/web-audio-api)
+* [audiojs](https://github.com/audiojs/)
+* [sonr](https://github.com/sonr/)
 -->
 
 ### Inspiration

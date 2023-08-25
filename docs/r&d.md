@@ -90,16 +90,24 @@
   * auna
 
   * auro
+    + auro- as prefix, like mono-auro-phonic, auro-scope, auro-palp...
+      + see https://en.wiktionary.org/wiki/auro-
+    + slight reference to Gaura
     + lino, mono, auriel, aura, aural
     + auro-bindo (red lotus), auro-ville
     + auro - God of Gold, golden
-    + .au, .a
+    + .au, .a, .auro
+      ? auro.
     + AUdio ROsette 🎧🏵️
       ~ not as meaningful
     +~ AUdio pROcessing
     ~- not distinguished enough
-    + slight reference to Gaura
-    + auro- as prefix, like mono-auro-phonic, auro-scope
+    ~- binds to audio field only
+    ~+ auro.noise, noise.auro
+
+  * audy
+    + free
+  * gaux
 
   * gaur, gauro, gour
     + free
@@ -107,6 +115,15 @@
       ~ too saintly reference, to the point of forgetting the language
     + golden
 
+  * gauri
+    - clashes with gaudi
+
+  * gauda, gaudy
+    - will clash with gaudi script below
+
+  * gaudi
+    + gaudi script
+    - taken
 
 ## [ ] Free operators
 
