@@ -1,26 +1,25 @@
 ## [x] name -> auro
 
   * soufn, sofn, sofun, so-fun, funzo, zfun
-  * sound-fu, zound-fu, zo-fu
-  * sonfu
-  * zzfu, sone-fu
+  * sound-fu, zound-fu, zo-fu, sonfu, sone-fu
   * sone, sones, sonx, sounx, sonez, sonz, sounz
     + sone-script (sonscript)
+    + unit of sound measurement
+    ~ synth.s, synth.sone
   * sonnes, sonn, sounes
     + is sonnes (sounds in french), sones, sonne in German
-  * sonra?
+  * ~~sonra?~~
     + feminine
     + ra sound (Radha)
     + mystical aspect, like spect
-  * sondr, sounder? sounr? soonr?
+  * ~~sondr, sounder? sounr? soonr?~~
   * sonl? sonal?
     + sona language
     + soun
-  * sond?
-  * sonescript?
+  * ~~sond?~~
+  * ~~sonescript?~~
     + like sanskrit
     + sound script
-  * sonscript?
     + son is common root for sound
     + (sonata, song, sone, )
     + .son extension is ok: reverb.son
@@ -31,46 +30,49 @@
     - weak association with sound
     ~ script has association with javascript, or roots from that (assemblyscript etc) - to mind that point.
     → if we root from assembly, it has more sense to call sont
-  * soneslang?
-  * solr? solo? soloscript? solos?
+  * ~~soneslang?~~
+  * ~~solo? solr? soloscript? solos?~~
+    - taken
   * sound-fun
     + like "sounds fun" phrase.
 
-  * sonf?
+  * ~~sonf?~~
     + sound-functions
     + sound-fun
-    + sound-fu
     + sound-formulas
+    + sound-fu
 
   * sonr?
     . maybe we should just keep name: it is short, clear, keeps .son files, playground
 
-  * soun?
+  * soun
     + short from sound
+    + abbreviation for sone
     +~ soul
     +~ sone
     +~ sour
 
   * line noise (lino)
+    - npm is taken and dispute is hard
     + sonlang can be more generic than just sound: any linear signals
     + looks like line noise
     + produces line noise
     + matches `mono`
     + lino is beginning of "linotype"
-    - npm is taken and dispute is hard
     - good thing (for God) cannot be called bad words...
     - `.son` extension is missing
       + `.lin` extension is pretty cool too, like flax
     - `.lin` vs `.ln` vs `.li` vs `.lino`, `.l`
 
-  * lisa
+  * ~~lisa~~
     ~+ like lino
     + mono -> lisa
     + reminds Julia lang
     + file can be named literally mono.lisa
     - already exists: https://github.com/Somainer/lisa-lang
+    - super-confusable
 
-  * auriel
+  * ~~auriel, aureil, aury~~
     + available
     + refers to arch-angel
     + patron of arts
@@ -81,13 +83,9 @@
     - too biblical
     - too long
     + .au extension
-  * aurie, aury
-  * aureil
     + AUdio REInterpretation Language
     + ...from auriel
-  * gloss
-  * onna, ona, oha,
-  * auna
+  * ~~onna, ona, oha,~~
 
   * auro
     + auro- as prefix, like mono-auro-phonic, auro-scope, auro-palp...
@@ -107,7 +105,9 @@
 
   * audy
     + free
-  * gaux
+
+  * audr
+    + compatible with sonr
 
   * gaur, gauro, gour
     + free
@@ -115,15 +115,17 @@
       ~ too saintly reference, to the point of forgetting the language
     + golden
 
-  * gauri
+  * gauri, gauda
     - clashes with gaudi
-
-  * gauda, gaudy
     - will clash with gaudi script below
 
-  * gaudi
+  * gaudi, gaudy
     + gaudi script
     - taken
+
+  * gaudio
+    + audio + gaudia
+
 
 ## [ ] Free operators
 
