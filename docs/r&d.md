@@ -126,6 +126,11 @@
   * gaudio
     + audio + gaudia
 
+  * aux
+    - taken, but so many names are taken anyways
+    + reminds audio directly
+    + 3 letters
+    + refers to auro
 
 ## [ ] Free operators
 
