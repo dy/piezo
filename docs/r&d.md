@@ -131,6 +131,8 @@
     + reminds audio directly
     + 3 letters
     + refers to auro
+    + consequence from line
+    - conflicts with auxlang https://en.wikipedia.org/wiki/International_auxiliary_language
 
 ## [ ] Free operators
 
