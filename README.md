@@ -1,4 +1,4 @@
-# 🎧 aux
+# 🎧 auro
 
 Microlanguage with ergonimic syntax, linear memory and compiling to 0-runtime WASM.<br>
 Made for the purpose of audio/signal processing.
@@ -371,9 +371,9 @@ Features:
 
 ### Other examples
 
-* [Freeverb](/examples/freeverb.aux)
-* [Floatbeat](/examples/floatbeat.aux)
-* [Complete ZZFX](/examples/zzfx.aux)
+* [Freeverb](/examples/freeverb.auro)
+* [Floatbeat](/examples/floatbeat.auro)
+* [Complete ZZFX](/examples/zzfx.auro)
 
 See [all examples](/examples)
 
@@ -382,12 +382,12 @@ See [all examples](/examples)
 
 _auro_ is available as CLI or JS package.
 
-`npm i aux`
+`npm i auro`
 
 ### CLI
 
 ```sh
-aux source.aux -o dest.wasm
+auro source.auro -o dest.wasm
 ```
 
 This produces compiled WASM binary.
@@ -395,10 +395,10 @@ This produces compiled WASM binary.
 ### JS
 
 ```js
-import * as aux from 'aux'
+import * as auro from 'auro'
 
 // create wasm arrayBuffer
-const wast = aux.compile(`
+const wast = auro.compile(`
   n=1;
   mult(x) = x*n;
   arr=[1,2,3];
@@ -439,8 +439,8 @@ Config object specifies behaviour of imports, memory and other aspects.
       sin: Math.sin
     },
 
-    // or aux source code
-    latr: `...aux latr code`
+    // or auro source code
+    latr: `...auro latr code`
   },
 
   // memory: false, exported name string or imported WebAssembly.Memory instance
@@ -479,7 +479,7 @@ It targets browsers, [audio worklets](https://developer.mozilla.org/en-US/docs/W
 -->
 
 <!--
-## Projects using aux
+## Projects using auro
 
 * [web-audio-api](https://github.com/audiojs/web-audio-api)
 * [audiojs](https://github.com/audiojs/)

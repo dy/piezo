@@ -133,6 +133,17 @@
     + refers to auro
     + consequence from line
     - conflicts with auxlang https://en.wikipedia.org/wiki/International_auxiliary_language
+    - reminds mux, which it is not
+
+  * naad
+    + cosmic sound
+    - .nd? .naad?
+    + free
+    - hindoo
+
+  * suri
+    + name of Krishna
+    + wisdom
 
 ## [ ] Free operators
 
