@@ -10,13 +10,15 @@
     + doesn't attach to audio as much: can be signals also
     + like .tone but .sone - more about signals/noises
     + legacy own name
-    
+
   * sonnes, sonn, sounes
     + is sonnes (sounds in french), sones, sonne in German
   * sonra, sondra
     + feminine
     + ra sound (Radha)
     + mystical aspect, like spect
+  * sono
+    - close to suno
   * sondr, sounder? sounr? soonr?
   * sonl? sonal?
     + sona language
@@ -134,11 +136,16 @@
     - `.aud` is australian dollar
   * audie
     + name
-    
+
   * diau, dioau
     + play on au-di, like diaudiaudiau
     + Sercy likes that sound
     + di in naming (my initials)
+  * dyau
+    + dy
+    + audy
+    + adya
+    + gaudiya
 
   * gaur, gauro, gour
     + free
@@ -177,7 +184,7 @@
   * zound
     - everything with Z is now war-related
   * onna, ona, oha
-    
+
   * nowr
     + sonr, latr
     + iva-now
@@ -196,14 +203,14 @@
   * auss
   * gauzz, gauz
   * auzio
-  * 
-  
+  *
+
   * tono
     + lino, mono(-tono)
     + `kick.ton`, `clap.ton` is _cool_
     + noto-
     - no strong feelings
-    - associates with Antony, which 
+    - associates with Antony, which
   * tuno
 
 ## [ ] Free operators
