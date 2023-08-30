@@ -1,4 +1,4 @@
-## [x] name -> auro
+## [x] name -> sone
 
   * soufn, sofn, sofun, so-fun, funzo, zfun
   * sound-fu, zound-fu, zo-fu, sonfu, sone-fu
@@ -10,6 +10,7 @@
     + doesn't attach to audio as much: can be signals also
     + like .tone but .sone - more about signals/noises
     + legacy own name
+      - smells old
 
   * sonnes, sonn, sounes
     + is sonnes (sounds in french), sones, sonne in German
@@ -191,6 +192,7 @@
     - `now` is taken by vercel
 
   * fono
+    - kick.fon,
   * cyntia, synthia
   * phaso
   * beato
@@ -199,12 +201,23 @@
     + noise kind
     + zz
     + sister (Sercy)
+  * swyz
   * dizz
   * auss
   * gauzz, gauz
   * auzio
-  *
-
+  * zvyk
+  * zwk
+    + free
+    + 3-letter
+    + russian "sound"
+    + starts with z
+  * zwn
+  * zwch
+  * wyzg
+  * gramo
+  * tonarm
+  * tona
   * tono
     + lino, mono(-tono)
     + `kick.ton`, `clap.ton` is _cool_
@@ -212,6 +225,10 @@
     - no strong feelings
     - associates with Antony, which
   * tuno
+
+  * medl
+  * tych
+  * swist
 
 ## [ ] Free operators
 
@@ -2244,6 +2261,7 @@ Having wat files is more useful than direct compilation to binary form:
       + can be used for defer
     + reminds brackets in terms of "include here"
     + relatively rare to use for anything else
+    + allows protocols inside as `<https://sonr.io/kick.s#a,b,c>`
   * sin, cos <- 'math', <- '@audio-lab/synth'
     + reminds list comprehension with assignment
     - conflict with arrow function ->
@@ -3889,13 +3907,16 @@ Having wat files is more useful than direct compilation to binary form:
     + makes `#` part of var names
     + allows avoiding quotes
 
-## [x] Should we make memory importable, instead of exportable? -> can be any
+## [x] Should we make memory importable, instead of exportable? -> internalize memory - it is exported only if imported
 
   + naturally enables shared memory
   ? can help with question of naming memory?
   + can be, yes, as `compile(src, {memory})`
   ~+ we gotta need to provide means to work directly with memory
   -> can be defined via config
+
+  ! if user needs to read memory - he must pass it as import argument; if memory is not passed - it is internal and there's no way to read it.
+    - useless to pass memory object in advance only to know mem signature
 
 ## [x] Directly call imported items as `@math.pi`? -> no: makes code unnecessarily verbose
 
@@ -4019,7 +4040,7 @@ Having wat files is more useful than direct compilation to binary form:
     - imports is part of JS, code may be not known
     + good for embeddable systems since all code is known in advance
 
-## [x] Import type detection: `@math.pi` vs `@math.sin()` - we have to detect type and fn signature. How? -> let's try passing config object for now
+## [ ] Import type detection: `@math.pi` vs `@math.sin()` - we have to detect type and fn signature. How? -> let's try passing config object for now
 
   1. By usage. `@math.pi * 2` - imports number, `@math.sin()` - imports a function.
     + we apply same logic in ops: `()` treats as fn, `[]` as array and `+` as number
@@ -4032,6 +4053,10 @@ Having wat files is more useful than direct compilation to binary form:
     + solves question of importing memory or possibly even a table
       ~ can be passed not polluting namespace
     + allows joining modules: `imports: {latr: ...src}` compiles latr source (necessary parts)
+    - detecting function signature is problematic:
+      - it doesn't discriminate `i32` vs `f64`
+      - it doesn't detect multiple return arguments
+    - it requires creating a memory object in advance for compiler, whereas it's required in instance
 
 ## [x] Should we make dot part of name, eg. `x.1`, `x.2`? -> no, it can be `a . 0`
 

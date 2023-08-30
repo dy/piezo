@@ -43,17 +43,18 @@
 * [x] Per-function vars scope: we don't need parens as scope
 * [x] Change `,` precedence to be under `=` to allow `^a,b,c`, `x?1,2,3:4,5,6`, `a,b<|x,i->x,i`
 * [ ] Include config params properly
-* [ ] Bench sobel https://github.com/mattdesl/wasm-bench
+* [ ] Sobel https://github.com/mattdesl/wasm-bench
   * [x] `(y1, y2) >= height ? (y1, y2) = height - 1` group ops
   * [ ] `(val0, val1) = data[ptr0 + (x, x1)];`
   * [x] `\` comments
   * [ ] optimized array prop access (track static vars / static-length arrays)
-* [ ] Bench biquad
+* [ ] Biquad
   * [ ] Clamp args
   * [x] Imports - nice `<>` syntax with href internals and options
   * [x] Units
   * [x] basic maths
   * [x] Comments
+* [ ] Oka encoder/decoder
 * [x] Group operators
   * [x] multiply
   * [x] floats
@@ -65,6 +66,7 @@
 * [ ] Group operators with skipped values
 * [ ] Group operators with range
 * [ ] Complex group operators (via heap)
+* [ ] Internalize memory: only imported memory is available
 * [x] CLI
 * [x] get rid of a.1: we can do that via static knowledge
 * [ ] dispose static arrays once ref is lost `[1,2,3]`
