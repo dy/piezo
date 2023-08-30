@@ -8,26 +8,26 @@ import Wabt from './lib/wabt.js'
 const argv = arg({
   '--output': String,
   '--text': Boolean,
-  '-o':'--output',
+  '-o': '--output',
   '-t': '--text'
 });
 
 const help =
-`
-Usage: lino <source> -o <destination>
+  `
+Usage: shym <source> -o <destination>
 
 Description:
-  Compiles lino source file to wasm binary output.
+  Compiles shym source file to wasm binary output.
 
 Repository:
-  https://github.com/audio-lab/lino
+  https://github.com/audio-lab/shym
 
 Options:
   --output, -o    Output file path
   --text, -t      [TODO] Output WASM text instead of binary
 
 Example:
-  lino input.lino -o output.wasm
+  shym input.s -o output.wasm
 `
 
 const path = argv._?.[0], outpath = argv['--output']
@@ -37,10 +37,10 @@ if (!path || !outpath) {
   process.exit(1); // 1 indicates an error occurred, any non-zero value can be used
 }
 
-const linoCode = await readFile(path, 'utf8');
+const shymCode = await readFile(path, 'utf8');
 
 const wabt = await Wabt();
-const wasmCode = compile(linoCode);
+const wasmCode = compile(shymCode);
 
 const wasmModule = wabt.parseWat('inline', wasmCode, {
   // simd: true,
