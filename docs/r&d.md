@@ -5,14 +5,10 @@
   * sone, sones, sonx, sounx, sonez, sonz, sounz
     + sone-script (sonscript)
     + unit of sound measurement
-    ~ synth.s, synth.sone
-      
-  * tono
-    + lino, mono(-tono)
-    + `kick.ton`, `clap.ton` is _cool_
-    + noto-
+    + synth.s, synth.sone
+      + both signal and sound
+    + doesn't attach to audio as much: can be signals also
     
-  * tuno
   * sonnes, sonn, sounes
     + is sonnes (sounds in french), sones, sonne in German
   * sonra, sondra
@@ -198,7 +194,15 @@
   * auss
   * gauzz, gauz
   * auzio
-  *  
+  * 
+  
+  * tono
+    + lino, mono(-tono)
+    + `kick.ton`, `clap.ton` is _cool_
+    + noto-
+    - no strong feelings
+    - associates with Antony, which 
+  * tuno
 
 ## [ ] Free operators
 
