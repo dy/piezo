@@ -1,4 +1,4 @@
-# 🎧 lino
+# 🎧 audia
 
 Microlanguage with ergonimic syntax, linear memory and compiling to 0-runtime WASM.<br>
 Made for the purpose of audio/signal processing.
@@ -388,14 +388,14 @@ See [all examples](/examples)
 
 ## Usage
 
-_lino_ is available as CLI or JS package.
+_audy_ is available as CLI or JS package.
 
-`npm i lino`
+`npm i audia`
 
 ### CLI
 
 ```sh
-lino source.li -o dest.wasm
+audia source.li -o dest.wasm
 ```
 
 This produces compiled WASM binary.
@@ -403,10 +403,10 @@ This produces compiled WASM binary.
 ### JS
 
 ```js
-import * as lino from 'lino'
+import * as audia from 'audia'
 
 // create wasm arrayBuffer
-const wast = lino.compile(`
+const wast = audia.compile(`
   n=1;
   mult(x) = x*n;
   arr=[1,2,3];
@@ -447,7 +447,7 @@ Config object specifies behaviour of imports, memory and other aspects.
       sin: Math.sin
     },
 
-    // or lino source code
+    // or audia source code
     latr: `...li latr code`
   },
 
@@ -487,7 +487,7 @@ It targets browsers, [audio worklets](https://developer.mozilla.org/en-US/docs/W
 -->
 
 <!--
-## Projects using lino
+## Projects using audia
 
 * [web-audio-api](https://github.com/audiojs/web-audio-api)
 * [audiojs](https://github.com/audiojs/)

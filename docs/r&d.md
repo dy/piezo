@@ -36,16 +36,13 @@
     - taken
   * sound-fun
     + like "sounds fun" phrase.
-
   * ~~sonf?~~
     + sound-functions
     + sound-fun
     + sound-formulas
     + sound-fu
-
   * sonr?
     . maybe we should just keep name: it is short, clear, keeps .son files, playground
-
   * soun
     + short from sound
     + abbreviation for sone
@@ -68,7 +65,6 @@
       + `.lin` extension is pretty cool too, like flax
     - `.lin` vs `.ln` vs `.li` vs `.lino`, `.l`
     + it's more generic than sound
-
   * ~~lisa~~
     ~+ like lino
     + mono -> lisa
@@ -91,7 +87,6 @@
     + AUdio REInterpretation Language
     + ...from auriel
   * ~~onna, ona, oha,~~
-
   * auro
     + auro- as prefix, like mono-auro-phonic, auro-scope, auro-palp...
       + see https://en.wiktionary.org/wiki/auro-
@@ -108,31 +103,8 @@
     ~- binds to audio field only
     ~+ auro.noise, noise.auro
     - spiritless: I have less motivation to finish it
-
-  * audy
-    + free
-  * audo
-    + free
   * audr
     + compatible with sonr
-
-  * gaur, gauro, gour
-    + free
-    + gauranga - reference to Holiest person
-      ~ too saintly reference, to the point of forgetting the language
-    + golden
-
-  * gauri, gauda
-    - clashes with gaudi
-    - will clash with gaudi script below
-
-  * gaudi, gaudy
-    + gaudi script
-    - taken
-
-  * gaudio
-    + audio + gaudia
-
   * aux
     - taken, but so many names are taken anyways
     + reminds audio directly
@@ -141,6 +113,37 @@
     + consequence from line
     - conflicts with auxlang https://en.wikipedia.org/wiki/International_auxiliary_language
     - reminds mux, which it is not
+  * adya
+    + short from audio
+    + "now" in sanskrit
+  * auda, audo
+    + free
+    + refers to audio
+    + refers to gauda
+    + oda in russian
+  * audya, audia, audiya
+    + gaudiya (math)
+    + audio
+    + adya = "now"
+  * audy
+    + au dy
+    - `.aud` is australian dollar
+  * audie
+    + name
+
+  * gaur, gauro, gour
+    + free
+    + gauranga - reference to Holiest person
+      ~ too saintly reference, to the point of forgetting the language
+    + golden
+  * gauri, gauda
+    - clashes with gaudi
+    - will clash with gaudi script below
+  * gaudi, gaudy
+    + gaudi script
+    - taken
+  * gaudio
+    + audio + gaudia
 
   * naad
     + cosmic sound
@@ -161,7 +164,14 @@
   * phono
   * deci
   * vibr
-  * chor
+  * chor, choir
+  * timr
+
+  * nowr
+    + sonr, latr
+    + iva-now
+    - `now` is taken by vercel
+
 
 ## [ ] Free operators
 
