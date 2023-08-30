@@ -130,6 +130,10 @@
     - `.aud` is australian dollar
   * audie
     + name
+  * diau, dioau
+    + play on au-di, like diaudiaudiau
+    + Sercy likes that sound
+    + di in naming (my initials)
 
   * gaur, gauro, gour
     + free

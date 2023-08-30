@@ -1,4 +1,4 @@
-# 🎧 audia
+# 🎧 dioau
 
 Microlanguage with ergonimic syntax, linear memory and compiling to 0-runtime WASM.<br>
 Made for the purpose of audio/signal processing.
@@ -388,14 +388,14 @@ See [all examples](/examples)
 
 ## Usage
 
-_audy_ is available as CLI or JS package.
+_Dioau_ is available as CLI or JS package.
 
-`npm i audia`
+`npm i dioau`
 
 ### CLI
 
 ```sh
-audia source.li -o dest.wasm
+dioau source.li -o dest.wasm
 ```
 
 This produces compiled WASM binary.
@@ -403,10 +403,10 @@ This produces compiled WASM binary.
 ### JS
 
 ```js
-import * as audia from 'audia'
+import * as dioau from 'dioau'
 
 // create wasm arrayBuffer
-const wast = audia.compile(`
+const wast = dioau.compile(`
   n=1;
   mult(x) = x*n;
   arr=[1,2,3];
@@ -447,7 +447,7 @@ Config object specifies behaviour of imports, memory and other aspects.
       sin: Math.sin
     },
 
-    // or audia source code
+    // or dioau source code
     latr: `...li latr code`
   },
 
@@ -463,7 +463,7 @@ Config object specifies behaviour of imports, memory and other aspects.
 
 Audio processing doesn't have general cross-platform solution, many environments lack audio features.
 JS _Web Audio API_ in particular is not suitable for audio purposes: unpredictable pauses, glitches and so on. It's better handled in worklet with WASM.<br/>
-_Lino_ addresses these points, making audio code more accessible and robust.
+_Dioau_ addresses these points, making audio code more accessible and robust.
 
 That's personal attempt to rethink some JS parts and secure language ground. Someone may find it a line noise, but I find it beautiful.
 
@@ -487,7 +487,7 @@ It targets browsers, [audio worklets](https://developer.mozilla.org/en-US/docs/W
 -->
 
 <!--
-## Projects using audia
+## Projects using dioau
 
 * [web-audio-api](https://github.com/audiojs/web-audio-api)
 * [audiojs](https://github.com/audiojs/)
