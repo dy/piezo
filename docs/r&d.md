@@ -8,6 +8,7 @@
     + synth.s, synth.sone
       + both signal and sound
     + doesn't attach to audio as much: can be signals also
+    + like .tone but .sone - more about signals/noises
     
   * sonnes, sonn, sounes
     + is sonnes (sounds in french), sones, sonne in German
