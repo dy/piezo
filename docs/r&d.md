@@ -6,17 +6,24 @@
     + sone-script (sonscript)
     + unit of sound measurement
     ~ synth.s, synth.sone
+      
+  * tono
+    + lino, mono(-tono)
+    + `kick.ton`, `clap.ton` is _cool_
+    + noto-
+    
+  * tuno
   * sonnes, sonn, sounes
     + is sonnes (sounds in french), sones, sonne in German
-  * ~~sonra?~~
+  * sonra, sondra
     + feminine
     + ra sound (Radha)
     + mystical aspect, like spect
-  * ~~sondr, sounder? sounr? soonr?~~
+  * sondr, sounder? sounr? soonr?
   * sonl? sonal?
     + sona language
     + soun
-  * ~~sond?~~
+  * sond?
   * sone / sonescript
     + like sanskrit
     + sound script
@@ -31,12 +38,12 @@
       +~ same as other options
     ~ script has association with javascript, or roots from that (assemblyscript etc) - to mind that point.
     → if we root from assembly, it has more sense to call sont
-  * ~~soneslang?~~
-  * ~~solo? solr? soloscript? solos?~~
+  * soneslang?
+  * solo? solr? soloscript? solos?
     - taken
   * sound-fun
     + like "sounds fun" phrase.
-  * ~~sonf?~~
+  * sonf?
     + sound-functions
     + sound-fun
     + sound-formulas
@@ -65,7 +72,7 @@
       + `.lin` extension is pretty cool too, like flax
     - `.lin` vs `.ln` vs `.li` vs `.lino`, `.l`
     + it's more generic than sound
-  * ~~lisa~~
+  * lisa
     ~+ like lino
     + mono -> lisa
     + reminds Julia lang
@@ -73,7 +80,7 @@
     - already exists: https://github.com/Somainer/lisa-lang
     - super-confusable
 
-  * ~~auriel, aureil, aury~~
+  * auriel, aureil, aury
     + available
     + refers to arch-angel
     + patron of arts
@@ -86,7 +93,6 @@
     + .au extension
     + AUdio REInterpretation Language
     + ...from auriel
-  * ~~onna, ona, oha,~~
   * auro
     + auro- as prefix, like mono-auro-phonic, auro-scope, auro-palp...
       + see https://en.wiktionary.org/wiki/auro-
@@ -130,6 +136,7 @@
     - `.aud` is australian dollar
   * audie
     + name
+    
   * diau, dioau
     + play on au-di, like diaudiaudiau
     + Sercy likes that sound
@@ -159,9 +166,8 @@
     + name of Krishna
     + wisdom
 
-  * beat
+  * beat, baet, beaut, bitr
     + kick.beat
-  * bitr
   * synl
   * fuzz
   * patchr
@@ -170,12 +176,29 @@
   * vibr
   * chor, choir
   * timr
-
+  * zound
+    - everything with Z is now war-related
+  * onna, ona, oha
+    
   * nowr
     + sonr, latr
     + iva-now
     - `now` is taken by vercel
 
+  * fono
+  * cyntia, synthia
+  * phaso
+  * beato
+  * sizz
+    + swizz
+    + noise kind
+    + zz
+    + sister (Sercy)
+  * dizz
+  * auss
+  * gauzz, gauz
+  * auzio
+  *  
 
 ## [ ] Free operators
 
