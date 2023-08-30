@@ -1,4 +1,4 @@
-# 🎧 sone
+# 🎧 shym
 
 Microlanguage with ergonimic syntax, linear memory and compiling to 0-runtime WASM.<br>
 Made for the purpose of audio/signal processing.
@@ -185,7 +185,7 @@ gain([0..5 <| @ * 0.1], 2);         \ 0, .2, .4, .6, .8, 1
 gain.                               \ export gain function
 ```
 
-Linoifies as `gain(b,v)=b<|=@*v.`
+Minifies as `gain(b,v)=b<|=@*v.`
 
 </details>
 
@@ -388,14 +388,14 @@ See [all examples](/examples)
 
 ## Usage
 
-_Sone_ is available as CLI or JS package.
+_shym_ is available as CLI or JS package.
 
-`npm i sone`
+`npm i shym`
 
 ### CLI
 
 ```sh
-sone source.s -o dest.wasm
+shym source.s -o dest.wasm
 ```
 
 This produces compiled WASM binary.
@@ -403,23 +403,41 @@ This produces compiled WASM binary.
 ### JS
 
 ```js
-import * as sone from 'sone'
+import * as shym from 'shym'
+import latr from 'latr'
 
 // create wasm arrayBuffer
-const wast = sone.compile(`
+const buffer = shym.compile(`
+  <math#pi,sin>;
   n=1;
-  mult(x) = x*n;
-  arr=[1,2,3];
-  mult, n, arr.
-`, { ...config })
-const buffer = /* Compile wasm text to buffer somehow, eg. wabt or wat-compier */;
+  mult(x) = x*pi;
+  arr=[1, 2, sin(1.08)];
+  mult, n, arr.;
+`, {
+  imports: {
+    // object
+    math: {
+      // direct value
+      pi: Math.PI,
+      // function / signature
+      sin: Math.sin
+    },
+    // string (code)
+    latr
+  },
+
+  memory: new WebAssembly.Memory({initial:1, maximum: 8}),
+
+  // target: can be `wat` or `wasm` for text or bytes
+  target: 'wasm'
+})
 
 // create wasm instance
 const module = new WebAssembly.Module(buffer)
 const instance = new WebAssembly.Instance(module)
 
 // use API
-const {mult, n, arr, __memory} = instance.exports
+const {mult, n, arr} = instance.exports
 
 // number exported as global
 n.value = 2;
@@ -431,39 +449,11 @@ mult(108) // 216
 const arrValues = new Float64Array(__memory, arr.value, 3)
 ```
 
-### Config
-
-Config object specifies behaviour of imports, memory and other aspects.
-
-```js
-{
-  // dict with imports
-  imports: {
-    // object
-    math: {
-      // direct value
-      pi: Math.PI,
-      // function / signature
-      sin: Math.sin
-    },
-
-    // or sone source code
-    latr: `...s latr code`
-  },
-
-  // memory: false, exported name string or imported WebAssembly.Memory instance
-  memory: "__memory",
-
-  // heap size, in bytes
-  heap: false
-}
-```
-
 ## Motivation
 
 Audio processing doesn't have general cross-platform solution, many environments lack audio features.
 JS _Web Audio API_ in particular is not suitable for audio purposes: unpredictable pauses, glitches and so on. It's better handled in worklet with WASM.<br/>
-_Sone_ addresses these points, making audio code more accessible and robust.
+_shym_ addresses these points, making audio code more accessible and robust.
 
 That's personal attempt to rethink some JS parts and secure language ground. Someone may find it a line noise, but I find it beautiful.
 
@@ -487,11 +477,11 @@ It targets browsers, [audio worklets](https://developer.mozilla.org/en-US/docs/W
 -->
 
 <!--
-## Projects using sone
+## Projects using shym
 
 * [web-audio-api](https://github.com/audiojs/web-audio-api)
 * [audiojs](https://github.com/audiojs/)
-* [sonr](https://github.com/sonr/)
+* [shym](https://github.com/shym/)
 -->
 
 ### Inspiration

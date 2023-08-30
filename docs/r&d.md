@@ -229,6 +229,11 @@
   * medl
   * tych
   * swist
+  * shym
+    + shyam
+    + noise
+    + Sneezed
+    + legacy from lino
 
 ## [ ] Free operators
 
