@@ -2267,6 +2267,7 @@ Having wat files is more useful than direct compilation to binary form:
     + reminds brackets in terms of "include here"
     + relatively rare to use for anything else
     + allows protocols inside as `<https://sonr.io/kick.s#a,b,c>`
+    - looks like JSX
   * sin, cos <- 'math', <- '@audio-lab/synth'
     + reminds list comprehension with assignment
     - conflict with arrow function ->

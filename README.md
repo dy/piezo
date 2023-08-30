@@ -1,4 +1,4 @@
-# 🎧 shym
+# ᯤ shym
 
 Microlanguage with ergonimic syntax, linear memory and compiling to 0-runtime WASM.<br>
 Made for the purpose of audio/signal processing.
