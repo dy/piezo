@@ -302,8 +302,8 @@ coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
 ## [Freeverb](https://github.com/opendsp/freeverb/blob/master/index.js)
 
 ```
-<./combfilter.li#comb>;
-<./allpass.li#allpass>;
+<./combfilter.s#comb>;
+<./allpass.s#allpass>;
 
 1s = 44100;
 
@@ -379,9 +379,9 @@ Features:
 * _length operator_ − `items[]` returns total number of items of either an array, group, string or range.
 -->
 
-* [Freeverb](/examples/freeverb.li)
-* [Floatbeat](/examples/floatbeat.li)
-* [Complete ZZFX](/examples/zzfx.li)
+* [Freeverb](/examples/freeverb.s)
+* [Floatbeat](/examples/floatbeat.s)
+* [Complete ZZFX](/examples/zzfx.s)
 
 See [all examples](/examples)
 
@@ -395,7 +395,7 @@ _Sone_ is available as CLI or JS package.
 ### CLI
 
 ```sh
-sone source.li -o dest.wasm
+sone source.s -o dest.wasm
 ```
 
 This produces compiled WASM binary.
@@ -448,7 +448,7 @@ Config object specifies behaviour of imports, memory and other aspects.
     },
 
     // or sone source code
-    latr: `...li latr code`
+    latr: `...s latr code`
   },
 
   // memory: false, exported name string or imported WebAssembly.Memory instance
