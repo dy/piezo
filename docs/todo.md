@@ -48,7 +48,6 @@
   * [ ] `(val0, val1) = data[ptr0 + (x, x1)];`
   * [x] `\` comments
   * [ ] optimized array prop access (track static vars / static-length arrays)
-  * [ ] `..=` inclusive ranges
 * [ ] Bench biquad
   * [ ] Clamp args
   * [x] Imports - nice `<>` syntax with href internals and options

@@ -1,4 +1,4 @@
-# 🎧 auro
+# 🎧 lino
 
 Microlanguage with ergonimic syntax, linear memory and compiling to 0-runtime WASM.<br>
 Made for the purpose of audio/signal processing.
@@ -371,23 +371,23 @@ Features:
 
 ### Other examples
 
-* [Freeverb](/examples/freeverb.auro)
-* [Floatbeat](/examples/floatbeat.auro)
-* [Complete ZZFX](/examples/zzfx.auro)
+* [Freeverb](/examples/freeverb.li)
+* [Floatbeat](/examples/floatbeat.li)
+* [Complete ZZFX](/examples/zzfx.li)
 
 See [all examples](/examples)
 
 
 ## Usage
 
-_auro_ is available as CLI or JS package.
+_lino_ is available as CLI or JS package.
 
-`npm i auro`
+`npm i lino`
 
 ### CLI
 
 ```sh
-auro source.auro -o dest.wasm
+lino source.li -o dest.wasm
 ```
 
 This produces compiled WASM binary.
@@ -395,10 +395,10 @@ This produces compiled WASM binary.
 ### JS
 
 ```js
-import * as auro from 'auro'
+import * as lino from 'lino'
 
 // create wasm arrayBuffer
-const wast = auro.compile(`
+const wast = lino.compile(`
   n=1;
   mult(x) = x*n;
   arr=[1,2,3];
@@ -439,8 +439,8 @@ Config object specifies behaviour of imports, memory and other aspects.
       sin: Math.sin
     },
 
-    // or auro source code
-    latr: `...auro latr code`
+    // or lino source code
+    latr: `...li latr code`
   },
 
   // memory: false, exported name string or imported WebAssembly.Memory instance
@@ -455,7 +455,7 @@ Config object specifies behaviour of imports, memory and other aspects.
 
 Audio processing doesn't have general cross-platform solution, many environments lack audio features.
 JS _Web Audio API_ in particular is not suitable for audio purposes: unpredictable pauses, glitches and so on. It's better handled in worklet with WASM.<br/>
-_Auro_ addresses these points, making audio code more accessible and robust.
+_Lino_ addresses these points, making audio code more accessible and robust.
 
 That's personal attempt to rethink some JS parts and secure language ground. Someone may find it a line noise, but I find it beautiful.
 
@@ -479,7 +479,7 @@ It targets browsers, [audio worklets](https://developer.mozilla.org/en-US/docs/W
 -->
 
 <!--
-## Projects using auro
+## Projects using lino
 
 * [web-audio-api](https://github.com/audiojs/web-audio-api)
 * [audiojs](https://github.com/audiojs/)

@@ -17,7 +17,7 @@
     + sona language
     + soun
   * ~~sond?~~
-  * ~~sonescript?~~
+  * sone / sonescript
     + like sanskrit
     + sound script
     + son is common root for sound
@@ -28,6 +28,7 @@
     + sonr naturally grows as IDE
     - son is confusing with a person
     - weak association with sound
+      +~ same as other options
     ~ script has association with javascript, or roots from that (assemblyscript etc) - to mind that point.
     → if we root from assembly, it has more sense to call sont
   * ~~soneslang?~~
@@ -54,15 +55,18 @@
 
   * line noise (lino)
     - npm is taken and dispute is hard
+      ? redirect to `@audio-lab/lino`?
     + sonlang can be more generic than just sound: any linear signals
     + looks like line noise
     + produces line noise
     + matches `mono`
     + lino is beginning of "linotype"
     - good thing (for God) cannot be called bad words...
+      ~+ irony? God doesn't need things
     - `.son` extension is missing
       + `.lin` extension is pretty cool too, like flax
     - `.lin` vs `.ln` vs `.li` vs `.lino`, `.l`
+    + it's more generic than sound
 
   * ~~lisa~~
     ~+ like lino
@@ -102,10 +106,12 @@
     ~- not distinguished enough
     ~- binds to audio field only
     ~+ auro.noise, noise.auro
+    - spiritless: I have less motivation to finish it
 
   * audy
     + free
-
+  * audo
+    + free
   * audr
     + compatible with sonr
 
@@ -144,6 +150,17 @@
   * suri
     + name of Krishna
     + wisdom
+
+  * beat
+    + kick.beat
+  * bitr
+  * synl
+  * fuzz
+  * patchr
+  * phono
+  * deci
+  * vibr
+  * chor
 
 ## [ ] Free operators
 
