@@ -58,6 +58,7 @@
       ? redirect to `@audio-lab/lino`?
     + sonlang can be more generic than just sound: any linear signals
     + looks like line noise
+      + `linoify` = line noisify
     + produces line noise
     + matches `mono`
     + lino is beginning of "linotype"

@@ -167,7 +167,8 @@ string * 2;                     \ repeat: "abc" * 2 = "abcabc"
 
 ## Examples
 
-### Gain Processor
+<details>
+<summary><strong>Gain</strong></summary>
 
 Provides k-rate amplification for block of samples.
 
@@ -184,9 +185,13 @@ gain([0..5 <| @ * 0.1], 2);         \ 0, .2, .4, .6, .8, 1
 gain.                               \ export gain function
 ```
 
-<!--Minifies as `gain(b,v)=b|=x->x*v.`-->
+Linoifies as `gain(b,v)=b<|=@*v.`
 
-### Biquad Filter
+</details>
+
+
+<details>
+<summary><strong>Biquad Filter</strong></summary>
 
 A-rate (per-sample) biquad filter processor.
 
@@ -227,7 +232,10 @@ lpf(                                \ per-sample processing function
 lpf.                                \ export lpf function, end program
 ```
 
-### ZZFX
+</details>
+
+<details>
+<summary><strong>ZZFX</strong></summary>
 
 Generates ZZFX's [coin sound](https://codepen.io/KilledByAPixel/full/BaowKzv) `zzfx(...[,,1675,,.06,.24,1,1.82,,,837,.06])`.
 
@@ -287,6 +295,8 @@ coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
   phase += (freq + (t > delay ? jump : 0)) * 2pi / 1s;
 ).
 ```
+
+</details>
 
 <!--
 ## [Freeverb](https://github.com/opendsp/freeverb/blob/master/index.js)
@@ -368,8 +378,6 @@ Features:
 * _string literal_ − `"abc"` acts as array with ASCII codes.
 * _length operator_ − `items[]` returns total number of items of either an array, group, string or range.
 -->
-
-### Other examples
 
 * [Freeverb](/examples/freeverb.li)
 * [Floatbeat](/examples/floatbeat.li)
