@@ -14,20 +14,20 @@ const argv = arg({
 
 const help =
   `
-Usage: shym <source> -o <destination>
+Usage: syne <source> -o <destination>
 
 Description:
-  Compiles shym source file to wasm binary output.
+  Compiles syne source file to wasm binary output.
 
 Repository:
-  https://github.com/audio-lab/shym
+  https://github.com/audio-lab/syne
 
 Options:
   --output, -o    Output file path
   --text, -t      [TODO] Output WASM text instead of binary
 
 Example:
-  shym input.s -o output.wasm
+  syne input.s -o output.wasm
 `
 
 const path = argv._?.[0], outpath = argv['--output']
@@ -37,10 +37,10 @@ if (!path || !outpath) {
   process.exit(1); // 1 indicates an error occurred, any non-zero value can be used
 }
 
-const shymCode = await readFile(path, 'utf8');
+const code = await readFile(path, 'utf8');
 
 const wabt = await Wabt();
-const wasmCode = compile(shymCode);
+const wasmCode = compile(code);
 
 const wasmModule = wabt.parseWat('inline', wasmCode, {
   // simd: true,

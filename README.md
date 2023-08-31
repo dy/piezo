@@ -1,11 +1,10 @@
-# shym
+# syne
 
 Microlanguage with ergonimic syntax, linear memory and compiling to 0-runtime WASM.<br>
 Made for the purpose of audio/signal processing.
 <!-- It also has smooth operator and organic sugar. -->
 
 <!--[Motivation](./docs/motivation.md)  |  [Documentation](./docs/reference.md)  |  [Examples](./docs/examples.md).-->
-
 
 ## Reference
 
@@ -388,14 +387,14 @@ See [all examples](/examples)
 
 ## Usage
 
-_shym_ is available as CLI or JS package.
+_syne_ is available as CLI or JS package.
 
-`npm i shym`
+`npm i syne`
 
 ### CLI
 
 ```sh
-shym source.s -o dest.wasm
+syne source.s -o dest.wasm
 ```
 
 This produces compiled WASM binary.
@@ -403,11 +402,11 @@ This produces compiled WASM binary.
 ### JS
 
 ```js
-import * as shym from 'shym'
+import * as syne from 'syne'
 import latr from 'latr'
 
 // create wasm arrayBuffer
-const buffer = shym.compile(`
+const buffer = syne.compile(`
   <math#pi,sin>;
   n=1;
   mult(x) = x*pi;
@@ -453,7 +452,7 @@ const arrValues = new Float64Array(__memory, arr.value, 3)
 
 Audio processing doesn't have general cross-platform solution, many environments lack audio features.
 JS _Web Audio API_ in particular is not suitable for audio purposes: unpredictable pauses, glitches and so on. It's better handled in worklet with WASM.<br/>
-_shym_ addresses these points, making audio code more accessible and robust.
+_syne_ addresses these points, making audio code more accessible and robust.
 
 That's personal attempt to rethink some JS parts and secure language ground. Someone may find it a line noise, but I find it beautiful.
 
@@ -477,11 +476,11 @@ It targets browsers, [audio worklets](https://developer.mozilla.org/en-US/docs/W
 -->
 
 <!--
-## Projects using shym
+## Projects using syne
 
 * [web-audio-api](https://github.com/audiojs/web-audio-api)
 * [audiojs](https://github.com/audiojs/)
-* [shym](https://github.com/shym/)
+* [syne](https://github.com/syne/)
 -->
 
 ### Inspiration

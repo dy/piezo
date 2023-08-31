@@ -20,7 +20,7 @@
     + mystical aspect, like spect
   * sono
     - close to suno
-  * sondr, sounder? sounr? soonr?
+  * sond, sondr, sounder? sounr? soonr?
   * sonl? sonal?
     + sona language
     + soun
@@ -168,14 +168,12 @@
     + free
     - hindoo
 
-  * suri
-    + name of Krishna
-    + wisdom
-
   * beat, baet, beaut, bitr
     + kick.beat
   * synl
-  * fuzz
+  * syne
+    + sine
+  * fuzz, buzz, hizz
   * patchr
   * phono
   * deci
@@ -227,13 +225,18 @@
   * tuno
 
   * medl
-  * tych
+  * tych, tycho, tiho
   * swist
   * shym
     + shyam
     + noise
     + Sneezed
     + legacy from lino
+    - reminds sham, shim
+  * shum
+  * suri
+    + name of Krishna
+    + wisdom
 
 ## [ ] Free operators
 
