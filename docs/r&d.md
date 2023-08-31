@@ -171,8 +171,17 @@
   * beat, baet, beaut, bitr
     + kick.beat
   * synl
+
   * syne
     + sine
+    + sync
+    + `.sy` is cool
+
+  * symph
+    + symphony
+    + more personal
+  * symf
+
   * fuzz, buzz, hizz
   * patchr
   * phono
