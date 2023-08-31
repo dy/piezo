@@ -1,4 +1,4 @@
-## [x] name -> sone
+## [x] name -> syne
 
   * soufn, sofn, sofun, so-fun, funzo, zfun
   * sound-fu, zound-fu, zo-fu, sonfu, sone-fu
@@ -176,6 +176,8 @@
     + sine
     + sync
     + `.sy` is cool
+    + sone without o
+    + synt
 
   * symph
     + symphony
