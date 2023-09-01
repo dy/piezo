@@ -27,7 +27,6 @@
   * [x] static precalc (no FLOAT/INT in compiler)
   * [x] units
   * [x] normalize args/array cases (), (a), (a,b)
-* [ ] `(drop)` collapse
 * [x] static arrays
   * [x] unwrap static ranges as plain sequences
 * [x] group read with prop access
@@ -38,7 +37,9 @@
 * [x] ~~`x=1; x=1.0` - add float dup~~
 * [x] arity of ops, for proper `(drop)` amount, eg. `a ? b;` has 0 items in stack;
 * [x] early return detection
-  * [ ] break/continue
+* [ ] while loop
+* [ ] break/continue
+* [ ] make use of watr compiler
 * [x] Readable generated code
 * [x] Per-function vars scope: we don't need parens as scope
 * [x] Change `,` precedence to be under `=` to allow `^a,b,c`, `x?1,2,3:4,5,6`, `a,b<|x,i->x,i`
@@ -67,6 +68,7 @@
 * [ ] Group operators with range
 * [ ] Complex group operators (via heap)
 * [ ] Internalize memory: only imported memory is available
+* [ ] `(drop)` collapse
 * [x] CLI
 * [x] get rid of a.1: we can do that via static knowledge
 * [ ] dispose static arrays once ref is lost `[1,2,3]`

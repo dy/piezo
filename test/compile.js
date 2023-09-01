@@ -534,11 +534,11 @@ t('compile: lists nested static', t => {
 })
 
 t.todo('compile: list comprehension', t => {
-  let wat = compile(`x = [1..3 <| @ * 2]`)
+  let wat = compile(`x = [1..3 <| # * 2]`)
 })
 
 t.todo('compile: list nested comprehension', t => {
-  let wat = compile(`x = [1..3 <| [0..@ <| @ * 2]]`)
+  let wat = compile(`x = [1..3 <| [0..# <| # * 2]]`)
 })
 
 t('compile: list simple write', t => {
@@ -632,7 +632,7 @@ t.todo('compile: break/continue', t => {
 
 t('compile: loops range global', t => {
   let wat, mod
-  wat = compile(`x=[1..3]; 0..2 |> x[@]=@+1; x.`)
+  wat = compile(`x=[1..3]; 0..2 |> x[#]=#+1; x.`)
   mod = compileWat(wat)
   let { __memory: memory, x } = mod.instance.exports
 
@@ -645,7 +645,7 @@ t('compile: loops range global', t => {
 
 t('compile: loops range local', t => {
   let wat, mod
-  wat = compile(`x=[1..3]; fill() = (0..x[] |> x[@]=@+1); fill, x.`)
+  wat = compile(`x=[1..3]; fill() = (0..x[] |> x[#]=#+1); fill, x.`)
   mod = compileWat(wat)
   let { __memory: memory, x, fill } = mod.instance.exports
 
@@ -659,8 +659,8 @@ t('compile: loops range local', t => {
 
 t('compile: loop range in range', t => {
   let wat = compile(`a=[..9], f(a,w,h)=(
-    0..w |> (x=@;
-      0..h |> (y=@;
+    0..w |> (x=#;
+      0..h |> (y=#;
         a[y*w + x] = x+y*w
       )
     )

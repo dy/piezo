@@ -109,37 +109,38 @@ d(b);                           \ 1, 8;
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ arrays
 m = [..10];                     \ array of 10 elements
-m = [..10 <| 2];                \ filled with value
-m = [1,2,3,4];                  \ array of 4
+m = [..10 <| 2];                \ filled with 2
+m = [1,2,3,4];                  \ array of 4 elements
 m = [n[..]];                    \ copy n
 m = [1, 2..4, 5];               \ mixed definition
 m = [1, [2, 3, [4]]];           \ nested arrays (tree)
-m = [0..4 <| @ * 2];            \ comprehension
+m = [0..4 <| # * 2];            \ list comprehension
 (first, last) = (m[0], m[-1]);  \ get by index
 (second, ..last) = m[1, 2..];   \ get multiple values
 length = m[];                   \ get length
 m[0] = 1;                       \ set value
 m[2..] = (1, 2..4, n[1..3]);    \ set multiple values from offset 2
-m[0..] = 0..4 <| @ * 2          \ set via iteration
+m[0..] = 0..4 <| # * 2          \ set via iteration
 m[1,2] = m[2,1];                \ rearrange
 m[0..] = m[-1..0];              \ reverse order
 m[0..] = m[1..,0];              \ rotate
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ loops
-a, b, c |> x(@);                \ for each a, b, c do x(item)
-10.. |> (                       \ iterate over range
-  @ < 3 ? ^^;                   \ ^^ break
-  @ < 5 ? ^;                    \ ^ continue
+a, b, c |> x(#);                \ for each a, b, c do x(item)
+10.. |> (                       \ descend over range
+  # < 3 ? ^^;                   \ if item < 3 break
+  # < 5 ? ^;                    \ if item < 5 continue
 );                              \
 i < 10 |> x(i++);               \ while i < 10 do x(i++)
-items |> a(@);                  \ iterate over array
-items |> a(@) |> b(@);          \ pipe iterations
+items |> a(#);                  \ iterate over array
+items |> a(#) |> b(#);          \ pipe iterations
 0..w |> (                       \ nest iterations
-  x=@; 0..h |> (y=@; a(x,y))    \
+  x=#;                          \ assign top-level item
+  0..h |> a(x,#);               \ a(x,y)
 );                              \
-x = a, b, c |> @;               \ returns last member: x == c
-a, b, c <| @ * 2;               \ returns multiple members
-x[3..5] <|= @ * 2;              \ map items from range
+x = a, b, c |> #;               \ returns last member: x == c
+a, b, c <| # * 2;               \ returns multiple: a*2, b*2, c*2
+x[3..5] <|= # * 2;              \ map items from range
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ import, export
 <math#pi,sin>;                  \ import (into global scope)
@@ -176,15 +177,15 @@ gain(                               \ define a function with block, volume argum
   block,                            \ block is a list argument
   volume <= 0..100                  \ volume is limited to 0..100 range
 ) = (
-  block <|= @ * volume;             \ map each sample by multiplying by value
+  block <|= # * volume;             \ map each sample by multiplying by value
 );
 
-gain([0..5 <| @ * 0.1], 2);         \ 0, .2, .4, .6, .8, 1
+gain([0..5 <| # * 0.1], 2);         \ 0, .2, .4, .6, .8, 1
 
 gain.                               \ export gain function
 ```
 
-Minifies as `gain(b,v)=b<|=@*v.`
+Minifies as `gain(b,v)=b<|=#*v.`
 
 </details>
 
@@ -226,7 +227,7 @@ lpf(                                \ per-sample processing function
   y0                                \ return y0
 );
 
-\ (0, .1, .3) <| lpf(@, 108, 5);
+\ (0, .1, .3) <| lpf(#, 108, 5);
 
 lpf.                                \ export lpf function, end program
 ```
@@ -287,8 +288,8 @@ coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
   t = i / 1s;
 
   out <|= oscillator[shape](phase)
-      <| adsr(@, 0, 0, .06, .24)
-      <| curve(@, 1.82)
+      <| adsr(#, 0, 0, .06, .24)
+      <| curve(#, 1.82)
 
   i++
   phase += (freq + (t > delay ? jump : 0)) * 2pi / 1s;
@@ -394,7 +395,7 @@ _syne_ is available as CLI or JS package.
 ### CLI
 
 ```sh
-syne source.s -o dest.wasm
+syne source.sy -o dest.wasm
 ```
 
 This produces compiled WASM binary.
@@ -403,40 +404,36 @@ This produces compiled WASM binary.
 
 ```js
 import * as syne from 'syne'
-import latr from 'latr'
 
 // create wasm arrayBuffer
 const buffer = syne.compile(`
-  <math#pi,sin>;
+  <math#PI,sin>, <mylib>, <./my/other/lib.sy>;
   n=1;
   mult(x) = x*pi;
   arr=[1, 2, sin(1.08)];
-  mult, n, arr.;
+  mult, n, arr.
 `, {
+  // js objects or paths to files
   imports: {
-    // object
-    math: {
-      // direct value
-      pi: Math.PI,
-      // function / signature
-      sin: Math.sin
-    },
-    // string (code)
-    latr
+    math: Math,
+    mylib: './path/to/my/lib.sy'
   },
 
-  memory: new WebAssembly.Memory({initial:1, maximum: 8}),
+  // name of imported/exported memory
+  memory: '__memory',
 
-  // target: can be `wat` or `wasm` for text or bytes
+  // target: `wat` for text or `wasm`
   target: 'wasm'
 })
 
 // create wasm instance
 const module = new WebAssembly.Module(buffer)
-const instance = new WebAssembly.Instance(module)
+const instance = new WebAssembly.Instance(module, {
+  imports: {math: Math}
+})
 
 // use API
-const {mult, n, arr} = instance.exports
+const { mult, n, arr, __memory } = instance.exports
 
 // number exported as global
 n.value = 2;

@@ -428,9 +428,9 @@ Object.assign(expr, {
     // FIXME: curve via a..b?
     if (a[0] === '..') {
       depth++
-      // i = from; to; while (i < to) {@ = i; ...; i++}
+      // i = from; to; while (i < to) {# = i; ...; i++}
       const [, min, max] = a
-      const cur = define('@', 'f64'),
+      const cur = define('#', 'f64'),
         idx = define(`idx:${depth}`, 'f64'),
         end = define(`end:${depth}`, 'f64'),
         body = expr(b), type = body.type.join(' ')
@@ -440,7 +440,7 @@ Object.assign(expr, {
         `(local.set $${end} ${asFloat(expr(max))})\n` +
         body.type.map(t => `(${t}.const 0)`).join('') + '\n' + // init result values
         `(loop (param ${type}) (result ${type})\n` +
-        `(if (param ${type}) (result ${type}) (f64.le ${get(idx)} (local.get $${end}))\n` + // if (@ < end)
+        `(if (param ${type}) (result ${type}) (f64.le ${get(idx)} (local.get $${end}))\n` + // if (# < end)
         `(then\n` +
         `${`(drop)`.repeat(body.type.length)}\n` +
         `${set(cur, get(idx))} \n` +
@@ -464,7 +464,7 @@ Object.assign(expr, {
       // (a,b,c) <| ...
       if (aop.type.length > 1) {
         // we create tmp list for this group and iterate over it, then after loop we dump it into stack and free memory
-        // i=0; to=types.length; while (i < to) {@ = stack.pop(); ...; i++}
+        // i=0; to=types.length; while (i < to) {# = stack.pop(); ...; i++}
         from = `(f64.const 0)`, to = `(f64.const ${aop.type.length})`
         next = `(f64.load (i32.add (global.get $__heap) (local.get $${idx})))`
         // push args into heap
@@ -485,7 +485,7 @@ Object.assign(expr, {
       }
       // list <| ...
       else {
-        // i = 0; to=buf[]; while (i < to) {@ = buf[i]; ...; i++}
+        // i = 0; to=buf[]; while (i < to) {# = buf[i]; ...; i++}
         inc('arr.len'), inc('arr.get')
 
         const src = tmp('src'), len = tmp('len', 'i32')
@@ -592,7 +592,7 @@ Object.assign(expr, {
       // FIXME: complex multiple members, eg.
       // (x ? a,b : c,d) * (y ? e,f : g,h);
       // (... (x ? ^^a,b); ...; c,d) * y(); ;; where y returns multiple values also
-      // (a <| @) * (b <| @);
+      // (a <| #) * (b <| #);
     }
 
     return op(`(f64.mul ${asFloat(aop)} ${asFloat(bop)})`, 'f64')

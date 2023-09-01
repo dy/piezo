@@ -179,6 +179,10 @@
     + sone without o
     + synt
 
+  * sinusoid
+  * soid
+  * zoid
+
   * symph
     + symphony
     + more personal
@@ -1469,7 +1473,7 @@ Having wat files is more useful than direct compilation to binary form:
   + allows building chords as (C3, E3, G3) = Cmaj
     ~ would require # to be valid part of identifier
 
-## [x] ? Parts of identifier: $, #, @, _ → @ is reserved for import
+## [x] ? Parts of identifier: $, #, @, _
   + allows private-ish variables
   + allows notes constants
   ~ mb non-standardish
@@ -2213,8 +2217,8 @@ Having wat files is more useful than direct compilation to binary form:
 ## [x] Import no-keyword? -> `<math#floor>`
 
   * No need to define scope: imports full contents
-  * #[math]; (Rusti)
-  * `# 'math', './my-mod.son', 'musi'`
+  * `#[math]; #[./path/to/lib.sy];` (Rusti)
+  * `#math;#./path/to/lib.sy;`
     + like md title
     + shortcut from #include, #import in C, C++, Obj C
     + `# 'math': sin, cos;`
@@ -2250,8 +2254,13 @@ Having wat files is more useful than direct compilation to binary form:
   * wildcard? 'math.*', 'latr.*', './my.son/*'
   * `* :: 'math', sin, cos :: 'math'`
   * `@math: sin, cos; @latr; @./my-lib.son`
-    + at math: sin, cos
+    + literal meaning: at math: sin, cos;
     + @ has address intuition, which better fits for paths.
+    + very typographical natural convention.
+    - doesn't allow sequence `@math:sin, @latr, @@audio-lab/synth, @./path/to/my/lib.sy;`
+    - double `@@audio-lab`
+    - reserves `@` and `:` operators.
+    - disregards URLs.
   * `sin, cos @ 'math', * @ 'latr'`
     + a,b at source
     +~ reminds npm namespace convention
@@ -2261,8 +2270,6 @@ Having wat files is more useful than direct compilation to binary form:
       ~ we may not necessarily want to resolve node_modules path, it's going to be either just `synth` or full path.
     + no case-sensitivity problem, `math#PI` and `math#pi` are different
     + it's more obvious that variables become part of scope, rather than figuring out vars from atom `'#a,b,c'`
-  *! what if npm module namespace convention? `'@math/sin,cos'`, `'./my-sound.son/*'`
-    ~ similar to just @
   * `'math' / sin, cos;`
     ? 'math' / *; ?
   * `'math': sin,cos, 'latr': *`
@@ -2273,15 +2280,19 @@ Having wat files is more useful than direct compilation to binary form:
   * `'math'!sin,cos, '@audio-lab/synth'!, './my-sound.son'!`
     - prefix is easier identifiable
   * `osc1, osc2 =: '@audio-lab/synt'`
-  * `<math>, <./path/to/my/son>, <@audio-lab/synth>`
+  * `<math>, <./path/to/my/sound.sy>, <@audio-lab/synth>;`
     + associates with C's `#import <std>`
     + encloses internal stuff: it's not string nor expression, same time safe
-    + saves extra operator `@`, `:` - allows `#` internally as part of URL
-      + can be used for defer
+    + frees extra operator `@`, `:` - allows `#` internally as part of URL
+      + can be used for defer or privates
     + reminds brackets in terms of "include here"
     + relatively rare to use for anything else
     + allows protocols inside as `<https://sonr.io/kick.s#a,b,c>`
-    - looks like JSX
+    - looks like JSX/C++/TypeScript type templates
+    - multiple lines in a row look heavy `<math#pi>;<./path/to/lib.sy>;`
+      + allows sequence as `<math#pi>, <./path/to/lib.sy>;`
+    - not as natural as `@math:sin,cos;@./path/to/lib.sy;`
+  * `{math},{./path/to/lib.sy},{@aydui-lab/synth};`
   * sin, cos <- 'math', <- '@audio-lab/synth'
     + reminds list comprehension with assignment
     - conflict with arrow function ->
@@ -3378,7 +3389,7 @@ Having wat files is more useful than direct compilation to binary form:
     * likely can be `osc=[sin(x)=...x,tri(x)=...x]`
   + resolves the issue of scope (above): no need to make all vars global since no scope recursion
 
-## [x] Replace `<|`, `|`, `|>`? -> ~~Let's try `::` for loop/generator and `list -> item ::` for extended loop/tranformer~~ ~~let's use `<|`, `|>` for map/reduce,~~ `<|` and `|>` for loop (multiple/single arg), `_` for topic token, ~~`x -> x*2` for mapping function~~
+## [x] Replace `<|`, `|`, `|>`? -> ~~Let's try `::` for loop/generator and `list -> item ::` for extended loop/tranformer~~ ~~let's use `<|`, `|>` for map/reduce,~~ `<|` and `|>` for loop (multiple/single arg), `#` for topic token, ~~`x -> x*2` for mapping function~~
 
   + Less problems with overloading `|`
   + Fold operator is likely not as useful
@@ -3612,14 +3623,19 @@ Having wat files is more useful than direct compilation to binary form:
     - nah: `x = ~list`
   ? ALT: `x <~ list : `
 
-### [x] What's the best character for placeholder? -> within `_#$%^@&` `@` seems most safe
+### [x] What's the best character for placeholder? -> within `_#$%^@&` `#` feels the best
 
   * `list |> #*2`, `list |> #>2?^^#:^#;`
     + `#` is almost perfect for topic/reference, associates with `#`th item
     - has more meaning as "number of" rather than i-th number
+      ~+ current item number as well
+    + has typographival meaning as placeholder, or "insertion field"
     - needs prohibiting variables starting from # though
-      - which is problematic for mono buffers `#tri = [..1s] |>= tri(@ * 2)`
+      - which is problematic for mono buffers `#tri = [..1s] <|= tri(# * 2)`
+      ~+ no, doesn't need, why?
     -~ interferes with `<math#a,b,c>`
+      ~ these imports are unwieldy tbh, too much legacy mixup: JSX, C++, types, URLs.
+    + no "select-all" problem as acute as with `_`
   * `list |> &*2`, `list |> &>2?^^&:^&;`
     + & is almost-character, feels more like an id
     - has weird connotation as binary
@@ -3635,14 +3651,19 @@ Having wat files is more useful than direct compilation to binary form:
     - ~~conflicts with import~~ import is `<>` for now
     - makefile denotes `$@` as target file (exports?), and `$^` as current file
     + matches `au-` from language name, also looks like aura around a
+      - we don't use auro name
+    - no confidence in it
+      - looks too much to reserve for that lil task
+      - no "placeholder" or "insertion" feeling
   * `list |> _ * 2`, `list |> _>2?^^_:^_`
     + less mystery than with `@`
     + more conventional (Elixir, Julia, Scala, Perl, PowerShell)
-    - not as distinguished from code, not so cool as `^@#&`
+    - not as distinguished from code, as `^@#&`
     - select-all problem, esp. since default separator in vars is `_`, like `sin_w`
     - has tinge of "throwaway variable"
-      ~+ we don't need throwaways in lino, since we support skipped args `(,,)`
+      ~+ we don't need throwaways, since we support skipped args `(,,)`
     - has tinge of "private variable"
+      ~ we don't have privates
     + literally means "placeholder", for "placeholder" variable
   * `list |> ^ * 2`
     - conflicts with `^` for return `list |> ^>2?^^^:^^;`
@@ -3655,6 +3676,7 @@ Having wat files is more useful than direct compilation to binary form:
     - hard to select-all
     - reminds tits `a(.)`
   * `list:x |> x * 2`, `list:x |> x>2?^^x:^x`;
+    + differentiates `a > 1 |> x` vs `a : x |> x`
     - conflict-ish with step `0..10:0.5:x |> x * 2`
       ? `0..10 + 0.5 : x |> x * 2`
     - conflicts with condition `a ? x : y |> z`
@@ -3672,7 +3694,7 @@ Having wat files is more useful than direct compilation to binary form:
   * `list |x> x*2`, `a,b,c |x> x*2`, `0..10 |x> x*2`
     - `list | (x > x*2)`
 
-## [x] What's the difference of `list <| @ * 2` vs `list |> @ * 2`? -> multiple vs single return
+## [x] What's the difference of `list <| # * 2` vs `list |> # * 2`? -> multiple vs single return
 
   ? First one returns multiple members, last one returns single (last) value
     ? can we detect that by-use-case?
