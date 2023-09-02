@@ -170,6 +170,7 @@
 
   * beat, baet, beaut, bitr
     + kick.beat
+
   * synl
 
   * syne
@@ -179,9 +180,11 @@
     + sone without o
     + synt
 
+  * sinu
   * sinusoid
   * soid
   * zoid
+  * sen
 
   * symph
     + symphony
