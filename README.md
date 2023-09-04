@@ -1,4 +1,4 @@
-# lino 𓈉
+# syne 𓈉
 
 Microlanguage with ergonimic syntax, linear memory and compiling to 0-runtime WASM.<br>
 Made for the purpose of audio/signal processing.
