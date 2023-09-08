@@ -1,4 +1,4 @@
-## [x] name -> syne
+## [x] name -> mell
 
   * soufn, sofn, sofun, so-fun, funzo, zfun
   * sound-fu, zound-fu, zo-fu, sonfu, sone-fu
@@ -80,6 +80,17 @@
     + file can be named literally mono.lisa
     - already exists: https://github.com/Somainer/lisa-lang
     - super-confusable
+  * lyno
+  * loni, lony
+  * looney
+    + looney tunes
+  * coo-coo
+    + sound
+  * mell
+    + melody language
+    + bell
+    + mell tunes
+    + .mel .me
 
   * auriel, aureil, aury
     + available
@@ -182,6 +193,8 @@
 
   * sinu
   * sinusoid
+  * sina
+
   * soid
   * zoid
   * sen
@@ -255,6 +268,13 @@
   * suri
     + name of Krishna
     + wisdom
+
+  * veena
+    + narada's playing instrument
+    + free
+  * vina
+    - taken
+  * vyn
 
 ## [ ] Free operators
 

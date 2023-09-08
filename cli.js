@@ -14,20 +14,20 @@ const argv = arg({
 
 const help =
   `
-Usage: syne <source> -o <destination>
+Usage: mell <source> -o <destination>
 
 Description:
-  Compiles syne source file to wasm binary output.
+  Compiles mell source file to wasm binary output.
 
 Repository:
-  https://github.com/audio-lab/syne
+  https://github.com/audio-lab/mell
 
 Options:
   --output, -o    Output file path
   --text, -t      [TODO] Output WASM text instead of binary
 
 Example:
-  syne input.s -o output.wasm
+  mell input.s -o output.wasm
 `
 
 const path = argv._?.[0], outpath = argv['--output']
