@@ -1,4 +1,4 @@
-# mell
+# lino
 
 Microlanguage with ergonimic syntax, linear memory and compiling to 0-runtime WASM.<br>
 Made for the purpose of audio/signal processing.
@@ -388,14 +388,14 @@ See [all examples](/examples)
 
 ## Usage
 
-_mell_ is available as CLI or JS package.
+_lino_ is available as CLI or JS package.
 
-`npm i mell`
+`npm i lino`
 
 ### CLI
 
 ```sh
-mell source.sy -o dest.wasm
+lino source.sy -o dest.wasm
 ```
 
 This produces compiled WASM binary.
@@ -403,10 +403,10 @@ This produces compiled WASM binary.
 ### JS
 
 ```js
-import * as mell from 'mell'
+import * as lino from 'lino'
 
 // create wasm arrayBuffer
-const buffer = mell.compile(`
+const buffer = lino.compile(`
   <math#PI,sin>, <mylib>, <./my/other/lib.sy>;
   n=1;
   mult(x) = x*pi;
@@ -449,7 +449,7 @@ const arrValues = new Float64Array(__memory, arr.value, 3)
 
 Audio processing doesn't have general cross-platform solution, many environments lack audio features.
 JS _Web Audio API_ in particular is not suitable for audio purposes: unpredictable pauses, glitches and so on. It's better handled in worklet with WASM.<br/>
-_mell_ addresses these points, making audio code more accessible and robust.
+_lino_ addresses these points, making audio code more accessible and robust.
 
 That's personal attempt to rethink some JS parts and secure language ground. Someone may find it a line noise, but I find it beautiful.
 
@@ -473,11 +473,11 @@ It targets browsers, [audio worklets](https://developer.mozilla.org/en-US/docs/W
 -->
 
 <!--
-## Projects using mell
+## Projects using lino
 
 * [web-audio-api](https://github.com/audiojs/web-audio-api)
 * [audiojs](https://github.com/audiojs/)
-* [mell](https://github.com/mell/)
+* [lino](https://github.com/lino/)
 -->
 
 ### Inspiration
