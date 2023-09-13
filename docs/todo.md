@@ -15,6 +15,8 @@
 
 ## Stage 1
 
+* [x] make use of watr compiler
+  * [ ] fix watr discrepancies with wabt in lino context
 * [x] Add proper scope mechanism (streamline compiler)
 * [ ] case-insensitive variables
 * [x] merge analyzer into compile
@@ -39,7 +41,6 @@
 * [x] early return detection
 * [ ] while loop
 * [ ] break/continue
-* [ ] make use of watr compiler
 * [x] Readable generated code
 * [x] Per-function vars scope: we don't need parens as scope
 * [x] Change `,` precedence to be under `=` to allow `^a,b,c`, `x?1,2,3:4,5,6`, `a,b<|x,i->x,i`
@@ -116,6 +117,27 @@
 * [ ] Readme examples
   * [ ] Audio gain example
   * [ ] Sine gen example
+
+## 1.1
+
+* [ ] Bytebeat collection
+  * [ ] classics http://viznut.fi/demos/unix/bytebeat_formulas.txt
+  * [ ] https://github.com/darius/bytebeat
+  * [ ] https://dollchan.net/bytebeat
+  * [ ] http://canonical.org/~kragen/bytebeat/
+  * [ ] https://tinyrave.com/
+  * [ ] https://llllllll.co/t/bytebeats-a-beginner-s-guide/16491
+  * [ ] https://www.reddit.com/r/bytebeat/
+  * [ ] https://games.greggman.com/game/html5-bytebeat/
+  * [ ] https://github.com/greggman/html5bytebeat#rant
+  * [ ] https://github.com/Butterroach/jstebeat
+  * [ ] https://butterroach.github.io/jstebeat/
+  * [ ] https://sarpnt.github.io/bytebeat-composer
+  * [ ] http://wavepot.com/
+  * [ ] https://github.com/stellartux/websynth
+  * [ ] https://github.com/radavis/bytebeat
+
+* [ ]
 
 ## 2
 

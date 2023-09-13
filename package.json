@@ -1,11 +1,12 @@
 {
   "devDependencies": {
+    "sprae": "^6.1.2",
     "tst": "^7.1.1"
   },
   "dependencies": {
     "arg": "^5.0.2",
     "subscript": "^7.4.6",
-    "watr": "^2.1.1"
+    "watr": "^2.1.4"
   },
   "name": "mell",
   "description": "Low-level language for audio/signal purposes",

@@ -1,4 +1,4 @@
-## [x] name -> mell
+## [ ] name ->
 
   * soufn, sofn, sofun, so-fun, funzo, zfun
   * sound-fu, zound-fu, zo-fu, sonfu, sone-fu
@@ -181,16 +181,15 @@
 
   * beat, baet, beaut, bitr
     + kick.beat
+  * beatr, beatl, bitl
 
   * synl
-
   * syne
     + sine
     + sync
     + `.sy` is cool
     + sone without o
     + synt
-
   * sinu
   * sinusoid
   * sina
@@ -274,7 +273,24 @@
     + free
   * vina
     - taken
-  * vyn
+    + anagram to ivan(ov), like
+  * vyna
+  * vani
+    + speech, sound, voice in sanskrit
+    + associated with Saraswati - goddess of arts, music, knowledge, speech.
+    + anagram to ivan(ov)
+    - taken as v-ani! Heck!
+  * niva
+    + anagram to ivan-ov
+    + anagram to vina
+    + anagram to vani
+    ~- residence, abode
+
+  * z
+    + zlang - zound/zvuk lang
+    + zzfx
+    - z language, z++ language exist
+  * zz
 
 ## [ ] Free operators
 
@@ -1327,7 +1343,7 @@ Having wat files is more useful than direct compilation to binary form:
   + `x -<= 0..10` is just a nice construct
   -  `x <- y` vs `x < -y`
 
-## [ ] Comments: `//`, `/*` vs `;;` and `(; ;)` → `\`
+## [ ] Comments: `//`, `/*` vs `;;` and `(; ;)` →
 
   1. `;;`
   + ;; make more sense, since ; is separator, and everything behind it doesn't matter
@@ -1380,8 +1396,12 @@ Having wat files is more useful than direct compilation to binary form:
   - // is used in python for floor division, very handy: (a / b | 0) -> a//b
     - that is especially not just floor division but autoconverting to int, which is super handy!!
       ? can that be resolved somehow?
+      - what's the big deal of just a/b | 0? internally that's same
   + allows defer to be `\x++`.
   + makes f#-compatible syntax highlight
+  + saves soooo much time converting bytebeats to lino
+    + sooo natural to feel
+  - search-matches with protocols like `https://`
 
   3. `\` or `\\`
     + mono-compatible
@@ -1404,6 +1424,7 @@ Having wat files is more useful than direct compilation to binary form:
     - takes primary semantic meaning, rather than "safe" secondary meaning
     ?- what's inline pairing? `\* *\`?
       + `\ inline comment \`
+    - sometimes ascii art includes these - becomes cumbersome
 
   4. `/* */`
     + most popular
@@ -2237,7 +2258,7 @@ Having wat files is more useful than direct compilation to binary form:
   + JS keywords are ridiculous: they block many good names pushing user use marginal names.
   + keywords play role of comments anyways. It's better to put freeword explanation into comments rather than pollute language.
 
-## [x] Import no-keyword? -> `<math#floor>`
+## [x] Import no-keyword? -> ~~`<math#floor>`~~ let's hold on for now
 
   * No need to define scope: imports full contents
   * `#[math]; #[./path/to/lib.sy];` (Rusti)
@@ -2326,7 +2347,7 @@ Having wat files is more useful than direct compilation to binary form:
     * it's better to always assign to a variable to make importable parts explicit.
     - conflicts with notes. We need to import all of them.
 
-## [x] Import subparts → try `<math#floor,cos,sin>`
+## [x] Import subparts → ~~try `<math#floor,cos,sin>`~~ let's hold on
 
   1. `@ 'math': sin, cos`
     + defines global functions
@@ -2362,6 +2383,15 @@ Having wat files is more useful than direct compilation to binary form:
     - scoping problem, same as JS.
 
   3.1 `math @ sin, cos`
+
+## [ ] Import: should we delegate it to compiler options?
+
+  + no need to care about file loading method: left up to user
+  + no syntax questions
+  + no code noise
+  + sonr can make some default math convention for imports, as well as export
+  + we anyways have to provide imports in compiler options, so that's unnecessary in code
+  - introduces implicit environment
 
 ## [x] Do we need to have `@` for imports? Can't we just indicate atom directly? -> we can import without atoms
 

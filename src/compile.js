@@ -4,7 +4,7 @@ import parse from './parse.js';
 import stdlib from './stdlib.js';
 import precompile from './precompile.js';
 import { ids, stringify, err, u82s } from './util.js';
-import { print } from 'watr';
+import { print, compile as watr } from 'watr';
 
 let prevCtx, includes, imports, globals, locals, slocals, funcs, func, exports, datas, mem, returns, config, depth;
 
@@ -96,6 +96,10 @@ export default function compile(node, obj) {
 
   // restore previous compiling context
   ({ prevCtx, includes, imports, globals, funcs, func, locals, slocals, exports, datas, mem, returns, config, depth } = prevCtx);
+
+  if (config?.target === 'wasm')
+    out = watr(out)
+
   return out
 }
 

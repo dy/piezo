@@ -186,7 +186,10 @@ token('(', PREC_CALL, (a, b) => !a && (b = expr(0, CPAREN), b ? ['(', b] : ['(']
 token('(', PREC_CALL, (a, b) => a && (b = expr(0, CPAREN), b ? ['()', a, b] : ['()', a]))
 
 // <a#b,c>
-token('<', PREC_TOKEN, (a, b) => !a && (b = skip(c => c !== GT), skip(), b ? ['<>', b] : err('Empty import statement')))
+// token('<', PREC_TOKEN, (a, b) => !a && (b = skip(c => c !== GT), skip(), b ? ['<>', b] : err('Empty import statement')))
 
 // \comments
-token('\\', PREC_TOKEN, (a, prec) => (skip(c => c >= SPACE), skip(), a || expr(prec) || [';']))
+// token('\\', PREC_TOKEN, (a, prec) => (skip(c => c >= SPACE), skip(), a || expr(prec) || [';']))
+
+// //comments
+token('//', PREC_TOKEN, (a, prec) => (skip(c => c >= SPACE), skip(), a || expr(prec) || [';']))

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+
+<script type="importmap">
+  {
+    "imports": {
+      "tst": "../node_modules/tst/tst.js",
+      "subscript": "../../subscript/subscript.js",
+      "subscript/parse.js": "../node_modules/subscript/parse.js",
+      "ts-dedent": "../node_modules/ts-dedent/esm/index.js",
+      "watr": "../node_modules/watr/watr.js",
+      "sprae": "../node_modules/sprae/sprae.js"
+    }
+  }
+</script>
+
+<body :with="{tracks:[
+  'viznut-2011-09-18'
+]}">
+  <a :each="track, i in tracks" :href="`#${track}.li`" :text="track" @click="
+    console.log('clicked', track)
+    const resp = await window.fetch(`${track}.li`)
+    const code = await resp.text();
+    runSample(code)
+  " />
+</body>
+
+<script type="module">
+  import sprae from 'sprae';
+  import lino from '../index.js'
+
+  // init UI
+  sprae(document.body, {
+    runSample(code) {
+      console.log(lino, code)
+
+      const wasm = lino(code)
+    }
+  });
+</script>

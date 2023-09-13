@@ -4,17 +4,13 @@ import t, { almost, is, not, ok, same, throws } from 'tst'
 import parse from '../src/parse.js'
 import compile from '../src/compile.js'
 import Wabt from '../lib/wabt.js'
-import precompile from '../src/precompile.js'
-import { INT, FLOAT } from '../src/const.js'
-// import Wabt from 'wabt'
+import watr from 'watr';
 
 
 // convert wast code to binary
 const wabt = await Wabt()
 export function compileWat(code, imports = {}) {
   code =
-    '(func $funcref.log (import "imports" "log") (param funcref))\n' +
-    '(func $externref.log (import "imports" "log") (param externref))\n' +
     '(func $i32.log (import "imports" "log") (param i32))\n' +
     '(func $i32.log2 (import "imports" "log") (param i32 i32))\n' +
     '(func $i32.log3 (import "imports" "log") (param i32 i32 i32))\n' +
@@ -24,21 +20,23 @@ export function compileWat(code, imports = {}) {
     '(func $i64.log (import "imports" "log") (param i64))\n' +
     code
 
-  const wasmModule = wabt.parseWat('inline', code, {
-    simd: true,
-    reference_types: true,
-    gc: true,
-    bulk_memory: true
-    // function_references: true
-  })
+  // WABT compilation
+  // const wasmModule = wabt.parseWat('inline', code, {
+  //   simd: true,
+  //   reference_types: true,
+  //   gc: true,
+  //   bulk_memory: true
+  //   // function_references: true
+  // })
+  // const { buffer } = wasmModule.toBinary({
+  //   log: true,
+  //   canonicalize_lebs: true,
+  //   relocatable: false,
+  //   write_debug_names: false,
+  // })
+  // wasmModule.destroy()
 
-  const binary = wasmModule.toBinary({
-    log: true,
-    canonicalize_lebs: true,
-    relocatable: false,
-    write_debug_names: false,
-  })
-  wasmModule.destroy()
+  const buffer = watr(code)
 
   const config = {
     imports: {
@@ -47,8 +45,9 @@ export function compileWat(code, imports = {}) {
     },
     ...imports
   }
+
   // sync instance - limits buffer size to 4kb
-  const module = new WebAssembly.Module(binary.buffer)
+  const module = new WebAssembly.Module(buffer)
   return { module, instance: new WebAssembly.Instance(module, config) }
 
   // async instance
@@ -65,9 +64,9 @@ function len(n) {
 t('compile: comments', t => {
   let wat = compile(`x(a,w,h)=(
     a=1
-    \\ a=2
+    // a=2
   ), y()=(
-    \\ (
+    // (
   ).`)
   let mod = compileWat(wat)
   let { x } = mod.instance.exports
@@ -295,7 +294,7 @@ t.skip('debugs', t => {
     (memory (export "__memory") 1 2048)
 
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;; Data
-    (data (i32.const 0) "\\")`, importObject)
+    (data (i32.const 0) "//")`, importObject)
   console.log(new Uint8Array(instance.exports.__memory.buffer))
   // instance.exports.x(instance.exports.x(instance.exports.cb))
 })
