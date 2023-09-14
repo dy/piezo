@@ -487,7 +487,7 @@ Having wat files is more useful than direct compilation to binary form:
   ALT: can we introduce alternative syntax for HEX/data?
     * `{0xabaababa13241abbabaabbabab123451236546389}` or something like
 
-### [ ] String is array of uint8, but lino supports only f64 numbers. How to read as uint8s?
+### [ ] String is array of uint8, but lino supports only f64 numbers. How to read as uint8s? ->
 
   1. discard uint8 and just do f64 instead?
     ~ since strings are static, we at-part know what type it has.
@@ -495,7 +495,9 @@ Having wat files is more useful than direct compilation to binary form:
     + the fastest way
     - non-compact memory to store value
     - returned UInt8Array doesn't contain string, needs Float64Array
+      ~ not hard to convert
     + allows easier unicodes store, up to u16
+      + a bit like unicode 32
 
   2. We can write type info into array data: we don't need i32 array addresses.
     + allows uint8 arrays
@@ -1383,7 +1385,6 @@ Having wat files is more useful than direct compilation to binary form:
       - in other words stripping such comments will break code
 
   2. `//`
-  + // associates besides C+/Java/JS with F#, which is pipy
   - // is noisy conflict with / and occupies operator space, eg.:
   ```
     tri(freq in 10..10000) = (
@@ -1392,15 +1393,17 @@ Having wat files is more useful than direct compilation to binary form:
       (1 - 4 * abs( round(phase/pi2) - phase/pi2 ))
     )
   ```
-  + // is super-familiar and js/c-y
   - // is used in python for floor division, very handy: (a / b | 0) -> a//b
     - that is especially not just floor division but autoconverting to int, which is super handy!!
       ? can that be resolved somehow?
-      - what's the big deal of just a/b | 0? internally that's same
+      - what's the big deal of just a/b | 0? internally that's same, no?
   + allows defer to be `\x++`.
-  + makes f#-compatible syntax highlight
+  + // associates besides C+/Java/JS with F#, which is pipy
+  + makes C#, F#-compatible syntax highlight
+  + // is super-familiar and js/c-y
   + saves soooo much time converting bytebeats to lino
     + sooo natural to feel
+    + maintaining syntax plugins is heavy task
   - search-matches with protocols like `https://`
 
   3. `\` or `\\`
@@ -1421,22 +1424,24 @@ Having wat files is more useful than direct compilation to binary form:
       + strings in JS/anywhere ignore comments
     - syntax highlighters don't know that
       ~ neither `;;`
+      - maintaining all possible highlighters can be a lifetime effort
     - takes primary semantic meaning, rather than "safe" secondary meaning
     ?- what's inline pairing? `\* *\`?
       + `\ inline comment \`
     - sometimes ascii art includes these - becomes cumbersome
+    - \\ is pessimist comment, // is optimist
 
   4. `/* */`
-    + most popular
-    + most conventional
-    + allows removing newlines safely
-    + supported by highlighters
-    - too decorative
-    - unwanted association with mult/div
-    - pair-operators are heavy
-    + space-agnostic
-    - not nice without `//` pair
-    - visual noise with state vars `*x;/*x is pos*/;`
+  + popular (CSS, C-family)
+    - F# doesn't have these
+  + most conventional
+  + allows removing newlines safely
+  + supported by highlighters
+  - too decorative
+  - pair-operators are heavy to handle
+    - editors don't use it as shortcuts
+  + space-agnostic, newline-agnostic: allows just removing all spaces from code safely, unlike `//` comments
+  - not nice without `//` pair
 
   5. `(; ;)`
     - wrongly associates with block

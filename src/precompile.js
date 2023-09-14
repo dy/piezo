@@ -1,8 +1,8 @@
-import { INT, FLOAT } from './const.js';
-import { err, ids, intersect } from './util.js';
-
 // Static optimizations, denormalizations etc.
 // Prepares tree for compiler.
+
+import { INT, FLOAT } from './const.js';
+import { err, ids, intersect } from './util.js';
 
 let units, prev
 

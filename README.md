@@ -196,8 +196,6 @@ Minifies as `gain(b,v)=b<|=#*v.`
 A-rate (per-sample) biquad filter processor.
 
 ```
-<math#pi,cos,sin>;                  // import pi, sin, cos from math
-
 1pi = pi;                           // define pi units
 1s = 44100;                         // define time units in samples
 1k = 10000;                         // basic si units

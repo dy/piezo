@@ -67,7 +67,7 @@ export default function compile(node, obj) {
   if (Object.keys(globals).length) {
     out += `;;;;;;;;;;;;;;;;;;;;;;;;;;;; Globals\n`
     for (let name in globals)
-      if (!globals[name].import) out += `(global $${name} (mut ${globals[name].type}) (${globals[name].type}.const 0))\n`
+      if (!globals[name].import) out += `(global $${name} (mut ${globals[name].type}) (${globals[name].type}.const ${globals[name].init || 0}))\n`
     out += `\n`
   }
 
@@ -329,9 +329,17 @@ Object.assign(expr, {
     // a = b,  a = (b,c),   a = (b;c,d)
     if (typeof a === 'string') {
       if (globals[a]?.func) err(`Redefining function '${a}' is not allowed`)
-      a = define(a)
+
+      // global constants init doesn't require operation
+      if (!locals && (b[0] === INT || b[0] === FLOAT)) {
+        a = define(a, 'f64', b[1])
+        return
+      }
+
+      a = define(a, 'f64')
       const bop = expr(b)
       if (!bop.type?.length) err(`Cannot use void operator \`${b[0]}\` as right-side value`)
+
       return tee(a, asFloat(bop))
     }
 
@@ -779,10 +787,10 @@ function tee(name, init) {
 }
 
 // define variable in current scope, export if necessary; returns resolved name
-// if name includes `:` - it enforces local name (in start local function)
-function define(name, type = 'f64') {
+// FIXME if name includes `:` - it enforces local name (in start local function)
+function define(name, type = 'f64', init) {
   if (locals?.[name] || slocals?.[name] || globals?.[name]) return name;
-  ; (locals || (name.includes(':') ? slocals : globals))[name] = { var: true, type }
+  ; (locals || (name.includes(':') ? slocals : globals))[name] = { var: true, type, init }
   return name
 }
 

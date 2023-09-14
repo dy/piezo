@@ -14,11 +14,11 @@
 </script>
 
 <body :with="{tracks:[
-  'viznut-2011-09-18'
+  'viznut-2011-09-18.li'
 ]}">
-  <a :each="track, i in tracks" :href="`#${track}.li`" :text="track" @click="
+  <a :each="track, i in tracks" :href="'#' + track" :text="track" @click="
     console.log('clicked', track)
-    const resp = await window.fetch(`${track}.li`)
+    const resp = await window.fetch(`/examples/${track}`)
     const code = await resp.text();
     runSample(code)
   " />
@@ -31,7 +31,7 @@
   // init UI
   sprae(document.body, {
     runSample(code) {
-      console.log(lino, code)
+      console.log(code)
 
       const wasm = lino(code)
     }
