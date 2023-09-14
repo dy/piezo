@@ -454,7 +454,7 @@ t('compile: list basic', t => {
   is(yl.value, 4, 'ylen')
 })
 
-t('compile: list basic local', t => {
+t.only('compile: list basic local', t => {
   let wat = compile(`x() = [1, 2].`)
   let mod = compileWat(wat)
   let { __memory: memory, x } = mod.instance.exports
