@@ -16,7 +16,7 @@
 ## Stage 1
 
 * [x] make use of watr compiler
-  * [ ] fix watr discrepancies with wabt in lino context
+  * [x] fix watr discrepancies with wabt in lino context
 * [x] Add proper scope mechanism (streamline compiler)
 * [ ] case-insensitive variables
 * [x] merge analyzer into compile

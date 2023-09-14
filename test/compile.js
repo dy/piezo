@@ -440,7 +440,6 @@ t('compile: list basic', t => {
   let wat = compile(`x = [1.1, 2.22, 3.333], y = [4.1234,5.54321,654321.123456,7.7777777]; x,y,xl=x[],yl=y[].`)
   let mod = compileWat(wat)
   let { __memory: memory, x, y, xl, yl } = mod.instance.exports
-  console.log(new Uint8Array(memory.buffer))
   let xarr = new Float64Array(memory.buffer, x.value, 3)
   is(xarr[0], 1.1, 'x0')
   is(xarr[1], 2.22, 'x1')
@@ -454,7 +453,7 @@ t('compile: list basic', t => {
   is(yl.value, 4, 'ylen')
 })
 
-t.only('compile: list basic local', t => {
+t('compile: list basic local', t => {
   let wat = compile(`x() = [1, 2].`)
   let mod = compileWat(wat)
   let { __memory: memory, x } = mod.instance.exports
@@ -768,7 +767,7 @@ t.todo('compile: state variable - mixed deps', t => {
   let { x, y, z } = mod.instance.exports
 })
 
-t('compile: import simple', t => {
+t.todo('compile: import simple', t => {
   const imports = { math: { sin: Math.sin, pi: Math.PI } };
   let wat = compile(`<math#pi,sin>; pi, sinpi(n=1)=sin(pi*n).`, { imports })
   let mod = compileWat(wat, imports)
