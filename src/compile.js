@@ -180,13 +180,6 @@ Object.assign(expr, {
     return out;
   },
 
-  '^'([, a]) {
-    let aop = expr(a)
-    returns.push(aop)
-    // we enforce early returns to be f64
-    return op(`(return ${asFloat(aop)})`, aop.type)
-  },
-
   // a()
   '()'([, name, [, ...args]]) {
     if (!globals[name]) err('Unknown function call: ' + name)
@@ -621,18 +614,62 @@ Object.assign(expr, {
     let aop = expr(a), bop = expr(b)
     return inc('f64.pow'), op(`(call $f64.pow ${asFloat(aop)} ${asFloat(bop)})`, 'f64')
   },
+  '%'([, a, b]) {
+    let aop = expr(a), bop = expr(b);
+    // x % inf
+    if (b[1] === Infinity) return aop;
+    if (aop.type[0] === 'i32' && bop.type[0] === 'i32') op(`(i32.rem_s ${aop} ${bop})`, 'i32')
+    return inc('f64.rem'), op(`(call $f64.rem ${asFloat(aop)} ${asFloat(bop)})`, `f64`)
+  },
+  '%%'([, a, b]) {
+    // common case of int is array index access
+    let aop = expr(a), bop = expr(b);
+    if (aop.type[0] === 'i32' && bop.type[0] === 'i32') return inc('i32.modwrap'), op(`(call $i32.modwrap ${a} ${b})`)
+    return inc('f64.modwrap'), inc('f64.rem'), op(`(call $f64.modwrap ${asFloat(a)} ${asFloat(b)})`, `f64`)
+  },
+
+  '~'([, a]) {
+    let aop = expr(a)
+    return op(`(i32.xor (i32.const -1) ${asInt(aop)})`, 'i32')
+  },
+
   '|'([, a, b]) {
     let aop = expr(a), bop = expr(b);
     // x | 0
     if (b[1] === 0) return asInt(aop);
     return op(`(i32.or ${asInt(aop)} ${asInt(bop)})`, 'i32')
   },
-
-  '%%'([, a, b]) {
-    // common case of int is array index access
-    if (getDesc(a).type === INT && getDesc(b).type === INT) return inc('i32.modwrap'), call('i32.modwrap', a, b)
-    return inc('f64.modwrap'), expr(['()', 'f64.modwrap', [',', a, b]])
+  '!'([, a]) {
+    let aop = expr(a)
+    if (aop.type.length > 1) err('Group inversion: unimplemented')
+    if (aop.type[0] === 'i32') return op(`(if (result i32) (i32.eqz ${aop}) (then (i32.const 1)) (else (i32.const 0)))`, 'i32')
+    return op(`(if (result i32) (f64.eq ${aop} (f64.const 0)) (then (i32.const 1)) (else (i32.const 0)))`, 'i32')
   },
+  '&'([, a, b]) {
+    let aop = expr(a), bop = expr(b);
+    return op(`(i32.and ${asInt(aop)} ${asInt(bop)})`, `i32`)
+  },
+  '^'([, a, b]) {
+    // ^a
+    if (!b) {
+      let aop = expr(a)
+      returns.push(aop)
+      // we enforce early returns to be f64
+      return op(`(return ${asFloat(aop)})`, aop.type)
+    }
+    // a ^ b
+    let aop = expr(a), bop = expr(b);
+    return op(`(i32.xor ${asInt(aop)} ${asInt(bop)})`, `i32`)
+  },
+  '<<'([, a, b]) {
+    let aop = expr(a), bop = expr(b);
+    return op(`(i32.shl ${asInt(aop)} ${asInt(bop)})`, `i32`)
+  },
+  '>>'([, a, b]) {
+    let aop = expr(a), bop = expr(b);
+    return op(`(i32.shr_s ${asInt(aop)} ${asInt(bop)})`, `i32`)
+  },
+
   // comparisons
   '<'([, a, b]) {
     let aop = expr(a), bop = expr(b)
@@ -848,7 +885,6 @@ function pick(count, input) {
 // holds number of returns (ops)
 // makes sure it stringifies properly into wasm expression
 // provides any additional info: types, static, min/max etc
-// supposed to be a replacement for getDesc to avoid mirroring every possible op
 function op(str = '', type, info = {}) {
   str = new String(str)
   if (!type) type = []

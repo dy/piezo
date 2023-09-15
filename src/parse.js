@@ -15,8 +15,7 @@ const PREC_SEMI = 1,
   PREC_RETURN = 4, // x ? ^a,b : y
   PREC_STATE = 4, // FIXME: *a,b,c, d=4 is confusing group
   PREC_LOOP = 5, // <| |>
-  // NOTE: these halves are sensitive since subscript for rassoc uses 0.5 precedence shift
-  PREC_SEQUENCE = 7.75, //  ^a,b,c;  a, b ? c,d : e,f;
+  PREC_SEQUENCE = 7, //  ^a,b,c;  a, b ? (c,d) : (e,f);
   PREC_IF = 8,    // a ? b=c;  a = b?c;
   PREC_ASSIGN = 8.25,  // a=b, c=d,  a = b||c,  a = b | c,   a = b&c
   PREC_OR = 11,

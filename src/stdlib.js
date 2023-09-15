@@ -13,10 +13,23 @@ export const std = {
 
   // a %% b, also used to access buffer
   "i32.modwrap": `(func $i32.modwrap (param i32 i32) (result i32) (local $rem i32)
-     (local.set $rem (i32.rem_s (local.get 0) (local.get 1)))
-     (if (result i32) (i32.and (local.get $rem) (i32.const 0x80000000))
-     (then (i32.add (local.get 1) (local.get $rem))) (else (local.get $rem))
-    ))`,
+    (local.set $rem (i32.rem_s (local.get 0) (local.get 1)))
+    (if (result i32) (i32.and (local.get $rem) (i32.const 0x80000000))
+      (then (i32.add (local.get 1) (local.get $rem)))
+      (else (local.get $rem)
+    )
+  ))`,
+  "f64.modwrap": `(func $f64.modwrap (param f64 f64) (result i32) (local $rem i32)
+    (local.set $rem (call $f64.rem (local.get 0) (local.get 1)))
+    (if (result f64) (f64.lt (local.get $rem) (f64.const 0))
+      (then (f64.add (local.get 1) (local.get $rem)))
+      (else (local.get $rem)
+    )
+  )`,
+  // divident % divisor => dividend - divisor * floor(dividend / divisor)
+  "f64.rem": `(func $f64.rem (param f64 f64) (result f64)
+    (f64.sub (local.get 0) (f64.mul (f64.floor (f64.div (local.get 0) (local.get 1))) (local.get 1)))
+  )`,
 
   // increase available memory to N bytes, grow if necessary; returns ptr to allocated block
   "malloc": `(func $malloc (param i32) (result i32) (local i32 i32)\n` +

@@ -15,7 +15,7 @@ Made for the purpose of audio/signal processing.
 
 ///////////////////////////////// standard operators
 + - * / % -- ++                // arithmetical (float)
-&& || ! ?: ?                   // logical (boolean)
+&& || ! ?:                     // logical (boolean)
 > >= < <= == !=                // comparisons (boolean)
 & | ^ ~ >> <<                  // binary (integer)
 []                             // member access, length

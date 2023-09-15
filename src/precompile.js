@@ -293,6 +293,9 @@ Object.assign(expr, {
     )
   },
 
+  '!'([, a]) {
+    a = expr(a); return unroll('!', a) || (typeof a[1] === 'number' ? [INT, !a[1]] : ['!', a])
+  },
   '&'([, a, b]) {
     a = expr(a), b = expr(b); return unroll('&', a, b) || (
       typeof a[1] === 'number' && typeof b[1] === 'number' ? [INT, a[1] & b[1]] :

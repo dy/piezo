@@ -16,8 +16,10 @@
 ## Stage 1
 
 * [ ] all readmes test
-  * [ ] inline global consts
+  * [x] inline global consts
+  * [ ] standard operators
 * [ ] first bytebeat
+* [ ] strings
 * [x] make use of watr compiler
   * [x] fix watr discrepancies with wabt in lino context
 * [x] Add proper scope mechanism (streamline compiler)

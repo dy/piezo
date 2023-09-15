@@ -355,8 +355,9 @@ t('parse: sine gen', t => {
 t('parse: sequence precedence', t => {
   is(parse(`^b,c`), ['^', [',', 'b', 'c']]);
   is(parse(`^^b,c`), ['^^', [',', 'b', 'c']]);
-  is(parse(`a,b?c,d:e,f`), [',', 'a', ['?:', 'b', [',', 'c', 'd'], [',', 'e', 'f']]]);
-  is(parse(`a?b,c`), ['?', 'a', [',', 'b', 'c']]);
+  // is(parse(`a,b?c,d:e,f`), [',', 'a', ['?:', 'b', [',', 'c', 'd'], [',', 'e', 'f']]]);
+  // is(parse(`a?b,c`), ['?', 'a', [',', 'b', 'c']]);
+  is(parse(`a?b,c`), [',', ['?', 'a', 'b'], 'c']);
   is(parse(`a=b,c=d`), [',', ['=', 'a', 'b'], ['=', 'c', 'd']]);
   is(parse(`a,b<|c,d`), ['<|', [',', 'a', 'b'], [',', 'c', 'd']]);
 

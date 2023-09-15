@@ -302,7 +302,7 @@
   * `-|`, `=|`, `~|`
   * `-\`, `=\`, `~\`
   * `=>`, `~>`
-  * `''`, `""`, ``
+  * `''`, ``
   * `?=`, `~=`
 
 ## [x] WAT, WASM? All targets
@@ -469,10 +469,13 @@ Having wat files is more useful than direct compilation to binary form:
     → sets can be listed as `(a,b,c)` ()
       ⇒ or even better, as functional languages do: `type in a|b|c`
 
-## [ ] Strings ->
+## [x] Strings -> useful for floatbeats, use `""` notation
 
   * Erlang-like "hello" === [104,101,108,108,111]
     + Standard
+    + F#-compatible
+    + `"` is not used for apostropes, so no need for `'`
+    + `'` can be used for atoms (later)
   - Case-sensitivize code
   + Floatbeats use strings
   + Static precompiler can convert static arrays to strings
@@ -487,7 +490,7 @@ Having wat files is more useful than direct compilation to binary form:
   ALT: can we introduce alternative syntax for HEX/data?
     * `{0xabaababa13241abbabaabbabab123451236546389}` or something like
 
-### [ ] String is array of uint8, but lino supports only f64 numbers. How to read as uint8s? ->
+### [x] String is array of uint8, but lino supports only f64 numbers. How to read as uint8s? -> let's try f64s array
 
   1. discard uint8 and just do f64 instead?
     ~ since strings are static, we at-part know what type it has.
@@ -496,8 +499,9 @@ Having wat files is more useful than direct compilation to binary form:
     - non-compact memory to store value
     - returned UInt8Array doesn't contain string, needs Float64Array
       ~ not hard to convert
+      ~ we wouldnt' likely do utf-8 anyways
     + allows easier unicodes store, up to u16
-      + a bit like unicode 32
+      + a bit like utf 32
 
   2. We can write type info into array data: we don't need i32 array addresses.
     + allows uint8 arrays
@@ -747,7 +751,7 @@ Having wat files is more useful than direct compilation to binary form:
     + laconic, obvious and truthy
     ~+ customizable from outside as `1s=sampleRate`
 
-## [ ] Units: what does customization give vs take
+## [x] Units: what does customization give vs take -> static as much as possible, dynamic otherwise
 
   + Gives i18l code: 1м3с
   + Gives customization of sample rate: `1s=44800`
@@ -799,17 +803,58 @@ Having wat files is more useful than direct compilation to binary form:
       - doesn't help much if expr comes after, eg. `pi,rate. a=3;`
     -> so seems uncovered period can stand only at the end of scope. Else there must be a semi.
 
-## [x] Early return? → yes, via return indicator a ? ^b;
+## [x] Early return? → keep `a ? ^;` for now
 
-  * can often see `if (a) return;` - useful construct. How's that in sonl?
+  * can often see `if (a) return;` - useful construct. How's that in lino?
   1. `a ? value.`
     * There doesn't seem to be other options.
     → `a ? b.;` expects `;` at the end.
       * skipping ; means node is the last element: `(a;b;c.)`
+    - `?` operator is void
   2. not supporting early return.
     + simpler flow/logic
     + no (b.c;d) syntax case
     + gl code doesn't support preliminary returns as well as optimal branching, so maybe meaningful
+    - no reason to not have it
+
+## [x] Early return operator / guard? What would it look like? -> still `a?.b` or `a?^b`
+
+  + we don't want to introduce void `a?b;` identical to `a&&b`
+  + the only way to use early func return is via `if(smth)return`, is there anything else?
+  + break, continue also happens always via `if(smth) break`
+    + we don't want much to introduce `^`, `^^` operators therefore
+  + so it's more known as function/block guards
+  + it's potentially easier for analysis, since we exclude fancy returns and just do conditional breaks
+  -? what should that return? It's still void operator.
+
+  * `cond ?.; cond ?. b; cond ?.. b;`
+    - conflicts with JS `a?.b;` which means optional access
+    + matches end of program `.`
+      - end of function is not denoted
+    + matches paradigm of paths: `.`, `..`
+  * `cond.?; cond.?a; cond..?b;`
+  * `cond?^; cond?^a; cond?^^b;`
+    ~ no need for one operator, can be `?` and `^^` operators
+      - which is undesirable
+      + doesn't have to introduce separate `?` and `^`.
+    + matches beginning of ternary
+    ~ we may still want to have if operator `?`.
+      ~ we can have it as elvis `a ?: b` form, or `a ?? b;`
+  * `cond!; cond!b; cond!!b;`
+    - `!a ! b;`
+    + clear option for guards, like `a > 3 !;`
+      * it's inverse early return: it ensures function body passes the condition, not vice-versa, eg
+      * `a <= 3 ! ret;`
+    - not clear how to break 2 scopes or break loop `(list <| (#!; #*#))` filter & map
+  * `cond!?; cond !? b; cond !? c;`
+  * `cond?!; cond?!b; cond?!!c;`
+    - `cond ? !b`
+  ? what about `a :? b`
+  * `cond ?:; cond?:b; cond?::b;`
+    - matches elvis visually, but not by meaning
+  * `cond:; cond: a; cond::b;`
+  * `cond<>; cond<a>; cond<<b>>;`
+  * `<cond>; <cond> a; <<cond>> b;`
 
 ## [x] Return operator: alternatives → try using `^` for returning value from block.
 
@@ -821,16 +866,17 @@ Having wat files is more useful than direct compilation to binary form:
     - exported global is confusing `sampleRate = 44100.;`
     ~ `c()=1.`, `c()=1.0.` - weirdish constructs, although clear
     - semi after the result.
-  * `a ? b...;`, `sampleRate = 44100...;`
-  * `a ? b!;`, `sampleRate = 44100!;`
-  * `a ? b :| c + d`, `sampleRate = 44100:|;`
-  * `a ? ^b;`
+  2. `a ? b...;`, `sampleRate = 44100...;`
+  3. `a ? b!;`, `sampleRate = 44100!;`
+  4. `a ? b :| c + d`, `sampleRate = 44100:|;`
+  5. `a ? ^b;`
     + less confusion with `.`
     - doesn't look natural when at the end there's `a() = (...; ^out);`
       + it doesn't necessarily required: last element is returned by default.
     + allows `.` for short float notation.
       -~ `1...2.` can be messy
     + allows return none / break notation.
+    - enforces `?`, `^` operators
 
 ## [x] Always return result, or allow no-result functions? → implicit return, same as (a;b) in scopes
 
@@ -1096,8 +1142,7 @@ Having wat files is more useful than direct compilation to binary form:
   - require strings to implement dynamic access `x['first']`
   - some arrays have aliases, others don't: we're not going to make aliases dynamic
 
-## [x] If `a ? b`, elvis: `a ?: b`? -> yes, for now it's the best option
-  * ~ equivalent to a ? #0 : b
+## [ ] If `a ? b`, elvis: `a ?: b`? -> likely yes
   + organic extension of ternary `a ? b`, `a ?: b`.
   - weirdly confusing, as if very important part is lost. Maybe just introduce elvis `a>b ? a=1` → `a<=b ?: a=1`
   - it has no definite returning type. What's the result of `(a ? b)`?
@@ -1112,6 +1157,9 @@ Having wat files is more useful than direct compilation to binary form:
     - nah, wrong ordering, we inverse `a`, not `b`
   !? What if `a ?? b`?
     - means `a || b` from JS, which is just `a ?: b`
+  - almost identical with `a&&b`
+    + allows early returns as `a ? ^b;`, whereas `a && ^b` doesn't really work like that.
+  - tiny profit, big discrepancy with convention
 
 ## [ ] mix, smoothstep operators
 
