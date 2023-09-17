@@ -1497,7 +1497,7 @@ Having wat files is more useful than direct compilation to binary form:
 
   4. `/* */`
   + popular (CSS, C-family, PHP, Swift, Kotlin, Java, JS)
-    - F# doesn't have these
+    -~ F# doesn't have these, although we can't use F# anyways due to `(*x)` issue
   + most conventional
   + allows removing newlines safely
   + supported by highlighters
@@ -1505,26 +1505,34 @@ Having wat files is more useful than direct compilation to binary form:
   - pair-operators are heavy to handle
     - editors don't use it as shortcuts as Cmd+/
   + space-agnostic, newline-agnostic: allows just removing all spaces from code safely, unlike `//` comments
-  - not nice without `//` pair
+  - not so nice without `//` pair
 
-  5. `(; ;)`
+  5. ~~`(; ;)`~~
     - wrongly associates with block
+      - in fact valid block expression
     + compat with wasm
     + everything is block-y anyways
     + smiles ;)
 
-  6. `{ comment }`, `{- comment -}`
+  6. ~~`{ comment }`, `{- comment -}`~~
     + Haskell like
     - reserves object syntax space
 
   7. `# xxx`
     + Python, Perl, R, Raku, PHP, Shells, Ruby, Julia, Nim, Make
     - reserves `#` from the name, loop placeholder
+    - too black, dark, heavy
 
   8. ~~`(* abc *)`~~
     + OCaml
     + Pascal
     - `(*p=2)` is phase state variable
+
+  9. `'abc`
+    + highlights as "string-ish"
+    + refers to old vbasics: xojo, vbasic.net, vbasic, basic
+    - strong association with strings
+    - conflicts with apostrophes
 
 ## [x] Groups: basic operations -> syntax sugar
 

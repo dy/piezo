@@ -19,7 +19,7 @@ export const std = {
       (else (local.get $rem)
     )
   ))`,
-  "f64.modwrap": `(func $f64.modwrap (param f64 f64) (result i32) (local $rem i32)
+  "f64.modwrap": `(func $f64.modwrap (param f64 f64) (result f64) (local $rem f64)
     (local.set $rem (call $f64.rem (local.get 0) (local.get 1)))
     (if (result f64) (f64.lt (local.get $rem) (f64.const 0))
       (then (f64.add (local.get 1) (local.get $rem)))

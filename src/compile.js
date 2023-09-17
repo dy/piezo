@@ -621,8 +621,8 @@ Object.assign(expr, {
   '%%'([, a, b]) {
     // common case of int is array index access
     let aop = expr(a), bop = expr(b);
-    if (aop.type[0] === 'i32' && bop.type[0] === 'i32') return inc('i32.modwrap'), op(`(call $i32.modwrap ${a} ${b})`)
-    return inc('f64.modwrap'), inc('f64.rem'), op(`(call $f64.modwrap ${asFloat(a)} ${asFloat(b)})`, `f64`)
+    if (aop.type[0] === 'i32' && bop.type[0] === 'i32') return inc('i32.modwrap'), op(`(call $i32.modwrap ${a} ${b})`, 'i32')
+    return inc('f64.modwrap'), inc('f64.rem'), op(`(call $f64.modwrap ${asFloat(aop)} ${asFloat(bop)})`, `f64`)
   },
 
   '~'([, a]) {
@@ -665,6 +665,14 @@ Object.assign(expr, {
   '>>'([, a, b]) {
     let aop = expr(a), bop = expr(b);
     return op(`(i32.shr_s ${asInt(aop)} ${asInt(bop)})`, `i32`)
+  },
+  '<<<'([, a, b]) {
+    let aop = expr(a), bop = expr(b);
+    return op(`(i32.rotl ${asInt(aop)} ${asInt(bop)})`, `i32`)
+  },
+  '>>>'([, a, b]) {
+    let aop = expr(a), bop = expr(b);
+    return op(`(i32.rotr ${asInt(aop)} ${asInt(bop)})`, `i32`)
   },
 
   // comparisons

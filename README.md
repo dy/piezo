@@ -13,19 +13,16 @@ Made for the purpose of audio/signal processing.
 16, 0x10, 0b0;                 // int, hex or binary
 16.0, .1, 1e3, 2e-3;           // float
 
-///////////////////////////////// standard operators
+///////////////////////////////// operators
 + - * / % -- ++                // arithmetical (float)
 && || ! ?:                     // logical (boolean)
 > >= < <= == !=                // comparisons (boolean)
 & | ^ ~ >> <<                  // binary (integer)
 []                             // member access, length
-
-///////////////////////////////// extended operators
-** // %%                       // power, floor div, unsigned mod
+** %%                          // power, unsigned mod
+<<< >>>                        // rotate left, right
 <? <?= ..                      // clamp/min/max, range
 |> <| <|=                      // loop, map
-*                              // state variable
-^ ^^                           // continue, break
 
 ///////////////////////////////// variables
 foo=1, bar=2.0;                // declare vars
