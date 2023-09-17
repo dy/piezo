@@ -1,4 +1,6 @@
 
+* [ ] bytebeats
+* [ ] glitches https://github.com/naivesound/glitch
 * [ ] Loudness meters https://github.com/x42/meters.lv2
 * [ ] Essentia algorithms http://essentia.upf.edu/algorithms_reference.html
 * [ ] fourier-transform
@@ -10,7 +12,6 @@
 * [ ] [sndkit](https://github.com/paulbatchelor/sndkit)
 * [ ] Compare to alternatives: rust, [soul](https://soul.dev/), elementary-audio
 * [ ] https://github.com/gleitz/midi-js-soundfonts
-* [ ] bytebeats
 * [ ] pink trombone cases https://github.com/zakaton/Pink-Trombone, https://dood.al/pinktrombone/
 * [ ] https://github.com/usdivad/mesing,
 * [ ] https://github.com/tidalcycles/strudel

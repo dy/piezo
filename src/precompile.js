@@ -273,14 +273,11 @@ Object.assign(expr, {
         (b[1] === 0) ? [FLOAT, 1] :
           (a[1] === 1) ? [FLOAT, 1] :
             (b[1] === 1) ? a :
-              // FIXME: rename to something like @sqrt
-              (b[1] === 0.5) ? ['/*', a] :
-                (b[1] === -1) ? ['/', [FLOAT, 1], b] :
-                  (b[1] === -0.5) ? ['/', [FLOAT, 1], ['/*', a]] :
-                    (typeof b[1] === 'number' && b[1] < 0) ? ['/', [FLOAT, 1], expr(['**', a, [FLOAT, Math.abs(b[1])]])] :
-                      // a ** 3 -> a*a*a
-                      (typeof a === 'string' && typeof b[1] === 'number' && b[1] % 1 === 0 && b[1] <= 3) ? Array(b[1]).fill(a).reduce((prev, a) => ['*', a, prev]) :
-                        ['**', a, b]
+              (b[1] === -1) ? ['/', [FLOAT, 1], b] :
+                (typeof b[1] === 'number' && b[1] < 0) ? ['/', [FLOAT, 1], expr(['**', a, [FLOAT, Math.abs(b[1])]])] :
+                  // a ** 3 -> a*a*a
+                  (typeof a === 'string' && typeof b[1] === 'number' && b[1] % 1 === 0 && b[1] <= 3) ? Array(b[1]).fill(a).reduce((prev, a) => ['*', a, prev]) :
+                    ['**', a, b]
     );
   },
   '//'([, a, b]) {

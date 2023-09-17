@@ -17,7 +17,8 @@
 
 * [ ] all readmes test
   * [x] inline global consts
-  * [ ] standard operators
+  * [x] standard operators
+  * [ ]
 * [ ] first bytebeat
 * [ ] strings
 * [x] make use of watr compiler

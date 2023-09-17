@@ -606,11 +606,8 @@ Object.assign(expr, {
     let aop = expr(a), bop = expr(b)
     return op(`(f64.div ${asFloat(aop)} ${asFloat(bop)})`, 'f64')
   },
-  // sqrt
-  '/*'([, a]) {
-    return op(`(f64.sqrt ${asFloat(expr(a))})`, 'f64')
-  },
   '**'([, a, b]) {
+    if (b[1] === 0.5) return op(`(f64.sqrt ${asFloat(expr(a))})`, 'f64');
     let aop = expr(a), bop = expr(b)
     return inc('f64.pow'), op(`(call $f64.pow ${asFloat(aop)} ${asFloat(bop)})`, 'f64')
   },

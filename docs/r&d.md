@@ -1142,7 +1142,7 @@ Having wat files is more useful than direct compilation to binary form:
   - require strings to implement dynamic access `x['first']`
   - some arrays have aliases, others don't: we're not going to make aliases dynamic
 
-## [ ] If `a ? b`, elvis: `a ?: b`? -> likely yes
+## [x] If `a ? b`, elvis: `a ?: b`? -> likely yes to simple condition
   + organic extension of ternary `a ? b`, `a ?: b`.
   - weirdly confusing, as if very important part is lost. Maybe just introduce elvis `a>b ? a=1` → `a<=b ?: a=1`
   - it has no definite returning type. What's the result of `(a ? b)`?
@@ -1406,7 +1406,9 @@ Having wat files is more useful than direct compilation to binary form:
   + it has "safe" or "light" semantic expectation, like, noone would guess it does something heavy
     + unlike `a \ b` or `a \\ b`
   - associates with autohotkey, which is the opposite of fast
+  + associates with assembly langs and others: Most assembly languages, AutoHotkey, AutoIt, Lisp, Common Lisp, Clojure, PGN, Rebol, Red, Scheme
   - single-comment breaks inline structures like a(x)=b;c;d.
+    + that's why `;;`
   - not as "cool" as `\\`
   - `a + b;  ;; some comment` - not nice noise
   + more lightweight than `\\`
@@ -1422,9 +1424,11 @@ Having wat files is more useful than direct compilation to binary form:
       ~+ kind-of equivalent to "nothing", eg. `x(a, (; some description;))` === `x(a,)`
     ~ `0..10<|(x,i)->sin(x);;i;;+sin(x*2)`
   + `;;` is safer & softer, not as spiky / scratchy, more familiar
-  - creates conflict `a();;;some action` - comment might start at `a();;...` which will produce invalid code
-    - in other words, such comments are not easy to strip
+  - creates conflict `a();;;some action` - comment is detected at `a();;...` which produces invalid code
+    - in other words, such comments are not so easy to strip
   - conflict with direct code, eg. `(;;;)` is valid code piece, but comment will strip it out
+    ~ that's an edge case, code like `(;;)` is discouraged
+  - the support of such comments is not widespread
 
   1.1 should we allow merge of `fn();;do something`
     + less symbols
@@ -1445,23 +1449,31 @@ Having wat files is more useful than direct compilation to binary form:
     - that is especially not just floor division but autoconverting to int, which is super handy!!
       ? can that be resolved somehow?
       - what's the big deal of just a/b | 0? internally that's same, no?
+    - it's just so nice symmetricity of ++ -- ** %% but not //
   + allows defer to be `\x++`.
   + // associates besides C+/Java/JS with F#, which is pipy
-  + makes C#, F#-compatible syntax highlight
+    + with many others: ActionScript, Boo, C (C99), C++, C#, D, F#, Go, Java, JavaScript, Kotlin, Object Pascal (Delphi), Objective-C, PHP, Rust, Scala, SASS, Swift, Xojo
+  + ~~makes C#, F#-compatible syntax highlight~~
+    - `(*p)` makes F# comment
+    - `#p` makes C# comment
   + // is super-familiar and js/c-y
   + saves soooo much time converting bytebeats to lino
     + sooo natural to feel
     + maintaining syntax plugins is heavy task
+    - can be without hardships converted to `\\`
   - search-matches with protocols like `https://`
 
   3. `\` or `\\`
     + mono-compatible
+    +~ Forth?
     + \ is almost never used in langs & that's unique
     + reminds `//`
     - sort-of constant footgun to confuse with `//`
-      + that's why `\`
+      + that's why `\\`
     + it's short
     + association with "escape" sequence in strings
+    - if strings come in (likely yes), then select-alling comments will select a bunch of escapes
+      ~ can be `\\`
     + cooler than `;;`
       + `\` is cool
     + looks fresh directionally, shadow effect `\\\\\\\\\\\\\\\\\\\\\\\\\`
@@ -1477,17 +1489,21 @@ Having wat files is more useful than direct compilation to binary form:
     ?- what's inline pairing? `\* *\`?
       + `\ inline comment \`
     - sometimes ascii art includes these - becomes cumbersome
+      ~ can be `\\`
     - \\ is pessimist comment, // is optimist
+      ~ not necessarily bad
+    + not confusable with http://
+    - writing that comment by hand requires escaping each of these, so comment becomes `\\\\`
 
   4. `/* */`
-  + popular (CSS, C-family)
+  + popular (CSS, C-family, PHP, Swift, Kotlin, Java, JS)
     - F# doesn't have these
   + most conventional
   + allows removing newlines safely
   + supported by highlighters
   - too decorative
   - pair-operators are heavy to handle
-    - editors don't use it as shortcuts
+    - editors don't use it as shortcuts as Cmd+/
   + space-agnostic, newline-agnostic: allows just removing all spaces from code safely, unlike `//` comments
   - not nice without `//` pair
 
@@ -1496,6 +1512,19 @@ Having wat files is more useful than direct compilation to binary form:
     + compat with wasm
     + everything is block-y anyways
     + smiles ;)
+
+  6. `{ comment }`, `{- comment -}`
+    + Haskell like
+    - reserves object syntax space
+
+  7. `# xxx`
+    + Python, Perl, R, Raku, PHP, Shells, Ruby, Julia, Nim, Make
+    - reserves `#` from the name, loop placeholder
+
+  8. ~~`(* abc *)`~~
+    + OCaml
+    + Pascal
+    - `(*p=2)` is phase state variable
 
 ## [x] Groups: basic operations -> syntax sugar
 
