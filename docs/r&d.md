@@ -1407,6 +1407,7 @@ Having wat files is more useful than direct compilation to binary form:
     + unlike `a \ b` or `a \\ b`
   - associates with autohotkey, which is the opposite of fast
   + associates with assembly langs and others: Most assembly languages, AutoHotkey, AutoIt, Lisp, Common Lisp, Clojure, PGN, Rebol, Red, Scheme
+    + csound
   - single-comment breaks inline structures like a(x)=b;c;d.
     + that's why `;;`
   - not as "cool" as `\\`
@@ -1422,19 +1423,25 @@ Having wat files is more useful than direct compilation to binary form:
   - `;; xxx` or `(;....;)` is valid actual syntax
     - eg. `sin(x)(; explainer ;)` is equivalent to `sin(x)()`
       ~+ kind-of equivalent to "nothing", eg. `x(a, (; some description;))` === `x(a,)`
-    ~ `0..10<|(x,i)->sin(x);;i;;+sin(x*2)`
+    + `;;` code is discouraged
   + `;;` is safer & softer, not as spiky / scratchy, more familiar
+  + looks the most organic for non-too-nerdy code, the most design-ish
   - creates conflict `a();;;some action` - comment is detected at `a();;...` which produces invalid code
     - in other words, such comments are not so easy to strip
+      ~ same problem is in C comments as `a///comment\nb`, less commonly met though
   - conflict with direct code, eg. `(;;;)` is valid code piece, but comment will strip it out
     ~ that's an edge case, code like `(;;)` is discouraged
+    ~ paired with `(; comment ;)` that's not a threat
   - the support of such comments is not widespread
+  + hints to asm/wasm languages
+  + if all programs use that comment style it seems fine: it's a good balance between neutrality, familiarity/intuitivity, innovation
 
-  1.1 should we allow merge of `fn();;do something`
+  1.1 should we make comment an alternative to semi token `fn() ;;do something`
     + less symbols
     + nice alternative to simple semicolon
-    - can deform code if used for-real, since mandatory semi will migrate to comment
-      - in other words stripping such comments will break code
+    - stripping such comments will break code
+      ~ no need to strip, just replace to `;`
+    - doesn't allow inserting inline comments within sequences like `a,;;xxx\n b`
 
   2. `//`
   - // is noisy conflict with / and occupies operator space, eg.:
@@ -1462,38 +1469,43 @@ Having wat files is more useful than direct compilation to binary form:
     + maintaining syntax plugins is heavy task
     - can be without hardships converted to `\\`
   - search-matches with protocols like `https://`
+  - pretends to be C/JS, when it is not.
+    * Such comments would make sense if: code was case-sensitive; it had standard allowed chars (no #@); code had if|else|while|for|return|in keywords.
 
   3. `\` or `\\`
-    + mono-compatible
-    +~ Forth?
-    + \ is almost never used in langs & that's unique
-    + reminds `//`
-    - sort-of constant footgun to confuse with `//`
-      + that's why `\\`
-    + it's short
-    + association with "escape" sequence in strings
-    - if strings come in (likely yes), then select-alling comments will select a bunch of escapes
-      ~ can be `\\`
-    + cooler than `;;`
-      + `\` is cool
-    + looks fresh directionally, shadow effect `\\\\\\\\\\\\\\\\\\\\\\\\\`
-    ~ possible conflict with string escapes
-      + can be resolved with `\\`
-        + creates clear separation of "comments" area
-      + `;;` can as well have conflict with strings, that's not a feature of this comment
-      + strings in JS/anywhere ignore comments
-    - syntax highlighters don't know that
-      ~ neither `;;`
-      - maintaining all possible highlighters can be a lifetime effort
-    - takes primary semantic meaning, rather than "safe" secondary meaning
-    ?- what's inline pairing? `\* *\`?
-      + `\ inline comment \`
-    - sometimes ascii art includes these - becomes cumbersome
-      ~ can be `\\`
-    - \\ is pessimist comment, // is optimist
-      ~ not necessarily bad
-    + not confusable with http://
-    - writing that comment by hand requires escaping each of these, so comment becomes `\\\\`
+  + mono lang reference
+  +~ Forth?
+  + \ is almost never used in langs & that's unique
+  + reminds `//`
+  - sort-of constant footgun to confuse with `//`
+    ~ can be `\`
+  + it's short
+  + association with "escape" sequence in strings
+  - if strings come in (likely yes), then select-alling comments will select a bunch of escapes
+    ~ can be `\\`
+  + cooler than `;;`
+    + `\` is cool
+  + looks fresh directionally, shadow effect `\\\\\\\\\\\\\\\\\\\\\\\\\`
+  - possible conflict with string escapes
+    + can be resolved with `\\`
+      + creates clear separation of "comments" area
+    + `;;` can as well have conflict with strings, that's not a feature of this comment
+      - string escapes are more likely
+    + strings in JS/anywhere ignore comments
+  - syntax highlighters don't know that
+    ~ neither `;;`
+    - maintaining all possible highlighters can be a lifetime effort
+      ~ can be one-time vscode contribution
+  - takes primary semantic meaning, rather than "safe" secondary meaning
+  ?- what's inline pairing? `\* *\`?
+    + `\ inline comment \`
+  - sometimes ascii art includes these - becomes cumbersome
+    ~ can be `\\`
+  - `\\`` is pessimist comment, // is optimist
+    ~ not necessarily bad
+  + not confusable with http://
+  - writing that comment by hand requires escaping each of these, so comment becomes `\\\\`
+  - maybe too much if all programs will use that, that's a bit weird
 
   4. `/* */`
   + popular (CSS, C-family, PHP, Swift, Kotlin, Java, JS)
@@ -1507,12 +1519,19 @@ Having wat files is more useful than direct compilation to binary form:
   + space-agnostic, newline-agnostic: allows just removing all spaces from code safely, unlike `//` comments
   - not so nice without `//` pair
 
-  5. ~~`(; ;)`~~
+  5. `(; ;)`
     - wrongly associates with block
       - in fact valid block expression
+      ~+ it doesn't make any sense to start block with `(;`
     + compat with wasm
     + everything is block-y anyways
+      + that logic is from HTML comments logic: the most prominent language construct with special opening `<` + `!--` -> `(` + `;`
     + smiles ;)
+    + allows easy strip
+    + makes it space-ignorant
+    + inlinable
+    - without `;;` is not sufficient
+    + hints that language is wasm-related
 
   6. ~~`{ comment }`, `{- comment -}`~~
     + Haskell like
@@ -1533,6 +1552,17 @@ Having wat files is more useful than direct compilation to binary form:
     + refers to old vbasics: xojo, vbasic.net, vbasic, basic
     - strong association with strings
     - conflicts with apostrophes
+  9.a ``abc`` - backticked
+    + not as strong association with strings
+    + not supposed to conflict with apostrophes or typographical stuff
+    + looks like just unnamed strings
+    + indicates possibility of multiline
+    - too light for inline comments
+    - immediate impression is strings within program
+
+  10. `"Some comment about the code"`
+    + unnamed strings can be used to store program comments, removed by compiler
+    ~ can conflict a-bit-ish with compiler directives
 
 ## [x] Groups: basic operations -> syntax sugar
 

@@ -1,6 +1,8 @@
 
 * [ ] bytebeats
 * [ ] glitches https://github.com/naivesound/glitch
+* [ ] tinyrave
+* [ ] https://cowbell.lol/
 * [ ] Loudness meters https://github.com/x42/meters.lv2
 * [ ] Essentia algorithms http://essentia.upf.edu/algorithms_reference.html
 * [ ] fourier-transform
@@ -15,7 +17,6 @@
 * [ ] pink trombone cases https://github.com/zakaton/Pink-Trombone, https://dood.al/pinktrombone/
 * [ ] https://github.com/usdivad/mesing,
 * [ ] https://github.com/tidalcycles/strudel
-* [ ] https://cowbell.lol/
 * [ ] LUFS and other meters https://github.com/klangfreund/LUFSMeter/blob/master/Ebu128LoudnessMeter.cpp
 * [ ] https://phoboslab.org/log/2023/02/qoa-time-domain-audio-compression
 * [ ] decoders from audio-decode

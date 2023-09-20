@@ -123,6 +123,7 @@
 * [ ] Readme examples
   * [ ] Audio gain example
   * [ ] Sine gen example
+* [ ] Ignore unassigned immediate constructs like `[1,2,3]` or `"abc"`.
 
 ## 1.1
 
