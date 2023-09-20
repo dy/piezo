@@ -1312,12 +1312,12 @@ Having wat files is more useful than direct compilation to binary form:
     + reminds UML <> block with condition inside
   * ? `x < 5 <:> x++`, `[ x in 1,2,3 <:> x*2 ]`
   * ? `x < 5 :.. x++`,  `x++ ..: x < 5`, `[ x in 1,2,3 ..: x*2 ]`, `[ x * 2 :.. x in 1,2,3 ]`
-  * ? `x < 5 :: x++`,  `x++ :: x < 5`, `[ x ~ 1,2,3 :: x*2 ]`, `[ x * 2 :: x ~ 1,2,3 ]`
+  * ? `x < 5 :: x++`,  `x++ :: x < 5`, `[ 1,2,3 -> x :: x*2 ]`
     + "array" intuition (many dots)
     + reminds : as in label
     + reminds math notation for list comprehension or set builder
     + reminds a bit musical meaning for loops
-    - conflict with Java/C's scope resolution operator https://en.wikipedia.org/wiki/Scope_resolution_operator
+    - reminder of with Java/C's scope resolution operator https://en.wikipedia.org/wiki/Scope_resolution_operator
   * ? `x < 5 <> x++`,  `x++ <> x < 5`, `[ x in 1,2,3 <> x*2 ]`, `[ x * 2 <> x in 1,2,3 ]`
   * ? Do we need reverse direction? - Until is very rarely used, - until style is incompatible for list comprehension
 
@@ -3575,7 +3575,7 @@ Having wat files is more useful than direct compilation to binary form:
     ? `list -> item :: (item * 2)`
       - that operator `list -> item` has no meaning by itself
     ? `list :: x -> x*2`
-      - confusion with function mappers, which is not
+      - confusion with function mappers, which it is not
       + c-like pattern `list::item -> item*2`, meaning for each item
       * loop as `a < 3 -> a++`
     ? `list -> item :: item * 2`
@@ -3671,7 +3671,7 @@ Having wat files is more useful than direct compilation to binary form:
     + No mention of fake anonymous functions
     + No conflict with `a | >b`
     + Leaves `|>` operator for something meaningful
-    - a bit cryptic and non-intuitive things like `[0, .1, ...] -> x :: lpf(x, 108, 5)`, `out ::= oscillator[shape](phase) -> x :: adsr(x, 0, 0, .06, .24) -> x :: curve(x, 1.82);`
+    - a bit cryptic and non-intuitive things like `[0, .1, ...] -> x ??: lpf(x, 108, 5)`, `out ::= oscillator[shape](phase) -> x :: adsr(x, 0, 0, .06, .24) -> x :: curve(x, 1.82);`
     - reminds some crazy wasm spec `blocktype ::= 0x40       => [] -> []`
 
   ? ALT: `list | & * 2 | filter(&)`, `a < 2 | a++`, `list |= & * 2`
