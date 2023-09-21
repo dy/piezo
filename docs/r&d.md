@@ -821,7 +821,7 @@
     + gl code doesn't support preliminary returns as well as optimal branching, so maybe meaningful
     - no reason to not have it
 
-## [x] Early return operator / guard? What would it look like? -> `a ?.; a ? b.;`
+## [x] Early return operator / guard? What would it look like? -> `a ?.; a ? b.; a ? b..;`
 
   + we don't want to introduce void `a?b;` identical to `a&&b`
   + the only way to use early func return is via `if(smth)return`, is there anything else?
@@ -841,10 +841,22 @@
     + ideal from the natural point of view
     ~ some conflict with optional JS paths
     ? how to make break 2 scopes, or alternatively continue loop?
-      !?+ for continue `a < tsh ?..;`
+      !? for continue `a < tsh ?..;`
         + matches typographic meaning
         - inverse paths meaning `.`, `..`
         - `a < tsh ? val..;` is identical to range
+          ? is that so bad that it matches range? it is kind-of indicator to "continue" range
+            * yes: how do we know if it returns sequence or just one element?
+              +~ noone returns infinite sequence as result
+          - confusable `a < tsh ? ..4;` and `a < tsh ? 4..;`
+            ~+ continue with infinite sequence from either side is meaningless
+              ~ we can make some meaning for `..4`, like "put value at the end" or something
+          ~ we also use range in indirect way in assignments as `(a, ..last) = (1, 2, 3, 4)`
+      ? for continue `a ? >b;`
+        + matches pipe operator `a,b,c |> ^ > 3 ?>; ^ > 8 ? .;`
+      ? for continue `a ? b,;`
+        + means continue sequence literally
+        - may conflict with
   * `cond ?< b; cond ?<; cond ? <<b;`
   * `cond ? =b; cond ? .=b; cond ? := b`
   * `cond ?= b; cond ? ==b; cond ?=;`
@@ -923,7 +935,7 @@
       * or else `.` depends on `()`: `(a.)` is result, `a.` is export.
   + Since `(a;b;c)` naturally returns last element, so must function body.
 
-## [x] Break, continue, return? -> ~~try `^` for continue, `^^` for break/return etc.~~ `?.` and `?..` operators.
+## [ ] Break, continue, return? -> ~~try `^` for continue, `^^` for break/return etc.~~ `?.` for break, `?..` for continue.
 
   1. `^` for continue, `^^` for break;
     + nice pattern to skip callstack;

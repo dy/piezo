@@ -16,13 +16,13 @@ Made for the purpose of audio/signal processing.
 ///////////////////////////////// operators
 + - * / % -- ++                // arithmetical (float)
 ** %%                          // power, unsigned mod
-&& || !                        // logical (boolean)
+&& || ! ?:                     // logical (boolean)
 > >= < <= == != ~=             // comparisons (boolean)
 & | ^ ~ >> <<                  // binary (integer)
 <<< >>>                        // rotate left, right
 []                             // member access, length
-?: ?. ?..                      // conditions
 <? <?= ..                      // clamp/min/max, range
+?. ?..                         // conditions, return, continue
 |> |>= ^                       // loop, map, item
 
 ///////////////////////////////// variables
@@ -126,8 +126,8 @@ m[0..] = m[1..,0];             // rotate
 a, b, c |> x(^);               // for each a, b, c do x(item)
 i < 10 |> x(i++);              // while i < 10 do x(i++)
 10.. |> (                      // descend over range
-  ^ < 5 ?.;                    // if item < 5 continue
-  ^ < 0 ?!;                    // if item < 0 break
+  ^ < 5 ?..;                   // if item < 5 continue
+  ^ < 0 ?.;                    // if item < 0 break
 );                             //
 items |> a(^);                 // iterate over array
 items |> a(^) |> b(^);         // pipe iterations
@@ -135,8 +135,8 @@ items |> a(^) |> b(^);         // pipe iterations
   x = ^;                       // assign top-level item
   0..h |> a(x,^);              // a(x,y)
 );                             //
-(x, , y) = a, b, c |> ^;       // x = a, y = c;
-x[3..5] |>= ^ * 2;             // map items from range
+(x,,y) = a, b, c |> ^;         // x = a, y = c;
+x[3..5] |>= ^ * 2;             // map items in range
 
 ///////////////////////////////// export
 x, y, z.                       // exports last statement
