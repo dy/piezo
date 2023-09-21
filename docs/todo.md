@@ -15,10 +15,15 @@
 
 ## Stage 1
 
+* [ ] refactor conditions to `?.`
+* [ ] remove `<|`
+* [ ] make use of `^` operator
+* [ ] precedence of `,` over `?` and `|>`
+* [ ] detect expected number of returns from operation so it may have internal optimization.
+* [ ] almost equal
 * [ ] all readmes test
   * [x] inline global consts
-  * [x] standard operators
-  * [ ]
+  * [ ] standard operators
 * [ ] first bytebeat
 * [ ] strings
 * [x] make use of watr compiler
@@ -202,4 +207,3 @@
 * get channel: `a[0]`?
 * get value at a time `a(t)`?
 * integrate: `∫(a, dt)`? `acc(a, dt)`?
-

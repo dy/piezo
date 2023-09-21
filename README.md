@@ -1,4 +1,4 @@
-# lino
+# lino ![stability](https://img.shields.io/badge/stability-experimental-black)
 
 Microlanguage with ergonimic syntax, linear memory and compiling to 0-runtime WASM.<br>
 Made for the purpose of audio/signal processing.
@@ -15,14 +15,15 @@ Made for the purpose of audio/signal processing.
 
 ///////////////////////////////// operators
 + - * / % -- ++                // arithmetical (float)
-&& || ! ?:                     // logical (boolean)
-> >= < <= == !=                // comparisons (boolean)
-& | ^ ~ >> <<                  // binary (integer)
-[]                             // member access, length
 ** %%                          // power, unsigned mod
+&& || !                        // logical (boolean)
+> >= < <= == != ~=             // comparisons (boolean)
+& | ^ ~ >> <<                  // binary (integer)
 <<< >>>                        // rotate left, right
+[]                             // member access, length
+?: ?. ?..                      // conditions
 <? <?= ..                      // clamp/min/max, range
-|> <| <|=                      // loop, map
+|> |>= ^                       // loop, map, item
 
 ///////////////////////////////// variables
 foo=1, bar=2.0;                // declare vars
@@ -42,16 +43,15 @@ inf = 1/0, nan = 0/0;          // alias infinity, NaN
 foo();                         // semi-colons at end of line are mandatory
 (c = a + b; c);                // parens return last statement
 (a = b+1; a,b,c);              // can return multiple values
-(a ? ^b; c);                   // or return early (break scope)
-(a ? (b ? ^^c) : d);           // break 2 scopes
 
 ///////////////////////////////// conditions
+a && b;                        // if a then b
 sign = a < 0 ? -1 : +1;        // ternary
 (2+2 >= 4) ? log(1) :          // multiline/switch
   3 <= 1..2 ? log(2) :         // else if
   log(3);                      // else
-a || b ? c;                    // if a or b then c
-(a, b) ? (c, d);               // group condition: (a ? c, b ? d)
+(a ? b.; c);                   // if a then return b (early return)
+a ~= b;                        // if a almost equal b (f32 step tolerance)
 
 ///////////////////////////////// ranges
 0..10;                         // from 1 to 9 (10 exclusive)
@@ -79,8 +79,8 @@ a, b=1, c=2;                   // define multiple values
 ///////////////////////////////// functions
 double(n) = n*2;               // define function
 times(m = 1, n < 1..) = (      // optional, clamped args
-  n == 0 ? ^n;                 // early return
-  m*n                          // default return
+  n == 0 ? n.;                 // early return
+  m * n                        // default return
 );                             //
 times(3,2);                    // 6
 times(5);                      // 5. optional argument
@@ -90,7 +90,7 @@ copy(10);                      // also 30
 dup(x) = (x,x);                // return multiple values
 (a,b) = dup(b);                // get returns
 
-///////////////////////////////// state variables
+///////////////////////////////// state vars
 a() = ( *i=0; ++i );           // i persists value between calls
 a(), a();                      // 1, 2
 fib() = (                      //
@@ -106,42 +106,40 @@ d(b);                          // 1, 8;
 
 ///////////////////////////////// arrays
 m = [..10];                    // array of 10 elements
-m = [..10 <| 2];               // filled with 2
+m = [..10 |> 2];               // filled with 2
 m = [1,2,3,4];                 // array of 4 elements
 m = [n[..]];                   // copy n
 m = [1, 2..4, 5];              // mixed definition
 m = [1, [2, 3, [4]]];          // nested arrays (tree)
-m = [0..4 <| # * 2];           // list comprehension
+m = [0..4 |> ^ * 2];           // list comprehension
 (first, last) = (m[0], m[-1]); // get by index
 (second, ..last) = m[1, 2..];  // get multiple values
 length = m[];                  // get length
 m[0] = 1;                      // set value
 m[2..] = (1, 2..4, n[1..3]);   // set multiple values from offset 2
-m[0..] = 0..4 <| # * 2         // set via iteration
+m[0..] = 0..4 |> ^ * 2         // set via iteration
 m[1,2] = m[2,1];               // rearrange
 m[0..] = m[-1..0];             // reverse order
 m[0..] = m[1..,0];             // rotate
 
 ///////////////////////////////// loops
-a, b, c |> x(#);               // for each a, b, c do x(item)
-10.. |> (                      // descend over range
-  # < 3 ? ^^;                  // if item < 3 break
-  # < 5 ? ^;                   // if item < 5 continue
-);                             //
+a, b, c |> x(^);               // for each a, b, c do x(item)
 i < 10 |> x(i++);              // while i < 10 do x(i++)
-items |> a(#);                 // iterate over array
-items |> a(#) |> b(#);         // pipe iterations
-0..w |> (                      // nest iterations
-  x=#;                         // assign top-level item
-  0..h |> a(x,#);              // a(x,y)
+10.. |> (                      // descend over range
+  ^ < 5 ?.;                    // if item < 5 continue
+  ^ < 0 ?!;                    // if item < 0 break
 );                             //
-x = a, b, c |> #;              // returns last member: x == c
-a, b, c <| # * 2;              // returns multiple: a*2, b*2, c*2
-x[3..5] <|= # * 2;             // map items from range
+items |> a(^);                 // iterate over array
+items |> a(^) |> b(^);         // pipe iterations
+0..w |> (                      // nest iterations
+  x = ^;                       // assign top-level item
+  0..h |> a(x,^);              // a(x,y)
+);                             //
+(x, , y) = a, b, c |> ^;       // x = a, y = c;
+x[3..5] |>= ^ * 2;             // map items from range
 
 ///////////////////////////////// export
-x, y, z.                       // last statement in the program gets exported
-                               // period indicates end of program
+x, y, z.                       // exports last statement
 ```
 
 <!--
@@ -174,10 +172,10 @@ gain(                               // define a function with block, volume argu
   block,                            // block is a list argument
   volume <= 0..100                  // volume is limited to 0..100 range
 ) = (
-  block <|= # * volume;             // map each sample by multiplying by value
+  block |>= ^ * volume;             // map each sample by multiplying by value
 );
 
-gain([0..5 <| # * 0.1], 2);         // 0, .2, .4, .6, .8, 1
+gain([0..5 |> ^ * 0.1], 2);         // 0, .2, .4, .6, .8, 1
 
 gain.                               // export gain function
 ```
@@ -222,7 +220,7 @@ lpf(                                // per-sample processing function
   y0                                // return y0
 );
 
-// (0, .1, .3) <| lpf(#, 108, 5);
+// (0, .1, .3) |> lpf(^, 108, 5);
 
 lpf.                                // export lpf function, end program
 ```
@@ -235,8 +233,6 @@ lpf.                                // export lpf function, end program
 Generates ZZFX's [coin sound](https://codepen.io/KilledByAPixel/full/BaowKzv) `zzfx(...[,,1675,,.06,.24,1,1.82,,,837,.06])`.
 
 ```
-<math#pi,abs,sin,round>;
-
 1pi = pi;
 1s = 44100;
 1ms = 1s / 1000;
@@ -282,12 +278,12 @@ coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
   *phase = 0;                     // current phase
   t = i / 1s;
 
-  out <|= oscillator[shape](phase)
-      <| adsr(#, 0, 0, .06, .24)
-      <| curve(#, 1.82);
+  out |>= oscillator[shape](phase)
+      |> adsr(^, 0, 0, .06, .24)
+      |> curve(^, 1.82);
 
   i++;
-  phase += (freq + (t > delay ? jump : 0)) * 2pi / 1s;
+  phase += (freq + (t > delay && jump)) * 2pi / 1s;
 ).
 ```
 
@@ -479,8 +475,10 @@ It targets browsers, [audio worklets](https://developer.mozilla.org/en-US/docs/W
 * [_mono_](https://github.com/stagas/mono)
 * [_zzfx_](https://killedbyapixel.github.io/ZzFX/)
 * [_bytebeat_](https://sarpnt.github.io/bytebeat-composer/)
+* [_glitch_](https://github.com/naivesound/glitch)
 * [_hxos_](https://github.com/stagas/hxos)
 * [_min_](https://github.com/r-lyeh/min)
+* [_roland_](https://github.com/DenialAdams/roland)
 * [_porffor_](https://github.com/CanadaHonk/porffor)
 
 <p align=center><a href="https://github.com/krsnzd/license/">🕉</a></p>

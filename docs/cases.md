@@ -36,3 +36,4 @@
 * [ ] https://github.com/ryohey/signal
 * [ ] https://github.com/austintheriot/hand-crafted-wasm
 * [ ] https://github.com/hzdgopher/4klang
+* [ ] https://github.com/maximecb/noisecraft

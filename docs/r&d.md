@@ -284,7 +284,9 @@
     + anagram to ivan-ov
     + anagram to vina
     + anagram to vani
-    ~- residence, abode
+    + anagram to navi (ocean)
+    ~ residence, abode
+    ~ .n
 
   * z
     + zlang - zound/zvuk lang
@@ -307,13 +309,13 @@
 
 ## [x] WAT, WASM? All targets
 
-Having wat files is more useful than direct compilation to binary form:
+  Having wat files is more useful than direct compilation to binary form:
 
-+ wat files are human-readable, so it's possible to debug mistakes and do changes
-+ wat files are standard interchangeable format with proven compiler: no need to reimplement compilation and deal with its bugs
-+ optimization out of the box
-- wat files are still a bit hard
-- modifying wat files creates divergence from son files..
+  + wat files are human-readable, so it's possible to debug mistakes and do changes
+  + wat files are standard interchangeable format with proven compiler: no need to reimplement compilation and deal with its bugs
+  + optimization out of the box
+  - wat files are still a bit hard
+  - modifying wat files creates divergence from son files..
 
 ### [x] ? Should it compile to wat or to wasm? → wat for now
 
@@ -773,7 +775,7 @@ Having wat files is more useful than direct compilation to binary form:
 
   + improves precision
 
-## [x] End operator → indicator of return statement. Try using ^a as return.
+## [x] End operator → indicator of return statement. ~~Try using ^a as return.~~ `.` as end/return operator.
 
   * `.` operator can finish function body and save state. `delay(x,y) = (*d=[1s], z=0; d[z++]=x; d[z-y].)`
   * ? is it optional?
@@ -803,7 +805,7 @@ Having wat files is more useful than direct compilation to binary form:
       - doesn't help much if expr comes after, eg. `pi,rate. a=3;`
     -> so seems uncovered period can stand only at the end of scope. Else there must be a semi.
 
-## [x] Early return? → keep `a ? ^;` for now
+## [x] Early return? → ~~keep `a ? ^;` for now~~ `a ? b.;` conjunction
 
   * can often see `if (a) return;` - useful construct. How's that in lino?
   1. `a ? value.`
@@ -811,13 +813,15 @@ Having wat files is more useful than direct compilation to binary form:
     → `a ? b.;` expects `;` at the end.
       * skipping ; means node is the last element: `(a;b;c.)`
     - `?` operator is void
+      ~ can be in conjunction with `.` so then it's a kind of ternary.
+    ?+ `a ? b. : c` === `if (a) return b; else c;`
   2. not supporting early return.
     + simpler flow/logic
     + no (b.c;d) syntax case
     + gl code doesn't support preliminary returns as well as optimal branching, so maybe meaningful
     - no reason to not have it
 
-## [x] Early return operator / guard? What would it look like? -> still `a?.b` or `a?^b`
+## [x] Early return operator / guard? What would it look like? -> `a ?.; a ? b.;`
 
   + we don't want to introduce void `a?b;` identical to `a&&b`
   + the only way to use early func return is via `if(smth)return`, is there anything else?
@@ -833,6 +837,20 @@ Having wat files is more useful than direct compilation to binary form:
       - end of function is not denoted
     + matches paradigm of paths: `.`, `..`
   * `cond.?; cond.?a; cond..?b;`
+  * `cond ? b.; cond ?. ; cond ?..;`
+    + ideal from the natural point of view
+    ~ some conflict with optional JS paths
+    ? how to make break 2 scopes, or alternatively continue loop?
+      !?+ for continue `a < tsh ?..;`
+        + matches typographic meaning
+        - inverse paths meaning `.`, `..`
+        - `a < tsh ? val..;` is identical to range
+  * `cond ?< b; cond ?<; cond ? <<b;`
+  * `cond ? =b; cond ? .=b; cond ? := b`
+  * `cond ?= b; cond ? ==b; cond ?=;`
+  * `cond ? b*; cond ? *; cond ? **;`
+    + period, but more obvious
+    + matches state var as `*a` - beginning, `a*` - end.
   * `cond?^; cond?^a; cond?^^b;`
     ~ no need for one operator, can be `?` and `^^` operators
       - which is undesirable
@@ -847,8 +865,21 @@ Having wat files is more useful than direct compilation to binary form:
       * `a <= 3 ! ret;`
     - not clear how to break 2 scopes or break loop `(list <| (#!; #*#))` filter & map
   * `cond!?; cond !? b; cond !? c;`
-  * `cond?!; cond?!b; cond?!!c;`
-    - `cond ? !b`
+    + no conflict or even direct mention of ternary
+    + hints to ternary as "special exiting condition"
+    + no postfix operator as in `cond ? x !;`
+    + sort of meaningful in sense of "inversed condition", like "stop condition".
+    ~ looks a bit quirk `a !? b;`
+    - `a !!? b;` is heavy
+    - `a!;` can possibly be reserved for throwing errors
+  * `cond ? x!;`, `cond ? x!!;`, `cond ?!;`
+    + continue, break, return
+    + builds into ternary operator
+    ~ blocks if operator, which is sort-of fine
+    ~- reminds inversion, which is undesirable
+      ~- creates alternative association with `!` as `stop`, `break`
+    +- makes use of postfix operator
+  * `cond ? x.;`, `cond ? x!;`, `cond?.;`
   ? what about `a :? b`
   * `cond ?:; cond?:b; cond?::b;`
     - matches elvis visually, but not by meaning
@@ -856,7 +887,7 @@ Having wat files is more useful than direct compilation to binary form:
   * `cond<>; cond<a>; cond<<b>>;`
   * `<cond>; <cond> a; <<cond>> b;`
 
-## [x] Return operator: alternatives → try using `^` for returning value from block.
+## [x] Return operator: alternatives → try using ~~`^`~~ `.` for returning value from block.
 
   1. `.`
     + erlang-y
@@ -868,6 +899,7 @@ Having wat files is more useful than direct compilation to binary form:
     - semi after the result.
   2. `a ? b...;`, `sampleRate = 44100...;`
   3. `a ? b!;`, `sampleRate = 44100!;`
+    - as discussed in other topics - `!` can be reserved for throwing errors.
   4. `a ? b :| c + d`, `sampleRate = 44100:|;`
   5. `a ? ^b;`
     + less confusion with `.`
@@ -891,7 +923,7 @@ Having wat files is more useful than direct compilation to binary form:
       * or else `.` depends on `()`: `(a.)` is result, `a.` is export.
   + Since `(a;b;c)` naturally returns last element, so must function body.
 
-## [x] Break, continue, return? -> try `^` for continue, `^^` for break/return etc.
+## [x] Break, continue, return? -> ~~try `^` for continue, `^^` for break/return etc.~~ `?.` and `?..` operators.
 
   1. `^` for continue, `^^` for break;
     + nice pattern to skip callstack;
@@ -1027,6 +1059,7 @@ Having wat files is more useful than direct compilation to binary form:
     )
     ```
     ~ `song()=(*t=0;)`
+    +! can use postfix `x1*;` to save state, that's just hidden hack
   3.1 ~~`x1*, x2*, y1*, y2*`~~
     + typographic meaning as footnote
     - `x1*=2`
@@ -1142,7 +1175,7 @@ Having wat files is more useful than direct compilation to binary form:
   - require strings to implement dynamic access `x['first']`
   - some arrays have aliases, others don't: we're not going to make aliases dynamic
 
-## [x] If `a ? b`, elvis: `a ?: b`? -> likely yes to simple condition
+## [x] If `a ? b`, elvis: `a ?: b`? -> ~~likely yes to simple condition~~ no, use `a && b` or early return `a ? b.;`
   + organic extension of ternary `a ? b`, `a ?: b`.
   - weirdly confusing, as if very important part is lost. Maybe just introduce elvis `a>b ? a=1` → `a<=b ?: a=1`
   - it has no definite returning type. What's the result of `(a ? b)`?
@@ -1161,13 +1194,15 @@ Having wat files is more useful than direct compilation to binary form:
     + allows early returns as `a ? ^b;`, whereas `a && ^b` doesn't really work like that.
   - tiny profit, big discrepancy with convention
 
+  ! ALT: can be done via early return as `(a ? b.; )`
+
 ## [ ] mix, smoothstep operators
 
   * `x -< a..b` defines clamping
   * `a..b -> x` looks like function, but is possible
   * can be done via external lib
 
-## [ ] Loops: ~~`i <- 0..10 <| a + i`, `i <- list <| a`, `[x <- 1,2,3 <| x*2]`~~ ~~`0..10 | i -> a + i`~~
+## [ ] Loops: ~~`i <- 0..10 <| a + i`, `i <- list <| a`, `[x <- 1,2,3 <| x*2]`~~ ~~`0..10 | i -> a + i`~~ `list |> ^ * 2;`
 
   * `for i in 0..10 (a,b,c)`, `for i in src a;`
   * alternatively as elixir does: `item <- 0..10 a,b,c`
@@ -1393,7 +1428,7 @@ Having wat files is more useful than direct compilation to binary form:
   + `x -<= 0..10` is just a nice construct
   -  `x <- y` vs `x < -y`
 
-## [ ] Comments: `//`, `/*` vs `;;` and `(; ;)` →
+## [x] Comments: `//`, `/*` vs `;;` and `(; ;)` → `//` seems most long-term choce.
 
   1. `;;`
   + ;; make more sense, since ; is separator, and everything behind it doesn't matter
@@ -1435,6 +1470,8 @@ Having wat files is more useful than direct compilation to binary form:
   - the support of such comments is not widespread
   + hints to asm/wasm languages
   + if all programs use that comment style it seems fine: it's a good balance between neutrality, familiarity/intuitivity, innovation
+  - it's noisy, compared to `//`
+  - it gives hand-made impression
 
   1.1 should we make comment an alternative to semi token `fn() ;;do something`
     + less symbols
@@ -1471,6 +1508,7 @@ Having wat files is more useful than direct compilation to binary form:
   - search-matches with protocols like `https://`
   - pretends to be C/JS, when it is not.
     * Such comments would make sense if: code was case-sensitive; it had standard allowed chars (no #@); code had if|else|while|for|return|in keywords.
+    + gives fresh feeling of old standard, since syntax is updated to be cool
 
   3. `\` or `\\`
   + mono lang reference
@@ -3011,7 +3049,7 @@ Having wat files is more useful than direct compilation to binary form:
 
 ## [x] `a <~ b` vs `a < ~b` -> use `a ~< b` instead
 
-## [ ] Case-insensitive variable names? -> let's try case-insensitive
+## [ ] Case-insensitive variable names? ->
 
   0. Case-insensitive
 
@@ -3047,7 +3085,9 @@ Having wat files is more useful than direct compilation to binary form:
   + capfirst is typographycally meaningful
   + can fix problem of units size
   - code is not robust to case-insensitive environments
+    ~ we still support strings so we don't target these environments anymore
   - import looks like `@math#Pi` still
+    ~ we don't need imports for now
   - doesn't solve constants issue, `PI` vs `pi` - would be cool to have `pi`
 
   1. Case-sensitive
@@ -3796,6 +3836,8 @@ Having wat files is more useful than direct compilation to binary form:
     - nah: `x = ~list`
   ? ALT: `x <~ list : `
 
+  ? ALT: `<( x>2?!; )>`
+
 ### [x] What's the best character for placeholder? -> within `_#$%^@&` `#` feels the best
 
   * `list |> #*2`, `list |> #>2?^^#:^#;`
@@ -4205,17 +4247,24 @@ Having wat files is more useful than direct compilation to binary form:
       ~ so `label:` works more as part of block/group as `(name: a,b,c)` rather than individual items.
         + which makes sense in terms of importing `@modul:a,b,c`
 
-## [ ] Raise `,` precedence?
+## [x] Raise `,` precedence? -> deal with `?` and `|>` only for intuition
 
   - not having `()` around sequence can be misleading, `()` nicely delineates group
-  + `^ a,b,c`
-  + `a,b,c <|`, `a,b,c |>`
+  + ~~`^ a,b,c`~~ `a,b,c.` - naturally done via `x ? a,b,c .` operator
+  + `a,b,c |>`
   + ~~`a,b,c -> a,b,c`~~
     * we don't have arrow function anymore
   + `x ? a,b,c;`
   - `*a,b,c, d=1` vs `*(a,b,c), d=1;`
     - `*` elements cannot be part of sequence
   * generally `,` can be above all operators which don't cannot be part of group, eg. `^(a,b),c` is impossible, as well as `a,b`
+
+## [x] Control flow blocks: loop, condition -> deal with precedence of `|>` and `?` operators only, they're lower than commas.
+
+  * these are apparently a separate syntax group
+  * these operators may require lower precedence than `,` or even `;`: `a ? x(), y(), z()` - these are elements of array, but not part of a condition.
+    ~ can be done as `a ? (x(); y(); z())`
+  * one possible simplest loop is without any condition, only by breaks `(a() ? x.; b(); c() ? y!;)`
 
 ## [x] Is it worthy introducing `:` only for importing members, ie. -> no, we use href as `<math#a,b>`
 
@@ -4542,7 +4591,7 @@ Having wat files is more useful than direct compilation to binary form:
     * `a <? 0..100 ** .01` - maps to pow range?
       + reinforces meaning of max operator, which is nice
 
-## [x] Early return: how to consolidate type? -> just enforce f64 for now for early returns
+## [ ] Early return: how to consolidate type? -> just enforce f64 for now for early returns
 
   * we have to consolidate output type with early returns
   * cases:
@@ -4872,11 +4921,22 @@ Having wat files is more useful than direct compilation to binary form:
   + we cannot dynamically declare local variables within loop. Static-size loop would make it possible to declare all variables in advance...
     - it would require thousands of local variables...
 
-## [x] Loop vs fold: no difference -> returns list <| or last |>
+## [x] Loop vs fold: no difference -> ~~returns list <| or last |>~~ no difference, use `|>`
 
   * `sum=0; xs <| (x) -> (sum += x)`
   * `xs |> (x, sum) -> sum + x`
   * Folds seem to be more efficient than loops: they create single value as result, loop creates multiple values (heap?).
+
+## [x] Alternative: merge `<|` and `|>` -> yes, we can just introduce single operator in context
+
+  + this allows us to not know different kinds of loops
+  + we anyways need a strategy to know if op result is required or not.
+    + that makes sure extra optimization step (peephole) is not needed, which produces more compact & faster code
+  + matches with `^` for current member
+  * eg. `[a,b,c |> ^*2]` produces output list
+  * `a,b,c |> ^*2;` doesn't have any stack output
+  * `(a,b,c |> ^*2) + 1;` produces group
+  + allows better precedence
 
 ## [x] Group ops: how? deconstruct to per-component ops with duplication
 
@@ -4981,3 +5041,7 @@ Having wat files is more useful than direct compilation to binary form:
     + end-allocation has worst-case same memory as max heap-size arrays would require
     + it doesn't require memcopy for flat dynamic arrays
     + it requires same or less amount of memcopy than head-heap would, since first layer is skipped
+
+## [x] Binaries: replace `&` with `/\` and `|` with `\/`? -> nah, don't be kidding
+
+  *  `t*(((t>>12)|(t>>8))\/(63\/(t>>4)))`
