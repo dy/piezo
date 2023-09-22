@@ -821,7 +821,7 @@
     + gl code doesn't support preliminary returns as well as optimal branching, so maybe meaningful
     - no reason to not have it
 
-## [x] Early return operator / guard? What would it look like? -> `a ?.; a ? b.; a ? b..;`
+## [ ] Early return operator / guard? What would it look like? -> `a ?.; a ? b.; a ? b..;`
 
   + we don't want to introduce void `a?b;` identical to `a&&b`
   + the only way to use early func return is via `if(smth)return`, is there anything else?
@@ -852,6 +852,10 @@
             ~+ continue with infinite sequence from either side is meaningless
               ~ we can make some meaning for `..4`, like "put value at the end" or something
           ~ we also use range in indirect way in assignments as `(a, ..last) = (1, 2, 3, 4)`
+            + actually `a < tsh ? ^..;` and `a < tsh ? ..^;` is nice indicators of how to proceed with loop:
+              * either processing the rest after current element `^..`
+              * or before current element `..^`
+              ~ before-range creates `a ? ..b;` operator, which invites `a ? ..b : c`
       ? for continue `a ? >b;`
         + matches pipe operator `a,b,c |> ^ > 3 ?>; ^ > 8 ? .;`
       ? for continue `a ? b,;`
@@ -950,6 +954,10 @@
       -> can be used as `tsd(i) = (i < 10 ? (log('lower'); 10).; i)`
     + the most laconic version
   4. webassembly doesn't use continue, just `^` for break.
+
+  ? If `?.` is return from function, then how to break (early return) current scope?
+  ? If `?..` is early return current scope, then how to break loop?
+    * we can avoid return generally and only bail out from current scope.
 
 ### [x] ? Can we use something else but . for export? → ~~let's try `a.` as global export operator~~ -> last members are exported by default, `.` indicates end of program.
 

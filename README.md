@@ -22,7 +22,7 @@ Made for the purpose of audio/signal processing.
 <<< >>>                        // rotate left, right
 []                             // member access, length
 <? <?= ..                      // clamp/min/max, range
-?. ?..                         // conditions, return, continue
+?. ?..                         // break, continue
 |> |>= ^                       // loop, map, item
 
 ///////////////////////////////// variables
@@ -60,10 +60,9 @@ a ~= b;                        // if a almost equal b (f32 step tolerance)
 1.08..108.0;                   // float range
 (x-1)..(x+1);                  // calculated ranges
 x <= 0..10;                    // is x in 0..10 range (10 inclusive)
-x <? ..10, x <? 0..;           // min(x, 10), max(x, 0)
 x <? 0..10;                    // clamp(x, 0, 10)
 x <?= 0..10;                   // x = clamp(x, 0, 10)
-a,b,c = 0..2;                  // a==0, b==1, c==2
+a,b,c = 0..3;                  // a==0, b==1, c==2
 (-10..10)[];                   // span is 20
 
 ///////////////////////////////// groups
@@ -123,17 +122,17 @@ m[0..] = m[-1..0];             // reverse order
 m[0..] = m[1..,0];             // rotate
 
 ///////////////////////////////// loops
-a, b, c |> x(^);               // for each a, b, c do x(item)
-i < 10 |> x(i++);              // while i < 10 do x(i++)
+a, b, c |> f(^);               // for each a, b, c do f(item)
+i < 10 |> f(i++);              // while i < 10 do f(i++)
 10.. |> (                      // descend over range
   ^ < 5 ?..;                   // if item < 5 continue
   ^ < 0 ?.;                    // if item < 0 break
 );                             //
-items |> a(^);                 // iterate over array
-items |> a(^) |> b(^);         // pipe iterations
+items |> f(^);                 // iterate over array
+items |> f(^) |> g(^);         // pipe
 0..w |> (                      // nest iterations
   x = ^;                       // assign top-level item
-  0..h |> a(x,^);              // a(x,y)
+  0..h |> f(x,^);              // f(x,y)
 );                             //
 (x,,y) = a, b, c |> ^;         // x = a, y = c;
 x[3..5] |>= ^ * 2;             // map items in range
