@@ -950,6 +950,7 @@
     + combinable with return statement which is kind-of natural `(a?^b; c)`.
     - wrapping in parens can change the meaning or scope of `^^`.
       ~+ not really: it's visible that it breaks recent scope.
+    + it seems going to live longer than `value.`
   2. `>>` for continue, `^` for break.
   3. `.` for break or return, acting within the block; `^` for continue.
     - break can be used without stack argument, `.` by itself doesn't do much sense although possible
