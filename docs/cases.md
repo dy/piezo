@@ -37,4 +37,3 @@
 * [ ] https://github.com/austintheriot/hand-crafted-wasm
 * [ ] https://github.com/hzdgopher/4klang
 * [ ] https://github.com/maximecb/noisecraft
-* [ ] https://github.com/tidalcycles/strudel

@@ -91,8 +91,6 @@
     + bell
     + mell tunes
     + .mel .me
-  * muzz
-  * muza
 
   * auriel, aureil, aury
     + available
@@ -807,7 +805,7 @@
       - doesn't help much if expr comes after, eg. `pi,rate. a=3;`
     -> so seems uncovered period can stand only at the end of scope. Else there must be a semi.
 
-## [x] Early return? → keep `a ? ^;` for now ~~`a ? b.;`~~
+## [x] Early return? → ~~keep `a ? ^;` for now~~ `a ? b.;` conjunction
 
   * can often see `if (a) return;` - useful construct. How's that in lino?
   1. `a ? value.`
@@ -823,7 +821,7 @@
     + gl code doesn't support preliminary returns as well as optimal branching, so maybe meaningful
     - no reason to not have it
 
-## [ ] Early return operator / guard? What would it look like? -> ~~`a ?.; a ? b.; a ? b..;`~~ `a ? ^b;`
+## [ ] Early return operator / guard? What would it look like? -> `a ?.; a ? b.; a ? b..;`
 
   + we don't want to introduce void `a?b;` identical to `a&&b`
   + the only way to use early func return is via `if(smth)return`, is there anything else?
@@ -838,7 +836,6 @@
     + matches end of program `.`
       - end of function is not denoted
     + matches paradigm of paths: `.`, `..`
-    - not so obvious indicator as `?^`
   * `cond.?; cond.?a; cond..?b;`
   * `cond ? b.; cond ?. ; cond ?..;`
     + ideal from the natural point of view
@@ -906,7 +903,7 @@
   * `cond<>; cond<a>; cond<<b>>;`
   * `<cond>; <cond> a; <<cond>> b;`
 
-## [x] Return operator: alternatives → try using `^` ~~`.`~~ for returning value from block.
+## [x] Return operator: alternatives → try using ~~`^`~~ `.` for returning value from block.
 
   1. `.`
     + erlang-y
@@ -942,7 +939,7 @@
       * or else `.` depends on `()`: `(a.)` is result, `a.` is export.
   + Since `(a;b;c)` naturally returns last element, so must function body.
 
-## [ ] Break, continue, return? -> try `^` for continue, `^^` for break/return etc. ~~`?.` for break current scope, `?..` for continue.~~
+## [ ] Break, continue, return? -> ~~try `^` for continue, `^^` for break/return etc.~~ `?.` for break, `?..` for continue.
 
   1. `^` for continue, `^^` for break;
     + nice pattern to skip callstack;

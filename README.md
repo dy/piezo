@@ -23,7 +23,7 @@ Made for the purpose of audio/signal processing.
 []                             // member access, length
 <? <?= ..                      // clamp/min/max, range
 ?. ?..                         // break, continue
-|> |>= #                       // loop, map, item
+|> |>= ^                       // loop, map, item
 
 ///////////////////////////////// variables
 foo=1, bar=2.0;                // declare vars
@@ -43,7 +43,6 @@ inf = 1/0, nan = 0/0;          // alias infinity, NaN
 foo();                         // semi-colons at end of line are mandatory
 (c = a + b; c);                // parens return last statement
 (a = b+1; a,b,c);              // can return multiple values
-(a ? ^b; c);                   // can have early return
 
 ///////////////////////////////// conditions
 a && b;                        // if a then b
@@ -51,7 +50,7 @@ sign = a < 0 ? -1 : +1;        // ternary
 (2+2 >= 4) ? log(1) :          // multiline/switch
   3 <= 1..2 ? log(2) :         // else if
   log(3);                      // else
-(a ? ^b; c);                   // if a then return b (early return)
+(a ? b.; c);                   // if a then return b (early return)
 a ~= b;                        // if a almost equal b (f32 step tolerance)
 
 ///////////////////////////////// ranges
@@ -79,7 +78,7 @@ a, b=1, c=2;                   // define multiple values
 ///////////////////////////////// functions
 double(n) = n*2;               // define function
 times(m = 1, n < 1..) = (      // optional, clamped args
-  n == 0 ? ^n;                 // early return
+  n == 0 ? n.;                 // early return
   m * n                        // default return
 );                             //
 times(3,2);                    // 6
@@ -111,32 +110,32 @@ m = [1,2,3,4];                 // array of 4 elements
 m = [n[..]];                   // copy n
 m = [1, 2..4, 5];              // mixed definition
 m = [1, [2, 3, [4]]];          // nested arrays (tree)
-m = [0..4 |> # * 2];           // list comprehension
+m = [0..4 |> ^ * 2];           // list comprehension
 (first, last) = (m[0], m[-1]); // get by index
 (second, ..last) = m[1, 2..];  // get multiple values
 length = m[];                  // get length
 m[0] = 1;                      // set value
 m[2..] = (1, 2..4, n[1..3]);   // set multiple values from offset 2
-m[0..] = 0..4 |> # * 2         // set via iteration
+m[0..] = 0..4 |> ^ * 2         // set via iteration
 m[1,2] = m[2,1];               // rearrange
 m[0..] = m[-1..0];             // reverse order
 m[0..] = m[1..,0];             // rotate
 
 ///////////////////////////////// loops
-a, b, c |> f(#);               // for each a, b, c do f(item)
+a, b, c |> f(^);               // for each a, b, c do f(item)
 i < 10 |> f(i++);              // while i < 10 do f(i++)
 10.. |> (                      // descend over range
-  # < 5 ? ^;                   // if item < 5 continue
-  # < 0 ? ^^;                  // if item < 0 break
+  ^ < 5 ?..;                   // if item < 5 continue
+  ^ < 0 ?.;                    // if item < 0 break
 );                             //
-items |> f(#);                 // iterate over array
-items |> f(#) |> g(#);         // pipe
+items |> f(^);                 // iterate over array
+items |> f(^) |> g(^);         // pipe
 0..w |> (                      // nest iterations
-  x = #;                       // assign top-level item
-  0..h |> f(x, #);             // f(x,y)
+  x = ^;                       // assign top-level item
+  0..h |> f(x,^);              // f(x,y)
 );                             //
-(x,,y) = a, b, c |> #;         // x = a, y = c;
-x[3..5] |>= # * 2;             // map items in range
+(x,,y) = a, b, c |> ^;         // x = a, y = c;
+x[3..5] |>= ^ * 2;             // map items in range
 
 ///////////////////////////////// export
 x, y, z.                       // exports last statement
@@ -172,10 +171,10 @@ gain(                               // define a function with block, volume argu
   block,                            // block is a list argument
   volume <= 0..100                  // volume is limited to 0..100 range
 ) = (
-  block |>= # * volume;             // map each sample by multiplying by value
+  block |>= ^ * volume;             // map each sample by multiplying by value
 );
 
-gain([0..5 |> # * 0.1], 2);         // 0, .2, .4, .6, .8, 1
+gain([0..5 |> ^ * 0.1], 2);         // 0, .2, .4, .6, .8, 1
 
 gain.                               // export gain function
 ```
@@ -220,7 +219,7 @@ lpf(                                // per-sample processing function
   y0                                // return y0
 );
 
-// (0, .1, .3) |> lpf(#, 108, 5);
+// (0, .1, .3) |> lpf(^, 108, 5);
 
 lpf.                                // export lpf function, end program
 ```
@@ -279,8 +278,8 @@ coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
   t = i / 1s;
 
   out |>= oscillator[shape](phase)
-      |> adsr(#, 0, 0, .06, .24)
-      |> curve(#, 1.82);
+      |> adsr(^, 0, 0, .06, .24)
+      |> curve(^, 1.82);
 
   i++;
   phase += (freq + (t > delay && jump)) * 2pi / 1s;
