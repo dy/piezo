@@ -14,7 +14,8 @@
 * [x] Parser
 
 ## Stage 1
-`
+
+* [ ] get rid of `.`
 * [ ] remove `<|`
 * [ ] make use of `^` operator
 * [ ] precedence of `,` over `?` and `|>`
@@ -50,7 +51,7 @@
 * [x] arity of ops, for proper `(drop)` amount, eg. `a ? b;` has 0 items in stack;
 * [x] early return detection
 * [ ] while loop
-* [ ] break/continue as `?.` and `?..` operators
+* [ ] break/continue as `./`, `../` and `.../`
 * [x] Readable generated code
 * [x] Per-function vars scope: we don't need parens as scope
 * [x] Change `,` precedence to be under `=` to allow `^a,b,c`, `x?1,2,3:4,5,6`, `a,b<|x,i->x,i`

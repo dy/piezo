@@ -22,7 +22,7 @@ Made for the purpose of audio/signal processing.
 <<< >>>                        // rotate left, right
 []                             // member access, length
 <? <?= ..                      // clamp/min/max, range
-?. ?..                         // break, continue
+./ ../ .../                    // continue, break, return
 |> |>= ^                       // loop, map, item
 
 ///////////////////////////////// variables
@@ -50,7 +50,7 @@ sign = a < 0 ? -1 : +1;        // ternary
 (2+2 >= 4) ? log(1) :          // multiline/switch
   3 <= 1..2 ? log(2) :         // else if
   log(3);                      // else
-(a ? b.; c);                   // if a then return b (early return)
+(a ? ./b; c);                  // if a then return b (early return)
 a ~= b;                        // if a almost equal b (f32 step tolerance)
 
 ///////////////////////////////// ranges
@@ -78,7 +78,7 @@ a, b=1, c=2;                   // define multiple values
 ///////////////////////////////// functions
 double(n) = n*2;               // define function
 times(m = 1, n < 1..) = (      // optional, clamped args
-  n == 0 ? n.;                 // early return
+  n == 0 ? ./n;                // early return
   m * n                        // default return
 );                             //
 times(3,2);                    // 6
@@ -107,7 +107,7 @@ d(b);                          // 1, 8;
 m = [..10];                    // array of 10 elements
 m = [..10 |> 2];               // filled with 2
 m = [1,2,3,4];                 // array of 4 elements
-m = [n[..]];                   // copy n
+m = [n[0..]];                  // copy n
 m = [1, 2..4, 5];              // mixed definition
 m = [1, [2, 3, [4]]];          // nested arrays (tree)
 m = [0..4 |> ^ * 2];           // list comprehension
@@ -125,8 +125,8 @@ m[0..] = m[1..,0];             // rotate
 a, b, c |> f(^);               // for each a, b, c do f(item)
 i < 10 |> f(i++);              // while i < 10 do f(i++)
 10.. |> (                      // descend over range
-  ^ < 5 ?..;                   // if item < 5 continue
-  ^ < 0 ?.;                    // if item < 0 break
+  ^ < 5 ? ./;                  // if item < 5 continue
+  ^ < 0 ? ../;                 // if item < 0 break
 );                             //
 items |> f(^);                 // iterate over array
 items |> f(^) |> g(^);         // pipe
@@ -138,7 +138,7 @@ items |> f(^) |> g(^);         // pipe
 x[3..5] |>= ^ * 2;             // map items in range
 
 ///////////////////////////////// export
-x, y, z.                       // exports last statement
+x, y, z                        // exports last statement
 ```
 
 <!--
@@ -400,7 +400,7 @@ const buffer = lino.compile(`
   n=1;
   mult(x) = x*PI;
   arr=[1, 2, sin(1.08)];
-  mult, n, arr.
+  mult, n, arr;
 `, {
   // js objects or paths to files
   imports: {

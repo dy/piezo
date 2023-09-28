@@ -861,6 +861,15 @@
       ? for continue `a ? b,;`
         + means continue sequence literally
         - may conflict with
+  * `cond ? (.); cond ? (..); cond ? (../a); cond ? (.../a);`
+    + matches paths pattern
+    + matches nextjs
+    + can augment returning argument
+  * `cond ? ./; cond ? ./x; cond ? ../x; cond ? .../x`
+    + no conflict with ranges
+    + literally paths
+    + has "close" hint `/` with end hint `.`
+    + gets rid of "end" operator
   * `cond ?< b; cond ?<; cond ? <<b;`
   * `cond ? =b; cond ? .=b; cond ? := b`
   * `cond ?= b; cond ? ==b; cond ?=;`
@@ -895,7 +904,6 @@
     ~- reminds inversion, which is undesirable
       ~- creates alternative association with `!` as `stop`, `break`
     +- makes use of postfix operator
-  * `cond ? x.;`, `cond ? x!;`, `cond?.;`
   ? what about `a :? b`
   * `cond ?:; cond?:b; cond?::b;`
     - matches elvis visually, but not by meaning
@@ -3623,7 +3631,7 @@
     * likely can be `osc=[sin(x)=...x,tri(x)=...x]`
   + resolves the issue of scope (above): no need to make all vars global since no scope recursion
 
-## [x] Replace `<|`, `|`, `|>`? -> ~~Let's try `::` for loop/generator and `list -> item ::` for extended loop/tranformer~~ ~~let's use `<|`, `|>` for map/reduce,~~ `<|` and `|>` for loop (multiple/single arg), `#` for topic token, ~~`x -> x*2` for mapping function~~
+## [x] Replace `<|`, `|`, `|>`? -> ~~Let's try `::` for loop/generator and `list -> item ::` for extended loop/tranformer~~ ~~let's use `<|`, `|>` for map/reduce,~~ ~~`<|` and~~ `|>` for loop (multiple/single arg), `#` for topic token, ~~`x -> x*2` for mapping function~~
 
   + Less problems with overloading `|`
   + Fold operator is likely not as useful
