@@ -294,6 +294,10 @@
     - z language, z++ language exist
   * zz
 
+  * raev
+    + рёв
+  * waev
+
 ## [ ] Free operators
 
   * `<>`, `><`

@@ -21,7 +21,7 @@ Made for the purpose of audio/signal processing.
 & | ^ ~ >> <<                  // binary (integer)
 <<< >>>                        // rotate left, right
 []                             // member access, length
-<? <?= ..                      // clamp/min/max, range
+<? <=? ..                      // clamp/min/max, range
 ./ ../ .../                    // continue, break, return
 |> |>= ^                       // loop, map, item
 
@@ -43,14 +43,16 @@ inf = 1/0, nan = 0/0;          // alias infinity, NaN
 foo();                         // semi-colons at end of line are mandatory
 (c = a + b; c);                // parens return last statement
 (a = b+1; a,b,c);              // can return multiple values
+(a > 1 ? ./b; c);              // can early return value
 
 ///////////////////////////////// conditions
-a && b;                        // if a then b
-sign = a < 0 ? -1 : +1;        // ternary
+a ? b;                         // if a then b (single-branch conditional) 
+sign = a < 0 ? -1 : +1;        // ternary conditional
 (2+2 >= 4) ? log(1) :          // multiline/switch
   3 <= 1..2 ? log(2) :         // else if
   log(3);                      // else
 (a ? ./b; c);                  // if a then return b (early return)
+a && b || c;                   // (a and b) or c
 a ~= b;                        // if a almost equal b (f32 step tolerance)
 
 ///////////////////////////////// ranges
@@ -60,8 +62,7 @@ a ~= b;                        // if a almost equal b (f32 step tolerance)
 1.08..108.0;                   // float range
 (x-1)..(x+1);                  // calculated ranges
 x <= 0..10;                    // is x in 0..10 range (10 inclusive)
-x <? 0..10;                    // clamp(x, 0, 10)
-x <?= 0..10;                   // x = clamp(x, 0, 10)
+x <=? 0..10;                   // clamp(x, 0, 10)
 a,b,c = 0..3;                  // a==0, b==1, c==2
 (-10..10)[];                   // span is 20
 
