@@ -779,7 +779,7 @@
 
   + improves precision
 
-## [x] End operator → indicator of return statement. ~~Try using ^a as return.~~ `.` as end/return operator.
+## [ ] End operator → indicator of return statement. ~~Try using ^a as return.~~ `.` as end/return operator.
 
   * `.` operator can finish function body and save state. `delay(x,y) = (*d=[1s], z=0; d[z++]=x; d[z-y].)`
   * ? is it optional?
@@ -809,7 +809,7 @@
       - doesn't help much if expr comes after, eg. `pi,rate. a=3;`
     -> so seems uncovered period can stand only at the end of scope. Else there must be a semi.
 
-## [x] Early return? → ~~keep `a ? ^;` for now~~ `a ? b.;` conjunction
+## [x] Early return? → ~~keep `a ? ^;` for now~~ `a ? ./b;` conjunction
 
   * can often see `if (a) return;` - useful construct. How's that in lino?
   1. `a ? value.`
@@ -825,23 +825,23 @@
     + gl code doesn't support preliminary returns as well as optimal branching, so maybe meaningful
     - no reason to not have it
 
-## [ ] Early return operator / guard? What would it look like? -> `a ?.; a ? b.; a ? b..;`
-
-  + we don't want to introduce void `a?b;` identical to `a&&b`
-  + the only way to use early func return is via `if(smth)return`, is there anything else?
-  + break, continue also happens always via `if(smth) break`
-    + we don't want much to introduce `^`, `^^` operators therefore
-  + so it's more known as function/block guards
-  + it's potentially easier for analysis, since we exclude fancy returns and just do conditional breaks
-  -? what should that return? It's still void operator.
-
+  3. Guard / early return operator?
+    + we don't want to introduce void `a?b;` identical to `a&&b`
+    + the only way to use early func return is via `if(smth)return`, is there anything else?
+    + break, continue also happens always via `if(smth) break`
+      + we don't want much to introduce `^`, `^^` operators therefore, they can be used for topic holder
+    + so it's more known as function/block guards
+    + it's potentially easier for analysis, since we exclude fancy returns and just do conditional breaks
+    -? what should that return? It's still void operator.
   * `cond ?.; cond ?. b; cond ?.. b;`
     - conflicts with JS `a?.b;` which means optional access
     + matches end of program `.`
       - end of function is not denoted
     + matches paradigm of paths: `.`, `..`
-  * `cond.?; cond.?a; cond..?b;`
-  * `cond ? b.; cond ?. ; cond ?..;`
+    - `cond ?. 0;` vs `cond ? .0;`
+  * `cond.?; cond .? a; cond ..? b; cond ...? b;`
+    - a bit unnatural order
+  * `cond ? b.; cond ?. ; cond ?..; cond ? c..;`
     + ideal from the natural point of view
     ~ some conflict with optional JS paths
     ? how to make break 2 scopes, or alternatively continue loop?
@@ -865,28 +865,43 @@
       ? for continue `a ? b,;`
         + means continue sequence literally
         - may conflict with
-  * `cond ? (.); cond ? (..); cond ? (../a); cond ? (.../a);`
+  * `cond ? (.); cond ? (..); cond ? (../a); cond ? (.../a); cond && (..);`
     + matches paths pattern
     + matches nextjs
     + can augment returning argument
-  * `cond ? ./; cond ? ./x; cond ? ../x; cond ? .../x`
+    - doesn't introduce "early return"
+    - introduces single-branch if
+    - not natural to wrap into braces
+  * `cond ? ./; cond ? ./x; cond ? ../x; cond ? .../x; cond && ../x`
     + no conflict with ranges
     + literally paths
     + has "close" hint `/` with end hint `.`
     + gets rid of "end" operator
+    - not early return
+    - single-branch if
+    + allows having return in alternative branch: `cond ? x : ../y;`
+  * `cond ?./; cond ?./ x; cond ?../x; cond ?.../x;`
+  * `cond && ./; cond && ./x; cond && ../x; cond && .../x;`
+    - mind-bending to see `(a && return b)`
+  * `cond ./; cond ../ x; cond .../x;`
+    - not obvious enough
+  * `a > b (.); a > b (..) x; a > b (...) x;`
+  * `cond ?/; cond ?/ x; cond ?// x; cond ?/// x;`
+    - not following patterns
+    - conflicts with comments
   * `cond ?< b; cond ?<; cond ? <<b;`
   * `cond ? =b; cond ? .=b; cond ? := b`
   * `cond ?= b; cond ? ==b; cond ?=;`
   * `cond ? b*; cond ? *; cond ? **;`
     + period, but more obvious
     + matches state var as `*a` - beginning, `a*` - end.
-  * `cond?^; cond?^a; cond?^^b;`
+  * `cond ?^; cond ?^ a; cond ?^^ b;`
     ~ no need for one operator, can be `?` and `^^` operators
       - which is undesirable
       + doesn't have to introduce separate `?` and `^`.
     + matches beginning of ternary
     ~ we may still want to have if operator `?`.
-      ~ we can have it as elvis `a ?: b` form, or `a ?? b;`
+      ~ likely nah
   * `cond!; cond!b; cond!!b;`
     - `!a ! b;`
     + clear option for guards, like `a > 3 !;`
@@ -908,14 +923,14 @@
     ~- reminds inversion, which is undesirable
       ~- creates alternative association with `!` as `stop`, `break`
     +- makes use of postfix operator
-  ? what about `a :? b`
+  * `a :? b`
   * `cond ?:; cond?:b; cond?::b;`
     - matches elvis visually, but not by meaning
   * `cond:; cond: a; cond::b;`
   * `cond<>; cond<a>; cond<<b>>;`
   * `<cond>; <cond> a; <<cond>> b;`
 
-## [x] Return operator: alternatives → try using ~~`^`~~ `.` for returning value from block.
+## [ ] Return operator: alternatives → try using ~~`^`~~ `.` for returning value from block.
 
   1. `.`
     + erlang-y
@@ -938,7 +953,7 @@
     + allows return none / break notation.
     - enforces `?`, `^` operators
 
-## [x] Always return result, or allow no-result functions? → implicit return, same as (a;b) in scopes
+## [ ] Always return result, or allow no-result functions? → implicit return, same as (a;b) in scopes
 
   + always return is more natural practice
   - no-result case is more generic and closer no wasm, by forcing result we limit capabilities

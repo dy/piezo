@@ -43,15 +43,16 @@ inf = 1/0, nan = 0/0;          // alias infinity, NaN
 foo();                         // semi-colons at end of line are mandatory
 (c = a + b; c);                // parens return last statement
 (a = b+1; a,b,c);              // can return multiple values
-(a > 1 ? ./b; c);              // can early return value
+(a ? ./b; c);                  // break current scope (return b)
+((a ? ../b; c); d);            // break 2 scopes
+(((a ? .../b; c); d); e);      // break to the root scope
 
 ///////////////////////////////// conditions
-a ? b;                         // if a then b (single-branch conditional) 
+a ? b;                         // if a then b (single-branch conditional)
 sign = a < 0 ? -1 : +1;        // ternary conditional
 (2+2 >= 4) ? log(1) :          // multiline/switch
   3 <= 1..2 ? log(2) :         // else if
   log(3);                      // else
-(a ? ./b; c);                  // if a then return b (early return)
 a && b || c;                   // (a and b) or c
 a ~= b;                        // if a almost equal b (f32 step tolerance)
 
