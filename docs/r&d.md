@@ -787,7 +787,7 @@
 
   + improves precision
 
-## [ ] End operator → indicator of return statement. ~~Try using ^a as return.~~ `.` as end/return operator.
+## [ ] End operator → indicator of return statement. Try using ^a as return.
 
   * `.` operator can finish function body and save state. `delay(x,y) = (*d=[1s], z=0; d[z++]=x; d[z-y].)`
   * ? is it optional?
@@ -817,7 +817,7 @@
       - doesn't help much if expr comes after, eg. `pi,rate. a=3;`
     -> so seems uncovered period can stand only at the end of scope. Else there must be a semi.
 
-## [x] Early return? → ~~keep `a ? ^;` for now~~ `a ? ./b;` conjunction
+## [x] Early return operator? → keep `a ? ^;` for now, no need for separate operator
 
   * can often see `if (a) return;` - useful construct. How's that in lino?
   1. `a ? value.`
@@ -849,7 +849,7 @@
     - `cond ?. 0;` vs `cond ? .0;`
   * `cond.?; cond .? a; cond ..? b; cond ...? b;`
     - a bit unnatural order
-  * `cond ? b.; cond ?. ; cond ?..; cond ? c..;`
+  * `cond ? b.; cond ?. ; cond ?..; cond ? c..;` (see 1.)
     + ideal from the natural point of view
     ~ some conflict with optional JS paths
     ? how to make break 2 scopes, or alternatively continue loop?
@@ -883,6 +883,7 @@
   * `cond ? ./; cond ? ./x; cond ? ../x; cond ? .../x; cond && ../x`
     + no conflict with ranges
     + literally paths
+      - confusable pattern in mind
     + has "close" hint `/` with end hint `.`
     + gets rid of "end" operator
     - not early return
@@ -909,7 +910,6 @@
       + doesn't have to introduce separate `?` and `^`.
     + matches beginning of ternary
     ~ we may still want to have if operator `?`.
-      ~ likely nah
   * `cond!; cond!b; cond!!b;`
     - `!a ! b;`
     + clear option for guards, like `a > 3 !;`
@@ -938,7 +938,7 @@
   * `cond<>; cond<a>; cond<<b>>;`
   * `<cond>; <cond> a; <<cond>> b;`
 
-## [ ] Return operator: alternatives → try using ~~`^`~~ `.` for returning value from block.
+## [ ] Return operator: alternatives → try using `^` for returning value from block.
 
   1. `.`
     + erlang-y
@@ -974,7 +974,7 @@
       * or else `.` depends on `()`: `(a.)` is result, `a.` is export.
   + Since `(a;b;c)` naturally returns last element, so must function body.
 
-## [ ] Break, continue, return? -> ~~try `^` for continue, `^^` for break/return etc.~~ `?.` for break, `?..` for continue.
+## [ ] Break, continue, return? -> `^` for continue, `^^` for return, `^^^` for root return.
 
   1. `^` for continue, `^^` for break;
     + nice pattern to skip callstack;
@@ -4989,9 +4989,9 @@
   + we anyways need a strategy to know if op result is required or not.
     + that makes sure extra optimization step (peephole) is not needed, which produces more compact & faster code
   + matches with `^` for current member
-  * eg. `[a,b,c |> ^*2]` produces output list
-  * `a,b,c |> ^*2;` doesn't have any stack output
-  * `(a,b,c |> ^*2) + 1;` produces group
+  * eg. `[a,b,c |> #*2]` produces output list
+  * `a,b,c |> #*2;` doesn't have any stack output
+  * `(a,b,c |> #*2) + 1;` produces group
   + allows better precedence
 
 ## [x] Group ops: how? deconstruct to per-component ops with duplication
@@ -5081,7 +5081,7 @@
   -? should all undefined numbers become `nan`s?
   - discrepancy with JS: `NaN ?? 1` gives `NaN`
 
-## [x] should we make heap precompilable, rather than compilable? -> let's try end-allocate strategy
+## [x] should we make heap precompilable, rather than compilable? -> let's try tail-heap strategy
 
   * `@heap=[..1024], @heap.cur=0`
   + allows customizing heap via code
@@ -5093,13 +5093,17 @@
     - if heap is after mem part, then nested dynamic arrays create too many memcpy ops
     + dynamic heaps extend nested memory limits
 
-  ALT: not sure about precompilable, but we can allocate arrays at the end
+  ALT: not sure about precompilable, but we can allocate arrays at the tail (? of what)
     + end-allocation has worst-case same memory as max heap-size arrays would require
     + it doesn't require memcopy for flat dynamic arrays
     + it requires same or less amount of memcopy than head-heap would, since first layer is skipped
 
-## [x] Binaries: replace `&` with `/\` and `|` with `\/`? -> nah, don't be kidding
+## [x] Binaries: replace `&` with `/\` and `|` with `\/`? -> not clear what's xor
 
-  *  `t*(((t>>12)|(t>>8))\/(63\/(t>>4)))`
+  *  `t*(((t>>12)|(t>>8))&(63&(t>>4)))` -> `t*(((t>>12)\/(t>>8))/\(63/\(t>>4)))`
+  + makes use of font ligatures
+  + frees | for pipes
+  + frees & for something like topic holder
+  - not clear what would be xor
 
 ## [ ] Linear regression from Julia x \ y

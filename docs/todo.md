@@ -15,12 +15,12 @@
 
 ## Stage 1
 
-* [ ] get rid of `.`
-* [ ] remove `<|`
-* [ ] make use of `^` operator
 * [ ] precedence of `,` over `?` and `|>`
+* [ ] get rid of `.`
+* [ ] make use of `^` operator
 * [ ] detect expected number of returns from operation so it may have internal optimization.
-* [ ] almost equal
+  * [ ] merge `<|` and `|>` into `|>`
+* [ ] almost equal ~=
 * [ ] all readmes test
   * [x] inline global consts
   * [ ] standard operators

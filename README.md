@@ -22,8 +22,8 @@ Made for the purpose of audio/signal processing.
 <<< >>>                        // rotate left, right
 []                             // member access, length
 <? <=? ..                      // clamp/min/max, range
-./ ../ .../                    // continue, break, return
-|> |>= ^                       // loop, map, item
+^ ^^ ^^^                       // continue, break, return
+|> |>= #                       // loop, map, item
 
 ///////////////////////////////// variables
 foo=1, bar=2.0;                // declare vars

@@ -8,11 +8,11 @@ process(data, width, height) = (
       (x, x1, x2) = (@, @+1, @+2);
       (x1, x2) >= width ? (x1, x2) = width - 1;
 
-      \ Extract values from image
+      // Extract values from image
       (val0, val1, val2, val3, val5, val6, val7, val8) =
         data[ptr0 + (x, x1, x2, x, x2, x, x1, x2)];
 
-      \ Apply Sobel kernel
+      // Apply Sobel kernel
       (gx, gy) = (
         (val5 - val3) * 2 + (val2 + val8) - (val0 + val6),
         (val7 - val1) * 2 + (val6 + val8) - (val0 + val2)
