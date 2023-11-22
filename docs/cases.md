@@ -1,5 +1,8 @@
 
 * [ ] bytebeats
+* [ ] color-space
+* [ ] https://github.com/AndrewBelt/WaveEdit
+  * for mridangam - generate base wave by formula from wavedit, apply adsr filter
 * [ ] glitches https://github.com/naivesound/glitch
 * [ ] tinyrave
 * [ ] https://cowbell.lol/
@@ -37,3 +40,6 @@
 * [ ] https://github.com/austintheriot/hand-crafted-wasm
 * [ ] https://github.com/hzdgopher/4klang
 * [ ] https://github.com/maximecb/noisecraft
+* [ ] https://github.com/ad-si/awesome-music-production
+* [ ] https://github.com/Auburn/FastNoiseLite
+* [ ] pick sound params to match specific sound https://www.youtube.com/watch?v=Hd0KYxotzv8

@@ -496,7 +496,7 @@
   ALT: can we introduce alternative syntax for HEX/data?
     * `{0xabaababa13241abbabaabbabab123451236546389}` or something like
 
-### [x] String is array of uint8, but lino supports only f64 numbers. How to read as uint8s? -> let's try f64s array
+### [ ] String is array of uint8, but lino supports only f64 numbers. How to read as uint8s? ->
 
   1. discard uint8 and just do f64 instead?
     ~ since strings are static, we at-part know what type it has.
@@ -514,6 +514,14 @@
     + we need just 1 bit for that info
     -~ slows down array access/write a bit
       - can be a trouble reading big amounts
+
+  3. String is sequence, not array
+    + `["abcdef"]` - to create an array - visually more apparent
+    + allows uint8's
+    ~- limited to stack of 1000 elements
+      + it's not a good practice anyways to have long strings
+    ~ at least good optimization technique
+    ~- not clear how to save string into a variable, unless we make groups saveable items
 
 ## [ ] !? atoms: 'hello' (not string)
   * Atoms are useful for referencing:
@@ -5093,3 +5101,5 @@
 ## [x] Binaries: replace `&` with `/\` and `|` with `\/`? -> nah, don't be kidding
 
   *  `t*(((t>>12)|(t>>8))\/(63\/(t>>4)))`
+
+## [ ] Linear regression from Julia x \ y
