@@ -433,9 +433,9 @@ Object.assign(expr, {
     // FIXME: curve via a..b?
     if (a[0] === '..') {
       depth++
-      // i = from; to; while (i < to) {# = i; ...; i++}
+      // i = from; to; while (i < to) {^ = i; ...; i++}
       const [, min, max] = a
-      const cur = define('#', 'f64'),
+      const cur = define('^', 'f64'),
         idx = define(`idx:${depth}`, 'f64'),
         end = define(`end:${depth}`, 'f64'),
         body = expr(b), type = body.type.join(' ')
@@ -445,7 +445,7 @@ Object.assign(expr, {
         `(local.set $${end} ${asFloat(expr(max))})\n` +
         body.type.map(t => `(${t}.const 0)`).join('') + '\n' + // init result values
         `(loop (param ${type}) (result ${type})\n` +
-        `(if (param ${type}) (result ${type}) (f64.le ${get(idx)} (local.get $${end}))\n` + // if (# < end)
+        `(if (param ${type}) (result ${type}) (f64.le ${get(idx)} (local.get $${end}))\n` + // if (^ < end)
         `(then\n` +
         `${`(drop)`.repeat(body.type.length)}\n` +
         `${set(cur, get(idx))} \n` +
@@ -469,7 +469,7 @@ Object.assign(expr, {
       // (a,b,c) <| ...
       if (aop.type.length > 1) {
         // we create tmp list for this group and iterate over it, then after loop we dump it into stack and free memory
-        // i=0; to=types.length; while (i < to) {# = stack.pop(); ...; i++}
+        // i=0; to=types.length; while (i < to) {^ = stack.pop(); ...; i++}
         from = `(f64.const 0)`, to = `(f64.const ${aop.type.length})`
         next = `(f64.load (i32.add (global.get $__heap) (local.get $${idx})))`
         // push args into heap
@@ -480,7 +480,7 @@ Object.assign(expr, {
           out += `${t === 'i32' ? '(f64.convert_i32_s)' : ''}(f64.store (i32.add (global.get $__heap) (i32.const 8)))`
         }
       }
-      // (0..10 <| a ? ^b : c) <| ...
+      // (0..10 <| a ? ./b : c) <| ...
       else if (aop.dynamic) {
         err('Unimplemented: dynamic loop arguments')
         // dynamic args are already in heap
@@ -490,7 +490,7 @@ Object.assign(expr, {
       }
       // list <| ...
       else {
-        // i = 0; to=buf[]; while (i < to) {# = buf[i]; ...; i++}
+        // i = 0; to=buf[]; while (i < to) {^ = buf[i]; ...; i++}
         inc('arr.len'), inc('arr.get')
 
         const src = tmp('src'), len = tmp('len', 'i32')
@@ -596,8 +596,8 @@ Object.assign(expr, {
       err('Complex group multiplication is not supported')
       // FIXME: complex multiple members, eg.
       // (x ? a,b : c,d) * (y ? e,f : g,h);
-      // (... (x ? ^^a,b); ...; c,d) * y(); ;; where y returns multiple values also
-      // (a <| #) * (b <| #);
+      // (... (x ? ../a,b); ...; c,d) * y(); ;; where y returns multiple values also
+      // (a <| ^) * (b <| ^);
     }
 
     return op(`(f64.mul ${asFloat(aop)} ${asFloat(bop)})`, 'f64')
@@ -647,13 +647,6 @@ Object.assign(expr, {
     return op(`(i32.and ${asInt(aop)} ${asInt(bop)})`, `i32`)
   },
   '^'([, a, b]) {
-    // ^a
-    if (!b) {
-      let aop = expr(a)
-      returns.push(aop)
-      // we enforce early returns to be f64
-      return op(`(return ${asFloat(aop)})`, aop.type)
-    }
     // a ^ b
     let aop = expr(a), bop = expr(b);
     return op(`(i32.xor ${asInt(aop)} ${asInt(bop)})`, `i32`)
@@ -813,6 +806,14 @@ Object.assign(expr, {
 
     return res
   },
+
+  // ./a,b
+  './'([, a]) {
+    let aop = expr(a)
+    returns.push(aop)
+    // we enforce early returns to be f64
+    return op(`(return ${asFloat(aop)})`, aop.type)
+  }
 })
 
 // return (local.set) or (global.set) (if no init - takes from stack)

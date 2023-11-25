@@ -36,7 +36,7 @@ const PREC_SEMI = 1,
   PREC_TOKEN = 28 // [a,b] etc
 
 // make id support #@
-parse.id = n => skip(char => isId(char) || char === HASH)
+parse.id = n => skip(char => isId(char) || char === HASH || char === AT)
 
 const isNum = c => c >= _0 && c <= _9
 const num = (a) => {
@@ -142,18 +142,17 @@ unary('--', PREC_UNARY)
 token('++', PREC_UNARY, a => a && ['-', ['++', a], [INT, 1]])
 token('--', PREC_UNARY, a => a && ['+', ['--', a], [INT, 1]])
 
-// returns
-// unary('^^', PREC_RETURN) // break with value: ^ a
-// unary('^', PREC_RETURN) // continue with value: ^ a
-token('^', PREC_TOKEN, (a, b) => !a && (b = expr(PREC_RETURN), b ? ['^', b] : ['^'])) // continue: ^
-token('^^', PREC_TOKEN, (a, b) => !a && (b = expr(PREC_RETURN), b ? ['^^', b] : ['^^'])) // break: ^^
-
-// @
-token('@', PREC_TOKEN, (a, b) => !a && '@')
 
 // a..b, ..b, a..
-token('..', PREC_RANGE, a => ['..', a, expr(PREC_RANGE)])
-token('..=', PREC_RANGE, a => ['..=', a, expr(PREC_RANGE)])
+token('..', PREC_RANGE, a => (['..', a, expr(PREC_RANGE)]))
+
+// returns
+token('./', PREC_TOKEN, (a, b) => !a && (b = expr(PREC_RETURN), b ? ['./', b] : ['./'])) // continue: ./
+token('../', PREC_TOKEN, (a, b) => (!a && (b = expr(PREC_RETURN), b ? ['../', b] : ['../']))) // break: ../
+token('.../', PREC_TOKEN, (a, b) => !a && (b = expr(PREC_RETURN), b ? ['.../', b] : ['.../'])) // return: ../
+
+// ^
+token('^', PREC_TOKEN, (a, b) => !a && '^')
 
 // a.b
 // NOTE: we don't parse expression to avoid 0..1 recognizing as 0[.1]
@@ -185,12 +184,6 @@ token('(', PREC_CALL, (a, b) => !a && (b = expr(0, CPAREN), b ? ['(', b] : ['(']
 
 // a(b,c,d), a()
 token('(', PREC_CALL, (a, b) => a && (b = expr(0, CPAREN), b ? ['()', a, b] : ['()', a]))
-
-// <a#b,c>
-// token('<', PREC_TOKEN, (a, b) => !a && (b = skip(c => c !== GT), skip(), b ? ['<>', b] : err('Empty import statement')))
-
-// \comments
-// token('\\', PREC_TOKEN, (a, prec) => (skip(c => c >= SPACE), skip(), a || expr(prec) || [';']))
 
 // //comments
 token('//', PREC_TOKEN, (a, prec) => (skip(c => c >= SPACE), skip(), a || expr(prec) || [';']))

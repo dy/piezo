@@ -508,6 +508,7 @@
       ~ we wouldnt' likely do utf-8 anyways
     + allows easier unicodes store, up to u16
       + a bit like utf 32
+      + in other words, it's consistent-size store, which simplifies calculation / indexing / shift
 
   2. We can write type info into array data: we don't need i32 array addresses.
     + allows uint8 arrays
@@ -787,7 +788,7 @@
 
   + improves precision
 
-## [ ] End operator → indicator of return statement. Try using ^a as return.
+## [x] End operator → indicator of return statement. ~~Try using ^a as return.~~ last statement automatically returns
 
   * `.` operator can finish function body and save state. `delay(x,y) = (*d=[1s], z=0; d[z++]=x; d[z-y].)`
   * ? is it optional?
@@ -817,7 +818,7 @@
       - doesn't help much if expr comes after, eg. `pi,rate. a=3;`
     -> so seems uncovered period can stand only at the end of scope. Else there must be a semi.
 
-## [x] Early return operator? → keep `a ? ^;` for now, no need for separate operator
+## [x] Early return operator? → ~~keep `a ? ^;` for now, no need for separate operator~~ -> use `./`, `../`, `.../`
 
   * can often see `if (a) return;` - useful construct. How's that in lino?
   1. `a ? value.`
@@ -882,13 +883,19 @@
     - not natural to wrap into braces
   * `cond ? ./; cond ? ./x; cond ? ../x; cond ? .../x; cond && ../x`
     + no conflict with ranges
+    + nextjs pattern
     + literally paths
       - confusable pattern in mind
+        + memorable due to that
     + has "close" hint `/` with end hint `.`
     + gets rid of "end" operator
     - not early return
     - single-branch if
     + allows having return in alternative branch: `cond ? x : ../y;`
+    + frees `^` (for topic holder)
+      + no conflict with XOR really
+      + conventional pipe `|> ^`
+    + resolves conflict of `#` as topic placeholder vs variable
   * `cond ?./; cond ?./ x; cond ?../x; cond ?.../x;`
   * `cond && ./; cond && ./x; cond && ../x; cond && .../x;`
     - mind-bending to see `(a && return b)`
@@ -938,7 +945,7 @@
   * `cond<>; cond<a>; cond<<b>>;`
   * `<cond>; <cond> a; <<cond>> b;`
 
-## [ ] Return operator: alternatives → try using `^` for returning value from block.
+## [ ] Return operator: alternatives → try using ~~`^`~~ `./` for returning value from block.
 
   1. `.`
     + erlang-y
@@ -960,8 +967,10 @@
       -~ `1...2.` can be messy
     + allows return none / break notation.
     - enforces `?`, `^` operators
+  6. `a ? ./b;`
+    + frees `^`
 
-## [ ] Always return result, or allow no-result functions? → implicit return, same as (a;b) in scopes
+## [x] Always return result, or allow no-result functions? → implicit return, same as (a;b) in scopes; solved by required number of output as well
 
   + always return is more natural practice
   - no-result case is more generic and closer no wasm, by forcing result we limit capabilities
@@ -974,7 +983,7 @@
       * or else `.` depends on `()`: `(a.)` is result, `a.` is export.
   + Since `(a;b;c)` naturally returns last element, so must function body.
 
-## [ ] Break, continue, return? -> `^` for continue, `^^` for return, `^^^` for root return.
+## [ ] Break, continue, return? -> `./` for continue, `../` for return, `.../`` for root return.
 
   1. `^` for continue, `^^` for break;
     + nice pattern to skip callstack;
@@ -3056,7 +3065,7 @@
     * `x() = (*i=0;.i++;)`, `x()=(.a; b,c,; .d;)`, `x(a) = (.log(a); .a+=1; a)`
       - not easy to find-select
 
-## [ ] !Prefer operator `x()=(a;<<x=1;a*x;)` - declares values at the beginning?
+## [x] !Prefer operator `x()=(a;<<x=1;a*x;)` - declares values at the beginning? -> nah
 
 ## [ ] Try-catch -> `x() ?= (a, b, c)` makes fn definition wrapped with try-catch
 
@@ -4989,9 +4998,9 @@
   + we anyways need a strategy to know if op result is required or not.
     + that makes sure extra optimization step (peephole) is not needed, which produces more compact & faster code
   + matches with `^` for current member
-  * eg. `[a,b,c |> #*2]` produces output list
-  * `a,b,c |> #*2;` doesn't have any stack output
-  * `(a,b,c |> #*2) + 1;` produces group
+  * eg. `[a,b,c |> ^*2]` produces output list
+  * `a,b,c |> ^*2;` doesn't have any stack output
+  * `(a,b,c |> ^*2) + 1;` produces group
   + allows better precedence
 
 ## [x] Group ops: how? deconstruct to per-component ops with duplication
@@ -5005,7 +5014,7 @@
 
   2. Complex multiple members: write to heap and multiply from it
     * `(x ? a,b : c,d) * (y ? e,f : g,h);`
-    * `(... (x ? ^^a,b); ...; c,d) * y();` - where y returns multiple values also
+    * `(... (x ? ../ a,b); ...; c,d) * y();` - where y returns multiple values also
     * `(a <| @) * (b <| @);`
 
 ## [x] pow, stdlib -> compiled
@@ -5105,5 +5114,10 @@
   + frees | for pipes
   + frees & for something like topic holder
   - not clear what would be xor
+    * `a><b`?
+    * `a/\/b`?
+    * `a/|\b`?
+    * `a/!\b`?
+  - `~` is still busy
 
 ## [ ] Linear regression from Julia x \ y

@@ -311,9 +311,6 @@ Object.assign(expr, {
   },
 
   '^'([, a, b]) {
-    // ^a, ^^a
-    if (!b) return ['^', expr(a)]
-
     a = expr(a), b = expr(b)
 
     return unroll('^', a, b) || (
