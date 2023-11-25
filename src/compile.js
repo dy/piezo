@@ -39,6 +39,11 @@ export default function compile(node, obj) {
   // run global in start function
   let init = expr(node).trim(), out = ``
 
+  // collect exports from last statement
+  const lastNode = node[0] === ';' ? node[node.length - 1] : node
+  // generic exports, excluding private names
+  for (let id of ids(lastNode)) if (!id.includes(':')) exports[id] = globals[id] || err('Unknown export member `' + id + `'`)
+
   if (Object.keys(imports).length) {
     out += `;;;;;;;;;;;;;;;;;;;;;;;;;;;; Imports\n`
     for (let name in imports)
@@ -788,24 +793,11 @@ Object.assign(expr, {
   },
 
   // a,b,c . x?
-  '.'([, a, b]) {
-    // a.b
-    if (b) {
-      // a.0 - index access - doesn't require modwrap
-      let idx = isNaN(Number(b)) ? err('Alias access is unimplemented') : Number(b)
-      return op(`(f64.load (i32.add ${asInt(expr(a))} (i32.const ${idx << 3})))`, 'f64')
-    }
-
-    if (locals) err('Export must be in global scope')
-    // FIXME: if (expNode !== node && expNode !== node[node.length-1]) err('Export must be the last node');
-
-    let res = expr(a)
-
-    // generic exports, excluding private names
-    for (let id of ids(a)) if (!id.includes(':')) exports[id] = globals[id] || err('Unknown export member `' + id + `'`)
-
-    return res
-  },
+  // '.'([, a, b]) {
+  //   // a.0 - index access - doesn't require modwrap
+  //   let idx = isNaN(Number(b)) ? err('Alias access is unimplemented') : Number(b)
+  //   return op(`(f64.load (i32.add ${asInt(expr(a))} (i32.const ${idx << 3})))`, 'f64')
+  // },
 
   // ./a,b
   './'([, a]) {

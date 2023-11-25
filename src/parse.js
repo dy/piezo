@@ -77,9 +77,6 @@ for (let i = 0; i <= 9; i++) lookup[_0 + i] = num;
 // .1
 lookup[PERIOD] = a => !a && num();
 
-// export is parsed as last-resort period operator, conditioned it's last in the code
-unary('.', PREC_EXPORT, true)
-
 const string = q => (qc, c, str = '') => {
   qc && err('Unexpected string') // must not follow another token
   skip()
@@ -156,7 +153,7 @@ token('^', PREC_TOKEN, (a, b) => !a && '^')
 
 // a.b
 // NOTE: we don't parse expression to avoid 0..1 recognizing as 0[.1]
-// NOTE: for now we disable prop access since we don't have alias and just static index can be done via x[0]
+// NOTE: for now we disable prop access since we don't have aliases and just static index can be done via x[0]
 // token('.', PREC_CALL, (a,b) => a && (b=skip(isId)) && ['.', a, b])
 
 // *a

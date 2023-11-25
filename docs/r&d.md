@@ -818,6 +818,18 @@
       - doesn't help much if expr comes after, eg. `pi,rate. a=3;`
     -> so seems uncovered period can stand only at the end of scope. Else there must be a semi.
 
+### [ ] End operator (discussion above is old): to have or not to have?
+
+  + `a,b,c.` explicitly indicates exported members
+    - we can do export by last statement as `a,b,c`, thinking it be similar to fn return
+      + fn return is unnamed, module exports is named
+      + module exports cannot return numbers or just values
+    - confusing intuition: `./a,b,c` returns `a,b,c`, but `a,b,c.` exports `a,b,c`.
+  + tribute to Erlang's and natural langs PERIOD.
+  - `a,b,c` - less conflict with other `.`-including operators.
+  - less is more
+  - no-period allows easier concat of modules.
+
 ## [x] Early return operator? → ~~keep `a ? ^;` for now, no need for separate operator~~ -> use `./`, `../`, `.../`
 
   * can often see `if (a) return;` - useful construct. How's that in lino?
@@ -945,7 +957,7 @@
   * `cond<>; cond<a>; cond<<b>>;`
   * `<cond>; <cond> a; <<cond>> b;`
 
-## [ ] Return operator: alternatives → try using ~~`^`~~ `./` for returning value from block.
+## [x] Return operator: alternatives → try using ~~`^`~~ `./` for returning value from block.
 
   1. `.`
     + erlang-y
@@ -983,7 +995,7 @@
       * or else `.` depends on `()`: `(a.)` is result, `a.` is export.
   + Since `(a;b;c)` naturally returns last element, so must function body.
 
-## [ ] Break, continue, return? -> `./` for continue, `../` for return, `.../`` for root return.
+## [x] Break, continue, return? -> `./` for continue, `../` for return, `.../`` for root return.
 
   1. `^` for continue, `^^` for break;
     + nice pattern to skip callstack;
@@ -1267,7 +1279,7 @@
   * `a..b -> x` looks like function, but is possible
   * can be done via external lib
 
-## [ ] Loops: ~~`i <- 0..10 <| a + i`, `i <- list <| a`, `[x <- 1,2,3 <| x*2]`~~ ~~`0..10 | i -> a + i`~~ `list |> ^ * 2;`
+## [x] Loops: ~~`i <- 0..10 <| a + i`, `i <- list <| a`, `[x <- 1,2,3 <| x*2]`~~ ~~`0..10 | i -> a + i`~~ `list |> ^ * 2;`
 
   * `for i in 0..10 (a,b,c)`, `for i in src a;`
   * alternatively as elixir does: `item <- 0..10 a,b,c`

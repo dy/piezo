@@ -270,9 +270,9 @@ t.skip('parse: import', () => {
 })
 
 t('parse: export', () => {
-  is(parse('x, y, z.'), ['.', [',', 'x', 'y', 'z']])
-  is(parse('x=1;x.'), [';', ['=', 'x', [INT, 1]], ['.', 'x']])
-  is(parse('x=1.'), ['.', ['=', 'x', [INT, 1]]])
+  is(parse('x, y, z'), [',', 'x', 'y', 'z'])
+  is(parse('x=1;x'), [';', ['=', 'x', [INT, 1]], 'x'])
+  is(parse('x=1;'), [';', ['=', 'x', [INT, 1]], undefined])
   // throws(() => parse('x, y, z. y'), /export/i)
 })
 

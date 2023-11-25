@@ -16,7 +16,7 @@
 ## Stage 1
 
 * [ ] precedence of `,` over `x ? a,b,c;` and `a,b,c |>`
-* [ ] get rid of `.`
+* [x] get rid of `.` (less = more)
 * [x] make use of `./`, `../`, `.../`
 * [x] make use of `^` topic placeholder
 * [ ] detect expected number of returns from operation so it may have internal optimization.

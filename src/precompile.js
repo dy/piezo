@@ -61,8 +61,14 @@ Object.assign(expr, {
       return [a]
     })
   },
-  '.'([, a]) {
-    return ['.', expr(a)]
+  './'([, a]) {
+    return ['./', expr(a)]
+  },
+  '../'([, a]) {
+    return ['../', expr(a)]
+  },
+  '.../'([, a]) {
+    return ['.../', expr(a)]
   },
 
   '('([, a]) {
