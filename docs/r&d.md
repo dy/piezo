@@ -86,11 +86,13 @@
     + looney tunes
   * coo-coo
     + sound
+
   * mell
     + melody language
     + bell
     + mell tunes
     + .mel .me
+    + mellifluous (sweet-sounding)
 
   * auriel, aureil, aury
     + available

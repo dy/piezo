@@ -1,4 +1,4 @@
-# lino ![stability](https://img.shields.io/badge/stability-experimental-black)
+# mell ![stability](https://img.shields.io/badge/stability-experimental-black)
 
 Microlanguage with ergonimic syntax, linear memory and compiling to 0-runtime WASM.<br>
 Made for the purpose of audio/signal processing.
@@ -380,14 +380,14 @@ See [all examples](/examples)
 
 ## Usage
 
-_lino_ is available as CLI or JS package.
+_mell_ is available as CLI or JS package.
 
-`npm i lino`
+`npm i mell`
 
 ### CLI
 
 ```sh
-lino source.li -o dest.wasm
+mell source.mel -o dest.wasm
 ```
 
 This produces compiled WASM binary.
@@ -395,10 +395,10 @@ This produces compiled WASM binary.
 ### JS
 
 ```js
-import lino from 'lino'
+import mell from 'mell'
 
 // create wasm arrayBuffer
-const buffer = lino.compile(`
+const buffer = mell.compile(`
   n=1;
   mult(x) = x*PI;
   arr=[1, 2, sin(1.08)];
@@ -407,7 +407,7 @@ const buffer = lino.compile(`
   // js objects or paths to files
   imports: {
     math: Math,
-    mylib: './path/to/my/lib.li'
+    mylib: './path/to/my/lib.mel'
   },
 
   // name of imported/exported memory
@@ -440,7 +440,7 @@ const arrValues = new Float64Array(__memory, arr.value, 3)
 
 Audio processing doesn't have general cross-platform solution, many environments lack audio features.
 JS _Web Audio API_ in particular is not suitable for audio purposes: unpredictable pauses, glitches and so on. It's better handled in worklet with WASM.<br/>
-_lino_ addresses these points, making audio code more accessible and robust.
+_mell_ addresses these points, making audio code more accessible and robust.
 
 That's personal attempt to rethink some JS parts and secure language ground. Someone may find it a line noise, but I find it beautiful.
 
@@ -464,11 +464,11 @@ It targets browsers, [audio worklets](https://developer.mozilla.org/en-US/docs/W
 -->
 
 <!--
-## Projects using lino
+## Projects using mell
 
 * [web-audio-api](https://github.com/audiojs/web-audio-api)
 * [audiojs](https://github.com/audiojs/)
-* [lino](https://github.com/lino/)
+* [mell](https://github.com/mell/)
 -->
 
 ### Inspiration
