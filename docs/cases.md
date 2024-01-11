@@ -43,3 +43,4 @@
 * [ ] https://github.com/ad-si/awesome-music-production
 * [ ] https://github.com/Auburn/FastNoiseLite
 * [ ] pick sound params to match specific sound https://www.youtube.com/watch?v=Hd0KYxotzv8
+* [ ] https://github.com/felixroos/doughbat?tab=readme-ov-file
