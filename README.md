@@ -1,8 +1,8 @@
 # mell ![stability](https://img.shields.io/badge/stability-experimental-black)
 
-Microlanguage with ergonimic syntax, linear memory and compiling to 0-runtime WASM.<br>
-Made for the purpose of audio/signal processing.
-<!-- It also has smooth operator and organic sugar. -->
+Microlanguage with refined syntax, linear memory and compiling to compact 0-runtime WASM.<br>
+Made for the purpose of float/bytebeats and DSP.
+<!-- It has smooth operator and organic sugar. -->
 
 <!--[Motivation](./docs/motivation.md)  |  [Documentation](./docs/reference.md)  |  [Examples](./docs/examples.md).-->
 
@@ -27,8 +27,8 @@ Made for the purpose of audio/signal processing.
 
 ///////////////////////////////// variables
 foo=1, bar=2.0;                // declare vars
-AbCF#, $0, Δx, _, @1;          // names permit alnum, unicodes, #_$@
-fooBar123 == FooBar123;        // names are case-insensitive
+AbCF#, $0, Δx, _;              // names permit alnum, unicodes, #_$
+fooBar123 != FooBar123;        // names are case-sensitive
 default=1, eval=fn, else=0;    // no reserved words
 true = 0b1, false = 0b0;       // alias bools
 inf = 1/0, nan = 0/0;          // alias infinity, NaN
@@ -43,9 +43,9 @@ inf = 1/0, nan = 0/0;          // alias infinity, NaN
 foo();                         // semi-colons at end of line are mandatory
 (c = a + b; c);                // parens return last statement
 (a = b+1; a,b,c);              // can return multiple values
-(a ? ./b; c);                   // break current scope (return b)
-((a ? ../b; c); d);             // break 2 scopes
-(((a ? .../b; c); d); e);       // break to the root scope
+(a ? ./b; c);                  // break current scope (return b)
+((a ? ../b; c); d);            // break 2 scopes
+(((a ? .../b; c); d); e);      // break to the root scope
 
 ///////////////////////////////// conditions
 a ? b;                         // if a then b (single-branch conditional)
@@ -55,6 +55,16 @@ sign = a < 0 ? -1 : +1;        // ternary conditional
   log(3);                      // else
 a && b || c;                   // (a and b) or c
 a ~= b;                        // if a almost equal b (f32 step tolerance)
+
+///////////////////////////////// groups
+a, b=1, c=2;                   // define multiple values
+(a, b, c)++;                   // increment multiple: (a++, b++, c++)
+(a,b,c) = (d,e,f);             // assign multiple: a=d, b=e, c=f
+(a,b) = (b,a);                 // swap
+(a,b) + (c,d);                 // operator for multiple members: (a+c, b+d)
+(a,b)[1] = c[2,3];             // multiple props: (a[1]=c[2], b[1]=c[3])
+(a,b,c) = d;                   // duplicate: (a, b, c) = (d, d, d);
+(a,,b) = (c,d,e);              // skip: (a=c, d, b=e);
 
 ///////////////////////////////// ranges
 0..10;                         // from 1 to 9 (10 exclusive)
@@ -72,16 +82,6 @@ x <?= 0..10;                   // x = clamp(x, 0, 10)
 x <=?= 0..10;                  // x = clamp(x, 0, 10)
 a,b,c = 0..3;                  // a==0, b==1, c==2
 (-10..10)[];                   // span is 20
-
-///////////////////////////////// groups
-a, b=1, c=2;                   // define multiple values
-(a, b, c)++;                   // increment multiple: (a++, b++, c++)
-(a,b,c) = (d,e,f);             // assign multiple: a=d, b=e, c=f
-(a,b) = (b,a);                 // swap
-(a,b) + (c,d);                 // operator for multiple members: (a+c, b+d)
-(a,b)[1] = c[2,3];             // multiple props: (a[1]=c[2], b[1]=c[3])
-(a,b,c) = d;                   // duplicate: (a, b, c) = (d, d, d);
-(a,,b) = (c,d,e);              // skip: (a=c, d, b=e);
 
 ///////////////////////////////// functions
 double(n) = n*2;               // define function
@@ -131,7 +131,6 @@ m[0..] = m[1..,0];             // rotate
 
 ///////////////////////////////// loops
 a, b, c |> f(#);               // for each a, b, c do f(item)
-i < 10 |> f(i++);              // while i < 10 do f(i++)
 10.. |> (                      // descend over range
   # < 5 ? ./;                  // if item < 5 continue
   # < 0 ? ../;                 // if item < 0 break
@@ -144,6 +143,7 @@ items |> f(#) |> g(#);         // pipe
 );                             //
 (x,,y) = a, b, c |> #;         // x = a, y = c;
 x[3..5] |>= # * 2;             // map items in range
+.. |> (i >= 10 ? ./; f(i++));  // while i < 10 do f(i++)
 
 ///////////////////////////////// export
 x, y, z                        // exports last statement

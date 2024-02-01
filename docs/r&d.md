@@ -303,7 +303,7 @@
     + рёв
   * waev
 
-## [ ] Free operators
+## Free operators
 
   * `<>`, `><`
     ~-- not always available
@@ -1284,7 +1284,7 @@
   * `a..b -> x` looks like function, but is possible
   * can be done via external lib
 
-## [x] Loops: ~~`i <- 0..10 <| a + i`, `i <- list <| a`, `[x <- 1,2,3 <| x*2]`~~ ~~`0..10 | i -> a + i`~~ `list |> ^ * 2;`
+## [x] Loops: ~~`i <- 0..10 <| a + i`, `i <- list <| a`, `[x <- 1,2,3 <| x*2]`~~ ~~`0..10 | i -> a + i`~~ `list |> # * 2;`
 
   * `for i in 0..10 (a,b,c)`, `for i in src a;`
   * alternatively as elixir does: `item <- 0..10 a,b,c`
@@ -1566,15 +1566,16 @@
   - // is noisy conflict with / and occupies operator space, eg.:
   ```
     tri(freq in 10..10000) = (
-      ...phase = 0  // phase state
-      phase += freq * pi2 / sampleRate
-      (1 - 4 * abs( round(phase/pi2) - phase/pi2 ))
+      ...phase = 0; // phase state
+      phase += freq * pi2 / sampleRate;
+      (1 - 4 * abs( round(phase/pi2) - phase/pi2 ));
     )
   ```
+    ~+ it doesn't go without `;` so not so much conflict
   - // is used in python for floor division, very handy: (a / b | 0) -> a//b
     - that is especially not just floor division but autoconverting to int, which is super handy!!
       ? can that be resolved somehow?
-      - what's the big deal of just a/b | 0? internally that's same, no?
+      ~ what's the big deal of just a/b | 0? internally that's same, no?
     - it's just so nice symmetricity of ++ -- ** %% but not //
   + allows defer to be `\x++`.
   + // associates besides C+/Java/JS with F#, which is pipy
@@ -3131,21 +3132,24 @@
 
 ## [x] `a <~ b` vs `a < ~b` -> use `a ~< b` instead
 
-## [ ] Case-insensitive variable names? ->
+## [x] Case-insensitive variable names? -> likely yes: AbB/ABb, x1/X1, @math.E/@math.e, export names, strings, atoms
   * should not be too smart, should be very simple
 
   0. Case-insensitive
 
   + simple
+  + it's safe: like html attributes, no gnasty name conflicts
   + https://twitter.com/bloomofthehours/status/1491797450595528713?s=20&t=1aJpwIDrbNhIjwIohsvxiw
   + reduces use of camelcase convention
+  + lowcase constants are fun `4p * i`
+    - can define via units
   - `AbB` vs `ABb` can be different chords, but lino mixes them up together
   - `X1` and `x1` can be different things in math
-    ~ can be solved as eg. `x1` and `_x1` or `@x1`
+    ~ can be solved as eg. `x1` and `_x1` or ~~`@x1`~~
   - `sampleRate` becomes `samplerate` - can be confusing
     ~ doesn't have to lowcase
   - export naming requirement: `'AbB': AbB, 'sampleRate': sampleRate.`?
-    ~ can take exact name though
+    + can take exact name though
     + lowcase-enforced export is kind of cool, `exports.samplerate`
   - not much conventional, only MySQL and other oldies
   - import question: `@math:E` vs `@math.e`
@@ -3160,7 +3164,6 @@
   - Strings don't allow code to be case-change robust.
     * we either discard strings or make it (half) case-sensitive
   - Atoms may require case-sensitivity, eg. for error messages
-  -
 
   0.5 Capfirst-sensitive, (`Abc` == `ABc`) != (`aBC` == `abc`)
 
@@ -3949,13 +3952,14 @@
     + allows reserved name, no var name `#` shadowing
     + `items |> filter(@)` looks softer than `items |> filter(#)`
     ~- unusual convention (no such precedence)
-    - ~~conflicts with import~~ import is `<>` for now
+    - conflicts/associates with import (import can be `<>`, but still)
     - makefile denotes `$@` as target file (exports?), and `$^` as current file
     + matches `au-` from language name, also looks like aura around a
       - we don't use auro name
     - no confidence in it
       - looks too much to reserve for that lil task
       - no "placeholder" or "insertion" feeling
+      - associates with some mystical meta-stuff like decorators or directives
   * `list |> _ * 2`, `list |> _>2?^^_:^_`
     + less mystery than with `@`
     + more conventional (Elixir, Julia, Scala, Perl, PowerShell)
@@ -4002,7 +4006,7 @@
       - unlikely, same use-case can include both `[0,1,2<|@*2, 0,1,2|>@*2]`
     + first uses heap, the second doesn't (is faster)
 
-## [x] `list <| x` vs `a < 1 <| x` - how do we know left side type? -> from boolean operator result or by-syntax
+## [x] `list <| x` vs `a < 1 <| x` - how do we know lh type for while loops. -> .. |> (cond ? ./;)
 
   * type can be unknown, like `x(arg)=(arg <| ...)`
     ? do we run it until condition holds true?
@@ -4029,10 +4033,10 @@
 
   ? ALT: iteration is always via ranges
     * `.. <| # + 1` for infinite loop - break if needed
-      + `.. <| # < 3 ? ^^;`
+      + `.. <| # < 3 ? ./;`
     * `..100 <| #` for limited loop
     * `0.. <| # + 1` another kind of limited loop with nicer id
-    ? `..(a ? >< : 0) <| a + 1`
+    ? `..(a ? 1/0 : 0) <| a + 1`
     + refers to `..` in more looping sense!
     - no while is a bummer
 
@@ -4043,6 +4047,7 @@
       * it would need special boolean indicator for ops result. (any condition)
     - `1 <| ...` will produce infinite loop
       ~ we would not consider it a boolean op, it'd need to be `!0 <| ...`
+    - breaks convention of iterating left side items
 
   ? ALT: prohibit iterating lists: only range `a..b <|`, sequence `a,b,c <|` or condition (while) `a < 10 <|`
     + it's trivial and more explicit to iterate loops as `0..arr[] <| arr[#]`
