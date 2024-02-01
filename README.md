@@ -23,11 +23,11 @@ Made for the purpose of audio/signal processing.
 [i] []                         // member access, length
 <? <=? ..                      // clamp/min/max, range
 ./ ../ .../                    // continue, break, return
-|> |>= ^                       // loop, map, item
+|> |>= #                       // loop, map, item
 
 ///////////////////////////////// variables
 foo=1, bar=2.0;                // declare vars
-Ab_C_F#, $0, Δx, _, @1;        // names permit alnum, unicodes, #_$@
+AbCF#, $0, Δx, _, @1;          // names permit alnum, unicodes, #_$@
 fooBar123 == FooBar123;        // names are case-insensitive
 default=1, eval=fn, else=0;    // no reserved words
 true = 0b1, false = 0b0;       // alias bools
@@ -62,7 +62,13 @@ a ~= b;                        // if a almost equal b (f32 step tolerance)
 10..1;                         // reverse range
 1.08..108.0;                   // float range
 (x-1)..(x+1);                  // calculated ranges
-x <= 0..10;                    // is x in 0..10 range (10 inclusive)
+x < 0..10;                     // is x in 0..10 range, 10 exclusive
+x > 0..10;                     // is x out 0..10 range, 10 exclusive
+x <= 0..10;                    // is x in 0..10 range, 10 inclusive
+x >= 0..10;                    // is x out 0..10 range, 10 inclusive
+x <? 0..10;                    // clamp(x, 0..10), 10 exclusive
+x <=? 0..10;                   // clamp(x, 0..10), 10 inclusive
+x <?= 0..10;                   // x = clamp(x, 0, 10)
 x <=?= 0..10;                  // x = clamp(x, 0, 10)
 a,b,c = 0..3;                  // a==0, b==1, c==2
 (-10..10)[];                   // span is 20
@@ -79,8 +85,8 @@ a, b=1, c=2;                   // define multiple values
 
 ///////////////////////////////// functions
 double(n) = n*2;               // define function
-times(m = 1, n < 1..) = (      // optional, clamped args
-  n == 0 ? ./n;                 // early return
+times(m = 1, n <?= 1..) = (    // optional, clamped args
+  n == 0 ? ./n;                // early return
   m * n                        // default return
 );                             //
 times(3,2);                    // 6
@@ -102,8 +108,8 @@ fib() = (                      //
 fib(), fib(), fib();           // 1, 2, 3
 c() = (fib(), fib(), fib());   // state is defined by function scope
 fib(); c();                    // 5; 1, 2, 3;
-d(_b) = (fib(), _b());         // to get external state, pass fn as argument
-d(b);                          // 1, 8;
+d(_fn) = (fib(), _fn());       // to get external state, pass fn as argument
+d(c);                          // 1, 8;
 
 ///////////////////////////////// arrays
 m = [..10];                    // array of 10 elements
@@ -112,32 +118,32 @@ m = [1,2,3,4];                 // array of 4 elements
 m = [n[0..]];                  // copy n
 m = [1, 2..4, 5];              // mixed definition
 m = [1, [2, 3, [4]]];          // nested arrays (tree)
-m = [0..4 |> ^ * 2];           // list comprehension
+m = [0..4 |> # * 2];           // list comprehension
 (first, last) = (m[0], m[-1]); // get by index
 (second, ..last) = m[1, 2..];  // get multiple values
 length = m[];                  // get length
 m[0] = 1;                      // set value
 m[2..] = (1, 2..4, n[1..3]);   // set multiple values from offset 2
-m[0..] = 0..4 |> ^ * 2         // set via iteration
+m[0..] = 0..4 |> # * 2         // set via iteration
 m[1,2] = m[2,1];               // rearrange
 m[0..] = m[-1..0];             // reverse order
 m[0..] = m[1..,0];             // rotate
 
 ///////////////////////////////// loops
-a, b, c |> f(^);               // for each a, b, c do f(item)
+a, b, c |> f(#);               // for each a, b, c do f(item)
 i < 10 |> f(i++);              // while i < 10 do f(i++)
 10.. |> (                      // descend over range
-  ^ < 5 ? ./;                  // if item < 5 continue
-  ^ < 0 ? ../;                 // if item < 0 break
+  # < 5 ? ./;                  // if item < 5 continue
+  # < 0 ? ../;                 // if item < 0 break
 );                             //
-items |> f(^);                 // iterate over array
-items |> f(^) |> g(^);         // pipe
+items |> f(#);                 // iterate over array
+items |> f(#) |> g(#);         // pipe
 0..w |> (                      // nest iterations
-  x = ^;                       // assign top-level item
-  0..h |> f(x,^);              // f(x,y)
+  x = #;                       // assign top-level item
+  0..h |> f(x,#);              // f(x,y)
 );                             //
-(x,,y) = a, b, c |> ^;         // x = a, y = c;
-x[3..5] |>= ^ * 2;             // map items in range
+(x,,y) = a, b, c |> #;         // x = a, y = c;
+x[3..5] |>= # * 2;             // map items in range
 
 ///////////////////////////////// export
 x, y, z                        // exports last statement
@@ -171,17 +177,17 @@ Provides k-rate amplification for block of samples.
 ```
 gain(                               // define a function with block, volume arguments.
   block,                            // block is a list argument
-  volume <= 0..100                  // volume is limited to 0..100 range
+  volume <?= 0..100                 // volume is limited to 0..100 range
 ) = (
-  block |>= ^ * volume;             // map each sample by multiplying by value
+  block |>= # * volume;             // map each sample by multiplying by value
 );
 
-gain([0..5 |> ^ * 0.1], 2);         // 0, .2, .4, .6, .8, 1
+gain([0..5 |> # * 0.1], 2);         // 0, .2, .4, .6, .8, 1
 
 gain                                // export gain function
 ```
 
-Minifies as `gain(b,v)=b|>=^*v.`
+Minifies as `gain(b,v)=b|>=#*v.`
 
 </details>
 
@@ -198,8 +204,8 @@ A-rate (per-sample) biquad filter processor.
 
 lpf(                                // per-sample processing function
   x0,                               // input sample value
-  freq <= 1..10k = 100,             // filter frequency, float
-  Q <= 0.001..3.0 = 1.0             // quality factor, float
+  freq <?= 1..10k = 100,            // filter frequency, float
+  Q <?= 0.001..3.0 = 1.0            // quality factor, float
 ) = (
   *(x1, y1, x2, y2) = 0;            // define filter state
 
@@ -221,7 +227,7 @@ lpf(                                // per-sample processing function
   y0                                // return y0
 );
 
-// (0, .1, .3) |> lpf(^, 108, 5);
+// (0, .1, .3) |> lpf(#, 108, 5);
 
 lpf.                                // export lpf function, end program
 ```
@@ -280,8 +286,8 @@ coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
   t = i / 1s;
 
   out |>= oscillator[shape](phase)
-      |> adsr(^, 0, 0, .06, .24)
-      |> curve(^, 1.82);
+      |> adsr(#, 0, 0, .06, .24)
+      |> curve(#, 1.82);
 
   i++;
   phase += (freq + (t > delay && jump)) * 2pi / 1s;

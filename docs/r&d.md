@@ -1,4 +1,4 @@
-## [ ] name ->
+## [ ] name -> mell? noli?
 
   * soufn, sofn, sofun, so-fun, funzo, zfun
   * sound-fu, zound-fu, zo-fu, sonfu, sone-fu
@@ -823,7 +823,7 @@
       - doesn't help much if expr comes after, eg. `pi,rate. a=3;`
     -> so seems uncovered period can stand only at the end of scope. Else there must be a semi.
 
-### [ ] End operator (discussion above is old): to have or not to have?
+### [x] End operator (discussion above is old): to have or not to have? -> no, less ops the better
 
   + `a,b,c.` explicitly indicates exported members
     - we can do export by last statement as `a,b,c`, thinking it be similar to fn return
@@ -3132,9 +3132,11 @@
 ## [x] `a <~ b` vs `a < ~b` -> use `a ~< b` instead
 
 ## [ ] Case-insensitive variable names? ->
+  * should not be too smart, should be very simple
 
   0. Case-insensitive
 
+  + simple
   + https://twitter.com/bloomofthehours/status/1491797450595528713?s=20&t=1aJpwIDrbNhIjwIohsvxiw
   + reduces use of camelcase convention
   - `AbB` vs `ABb` can be different chords, but lino mixes them up together
@@ -3162,6 +3164,7 @@
 
   0.5 Capfirst-sensitive, (`Abc` == `ABc`) != (`aBC` == `abc`)
 
+  - too smart
   + fixes problem of math/class capfirst difference (math `X1` vs `x1`, `Oscillator` vs `oscillator`)
   + fixes problem of despawnerer's `fullName` == `fullname`
   + capfirst is typographycally meaningful
@@ -3174,6 +3177,7 @@
 
   1. Case-sensitive
 
+  + simple
   + Enables extra room for naming, eg. `Oscillator` creates oscillator vs `oscillator` is instance
   + Doesn't create exports naming conflict: `foo_bar` is non-js export name, like `samplerate`
   + More conventional: JS, C, Python
@@ -4460,19 +4464,20 @@
     + even simpler and more mathy
     + reminds actual infinity sign
 
-## [x] exclusive / non-inclusive range: how? -> use `0..10` as exclusive, `0..=10` as inclusive
+## [x] exclusive / non-inclusive range: how? -> use `0..10` as exclusive, operators decide inclusivity like `a <= 0..10`
 
   * `0..<10`, `0<..10`
     - `0 > ..10`, `0.. < 10`
   * `min..(max-1)` for ints, `min..(max-.00001)` for floats, so basically no exclusive ranges
     + problem solved
-    - width of int range is screwed up
+    - span of int range is screwed up
   * exclusive ranges only
     + solves problem of range width:
       * take `1..2`, so `2-1` as floats gives 1 which is correct width, but gives `2` as integers which is wrong
     + initializing array as `[..10]` creates `10` elements this way from `0..9` inclusive
     + inclusivity is a matter of `<=` or `<`
     + no questions with the way `range()`, `clamp()` works
+    - weird check `a in 0..10` is `a < 10 && a >= 0`
   * generally exclusives in langs are right `0..<10` or `0...10`, not making separate left `0>..10`
   * we can only have `0 .< 10` or `0 .> 10`
     ?- `x <> 0 .< 10` vs `x <> 0..<10`
@@ -4493,7 +4498,7 @@
     - `0.. .10`
   * `0..+10` for inclusive range, `0..10` for exclusive
     + `+` has no meaning as operator anyways
-    - `10..-+10` vs `10..+-10` is weird,vs `10..=-10`
+    - `10..-+10` vs `10..+-10` is weird, vs `10..=-10`
 
 ## [x] replace `x -< 0..10` with `x =< 0..10`? -> clamp is `x <? 0..10`
 
@@ -4535,7 +4540,7 @@
   + Converts back to f64 on export
   + Gives extreme precision/dimension
 
-## [x] min, max, clamp as `a <? 0..100`?
+## [x] min, max, clamp as `a <? 0..100`? yes
 
   * `a |< ..10`, `a >| 10` for
   * can be solved via clamp operator `a <> ..10`, `a <> 10..`
@@ -4547,6 +4552,15 @@
       + `a >? 0..10` means outside, not clear though which side
     - introduces `a <=? ..10` for inclusive test
       ? should we use `..=10` then instead?
+  * `a <> 0..10`, `a <=> 0..10`
+    + meaningful as `a < 10 && a > 0`, `a <= 10 && a > 0`
+      - can do `0 < a < 10`
+    ? is that `clamp(a, 0, 10)` or `a in 0..10`?
+      * logically it's `in`, what would be `clamp`?
+    + clamp as `a <>= 0..10`?
+      - logically it's `a = a <> 0..10`, which is assigning to boolean
+    + allows reverse clamp as `a >< 0..10`
+    + visual logic
 
 ## [x] Create empty array - how? -> `[..10]` since range is exclusive
 
