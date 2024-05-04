@@ -1,5 +1,6 @@
 
 * [ ] bytebeats
+* [ ] https://www.youtube.com/watch?v=cZrnjp0-Ba8 - for mridanga player
 * [ ] color-space
 * [ ] https://github.com/AndrewBelt/WaveEdit
   * for mridangam - generate base wave by formula from wavedit, apply adsr filter

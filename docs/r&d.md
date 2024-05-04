@@ -81,6 +81,8 @@
     - already exists: https://github.com/Somainer/lisa-lang
     - super-confusable
   * lyno
+    + free
+    + alliteration to lino
   * loni, lony
   * looney
     + looney tunes

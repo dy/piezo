@@ -1,6 +1,6 @@
-# mell ![stability](https://img.shields.io/badge/stability-experimental-black)
+# lino ![stability](https://img.shields.io/badge/stability-experimental-black)
 
-Microlanguage with refined syntax, linear memory and compiling to compact 0-runtime WASM.<br>
+Line noise language with linear memory and compiling to compact 0-runtime WASM.<br>
 Made for the purpose of float/bytebeats and DSP.
 <!-- It has smooth operator and organic sugar. -->
 
@@ -16,36 +16,37 @@ Made for the purpose of float/bytebeats and DSP.
 ///////////////////////////////// operators
 + - * / % -- ++                // arithmetical (float)
 ** %%                          // power, unsigned mod
-&& || ! ?:                     // logical (boolean)
-> >= < <= == != ~=             // comparisons (boolean)
 & | ^ ~ >> <<                  // binary (integer)
 <<< >>>                        // rotate left, right
-[i] []                         // member access, length
+&& || !                        // logical
+?: ?                           // conditions
+> >= < <= == != ~=             // comparisons (boolean)
 <? <=? ..                      // clamp/min/max, range
+x[i] x[]                       // member access, length
 ./ ../ .../                    // continue, break, return
 |> |>= #                       // loop, map, item
 
 ///////////////////////////////// variables
 foo=1, bar=2.0;                // declare vars
-AbCF#, $0, Δx, _;              // names permit alnum, unicodes, #_$
-fooBar123 != FooBar123;        // names are case-sensitive
-default=1, eval=fn, else=0;    // no reserved words
+AbCF, $0, Δx, _;               // names permit alnum, unicodes, _$
+fooBar123 != FooBar123;        // case-sensitive
+default=1, eval=fn, else=0;    // freedom of speech
 true = 0b1, false = 0b0;       // alias bools
 inf = 1/0, nan = 0/0;          // alias infinity, NaN
 
 ///////////////////////////////// units
 1k = 1000; 1pi = 3.1415926;    // define units
 1s = 44100; 1m = 60s;          // useful for sample indexes
-10.1k, 2pi;                    // units deconstruct to numbers: 10100, 6.283
-2m35s;                         // allow combinations
+10.1k, 2pi;                    // 10100, 6.283...
+2m35s;                         // combinations
 
 ///////////////////////////////// statements
-foo();                         // semi-colons at end of line are mandatory
-(c = a + b; c);                // parens return last statement
-(a = b+1; a,b,c);              // can return multiple values
-(a ? ./b; c);                  // break current scope (return b)
-((a ? ../b; c); d);            // break 2 scopes
-(((a ? .../b; c); d); e);      // break to the root scope
+foo();                         // semi-colons are mandatory
+(c = a + b; c);                // group returns last statement
+(a = b+1; a,b,c);              // return multiple values
+(a ? ./b; c);                  // break current scope - returns b
+((a ? ../; c); d);             // break 2 scopes
+(((a ? .../; c); d); e);       // break to the root scope
 
 ///////////////////////////////// conditions
 a ? b;                         // if a then b (single-branch conditional)
@@ -54,15 +55,15 @@ sign = a < 0 ? -1 : +1;        // ternary conditional
   3 <= 1..2 ? log(2) :         // else if
   log(3);                      // else
 a && b || c;                   // (a and b) or c
-a ~= b;                        // if a almost equal b (f32 step tolerance)
+a ~= b;                        // if a almost equal b (f32 tolerance)
 
 ///////////////////////////////// groups
-a, b=1, c=2;                   // define multiple values
-(a, b, c)++;                   // increment multiple: (a++, b++, c++)
-(a,b,c) = (d,e,f);             // assign multiple: a=d, b=e, c=f
+a, b=1, c=2;                   // declare
+(a, b, c)++;                   // (a++, b++, c++)
+(a,b,c) = (d,e,f);             // assign (a=d, b=e, c=f)
 (a,b) = (b,a);                 // swap
-(a,b) + (c,d);                 // operator for multiple members: (a+c, b+d)
-(a,b)[1] = c[2,3];             // multiple props: (a[1]=c[2], b[1]=c[3])
+(a,b) + (c,d);                 // any operator: (a+c, b+d)
+(a,b)[1] = c[2,3];             // props: (a[1]=c[2], b[1]=c[3])
 (a,b,c) = d;                   // duplicate: (a, b, c) = (d, d, d);
 (a,,b) = (c,d,e);              // skip: (a=c, d, b=e);
 
@@ -78,13 +79,11 @@ x <= 0..10;                    // is x in 0..10 range, 10 inclusive
 x >= 0..10;                    // is x out 0..10 range, 10 inclusive
 x <? 0..10;                    // clamp(x, 0..10), 10 exclusive
 x <=? 0..10;                   // clamp(x, 0..10), 10 inclusive
-x <?= 0..10;                   // x = clamp(x, 0, 10)
-x <=?= 0..10;                  // x = clamp(x, 0, 10)
 a,b,c = 0..3;                  // a==0, b==1, c==2
-(-10..10)[];                   // span is 20
+(-10..10)[];                   // range span 20
 
 ///////////////////////////////// functions
-double(n) = n*2;               // define function
+double(n) = n*2;               // define a function
 times(m = 1, n <?= 1..) = (    // optional, clamped args
   n == 0 ? ./n;                // early return
   m * n                        // default return
@@ -386,14 +385,14 @@ See [all examples](/examples)
 
 ## Usage
 
-_mell_ is available as CLI or JS package.
+_lino_ is available as CLI or JS package.
 
-`npm i mell`
+`npm i lino`
 
 ### CLI
 
 ```sh
-mell source.mel -o dest.wasm
+lino source.mel -o dest.wasm
 ```
 
 This produces compiled WASM binary.
@@ -401,10 +400,10 @@ This produces compiled WASM binary.
 ### JS
 
 ```js
-import mell from 'mell'
+import lino from 'lino'
 
 // create wasm arrayBuffer
-const buffer = mell.compile(`
+const buffer = lino.compile(`
   n=1;
   mult(x) = x*PI;
   arr=[1, 2, sin(1.08)];
@@ -446,7 +445,7 @@ const arrValues = new Float64Array(__memory, arr.value, 3)
 
 Audio processing doesn't have general cross-platform solution, many environments lack audio features.
 JS _Web Audio API_ in particular is not suitable for audio purposes: unpredictable pauses, glitches and so on. It's better handled in worklet with WASM.<br/>
-_mell_ addresses these points, making audio code more accessible and robust.
+_lino_ addresses these points, making audio code more accessible and robust.
 
 That's personal attempt to rethink some JS parts and secure language ground. Someone may find it a line noise, but I find it beautiful.
 
@@ -470,11 +469,11 @@ It targets browsers, [audio worklets](https://developer.mozilla.org/en-US/docs/W
 -->
 
 <!--
-## Projects using mell
+## Projects using lino
 
 * [web-audio-api](https://github.com/audiojs/web-audio-api)
 * [audiojs](https://github.com/audiojs/)
-* [mell](https://github.com/mell/)
+* [lino](https://github.com/lino/)
 -->
 
 ### Inspiration
