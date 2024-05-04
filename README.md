@@ -1,7 +1,7 @@
 # lino ![stability](https://img.shields.io/badge/stability-experimental-black)
 
 Line noise language with linear memory and compiling to compact 0-runtime WASM.<br>
-Made for the purpose of float/bytebeats and DSP.
+Made for the purpose of float/bytebeats and audio.
 <!-- It has smooth operator and organic sugar. -->
 
 <!--[Motivation](./docs/motivation.md)  |  [Documentation](./docs/reference.md)  |  [Examples](./docs/examples.md).-->
