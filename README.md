@@ -392,7 +392,7 @@ _lino_ is available as CLI or JS package.
 ### CLI
 
 ```sh
-lino source.mel -o dest.wasm
+lino source.l -o dest.l
 ```
 
 This produces compiled WASM binary.
@@ -401,6 +401,12 @@ This produces compiled WASM binary.
 
 ```js
 import lino from 'lino'
+
+// create memory buffer (optional)
+const memory = new WebAssembly.Memory({
+  initial: 10,
+  maximum: 100,
+});
 
 // create wasm arrayBuffer
 const buffer = lino.compile(`
@@ -415,8 +421,7 @@ const buffer = lino.compile(`
     mylib: './path/to/my/lib.mel'
   },
 
-  // name of imported/exported memory
-  memory: '__memory',
+  memory,
 
   // target: `wat` for text or `wasm`
   target: 'wasm'
@@ -429,7 +434,7 @@ const instance = new WebAssembly.Instance(module, {
 })
 
 // use API
-const { mult, n, arr, __memory } = instance.exports
+const { mult, n, arr } = instance.exports
 
 // number exported as global
 n.value = 2;
@@ -438,16 +443,14 @@ n.value = 2;
 mult(108) // 216
 
 // array is a number pointer to memory
-const arrValues = new Float64Array(__memory, arr.value, 3)
+const arrValues = new Float64Array(memory, arr.value, 3)
 ```
 
 ## Motivation
 
-Audio processing doesn't have general cross-platform solution, many environments lack audio features.
-JS _Web Audio API_ in particular is not suitable for audio purposes: unpredictable pauses, glitches and so on. It's better handled in worklet with WASM.<br/>
-_lino_ addresses these points, making audio code more accessible and robust.
-
-That's personal attempt to rethink some JS parts and secure language ground. Someone may find it a line noise, but I find it beautiful.
+Audio processing isn't cross-platform, various environments lack audio features.
+_Web Audio API_ has unpredictable pauses, glitches and so on, so audio is better handled in WASM worklet.<br/>
+_lino_ is personal take on what would no-bs language would look like.
 
 <!--
 It targets browsers, [audio worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, Python, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) etc.<br/>
