@@ -1,4 +1,4 @@
-## [ ] name -> mell? noli?
+## [ ] name -> mela
 
   * soufn, sofn, sofun, so-fun, funzo, zfun
   * sound-fu, zound-fu, zo-fu, sonfu, sone-fu
@@ -98,6 +98,11 @@
     + mell tunes
     + .mel .me
     + mellifluous (sweet-sounding)
+
+  * mela
+    + melody language
+    + metronome language
+    + .me
 
   * auriel, aureil, aury
     + available
