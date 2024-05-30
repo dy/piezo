@@ -73,18 +73,18 @@ a, b=1, c=2;                   // declare
 10..1;                         // reverse range
 1.08..108.0;                   // float range
 (x-1)..(x+1);                  // calculated ranges
-x < 0..10;                     // is x in 0..10 range, 10 exclusive
-x > 0..10;                     // is x out 0..10 range, 10 exclusive
-x <= 0..10;                    // is x in 0..10 range, 10 inclusive
-x >= 0..10;                    // is x out 0..10 range, 10 inclusive
-x <? 0..10;                    // clamp(x, 0..10), 10 exclusive
-x <=? 0..10;                   // clamp(x, 0..10), 10 inclusive
+x < 0..10;                     // clamp(x, 0..10), 10 exclusive
+x <= 0..10;                    // clamp(x, 0..10), 10 inclusive
+x <? 0..10;                    // is x in 0..10 range, 10 exclusive
+x >? 0..10;                    // is x out 0..10 range, 10 exclusive
+x <=? 0..10;                   // is x in 0..10 range, 10 inclusive
+x >=? 0..10;                   // is x out 0..10 range, 10 inclusive
 a,b,c = 0..3;                  // a==0, b==1, c==2
 (-10..10)[];                   // range span 20
 
 ///////////////////////////////// functions
 double(n) = n*2;               // define a function
-times(m = 1, n <?= 1..) = (    // optional, clamped args
+times(m = 1, n <= 1..) = (     // optional, clamped args
   n == 0 ? ./n;                // early return
   m * n                        // default return
 );                             //
@@ -175,8 +175,8 @@ Provides k-rate amplification for block of samples.
 
 ```
 gain(                               // define a function with block, volume arguments.
-  block,                            // block is a list argument
-  volume <?= 0..100                 // volume is limited to 0..100 range
+  block[],                          // block is a list argument
+  volume <= 0..100                  // volume is limited to 0..100 range
 ) = (
   block |>= # * volume;             // map each sample by multiplying by value
 );
@@ -203,8 +203,8 @@ A-rate (per-sample) biquad filter processor.
 
 lpf(                                // per-sample processing function
   x0,                               // input sample value
-  freq <?= 1..10k = 100,            // filter frequency, float
-  Q <?= 0.001..3.0 = 1.0            // quality factor, float
+  freq <= 1..10k = 100,             // filter frequency, float
+  Q <= 0.001..3.0 = 1.0             // quality factor, float
 ) = (
   *(x1, y1, x2, y2) = 0;            // define filter state
 
