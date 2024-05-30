@@ -448,13 +448,11 @@ const arrValues = new Float64Array(memory, arr.value, 3)
 
 ## Motivation
 
-Audio processing isn't cross-platform, various environments lack audio features.
-_Web Audio API_ has unpredictable pauses, glitches and so on, so audio is better handled in WASM worklet.<br/>
-_lino_ is personal take on what would no-bs language would look like.
+_Web Audio API_ has unpredictable pauses, glitches and so on, so <q>audio is better handled in WASM worklet</q> [@stagas](https://github.com/stagas).<br/>
+Audio processing in general has no cross-platform solution, various environments deal with audio differently, some don't have audio capabilities at all.<br/>
+Inspired by [_mono_](https://github.com/stagas/mono), _lino_ is personal take on what would no-bs language would look like.
+It compiles to WASM to enable it for browsers, [audio worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) and any other env with wasm.<br/>
 
-<!--
-It targets browsers, [audio worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, Python, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) etc.<br/>
--->
 
 <!--
 ### Principles
