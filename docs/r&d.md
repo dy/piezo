@@ -103,6 +103,10 @@
     + melody language
     + metronome language
     + .me
+    + sanskrit for "tune"
+
+  * lila
+    + sanskrit for "play"
 
   * auriel, aureil, aury
     + available
@@ -4512,7 +4516,7 @@
     + `+` has no meaning as operator anyways
     - `10..-+10` vs `10..+-10` is weird, vs `10..=-10`
 
-## [x] replace `x -< 0..10` with `x =< 0..10`? -> clamp is `x <? 0..10`
+## [x] replace `x -< 0..10` with `x =< 0..10`? -> ~~clamp is `x <? 0..10`~~ clamp is `x <= 0..10`
 
   ? do we ever need `clamp(x, 0, 10)`, opposed to `x = clamp(x, 0, 10)`?
     + it seems from examples we always `x = clamp(x, 0..10)`
@@ -4552,7 +4556,7 @@
   + Converts back to f64 on export
   + Gives extreme precision/dimension
 
-## [x] min, max, clamp as `a <? 0..100`? yes
+## [x] min, max, clamp as `a <? 0..100`? ~~yes~~ keep `a <? 0..100` for in, and `a <= 0..100` for clamp
 
   * `a |< ..10`, `a >| 10` for
   * can be solved via clamp operator `a <> ..10`, `a <> 10..`
@@ -4573,6 +4577,9 @@
       - logically it's `a = a <> 0..10`, which is assigning to boolean
     + allows reverse clamp as `a >< 0..10`
     + visual logic
+  * ALT: `a <= 0..10` for clamp, `a <? 0..10` is within check
+    + more meaningful for function arguments
+    - less matching definition of `a < 10 ? 10 : a > 0 ? 0 : a`
 
 ## [x] Create empty array - how? -> `[..10]` since range is exclusive
 
@@ -4696,7 +4703,7 @@
 ## [ ] Range modifiers: how, when?
 
   * `0..100 ** 0.01`
-    * `a <? 0..100 ** .01` - maps to pow range?
+    * `a <= 0..100 ** .01` - maps to pow range?
       + reinforces meaning of max operator, which is nice
 
 ## [ ] Early return: how to consolidate type? -> just enforce f64 for now for early returns
