@@ -1,6 +1,6 @@
 # mel ![stability](https://img.shields.io/badge/stability-experimental-black)
 
-Melody language with linear memory and compiling to compact 0-runtime WASM.<br>
+Micro language with linear memory and compiling to compact 0-runtime WASM.<br>
 Made for the purpose of floatbeats and audio processing.
 <!-- It has smooth operator and organic sugar. -->
 
