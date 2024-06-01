@@ -102,8 +102,18 @@
   * mela
     + melody language
     + metronome language
-    + .me
+    - .mela
+      + kirtan.mela
     + sanskrit for "tune"
+    + ChatGPT recommends it
+    - it means gathering, has nothing to do with melodies, there's a bunch of non-kirtan melas
+
+  * mel
+    + short
+    + in-line with other langs names
+    + extension .mel matches language name
+    + mel scale
+    - too programming
 
   * lila
     + sanskrit for "play"

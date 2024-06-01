@@ -1,7 +1,7 @@
-# lino ![stability](https://img.shields.io/badge/stability-experimental-black)
+# mel ![stability](https://img.shields.io/badge/stability-experimental-black)
 
-Line noise language with linear memory and compiling to compact 0-runtime WASM.<br>
-Made for the purpose of float/bytebeats and audio.
+Melody language with linear memory and compiling to compact 0-runtime WASM.<br>
+Made for the purpose of floatbeats and audio processing.
 <!-- It has smooth operator and organic sugar. -->
 
 <!--[Motivation](./docs/motivation.md)  |  [Documentation](./docs/reference.md)  |  [Examples](./docs/examples.md).-->
@@ -385,14 +385,14 @@ See [all examples](/examples)
 
 ## Usage
 
-_lino_ is available as CLI or JS package.
+_mel_ is available as CLI or JS package.
 
-`npm i lino`
+`npm i mel`
 
 ### CLI
 
 ```sh
-lino source.l -o dest.l
+mel source.mel -o dest.mel
 ```
 
 This produces compiled WASM binary.
@@ -400,7 +400,7 @@ This produces compiled WASM binary.
 ### JS
 
 ```js
-import lino from 'lino'
+import mel from 'mel'
 
 // create memory buffer (optional)
 const memory = new WebAssembly.Memory({
@@ -409,7 +409,7 @@ const memory = new WebAssembly.Memory({
 });
 
 // create wasm arrayBuffer
-const buffer = lino.compile(`
+const buffer = mel.compile(`
   n=1;
   mult(x) = x*PI;
   arr=[1, 2, sin(1.08)];
@@ -450,7 +450,7 @@ const arrValues = new Float64Array(memory, arr.value, 3)
 
 _Web Audio API_ has unpredictable pauses, glitches and so on, so <q>audio is better handled in WASM worklet</q> ([@stagas](https://github.com/stagas)).<br/>
 Audio processing in general has no cross-platform solution, various environments deal with audio differently, some don't have audio capabilities at all.<br/>
-_lino_ is personal take on what would no-bs language would look like.
+_mel_ is personal take on what would no-bs language would look like.
 It compiles to WASM to enable it for browsers, [audio worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) and any other env with wasm.<br/>
 
 
@@ -470,11 +470,11 @@ It compiles to WASM to enable it for browsers, [audio worklets](https://develope
 -->
 
 <!--
-## Projects using lino
+## Projects using mel
 
 * [web-audio-api](https://github.com/audiojs/web-audio-api)
 * [audiojs](https://github.com/audiojs/)
-* [lino](https://github.com/lino/)
+* [mel](https://github.com/mel/)
 -->
 
 ### Inspiration
