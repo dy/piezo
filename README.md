@@ -1,4 +1,4 @@
-# mela ![stability](https://img.shields.io/badge/stability-experimental-black)
+# melo ![stability](https://img.shields.io/badge/stability-experimental-black)
 
 Micro language for audio/music purposes, floatbeats etc.
 Compiles to compact 0-runtime WASM with linear memory.<br>
@@ -385,14 +385,14 @@ See [all examples](/examples)
 
 ## Usage
 
-_mel_ is available as CLI or JS package.
+_melo_ is available as CLI or JS package.
 
-`npm i mel`
+`npm i melo`
 
 ### CLI
 
 ```sh
-mel source.mel -o dest.mel
+melo source.me -o dest.me
 ```
 
 This produces compiled WASM binary.
@@ -400,7 +400,7 @@ This produces compiled WASM binary.
 ### JS
 
 ```js
-import mel from 'mel'
+import melo from 'melo'
 
 // create memory buffer (optional)
 const memory = new WebAssembly.Memory({
@@ -409,7 +409,7 @@ const memory = new WebAssembly.Memory({
 });
 
 // create wasm arrayBuffer
-const buffer = mel.compile(`
+const buffer = melo.compile(`
   n=1;
   mult(x) = x*PI;
   arr=[1, 2, sin(1.08)];
@@ -418,7 +418,7 @@ const buffer = mel.compile(`
   // js objects or paths to files
   imports: {
     math: Math,
-    mylib: './path/to/my/lib.mel'
+    mylib: './path/to/my/lib.me'
   },
 
   memory,
@@ -450,7 +450,7 @@ const arrValues = new Float64Array(memory, arr.value, 3)
 
 _Web Audio API_ has unpredictable pauses, glitches and so on, so <q>audio is better handled in WASM worklet</q> ([@stagas](https://github.com/stagas)).<br/>
 Audio processing in general has no cross-platform solution, various environments deal with audio differently, some don't have audio processing at all.<br/>
-_mel_ is personal take on what would no-bs language would look like.
+_melo_ is personal take on what would no-bs language would look like.
 It compiles to WASM to enable it for browsers, [audio worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) and any other env with wasm.<br/>
 
 
