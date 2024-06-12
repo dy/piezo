@@ -1,7 +1,7 @@
-# mel ![stability](https://img.shields.io/badge/stability-experimental-black)
+# melo ![stability](https://img.shields.io/badge/stability-experimental-black)
 
-Micro language with linear memory and compiling to compact 0-runtime WASM.<br>
-Made for the purpose of floatbeats and audio processing.
+Micro language for audio/music purposes, floatbeats etc.
+Compiles to compact 0-runtime WASM with linear memory.<br>
 <!-- It has smooth operator and organic sugar. -->
 
 <!--[Motivation](./docs/motivation.md)  |  [Documentation](./docs/reference.md)  |  [Examples](./docs/examples.md).-->
@@ -19,12 +19,13 @@ Made for the purpose of floatbeats and audio processing.
 & | ^ ~ >> <<                  // binary (integer)
 <<< >>>                        // rotate left, right
 && || !                        // logical
-?: ?                           // conditions
 > >= < <= == != ~=             // comparisons (boolean)
-<? <=? ..                      // clamp/min/max, range
+?: ?                           // conditions
+<? <=?                         // clamp, min, max
 x[i] x[]                       // member access, length
-./ ../ .../                    // continue, break, return
-|> |>= #                       // loop, map, item
+^ ^^ ^^^                       // continue, break, return
+a..b                           // range
+|> #                           // loop, item
 
 ///////////////////////////////// variables
 foo=1, bar=2.0;                // declare vars
@@ -44,9 +45,9 @@ inf = 1/0, nan = 0/0;          // alias infinity, NaN
 foo();                         // semi-colons are mandatory
 (c = a + b; c);                // group returns last statement
 (a = b+1; a,b,c);              // return multiple values
-(a ? ./b; c);                  // break current scope - returns b
-((a ? ../; c); d);             // break 2 scopes
-(((a ? .../; c); d); e);       // break to the root scope
+(a ? ^b; c);                   // break current scope, return b
+((a ? ^^; c); d);              // break 2 scopes
+(((a ? ^^^; c); d); e);        // break to the root scope
 
 ///////////////////////////////// conditions
 a ? b;                         // if a then b (single-branch conditional)
@@ -73,42 +74,12 @@ a, b=1, c=2;                   // declare
 10..1;                         // reverse range
 1.08..108.0;                   // float range
 (x-1)..(x+1);                  // calculated ranges
-x < 0..10;                     // clamp(x, 0..10), 10 exclusive
-x <= 0..10;                    // clamp(x, 0..10), 10 inclusive
-x <? 0..10;                    // is x in 0..10 range, 10 exclusive
-x >? 0..10;                    // is x out 0..10 range, 10 exclusive
-x <=? 0..10;                   // is x in 0..10 range, 10 inclusive
-x >=? 0..10;                   // is x out 0..10 range, 10 inclusive
-a,b,c = 0..3;                  // a==0, b==1, c==2
+x <? 0..10;                    // clamp(x, 0..10), 10 exclusive
+x <=? 0..10;                   // clamp(x, 0..10), 10 inclusive
+x < 0..10;                     // is x in 0..10 range, 10 exclusive
+x >= 0..10;                    // is x out 0..10 range, 10 inclusive
+a,b,c = 0..3;                  // a=0, b=1, c=2
 (-10..10)[];                   // range span 20
-
-///////////////////////////////// functions
-double(n) = n*2;               // define a function
-times(m = 1, n <= 1..) = (     // optional, clamped args
-  n == 0 ? ./n;                // early return
-  m * n                        // default return
-);                             //
-times(3,2);                    // 6
-times(5);                      // 5. optional argument
-times(,10);                    // 10. skipped argument
-copy = triple;                 // capture function
-copy(10);                      // also 30
-dup(x) = (x,x);                // return multiple values
-(a,b) = dup(b);                // get returns
-
-///////////////////////////////// state vars
-a() = ( *i=0; ++i );           // i persists value between calls
-a(), a();                      // 1, 2
-fib() = (                      //
-  *i=[1,0,0];                  // local memory of 3 items
-  i[1..] = i[0..];             // shift memory
-  i[0] = i[1] + i[2];          // sum prev 2 items
-);                             //
-fib(), fib(), fib();           // 1, 2, 3
-c() = (fib(), fib(), fib());   // state is defined by function scope
-fib(); c();                    // 5; 1, 2, 3;
-d(_fn) = (fib(), _fn());       // to get external state, pass fn as argument
-d(c);                          // 1, 8;
 
 ///////////////////////////////// arrays
 m = [..10];                    // array of 10 elements
@@ -131,18 +102,46 @@ m[0..] = m[1..,0];             // rotate
 ///////////////////////////////// loops
 a, b, c |> f(#);               // for each a, b, c do f(item)
 10.. |> (                      // descend over range
-  # < 5 ? ./;                  // if item < 5 continue
-  # < 0 ? ../;                 // if item < 0 break
+  # < 5 ? ^;                   // if item < 5 continue
+  # < 0 ? ^^;                  // if item < 0 break
 );                             //
-items |> f(#);                 // iterate over array
-items |> f(#) |> g(#);         // pipe
+items[..] |> f(#);             // iterate over array
+items[..] |> f(#) |> g(#);     // pipe
 0..w |> (                      // nest iterations
   x = #;                       // assign top-level item
-  0..h |> f(x,#);              // f(x,y)
+  0..h |> f(x, #);             // f(x,y)
 );                             //
 (x,,y) = a, b, c |> #;         // x = a, y = c;
-x[3..5] |>= # * 2;             // map items in range
-.. |> (i >= 10 ? ./; f(i++));  // while i < 10 do f(i++)
+x[3..5] |> # * 2 |> x[3..5];   // write result
+.. |> (i >= 10 ? ^; f(i++));   // while i < 10 do f(i++)
+
+///////////////////////////////// functions
+double(n) = n*2;               // define a function
+times(m = 1, n < 1..) = (      // optional, clamped arg
+  n == 0 ? ./n;                // early return
+  m * n                        // default return
+);                             //
+times(3,2);                    // 6
+times(5);                      // 5 - optional argument
+times(,10);                    // 10 - skipped argument
+copy = triple;                 // capture function
+copy(10);                      // also 30
+dup(x) = (x,x);                // return multiple values
+(a,b) = dup(b);                // multiple returns
+
+///////////////////////////////// state vars
+a() = ( *i=0; ++i );           // i persists value between calls
+a(), a();                      // 1, 2
+fib() = (                      //
+  *i=[1,0,0];                  // local memory of 3 items
+  i[1..] = i[0..];             // shift memory
+  i[0] = i[1] + i[2];          // sum prev 2 items
+);                             //
+fib(), fib(), fib();           // 1, 2, 3
+c() = (fib(), fib(), fib());   // state is defined by fn scope
+fib(); c();                    // 5; 1, 2, 3;
+d(fn) = (fib(), fn());         // to get external state, pass fn as argument
+d(c);                          // 1, 8;
 
 ///////////////////////////////// export
 x, y, z                        // exports last statement
@@ -175,15 +174,15 @@ Provides k-rate amplification for block of samples.
 
 ```
 gain(                               // define a function with block, volume arguments.
-  block[],                          // block is a list argument
+  block,                            // block is a array argument
   volume <= 0..100                  // volume is limited to 0..100 range
 ) = (
-  block |>= # * volume;             // map each sample by multiplying by value
+  block |>= # * volume              // multiply each sample by volume value
 );
 
 gain([0..5 |> # * 0.1], 2);         // 0, .2, .4, .6, .8, 1
 
-gain                                // export gain function
+gain.                               // export gain function
 ```
 
 Minifies as `gain(b,v)=b|>=#*v.`
@@ -226,7 +225,7 @@ lpf(                                // per-sample processing function
   y0                                // return y0
 );
 
-// (0, .1, .3) |> lpf(#, 108, 5);
+// [0, .1, .3] |> lpf(#, 108, 5);
 
 lpf.                                // export lpf function, end program
 ```
@@ -279,14 +278,16 @@ curve(x, amt<=0..10=1.82) = (sign(x) * abs(x)) ** amt;
 
 // coin = triangle with pitch jump, produces block
 coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
-  out[1023];                      // output block of 1024 samples
+  *out=[..1024];
   *i=0;
   *phase = 0;                     // current phase
   t = i / 1s;
 
-  out |>= oscillator[shape](phase)
-      |> adsr(#, 0, 0, .06, .24)
-      |> curve(#, 1.82);
+  // generate samples block, apply adsr/curve, write result to out
+  out[..] |> oscillator[shape](phase)
+          |> adsr(#, 0, 0, .06, .24)
+          |> curve(#, 1.82)
+          |> out[..];
 
   i++;
   phase += (freq + (t > delay && jump)) * 2pi / 1s;
@@ -449,7 +450,7 @@ const arrValues = new Float64Array(memory, arr.value, 3)
 ## Motivation
 
 _Web Audio API_ has unpredictable pauses, glitches and so on, so <q>audio is better handled in WASM worklet</q> ([@stagas](https://github.com/stagas)).<br/>
-Audio processing in general has no cross-platform solution, various environments deal with audio differently, some don't have audio capabilities at all.<br/>
+Audio processing in general has no cross-platform solution, various environments deal with audio differently, some don't have audio processing at all.<br/>
 _mel_ is personal take on what would no-bs language would look like.
 It compiles to WASM to enable it for browsers, [audio worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) and any other env with wasm.<br/>
 
