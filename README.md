@@ -21,7 +21,7 @@ Compiles to compact 0-runtime WASM with linear memory.<br>
 && || !                        // logical
 > >= < <= == != ~=             // comparisons (boolean)
 ?: ?                           // conditions
-<? <=?                         // clamp, min, max
+<? <=? -/                      // clamp, min, max, smoothstep
 x[i] x[]                       // member access, length
 ^ ^^ ^^^                       // continue, break, return
 a..b                           // range
@@ -74,11 +74,11 @@ a, b=1, c=2;                   // declare
 10..1;                         // reverse range
 1.08..108.0;                   // float range
 (x-1)..(x+1);                  // calculated ranges
+a,b,c = 0..3;                  // a=0, b=1, c=2
 x <? 0..10;                    // clamp(x, 0..10), 10 exclusive
 x <=? 0..10;                   // clamp(x, 0..10), 10 inclusive
 x < 0..10;                     // is x in 0..10 range, 10 exclusive
 x >= 0..10;                    // is x out 0..10 range, 10 inclusive
-a,b,c = 0..3;                  // a=0, b=1, c=2
 (-10..10)[];                   // range span 20
 
 ///////////////////////////////// arrays
@@ -112,7 +112,7 @@ items[..] |> f(#) |> g(#);     // pipe
   0..h |> f(x, #);             // f(x,y)
 );                             //
 (x,,y) = a, b, c |> #;         // x = a, y = c;
-x[3..5] |>= # * 2              // overwrite source
+x[3..5] |>= # * 2;             // overwrite source
 .. |> (i >= 10 ? ^; f(i++));   // while i < 10 do f(i++)
 
 ///////////////////////////////// functions
