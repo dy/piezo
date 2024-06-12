@@ -112,7 +112,7 @@ items[..] |> f(#) |> g(#);     // pipe
   0..h |> f(x, #);             // f(x,y)
 );                             //
 (x,,y) = a, b, c |> #;         // x = a, y = c;
-x[3..5] |> # * 2 |> x[3..5];   // write result
+x[3..5] |>= # * 2              // overwrite source
 .. |> (i >= 10 ? ^; f(i++));   // while i < 10 do f(i++)
 
 ///////////////////////////////// functions
@@ -284,10 +284,9 @@ coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
   t = i / 1s;
 
   // generate samples block, apply adsr/curve, write result to out
-  out[..] |> oscillator[shape](phase)
+  out[..] |>= oscillator[shape](phase)
           |> adsr(#, 0, 0, .06, .24)
-          |> curve(#, 1.82)
-          |> out[..];
+          |> curve(#, 1.82);
 
   i++;
   phase += (freq + (t > delay && jump)) * 2pi / 1s;
