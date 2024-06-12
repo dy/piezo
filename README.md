@@ -1,4 +1,4 @@
-# melo ![stability](https://img.shields.io/badge/stability-experimental-black)
+# mela ![stability](https://img.shields.io/badge/stability-experimental-black)
 
 Micro language for audio/music purposes, floatbeats etc.
 Compiles to compact 0-runtime WASM with linear memory.<br>
