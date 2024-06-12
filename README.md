@@ -1,7 +1,8 @@
 # melo ![stability](https://img.shields.io/badge/stability-experimental-black)
 
-Micro language for floatbeats and audio, it has smooth operator and organic sugar.<br/>
+Micro language for floatbeats and audio.<br/>
 Compiles to compact 0-runtime WASM with linear memory.<br/>
+It has smooth operator and organic sugar.
 
 <!--[Motivation](./docs/motivation.md)  |  [Documentation](./docs/reference.md)  |  [Examples](./docs/examples.md).-->
 
