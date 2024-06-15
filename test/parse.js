@@ -61,9 +61,9 @@ t('parse: standard operators', t => {
 })
 
 t('parse: clamp operator', t => {
-  is(parse('x <? 0..10;'), [';', ['<?', 'x', ['..', [INT, 0], [INT, 10]]], ,], 'clamp(x, 0, 10)')
-  is(parse('x <? ..10;'), [';', ['<?', 'x', ['..', undefined, [INT, 10]]], ,], 'min(x, 10)')
-  is(parse('x <? 0..;'), [';', ['<?', 'x', ['..', [INT, 0], undefined]], ,], 'max(0, x)')
+  is(parse('x -< 0..10;'), [';', ['-<', 'x', ['..', [INT, 0], [INT, 10]]], ,], 'clamp(x, 0, 10)')
+  is(parse('x -< ..10;'), [';', ['-<', 'x', ['..', undefined, [INT, 10]]], ,], 'min(x, 10)')
+  is(parse('x -< 0..;'), [';', ['-<', 'x', ['..', [INT, 0], undefined]], ,], 'max(0, x)')
   // is(parse('x <?= 0..10;'), [';', ['<?=', 'x', ['..', [INT, 0], [INT, 10]]], ,], 'x = clamp(x, 0, 10)')
 })
 
@@ -139,26 +139,26 @@ t('parse: statements', t => {
   // is(parse('(a ? ^a,b; c)'), ['(',[';',['?','a',['^',[',','a','b']]],'c']], 'return/break token')
   is(parse('(a ? ^(a,b); c)'), ['()', [';', ['?', 'a', ['^', ['()', [',', 'a', 'b']]]], 'c']], 'return/break token')
   is(parse('(foo(); bar();)'), ['()', [';', ['(', 'foo', ,], ['(', 'bar', ,], ,]], 'semi-colon after last statement returns void')
-  is(parse('a ? ^a : ^b'), ['?', 'a', ['^', 'a'], ['^', 'b']], 'order of labels')
+  is(parse('a ? ^a : ^b'), ['?:', 'a', ['^', 'a'], ['^', 'b']], 'order of labels')
 })
 
 t('parse: conditions', t => {
-  is(parse(`sign = a < 0 ? -1 : +1`), ['=', 'sign', ['?', ['<', 'a', [INT, 0]], ['-', [INT, 1]], ['+', [INT, 1]]]], 'inline ternary')
+  is(parse(`sign = a < 0 ? -1 : +1`), ['=', 'sign', ['?:', ['<', 'a', [INT, 0]], ['-', [INT, 1]], ['+', [INT, 1]]]], 'inline ternary')
   is(parse('a > b ? ++b'), ['?', ['>', 'a', 'b'], ['++', 'b']], 'if operator')
   is(parse('a = b ? c'), ['=', 'a', ['?', 'b', 'c']], 'if operator precedence')
   is(parse('a ? b = c'), ['?', 'a', ['=', 'b', 'c']], 'if operator precedence')
-  is(parse('a = b ? c : d'), ['=', 'a', ['?', 'b', 'c', 'd']], 'ternary precedence')
-  is(parse('a ? b = c : d'), ['?', 'a', ['=', 'b', 'c'], 'd'], 'ternary precedence')
+  is(parse('a = b ? c : d'), ['=', 'a', ['?:', 'b', 'c', 'd']], 'ternary precedence')
+  is(parse('a ? b = c : d'), ['?:', 'a', ['=', 'b', 'c'], 'd'], 'ternary precedence')
   // FIXME: confusable with a > -b
   // is(parse('a,b,c >- x ? a : b : c'), ['?', ['>-', [',','a','b','c'], [':','a','b','c']]], 'switch operator')
   is(parse(`2+2 >= 4 ?        // multiline ternary
     a
   : a < b ?               // else if
     b
-  : (c)`), ['?',
+  : (c)`), ['?:',
     ['>=', ['+', [INT, 2], [INT, 2]], [INT, 4]],
     'a',
-    ['?',
+    ['?:',
       ['<', 'a', 'b'],
       'b',
       ['()', 'c']
@@ -180,7 +180,7 @@ t('parse: loops', t => {
   is(parse('c |> d |> e'), ['|>', 'c', 'd', 'e'], 'c |> d |> e')
   is(parse('a -= b += c'), ['-=', 'a', ['+=', 'b', 'c']])
   is(parse('a |> b = c'), ['|>', 'a', ['=', 'b', 'c']])
-  is(parse('a?b:c |> d'), ['|>', ['?', 'a', 'b', 'c'], 'd'])
+  is(parse('a?b:c |> d'), ['|>', ['?:', 'a', 'b', 'c'], 'd'])
   is(parse('a , b|>c'), ['|>', [',', 'a', 'b'], 'c'])
   is(parse('b|>c, d'), ['|>', 'b', [',', 'c', 'd']])
   is(parse('a |> b | c | c |> d'), ['|>', 'a', ['|', ['|', 'b', 'c'], 'c'], 'd'], 'a |> b | c | c |> d')
@@ -226,7 +226,7 @@ t('parse: functions', () => {
   is(parse('triple(,10)'), ['(', 'triple', [',', , [INT, 10]]], '30. skipped argument.')
   is(parse('copy = triple'), ['=', 'copy', 'triple'], 'capture function')
   is(parse('copy(10)'), ['(', 'copy', [INT, 10]], 'also 30')
-  is(parse('clamp(v <? 0..10) = v'), ['=', ['(', 'clamp', ['<?', 'v', ['..', [INT, 0], [INT, 10]]]], 'v'], 'clamp argument')
+  is(parse('clamp(v -< 0..10) = v'), ['=', ['(', 'clamp', ['-<', 'v', ['..', [INT, 0], [INT, 10]]]], 'v'], 'clamp argument')
   is(parse('x() = (1,2,3)'), ['=', ['(', 'x', ,], ['()', [',', [INT, 1], [INT, 2], [INT, 3]]]], 'return group (multiple values)')
 })
 
@@ -367,6 +367,6 @@ t('parse: sequence precedence', t => {
   is(parse(`a=b,c=d`), [',', ['=', 'a', 'b'], ['=', 'c', 'd']]);
   is(parse(`a,b|>c,d`), ['|>', [',', 'a', 'b'], [',', 'c', 'd']]);
 
-  is(parse(`a=b?c=d:e=f`), ['=', 'a', ['?', 'b', ['=', 'c', 'd'], ['=', 'e', 'f']]]);
+  is(parse(`a=b?c=d:e=f`), ['=', 'a', ['?:', 'b', ['=', 'c', 'd'], ['=', 'e', 'f']]]);
   is(parse(`a=b?c`), ['=', 'a', ['?', 'b', 'c']]);
 })

@@ -1,43 +1,47 @@
 // parser converts syntax into AST/calltree
-import parse, { lookup, skip, next, cur, idx, err, expr, token, unary, binary, nary, id } from 'subscript/parse'
-
-import 'subscript/feature/call.js'
-import 'subscript/feature/access.js'
-import 'subscript/feature/group.js'
-import 'subscript/feature/mult.js'
-import 'subscript/feature/add.js'
-import 'subscript/feature/increment.js'
-import 'subscript/feature/bitwise.js'
-import 'subscript/feature/compare.js'
-import 'subscript/feature/logic.js'
-import 'subscript/feature/assign.js'
-import 'subscript/feature/string.js'
-// import 'subscript/feature/ternary.js'
-import 'subscript/feature/comment.js'
-import 'subscript/feature/pow.js'
-import 'subscript/feature/array.js'
+// NOTE: we don't import subscript features because we don't need its compiler
+// also we don't need certain default operators like . or comments
+// also we need adjusted precedences and parsing order
+import parse, { lookup, skip, next, cur, idx, err, expr, token, unary, binary, access, group, nary, id } from 'subscript/parse'
 
 import { FLOAT, INT } from './const.js'
 
-export default (str) => (
-  parse(str)
-)
+export default parse
 
 // char codes
 const OPAREN = 40, CPAREN = 41, OBRACK = 91, CBRACK = 93, SPACE = 32, QUOTE = 39, DQUOTE = 34, PERIOD = 46, BSLASH = 92, _0 = 48, _9 = 57, COLON = 58, HASH = 35, AT = 64, PLUS = 43, MINUS = 45, GT = 62
 
 // precedences
-const PREC_RETURN = 8,//4, // x ? ^a,b : y
-  PREC_STATE = 8,//4, // FIXME: *a,b,c, d=4 is confusing group
-  PREC_LOOP = 9,//5, // <| |>
-  PREC_IF = 20,//8,    // a ? b=c;  a = b?c;
-  PREC_CLAMP = 105,//19, // pre-arithmetical: a+b*c <? 10; BUT a < b<?c, a << b<?c
-  PREC_RANGE = 115,//22, // +a .. -b, a**2 .. b**3, a*2 .. b*3; BUT a + 2..b + 3
-  PREC_TOKEN = 280 // [a,b] etc
+const PREC_SEMI = 1,
+  PREC_EXPORT = 2,
+  PREC_RETURN = 4, // x ? ^a,b : y
+  PREC_STATE = 4, // FIXME: *a,b,c, d=4 is confusing group
+  PREC_LOOP = 5, // <| |>
+  PREC_SEQ = 7, //  ^a,b,c;  a, b ? (c,d) : (e,f);
+  PREC_IF = 8,    // a ? b=c;  a = b?c;
+  PREC_ASSIGN = 8.25,  // a=b, c=d,  a = b||c,  a = b | c,   a = b&c
+  PREC_LOR = 11,
+  PREC_LAND = 12,
+  PREC_BOR = 13, // a|b , c|d,   a = b|c
+  PREC_XOR = 14,
+  PREC_BAND = 15,
+  PREC_EQ = 16,
+  PREC_COMP = 17,
+  PREC_SHIFT = 18,
+  PREC_CLAMP = 19, // pre-arithmetical: a+b*c <? 10; BUT a < b<?c, a << b<?c
+  PREC_ADD = 20,
+  PREC_RANGE = 22, // +a .. -b, a**2 .. b**3, a*2 .. b*3; BUT a + 2..b + 3
+  PREC_MULT = 23,
+  PREC_POW = 24,
+  PREC_UNARY = 26,
+  PREC_CALL = 27, // a(b), a.b, a[b], a[]
+  PREC_TOKEN = 28 // [a,b] etc
+
 
 // make id support #@
 const isId = parse.id = char => id(char) || char === HASH
 
+// numbers
 const isNum = c => c >= _0 && c <= _9
 const num = (a) => {
   if (a) err(); // abc 023 - wrong
@@ -80,16 +84,102 @@ for (let i = _0; i <= _9; i++) lookup[i] = num;
 lookup[PERIOD] = a => !a && num();
 
 
-// binary('%%', PREC_MULT)
+// strings
+const escape = { n: '\n', r: '\r', t: '\t', b: '\b', f: '\f', v: '\v' },
+  string = q => (qc, c, str = '') => {
+    qc && err('Unexpected string') // must not follow another token
+    skip() // first quote
+    while (c = cur.charCodeAt(idx), c - q) {
+      if (c === BSLASH) skip(), c = skip(), str += escape[c] || c
+      else str += skip()
+    }
+    skip() || err('Bad string')
+    return [, str]
+  }
 
-binary('<?', PREC_CLAMP) // a <? b
-binary('<=?', PREC_CLAMP) // a <? b
 
-// a[..] |> #
+// "' with /
+lookup[DQUOTE] = string(DQUOTE)
+lookup[QUOTE] = string(QUOTE)
+
+
+// a(b,c,d), a()
+access('()', PREC_CALL)
+
+// a[b]
+access('[]', PREC_CALL)
+
+// (a,b,c), (a)
+group('()', PREC_CALL)
+// [a,b,c]
+group('[]', PREC_TOKEN)
+
+// a,b,,c
+nary(',', PREC_SEQ, true)
+// a;b;;c
+nary(';', PREC_SEMI, true)
+
+// mults
+binary('*', PREC_MULT)
+binary('/', PREC_MULT)
+binary('%', PREC_MULT)
+
+// adds
+unary('+', PREC_UNARY)
+unary('-', PREC_UNARY)
+binary('+', PREC_ADD)
+binary('-', PREC_ADD)
+
+// increments
+token('++', PREC_UNARY, a => a ? ['++-', a] : ['++', expr(PREC_UNARY - 1)])
+token('--', PREC_UNARY, a => a ? ['--+', a] : ['--', expr(PREC_UNARY - 1)])
+
+// bitwises
+unary('~', PREC_UNARY)
+binary('|', PREC_BOR)
+binary('&', PREC_BAND)
+binary('^', PREC_XOR)
+binary('>>', PREC_SHIFT)
+binary('<<', PREC_SHIFT)
+binary('>>>', PREC_SHIFT)
+binary('<<<', PREC_SHIFT)
+
+// compares
+binary('==', PREC_EQ)
+binary('!=', PREC_EQ)
+binary('>', PREC_COMP)
+binary('<', PREC_COMP)
+binary('>=', PREC_COMP)
+binary('<=', PREC_COMP)
+
+// logics
+unary('!', PREC_UNARY)
+binary('||', PREC_LOR)
+binary('&&', PREC_LAND)
+
+// assigns
+binary('=', PREC_ASSIGN, true)
+binary('*=', PREC_ASSIGN, true)
+binary('/=', PREC_ASSIGN, true)
+binary('%=', PREC_ASSIGN, true)
+binary('+=', PREC_ASSIGN, true)
+binary('-=', PREC_ASSIGN, true)
+
+// pow, mod
+binary('**', PREC_POW, true)
+binary('%%', PREC_MULT, true)
+
+// clamps
+binary('-<', PREC_CLAMP)
+binary('-/', PREC_CLAMP)
+binary('-*', PREC_CLAMP)
+binary('~/', PREC_CLAMP)
+binary('~*', PREC_CLAMP)
+
+// loop a[..] |> #
 nary('|>', PREC_LOOP)
 
-
-// a..b, ..b, a..
+// range a..b, ..b, a..
 token('..', PREC_RANGE, a => (['..', a, expr(PREC_RANGE)]))
 
 // returns
@@ -108,8 +198,14 @@ token('^^^', PREC_TOKEN, (a, b) => !a && (b = expr(PREC_RETURN), b ? ['^^^', b] 
 // *a
 unary('*', PREC_STATE)
 
+// conditions & ternary
 // a?b - returns b if a is true, else returns a
 binary('?', PREC_IF, true)
+binary('?:', PREC_IF, true)
 
 // ?: - we use modified ternary for our cases
-token('?', PREC_IF, (a, b, c) => a && (b = expr(PREC_IF - 0.5)) && next(c => c === COLON) && (c = expr(PREC_IF - 0.5), ['?', a, b, c]))
+token('?', PREC_IF, (a, b, c) => a && (b = expr(PREC_IF - 0.5)) && next(c => c === COLON) && (c = expr(PREC_IF - 0.5), ['?:', a, b, c]))
+
+// /**/, //
+token('/*', PREC_TOKEN, (a, prec) => (next(c => c !== STAR && cur.charCodeAt(idx + 1) !== 47), skip(2), a || expr(prec) || []))
+token('//', PREC_TOKEN, (a, prec) => (next(c => c >= SPACE), a || expr(prec) || []))
