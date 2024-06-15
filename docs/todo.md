@@ -15,12 +15,15 @@
 
 ## Stage 1
 
-* [ ] precedence of `,` over `x ? a,b,c;` and `a,b,c |>`
-* [x] get rid of `.` (less = more)
-* [x] make use of `./`, `../`, `.../`
-* [x] make use of `^` topic placeholder
+* [ ] update subscript
 * [ ] detect expected number of returns from operation so it may have internal optimization.
   * [ ] merge `<|` and `|>` into `|>`
+* [ ] precedence of `,` over `x ? a,b,c;` and `a,b,c |>`
+* [x] get rid of `.` (less = more)
+* [x] make use of `^`, `^^`, `^^^`
+* [ ] make use of `#` topic placeholder
+* [ ] -/ for step / smoothstep
+* [ ] -< for lerp
 * [ ] almost equal ~=
 * [ ] all readmes test
   * [x] inline global consts
@@ -52,7 +55,7 @@
 * [x] arity of ops, for proper `(drop)` amount, eg. `a ? b;` has 0 items in stack;
 * [x] early return detection
 * [ ] while loop
-* [ ] break/continue as `./`, `../` and `.../`
+* [ ] break/continue/return as `^`, `^^` and `^^^`
 * [x] Readable generated code
 * [x] Per-function vars scope: we don't need parens as scope
 * [x] Change `,` precedence to be under `=` to allow `^a,b,c`, `x?1,2,3:4,5,6`, `a,b<|x,i->x,i`
@@ -60,7 +63,7 @@
 * [ ] Sobel https://github.com/mattdesl/wasm-bench
   * [x] `(y1, y2) >= height ? (y1, y2) = height - 1` group ops
   * [ ] `(val0, val1) = data[ptr0 + (x, x1)];`
-  * [x] `\` comments
+  * [x] ~~`\` comments~~
   * [ ] optimized array prop access (track static vars / static-length arrays)
 * [ ] Biquad
   * [ ] Clamp args
@@ -130,6 +133,11 @@
   * [ ] Audio gain example
   * [ ] Sine gen example
 * [ ] Ignore unassigned immediate constructs like `[1,2,3]` or `"abc"`.
+* [ ]
+
+## MVP
+
+* [ ] Metronome app: variable speed, variable tone
 
 ## 1.1
 

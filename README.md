@@ -1,4 +1,4 @@
-# melo ![stability](https://img.shields.io/badge/stability-experimental-black)
+# mel ![stability](https://img.shields.io/badge/stability-experimental-black)
 
 Micro language for floatbeats and audio with smooth operator and organic sugar.<br/>
 Compiles to compact 0-runtime WASM with linear memory.<br/>
@@ -19,7 +19,7 @@ Compiles to compact 0-runtime WASM with linear memory.<br/>
 <<< >>>                       // rotate left, right
 && || !                       // logical
 > >= < <= == != ~=            // comparisons (boolean)
-?: ?                          // conditions
+?: ? ?= ?:=                   // conditions
 x[i] x[]                      // member access, length
 a..b                          // range
 -<                            // clamp/min/max
@@ -175,10 +175,10 @@ Provides k-rate amplification for block of samples.
 
 ```
 gain(                              // define a function with block, volume arguments.
-  block,                           // block is a array argument
+  block,                           // block is a array of samples
   volume <= 0..100                 // volume is limited to 0..100 range
 ) = (
-  block |>= # * volume             // multiply each sample by volume value
+  block[..] |>= # * volume         // multiply each sample by volume value
 );
 
 gain([0..5 |> # * 0.1], 2);        // 0, .2, .4, .6, .8, 1
@@ -386,14 +386,14 @@ See [all examples](/examples)
 
 ## Usage
 
-_melo_ is available as CLI or JS package.
+_mel_ is available as CLI or JS package.
 
-`npm i melo`
+`npm i mel`
 
 ### CLI
 
 ```sh
-melo source.me -o dest.me
+mel source.mel -o dest.mel
 ```
 
 This produces compiled WASM binary.
@@ -401,7 +401,7 @@ This produces compiled WASM binary.
 ### JS
 
 ```js
-import melo from 'melo'
+import mel from 'mel'
 
 // create memory buffer (optional)
 const memory = new WebAssembly.Memory({
@@ -410,7 +410,7 @@ const memory = new WebAssembly.Memory({
 });
 
 // create wasm arrayBuffer
-const buffer = melo.compile(`
+const buffer = mel.compile(`
   n=1;
   mult(x) = x*PI;
   arr=[1, 2, sin(1.08)];
@@ -451,7 +451,7 @@ const arrValues = new Float64Array(memory, arr.value, 3)
 
 _Web Audio API_ has unpredictable pauses, glitches and so on, so <q>audio is better handled in WASM worklet</q> ([@stagas](https://github.com/stagas)).<br/>
 Audio processing in general has no cross-platform solution, various environments deal with audio differently, some don't have audio processing at all.<br/>
-_melo_ is personal take on what would no-bs language would look like.
+_mel_ is personal take on what would no-bs language would look like.
 It compiles to WASM to enable it for browsers, [audio worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) and any other env with wasm.<br/>
 
 

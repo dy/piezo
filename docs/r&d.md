@@ -1,4 +1,4 @@
-## [ ] name -> mela
+## [ ] name -> mel
 
   * soufn, sofn, sofun, so-fun, funzo, zfun
   * sound-fu, zound-fu, zo-fu, sonfu, sone-fu
@@ -104,16 +104,24 @@
     + metronome language
     - .mela
       + kirtan.mela
+        - source.mela is meaningless as "congregation"
     + sanskrit for "tune"
-    + ChatGPT recommends it
+    + ChatGPT recommends it as unique name
     - it means gathering, has nothing to do with melodies, there's a bunch of non-kirtan melas
 
   * mel
     + short
-    + in-line with other langs names
+    + in-line with other 3-letter langs
     + extension .mel matches language name
     + mel scale
-    - too programming
+    - too programming / physycal / dry
+
+  * melo
+    + short from melody
+    + alliterates to mono
+    + dy/melo
+    - not clear extension
+    - 4 letters
 
   * lila
     + sanskrit for "play"
@@ -329,7 +337,7 @@
   * `<>`, `><`
     ~-- not always available
   * `::`
-  * `-<`, `=<`, `~<`
+  * ~~`-<`, `=<`, `~<`~~
   * `-/`, `=/`, `~/`
   * `-|`, `=|`, `~|`
   * `-\`, `=\`, `~\`
@@ -528,7 +536,7 @@
     ~ since strings are static, we at-part know what type it has.
       - it can be fn argument
     + the fastest way
-    - non-compact memory to store value
+    - non-compact memory to store value, 8x overkill, even for i32
     - returned UInt8Array doesn't contain string, needs Float64Array
       ~ not hard to convert
       ~ we wouldnt' likely do utf-8 anyways
@@ -541,6 +549,7 @@
     + we need just 1 bit for that info
     -~ slows down array access/write a bit
       - can be a trouble reading big amounts
+    -~ enables types via data
 
   3. String is sequence, not array
     + `["abcdef"]` - to create an array - visually more apparent
@@ -742,7 +751,7 @@
   ! → operator must uniquely identify type and be macros
   ?! Try x(..args) -> operation for regular functions?
 
-## [x] ~~Reduce/fold operator: let's use |> with lambdas~~ easier to use just loops `sum=0; list | i-> sum+=i`
+## [x] ~~Reduce/fold operator: let's use |> with lambdas~~ easier to use just loops `sum=0; list |> sum+=#`
 
   * ? Reduce operator? It can be eg. `:>` (2 become 1), or `=>`.
     * ? `a,b,c :> reducer`, like `signals :> #0 + #1`
@@ -856,14 +865,14 @@
   - less is more
   - no-period allows easier concat of modules.
 
-## [x] Early return operator? → ~~keep `a ? ^;` for now, no need for separate operator~~ -> use `./`, `../`, `.../`
+## [x] Early return operator? → keep `a ? ^;` for now, no need for separate operator -> ~~use `./`, `../`, `.../`~~
 
   * can often see `if (a) return;` - useful construct. How's that in lino?
   1. `a ? value.`
     * There doesn't seem to be other options.
     → `a ? b.;` expects `;` at the end.
       * skipping ; means node is the last element: `(a;b;c.)`
-    - `?` operator is void
+    - `?` ~~operator is void~~
       ~ can be in conjunction with `.` so then it's a kind of ternary.
     ?+ `a ? b. : c` === `if (a) return b; else c;`
   2. not supporting early return.
@@ -1021,7 +1030,7 @@
       * or else `.` depends on `()`: `(a.)` is result, `a.` is export.
   + Since `(a;b;c)` naturally returns last element, so must function body.
 
-## [x] Break, continue, return? -> `./` for continue, `../` for return, `.../`` for root return.
+## [x] Break, continue, return? -> `^` for continue, `^^` for return, `^^^` for root return.
 
   1. `^` for continue, `^^` for break;
     + nice pattern to skip callstack;
@@ -1030,6 +1039,8 @@
     - wrapping in parens can change the meaning or scope of `^^`.
       ~+ not really: it's visible that it breaks recent scope.
     + it seems going to live longer than `value.`
+    + gives nice feeling of direction in language, meaning visually "get out of this scope"
+      + that supports piper `|>`
   2. `>>` for continue, `^` for break.
   3. `.` for break or return, acting within the block; `^` for continue.
     - break can be used without stack argument, `.` by itself doesn't do much sense although possible
@@ -1278,7 +1289,7 @@
   - require strings to implement dynamic access `x['first']`
   - some arrays have aliases, others don't: we're not going to make aliases dynamic
 
-## [x] If `a ? b`, elvis: `a ?: b`? -> ~~likely yes to simple condition~~ no, use `a && b` or early return `a ? b.;`
+## [x] If `a ? b`, elvis: `a ?: b`? -> ~~likely yes to simple condition~~ no, use `a && b` or early return `a ? ^b;`
   + organic extension of ternary `a ? b`, `a ?: b`.
   - weirdly confusing, as if very important part is lost. Maybe just introduce elvis `a>b ? a=1` → `a<=b ?: a=1`
   - it has no definite returning type. What's the result of `(a ? b)`?
@@ -1298,12 +1309,6 @@
   - tiny profit, big discrepancy with convention
 
   ! ALT: can be done via early return as `(a ? b.; )`
-
-## [ ] mix, smoothstep operators
-
-  * `x -< a..b` defines clamping
-  * `a..b -> x` looks like function, but is possible
-  * can be done via external lib
 
 ## [x] Loops: ~~`i <- 0..10 <| a + i`, `i <- list <| a`, `[x <- 1,2,3 <| x*2]`~~ ~~`0..10 | i -> a + i`~~ `list |> # * 2;`
 
@@ -1531,7 +1536,7 @@
   + `x -<= 0..10` is just a nice construct
   -  `x <- y` vs `x < -y`
 
-## [x] Comments: `//`, `/*` vs `;;` and `(; ;)` → `//` seems most long-term choce.
+## [x] Comments: `//`, `/*` vs `;;` and `(; ;)` → `//` is safest choice. ~~`\\` gives too many benefits~~
 
   1. `;;`
   + ;; make more sense, since ; is separator, and everything behind it doesn't matter
@@ -1598,6 +1603,7 @@
       ? can that be resolved somehow?
       ~ what's the big deal of just a/b | 0? internally that's same, no?
     - it's just so nice symmetricity of ++ -- ** %% but not //
+  - it blocks smoothstep as `-//`
   + allows defer to be `\x++`.
   + // associates besides C+/Java/JS with F#, which is pipy
     + with many others: ActionScript, Boo, C (C99), C++, C#, D, F#, Go, Java, JavaScript, Kotlin, Object Pascal (Delphi), Objective-C, PHP, Rust, Scala, SASS, Swift, Xojo
@@ -1612,6 +1618,7 @@
   - search-matches with protocols like `https://`
   - pretends to be C/JS, when it is not.
     * Such comments would make sense if: code was case-sensitive; it had standard allowed chars (no #@); code had if|else|while|for|return|in keywords.
+      - code is case-sensitive now
     + gives fresh feeling of old standard, since syntax is updated to be cool
 
   3. `\` or `\\`
@@ -1628,6 +1635,7 @@
   + cooler than `;;`
     + `\` is cool
   + looks fresh directionally, shadow effect `\\\\\\\\\\\\\\\\\\\\\\\\\`
+    + shadow makes sense as comments hide in "shadow" of real code
   - possible conflict with string escapes
     + can be resolved with `\\`
       + creates clear separation of "comments" area
@@ -1638,6 +1646,8 @@
     ~ neither `;;`
     - maintaining all possible highlighters can be a lifetime effort
       ~ can be one-time vscode contribution
+    ~+ not so heavy, can be done once
+    ~+ existing highlighters don't know melo anyways
   - takes primary semantic meaning, rather than "safe" secondary meaning
   ?- what's inline pairing? `\* *\`?
     + `\ inline comment \`
@@ -1646,8 +1656,12 @@
   - `\\`` is pessimist comment, // is optimist
     ~ not necessarily bad
   + not confusable with http://
+  + allows `-//`, `//` operators
+    ~ we don't need them as much, `-//` is not best choice anyways
   - writing that comment by hand requires escaping each of these, so comment becomes `\\\\`
   - maybe too much if all programs will use that, that's a bit weird
+  - too ground-breaking
+  - complicates copy-paste
 
   4. `/* */`
   + popular (CSS, C-family, PHP, Swift, Kotlin, Java, JS)
@@ -3125,6 +3139,7 @@
     ? `res = fn() : err`
       - same as above: `res = a ? fn() : err : fn2() : err`
   * Possible syntax: `fn(a) ?= (!a ? 'Bad arg'!; 1/a);`
+    - no: `a ?= b` is `a = a ? b`, same as `a ?:= b` is `a = a ?: b`
 
 ## [ ] How do we define throw?
   * `!'Error message'`
@@ -3136,7 +3151,7 @@
   ~- we can do that via just returns
   - Errors make program syntax case-sensitive
 
-## [x] Pipe: replace with `|:` operator? -> let's use lowered-precedence `|` for now and see for side-effects
+## [x] Pipe: replace with `|>` operator? -> let's use lowered-precedence `|` for now and see for side-effects
 
   + Doesn't mess up precedence of `a,b | c`
     - actually it's desired precedence...
@@ -3540,7 +3555,7 @@
     + allows more flexible write to different targets
   3. modify fn and return last element
 
-## [x] Batch function as a syntax sugar -> nah, simplify functions as much as possible, use `|`, `|>` operators to generate processings
+## [x] Batch function as a syntax sugar -> nah, simplify functions as much as possible, use loops operators to generate processings
 
   * We often can find code like `gain = (in,vol) -> (*out=[..in[]];out[0..]=in|x->x*vol;out)`
 
@@ -3712,7 +3727,7 @@
     * likely can be `osc=[sin(x)=...x,tri(x)=...x]`
   + resolves the issue of scope (above): no need to make all vars global since no scope recursion
 
-## [x] Replace `<|`, `|`, `|>`? -> ~~Let's try `::` for loop/generator and `list -> item ::` for extended loop/tranformer~~ ~~let's use `<|`, `|>` for map/reduce,~~ ~~`<|` and~~ `|>` for loop (multiple/single arg), `#` for topic token, ~~`x -> x*2` for mapping function~~
+## [x] Replace `<|`, `|`, `|>`? -> ~~Let's try `::` for loop/generator and `list -> item ::` for extended loop/tranformer~~ ~~let's use `<|`, `|>` for map/reduce,~~ ~~`<|` and~~ ~~`|>`~~ `|:` for loop (multiple/single arg), `#` for topic token, ~~`x -> x*2` for mapping function~~
 
   + Less problems with overloading `|`
   + Fold operator is likely not as useful
@@ -4020,7 +4035,7 @@
   * `list |x> x*2`, `a,b,c |x> x*2`, `0..10 |x> x*2`
     - `list | (x > x*2)`
 
-## [x] What's the difference of `list <| # * 2` vs `list |> # * 2`? -> multiple vs single return
+## [x] What's the difference of `list <| # * 2` vs `list |> # * 2`? -> multiple vs single return, we don't need <| if we detect if returns are necessary
 
   ? First one returns multiple members, last one returns single (last) value
     ? can we detect that by-use-case?
@@ -4453,29 +4468,35 @@
     + allows merging analyser into 1-pass compiler
     + retains precision
 
-## [ ] mix, smoothstep operators -> `-/` and `-/=` for smoothstep
+## [x] mix, smoothstep, lerp operators -> `-/, -*`, `~/, ~*`
 
-  * `x -< a..b` defines clamping
-  * `x -/ a..b` for smoothstep?
+  * `x -< a..b` ~~defines clamping~~
+  * `x -/ a..b` or `x -| a` for step / smoothstep?
     + reminds `_/`
     + compatible with clamping by meaning (one of integral)
       - x is clamped, but here x is mapped
+    + `(0-1) * threshold = (0-threshold)`, then `(0-tsh)/tsh=(0,1)`, then `(min-max) -/ min..max = (0,1)` is step
+      + and then `(0-1) -* min..max = (min-max)` is inverse step
+  ? `-//` for smoothstep
+    - can't use `//`, unless we change comments style back to `\`
+  * ALT: smoothness range modifier, along with exp, step etc `0..10 ~ 0.2`
+    + makes use of step operator
+    + gives wide variety of possible range transitions
+    + resolves `//` issue
+  ? `~/`
+    + `~*`
   * `x ~/ a..b`
     + allows `x -/ a..b` for lerp
   * `x ~< a..b`
   * `a..b -> x`
     - looks like function
   * can be done via external lib
-  * `x >< a..b` for mix?
+  * `x >< a..b` for mix/lerp?
   * `x =< a..b` for mix?
     - what's infinity then?
   * `x / a..b` for smoothstep?
   * `x <= a..b`
     - can be used to compare ranges
-  * `x =/ a..b` for smoothstep
-  * `x </ a..b` for smoothstep
-  * `x /< a..b` for smoothstep
-  * `x -| a..b` for step?
 
 ## [x] how do we represent infinity? -> `1/0`, `0/0`
 
@@ -4526,7 +4547,7 @@
     + `+` has no meaning as operator anyways
     - `10..-+10` vs `10..+-10` is weird, vs `10..=-10`
 
-## [x] replace `x -< 0..10` with `x =< 0..10`? -> ~~clamp is `x <? 0..10`~~ clamp is `x <= 0..10`
+## [x] replace `x -< 0..10` with `x =< 0..10`? -> clamp is `x <? 0..10`
 
   ? do we ever need `clamp(x, 0, 10)`, opposed to `x = clamp(x, 0, 10)`?
     + it seems from examples we always `x = clamp(x, 0..10)`
@@ -4590,6 +4611,12 @@
   * ALT: `a <= 0..10` for clamp, `a <? 0..10` is within check
     + more meaningful for function arguments
     - less matching definition of `a < 10 ? 10 : a > 0 ? 0 : a`
+  * `a -< 0..10`
+    + allows `a -<= 0..10`
+    + visually clear
+    + aligns with `-/` for smoothstep operator
+    + looks cooler than `<?`
+
 
 ## [x] Create empty array - how? -> `[..10]` since range is exclusive
 
@@ -4696,11 +4723,11 @@
   * `[0..+10..0.5]`
   * `[0..0.5..+10]`
     - `[20..0.5..+-20]`
-  * `[0..10:0.5]`
+  * `[0..10 : 0.5]`
     - ~~conflicts with~~
     + possible, : is free now
     + similar to type definition, but more meaningful
-    ? can be used as stride in mem reading as uint8? `x = y[2:ui8]`
+    ? can be used as stride in mem reading as uint8? `x = y[2:u8]`
   * `[0..20 <| @*0.5]`
     - very verbose
   * `[0..10 / 0.01]`
@@ -4713,7 +4740,7 @@
 ## [ ] Range modifiers: how, when?
 
   * `0..100 ** 0.01`
-    * `a <= 0..100 ** .01` - maps to pow range?
+    * `a <? 0..100 ** .01` - maps to pow range?
       + reinforces meaning of max operator, which is nice
 
 ## [ ] Early return: how to consolidate type? -> just enforce f64 for now for early returns
@@ -5135,6 +5162,7 @@
 
   2. `(a,b) ? (tmp=h++; a=tmp, b=tmp)`
     -? doesn't unroll obviously
+    + intuitive (expected)
 
   3. `(a ? a = tmp ||= h++, b ? b = tmp ||= h++)`
     -~ duplicated code, but gated
@@ -5181,3 +5209,59 @@
   - `~` is still busy
 
 ## [ ] Linear regression from Julia x \ y
+
+  ? what's that?
+
+## [x] Replace `|>` with `|:` for loops? -> nah, let's keep `|>`
+
+1. `|:`
+  + matches musical repeat block, which is very intuitive
+  + reminds label a: ...
+  + keeps body visually clean after bar, as if returning result, condition clarifies body: `[x*2]` → `[x*2 |: x in 1..10]`
+  + `|:` sounds like `|` such `:` that, swoooch th th
+    + matches set builder `x++ |: x < 5` as `x++ such that x < 5`
+  - it subtly conflicts with elvis operator `x in 1..10 ?: body`, but `x in 1..10 |: body`
+    ~ we don't have elvis
+  + `x * 2 |` is close intuition to standard list comprehension syntax
+  + musically loop may have multiple ends and end mark `:|` place is uncertain, but `|:` is unambiguously at the beginning of loop.
+  + refer to looping body, not condition, which is better by musical intuition
+    - it disjoints condition from repeating part. In music |: denotes the beginning of loop, whereas here it stands in the middle.
+  - does not stand as nice with parens `range |: (# + 1);`
+
+  + it takes step away from associating `|>` with js pipes: it's not pipe.
+  + has less to do with wrong assoc with `|>` etc.
+
+  - `|:` is less obvious for pipes than `|>`, `out |>= gen() |> lp(#) |> amp(#)`
+    ? `out |:= gen() :|: lp() :|: amp()`
+      - not as nice for multiline
+  - not convinced yet, way too fancy
+  - no obvious way to write to destination
+
+2. `|>`
+  + looks like play
+  + indicates direction
+  + allows vertical stacking
+  - looks like pipe but has less to do with actual pipes
+  - wrong operator sequence with loop `for i=0, i<len, i++`
+  + allows directing output to range as `out[..] |> op(#) |> out[..]`
+    ~ not necessary since can be done as `out[..] = out[..] |> op(#)` or `out[..] |>= op(#)`
+  + gives flow feeling
+3. `<++`, `<=++`
+  + matches operator sequence from loop
+  - doesnt' work as pipe vertically
+4. `|<`, `|<=`
+  + keeps pipe vertically
+  - not nice to type due to autocomplete
+5. `->`, `=>`
+  - no pipe feeling
+  - confusable with fn definitions
+
+## [x] Prohibit non-range operands for loops, `a |> x` means iterate over 1 element only
+
++ to iterate array always provide range or list `a[..] |> #`, `a, b, c |> #`
++ removes ambiguity from code and from brain
+
+## [x] Is `a ? b;` void or not? -> not void, like elvis a ?: b or a ? b : c
+
+* research was done somewhere here, but keyword "void" wasn't used, so to clarify
+- same as elvis `a ?: b` is not void, this is not void
