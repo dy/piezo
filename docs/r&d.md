@@ -4631,8 +4631,9 @@
     - `a ~= 10` can be almost equal
       ~+ we remake almost equal to `a <= (from-f32)..(from+f32)`
     + makes sense as `a ~/ 0..10` for normalize, `a ~* 0..10` for lerp
+    + enables definitions like `x = 10 ~ 0..10;`
     ? what about smoothstep
-      ~ likely we'd need to have a range modifier
+      ~ likely we'd need to have a range modifier, eg. `x = 10 ~ 0..10**0.2`
 
 
 ## [x] Create empty array - how? -> `[..10]` since range is exclusive
