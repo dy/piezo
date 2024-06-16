@@ -1,10 +1,12 @@
 // parser converts syntax into AST/calltree
-import parse, { lookup, skip, cur, idx, err, expr, token, unary, binary, nary, isId } from 'subscript/parse.js'
+// NOTE: we don't import subscript features because we don't need its compiler
+// also we don't need certain default operators like . or comments
+// also we need adjusted precedences and parsing order
+import parse, { lookup, skip, next, cur, idx, err, expr, token, unary, binary, access, group, nary, id } from 'subscript/parse'
+
 import { FLOAT, INT } from './const.js'
 
-export default (str) => (
-  parse(str)
-)
+export default parse
 
 // char codes
 const OPAREN = 40, CPAREN = 41, OBRACK = 91, CBRACK = 93, SPACE = 32, QUOTE = 39, DQUOTE = 34, PERIOD = 46, BSLASH = 92, _0 = 48, _9 = 57, COLON = 58, HASH = 35, AT = 64, PLUS = 43, MINUS = 45, GT = 62
@@ -15,11 +17,11 @@ const PREC_SEMI = 1,
   PREC_RETURN = 4, // x ? ^a,b : y
   PREC_STATE = 4, // FIXME: *a,b,c, d=4 is confusing group
   PREC_LOOP = 5, // <| |>
-  PREC_SEQUENCE = 7, //  ^a,b,c;  a, b ? (c,d) : (e,f);
+  PREC_SEQ = 7, //  ^a,b,c;  a, b ? (c,d) : (e,f);
   PREC_IF = 8,    // a ? b=c;  a = b?c;
   PREC_ASSIGN = 8.25,  // a=b, c=d,  a = b||c,  a = b | c,   a = b&c
-  PREC_OR = 11,
-  PREC_AND = 12,
+  PREC_LOR = 11,
+  PREC_LAND = 12,
   PREC_BOR = 13, // a|b , c|d,   a = b|c
   PREC_XOR = 14,
   PREC_BAND = 15,
@@ -27,7 +29,7 @@ const PREC_SEMI = 1,
   PREC_COMP = 17,
   PREC_SHIFT = 18,
   PREC_CLAMP = 19, // pre-arithmetical: a+b*c <? 10; BUT a < b<?c, a << b<?c
-  PREC_SUM = 20,
+  PREC_ADD = 20,
   PREC_RANGE = 22, // +a .. -b, a**2 .. b**3, a*2 .. b*3; BUT a + 2..b + 3
   PREC_MULT = 23,
   PREC_POW = 24,
@@ -35,20 +37,24 @@ const PREC_SEMI = 1,
   PREC_CALL = 27, // a(b), a.b, a[b], a[]
   PREC_TOKEN = 28 // [a,b] etc
 
-// make id support #@
-parse.id = n => skip(char => isId(char) || char === HASH || char === AT)
 
+// make id support #@
+const isId = parse.id = char => id(char) || char === HASH
+
+// numbers
 const isNum = c => c >= _0 && c <= _9
 const num = (a) => {
   if (a) err(); // abc 023 - wrong
-  let n = skip(isNum), sep = '', d = '', unit; // numerator, separator, denominator, unit
 
-  let next = cur.charCodeAt(idx + 1)
-  if (numTypes[cur[idx]] && (isNum(next) || next === PLUS || next === MINUS)) {
+  let n = next(isNum), sep = '', d = '', unit; // numerator, separator, denominator, unit
+
+  let c = cur.charCodeAt(idx + 1)
+
+  if (numTypes[cur[idx]] && (isNum(c) || c === PLUS || c === MINUS)) {
     sep = skip()
-    if (next === PLUS || next === MINUS) d = skip(), d += (skip(isNum) || err('Bad number', n + sep + d))
-    else d = skip(isNum)
-    if (sep && !d) err('Bad number', n + sep + d)
+    if (c === PLUS || c === MINUS) d = skip(), d += (next(isNum) || err('Bad number ' + n + sep + d))
+    else d = next(isNum)
+    if (sep && !d) err('Bad number ' + n + sep + d)
   }
 
   if (!n && !d) err('Bad number')
@@ -58,7 +64,7 @@ const num = (a) => {
   let node = (numTypes[sep])(n, d);
 
   // parse units, eg. 1s
-  if (unit = skip(c => !isNum(c) && isId(c))) node.push(unit)
+  if (unit = next(c => !isNum(c) && isId(c))) node.push(unit)
 
   // parse unit combinations, eg. 1h2m3s
   if (isNum(cur.charCodeAt(idx))) node.push(num())
@@ -73,114 +79,131 @@ const numTypes = {
   'b': (n, d) => [INT, parseInt(d, 2)]
 }
 // 0-9
-for (let i = 0; i <= 9; i++) lookup[_0 + i] = num;
+for (let i = _0; i <= _9; i++) lookup[i] = num;
 // .1
 lookup[PERIOD] = a => !a && num();
 
-const string = q => (qc, c, str = '') => {
-  qc && err('Unexpected string') // must not follow another token
-  skip()
-  while (c = cur.charCodeAt(idx), c - q) {
-    if (c === BSLASH) skip(), c = skip(), str += escape[c] || c
-    else str += skip()
+
+// strings
+const escape = { n: '\n', r: '\r', t: '\t', b: '\b', f: '\f', v: '\v' },
+  string = q => (qc, c, str = '') => {
+    qc && err('Unexpected string') // must not follow another token
+    skip() // first quote
+    while (c = cur.charCodeAt(idx), c - q) {
+      if (c === BSLASH) skip(), c = skip(), str += escape[c] || c
+      else str += skip()
+    }
+    skip() || err('Bad string')
+    return [, str]
   }
-  skip()
-  return [String.fromCharCode(q), str]
-},
-  escape = { n: '\n', r: '\r', t: '\t', b: '\b', f: '\f', v: '\v' }
+
+
+// "' with /
 lookup[DQUOTE] = string(DQUOTE)
-// lookup[QUOTE] = string(QUOTE)
+lookup[QUOTE] = string(QUOTE)
 
-// sequences
-nary(',', PREC_SEQUENCE, true)
+
+// a(b,c,d), a()
+access('()', PREC_CALL)
+
+// a[b]
+access('[]', PREC_CALL)
+
+// (a,b,c), (a)
+group('()', PREC_CALL)
+// [a,b,c]
+group('[]', PREC_TOKEN)
+
+// a,b,,c
+nary(',', PREC_SEQ, true)
+// a;b;;c
 nary(';', PREC_SEMI, true)
-nary('||', PREC_OR)
-nary('&&', PREC_AND)
 
-// binaries
-binary('=', PREC_ASSIGN, true)
-binary('+=', PREC_ASSIGN, true)
-binary('-=', PREC_ASSIGN, true)
-binary('<?=', PREC_ASSIGN, true)
-binary('<|=', PREC_ASSIGN, true)
-binary('**', PREC_POW, true)
-
-binary('+', PREC_SUM)
-binary('-', PREC_SUM)
+// mults
 binary('*', PREC_MULT)
 binary('/', PREC_MULT)
 binary('%', PREC_MULT)
-binary('%%', PREC_MULT)
+
+// adds
+unary('+', PREC_UNARY)
+unary('-', PREC_UNARY)
+binary('+', PREC_ADD)
+binary('-', PREC_ADD)
+
+// increments
+token('++', PREC_UNARY, a => a ? ['++-', a] : ['++', expr(PREC_UNARY - 1)])
+token('--', PREC_UNARY, a => a ? ['--+', a] : ['--', expr(PREC_UNARY - 1)])
+
+// bitwises
+unary('~', PREC_UNARY)
 binary('|', PREC_BOR)
 binary('&', PREC_BAND)
 binary('^', PREC_XOR)
+binary('>>', PREC_SHIFT)
+binary('<<', PREC_SHIFT)
+binary('>>>', PREC_SHIFT)
+binary('<<<', PREC_SHIFT)
+
+// compares
 binary('==', PREC_EQ)
 binary('!=', PREC_EQ)
 binary('>', PREC_COMP)
-binary('>=', PREC_COMP)
 binary('<', PREC_COMP)
+binary('>=', PREC_COMP)
 binary('<=', PREC_COMP)
-binary('>>', PREC_SHIFT)
-binary('>>>', PREC_SHIFT)
-binary('<<', PREC_SHIFT)
-binary('<<<', PREC_SHIFT)
 
-binary('<?', PREC_CLAMP) // a <? b
-nary('<|', PREC_LOOP)
+// logics
+unary('!', PREC_UNARY)
+binary('||', PREC_LOR)
+binary('&&', PREC_LAND)
+
+// assigns
+binary('=', PREC_ASSIGN, true)
+binary('*=', PREC_ASSIGN, true)
+binary('/=', PREC_ASSIGN, true)
+binary('%=', PREC_ASSIGN, true)
+binary('+=', PREC_ASSIGN, true)
+binary('-=', PREC_ASSIGN, true)
+
+// pow, mod
+binary('**', PREC_POW, true)
+binary('%%', PREC_MULT, true)
+
+// clamps
+binary('~', PREC_CLAMP)
+binary('~/', PREC_CLAMP)
+binary('~*', PREC_CLAMP)
+
+// loop a[..] |> #
 nary('|>', PREC_LOOP)
 
-// unaries
-unary('+', PREC_UNARY)
-unary('-', PREC_UNARY)
-unary('!', PREC_UNARY)
-unary('~', PREC_UNARY)
-unary('++', PREC_UNARY)
-unary('--', PREC_UNARY)
-token('++', PREC_UNARY, a => a && ['-', ['++', a], [INT, 1]])
-token('--', PREC_UNARY, a => a && ['+', ['--', a], [INT, 1]])
-
-
-// a..b, ..b, a..
+// range a..b, ..b, a..
 token('..', PREC_RANGE, a => (['..', a, expr(PREC_RANGE)]))
 
 // returns
-token('./', PREC_TOKEN, (a, b) => !a && (b = expr(PREC_RETURN), b ? ['./', b] : ['./'])) // continue: ./
-token('../', PREC_TOKEN, (a, b) => (!a && (b = expr(PREC_RETURN), b ? ['../', b] : ['../']))) // break: ../
-token('.../', PREC_TOKEN, (a, b) => !a && (b = expr(PREC_RETURN), b ? ['.../', b] : ['.../'])) // return: ../
+token('^', PREC_TOKEN, (a, b) => !a && (b = expr(PREC_RETURN), b ? ['^', b] : ['^'])) // continue: ./
+token('^^', PREC_TOKEN, (a, b) => (!a && (b = expr(PREC_RETURN), b ? ['^^', b] : ['^^']))) // break: ../
+token('^^^', PREC_TOKEN, (a, b) => !a && (b = expr(PREC_RETURN), b ? ['^^^', b] : ['^^^'])) // return: ../
 
-// ^
-token('^', PREC_TOKEN, (a, b) => !a && '^')
+// #
+// token('#', PREC_TOKEN, (a, b) => !a && '#')
 
 // a.b
 // NOTE: we don't parse expression to avoid 0..1 recognizing as 0[.1]
 // NOTE: for now we disable prop access since we don't have aliases and just static index can be done via x[0]
-// token('.', PREC_CALL, (a,b) => a && (b=skip(isId)) && ['.', a, b])
+// token('.', PREC_CALL, (a,b) => a && (b=next(isId)) && ['.', a, b])
 
 // *a
 unary('*', PREC_STATE)
 
-// a?b
-// NOTE: unlike || && this operator is void
+// conditions & ternary
+// a?b - returns b if a is true, else returns a
 binary('?', PREC_IF, true)
+binary('?:', PREC_IF, true)
 
-// a?b:c
-token('?', PREC_IF, (a, b, c) => (
-  a && (b = expr(PREC_IF - 1)) && skip(c => c === COLON) && (c = expr(PREC_IF - 1), ['?:', a, b, c])
-))
-// a:b, c:d
-// binary(':', PREC_LABEL, true)
+// ?: - we use modified ternary for our cases
+token('?', PREC_IF, (a, b, c) => a && (b = expr(PREC_IF - 0.5)) && next(c => c === COLON) && (c = expr(PREC_IF - 0.5), ['?:', a, b, c]))
 
-// a[b], a[]
-token('[', PREC_CALL, (a, b) => a && (b = expr(0, CBRACK), b ? ['[]', a, b] : ['[]', a]))
-
-// [a,b,c], []
-token('[', PREC_TOKEN, (a, b) => !a && (b = expr(0, CBRACK), b ? ['[', b] : ['[']))
-
-// (a,b,c), (a)
-token('(', PREC_CALL, (a, b) => !a && (b = expr(0, CPAREN), b ? ['(', b] : ['(']))
-
-// a(b,c,d), a()
-token('(', PREC_CALL, (a, b) => a && (b = expr(0, CPAREN), b ? ['()', a, b] : ['()', a]))
-
-// //comments
-token('//', PREC_TOKEN, (a, prec) => (skip(c => c >= SPACE), skip(), a || expr(prec) || [';']))
+// /**/, //
+token('/*', PREC_TOKEN, (a, prec) => (next(c => c !== STAR && cur.charCodeAt(idx + 1) !== 47), skip(2), a || expr(prec) || []))
+token('//', PREC_TOKEN, (a, prec) => (next(c => c >= SPACE), a || expr(prec) || []))

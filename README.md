@@ -1,4 +1,4 @@
-# melo ![stability](https://img.shields.io/badge/stability-experimental-black)
+# mel ![stability](https://img.shields.io/badge/stability-experimental-black)
 
 Micro language for floatbeats and audio with smooth operator and organic sugar.<br/>
 Compiles to compact 0-runtime WASM with linear memory.<br/>
@@ -18,12 +18,11 @@ Compiles to compact 0-runtime WASM with linear memory.<br/>
 & | ^ ~ >> <<                 // binary (integer)
 <<< >>>                       // rotate left, right
 && || !                       // logical
-> >= < <= == != ~=            // comparisons (boolean)
-?: ?                          // conditions
+> >= < <= == !=               // comparisons (boolean)
+?: ? ?= ?:=                   // conditions
 x[i] x[]                      // member access, length
 a..b                          // range
--<                            // clamp/min/max
--/ -* ~/ ~*                   // step/normalize, lerp, smoothstep, inverse
+~ ~= ~/ ~*                    // clamp, normalize, lerp
 ^ ^^ ^^^                      // continue, break, return
 |> #                          // loop, item
 
@@ -56,7 +55,7 @@ sign = a < 0 ? -1 : +1;       // ternary conditional
   3 <= 1..2 ? log(2) :        // else if
   log(3);                     // else
 a && b || c;                  // (a and b) or c
-a ~= b;                       // if a almost equal b (f32 tolerance)
+a <= (b-.1)..(b+.1);          // if a almost equal b (0.1 tolerance)
 
 //////////////////////////////// groups
 a, b=1, c=2;                  // declare
@@ -78,9 +77,8 @@ a,b,c = 0..3;                 // a=0, b=1, c=2
 x < 0..10;                    // is x in 0..10 range, 10 exclusive
 x >= 0..10;                   // is x out 0..10 range, 10 inclusive
 (-10..10)[];                  // range span 20
-x -< 0..10;                   // clamp(x, 0, 10)
-x -/ 0..10; x -* 0..10;       // normalize(x, 0, 10); lerp(x, 0, 10)
-x ~/ 0..10; x ~* 0..10;       // smoothstep(x, 0, 10); ismoothstep(x, 0, 10)
+x ~ 0..10; x ~= 0..10;        // clamp(x, 0, 10); x = clamp(x, 0, 10);
+x ~/ 0..10; x ~* 0..10;       // normalize(x, 0, 10); lerp(x, 0, 10)
 
 //////////////////////////////// arrays
 m = [..10];                   // array of 10 elements
@@ -175,10 +173,10 @@ Provides k-rate amplification for block of samples.
 
 ```
 gain(                              // define a function with block, volume arguments.
-  block,                           // block is a array argument
+  block,                           // block is a array of samples
   volume <= 0..100                 // volume is limited to 0..100 range
 ) = (
-  block |>= # * volume             // multiply each sample by volume value
+  block[..] |>= # * volume         // multiply each sample by volume value
 );
 
 gain([0..5 |> # * 0.1], 2);        // 0, .2, .4, .6, .8, 1
@@ -386,14 +384,14 @@ See [all examples](/examples)
 
 ## Usage
 
-_melo_ is available as CLI or JS package.
+_mel_ is available as CLI or JS package.
 
-`npm i melo`
+`npm i mel`
 
 ### CLI
 
 ```sh
-melo source.me -o dest.me
+mel source.mel -o dest.mel
 ```
 
 This produces compiled WASM binary.
@@ -401,7 +399,7 @@ This produces compiled WASM binary.
 ### JS
 
 ```js
-import melo from 'melo'
+import mel from 'mel'
 
 // create memory buffer (optional)
 const memory = new WebAssembly.Memory({
@@ -410,7 +408,7 @@ const memory = new WebAssembly.Memory({
 });
 
 // create wasm arrayBuffer
-const buffer = melo.compile(`
+const buffer = mel.compile(`
   n=1;
   mult(x) = x*PI;
   arr=[1, 2, sin(1.08)];
@@ -451,7 +449,7 @@ const arrValues = new Float64Array(memory, arr.value, 3)
 
 _Web Audio API_ has unpredictable pauses, glitches and so on, so <q>audio is better handled in WASM worklet</q> ([@stagas](https://github.com/stagas)).<br/>
 Audio processing in general has no cross-platform solution, various environments deal with audio differently, some don't have audio processing at all.<br/>
-_melo_ is personal take on what would no-bs language would look like.
+_mel_ is personal take on what would no-bs language would look like.
 It compiles to WASM to enable it for browsers, [audio worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) and any other env with wasm.<br/>
 
 

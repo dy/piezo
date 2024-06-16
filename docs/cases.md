@@ -46,3 +46,4 @@
 * [ ] pick sound params to match specific sound https://www.youtube.com/watch?v=Hd0KYxotzv8
 * [ ] https://github.com/felixroos/doughbat?tab=readme-ov-file
 * [ ] https://github.com/ijc8/alternator?tab=readme-ov-file
+* [ ] https://github.com/charlieroberts/genish.js
