@@ -1310,6 +1310,12 @@
 
   ! ALT: can be done via early return as `(a ? b.; )`
 
+## [ ] mix, smoothstep operators
+
+  * `x -< a..b` defines clamping?
+  * `a..b -> x` looks like function, but is possible
+  * can be done via external lib
+
 ## [x] Loops: ~~`i <- 0..10 <| a + i`, `i <- list <| a`, `[x <- 1,2,3 <| x*2]`~~ ~~`0..10 | i -> a + i`~~ `list |> # * 2;`
 
   * `for i in 0..10 (a,b,c)`, `for i in src a;`
@@ -3166,8 +3172,6 @@
     + which is less ambiguity
     + keeps loops logic simple
 
-## [x] `a <~ b` vs `a < ~b` -> use `a ~< b` instead
-
 ## [x] Case-insensitive variable names? -> likely yes: AbB/ABb, x1/X1, @math.E/@math.e, export names, strings, atoms
   * should not be too smart, should be very simple
 
@@ -4468,10 +4472,10 @@
     + allows merging analyser into 1-pass compiler
     + retains precision
 
-## [ ] mix, smoothstep, lerp operators -> `-/, -*`, `~/, ~*`
+## [ ] mix, smoothstep operators ->
 
-  * `x -< a..b` ~~defines clamping~~
-  * `x -/ a..b` or `x -| a` for step / smoothstep?
+  * `x -< a..b` defines clamping?
+  * `x -/ a..b` for smoothstep?
     + reminds `_/`
     + compatible with clamping by meaning (one of integral)
       - x is clamped, but here x is mapped
@@ -4550,7 +4554,7 @@
     + `+` has no meaning as operator anyways
     - `10..-+10` vs `10..+-10` is weird, vs `10..=-10`
 
-## [x] replace `x -< 0..10` with `x =< 0..10`? -> clamp is `x ~ 0..10`
+## [x] replace `x -< 0..10` with `x =< 0..10`? -> ~~clamp is `x <? 0..10`~~ clamp is `x ~ 0..10`
 
   ? do we ever need `clamp(x, 0, 10)`, opposed to `x = clamp(x, 0, 10)`?
     + it seems from examples we always `x = clamp(x, 0..10)`

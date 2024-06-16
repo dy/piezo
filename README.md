@@ -116,7 +116,7 @@ x[3..5] |>= # * 2;            // overwrite source
 
 //////////////////////////////// functions
 double(n) = n*2;              // define a function
-times(m = 1, n < 1..) = (     // optional, clamped arg
+times(m = 1, n ~ 1..) = (     // optional, clamped arg
   n == 0 ? ^n;                // early return
   m * n                       // default return
 );                            //
@@ -173,8 +173,8 @@ Provides k-rate amplification for block of samples.
 
 ```
 gain(                              // define a function with block, volume arguments.
-  block,                           // block is a array of samples
-  volume <= 0..100                 // volume is limited to 0..100 range
+  block,                           // block is a array argument
+  volume ~ 0..100                  // volume is limited to 0..100 range
 ) = (
   block[..] |>= # * volume         // multiply each sample by volume value
 );
@@ -201,8 +201,8 @@ A-rate (per-sample) biquad filter processor.
 
 lpf(                               // per-sample processing function
   x0,                              // input sample value
-  freq <= 1..10k = 100,            // filter frequency, float
-  Q <= 0.001..3.0 = 1.0            // quality factor, float
+  freq = 100 ~ 1..10k,             // filter frequency, float
+  Q = 1.0 ~ 0.001..3.0             // quality factor, float
 ) = (
   *(x1, y1, x2, y2) = 0;           // define filter state
 
@@ -250,7 +250,7 @@ oscillator = [
 // applies adsr curve to sequence of samples
 adsr(
   x,
-  a <= 1ms..,                    // prevent click
+  a ~= 1ms..,                    // prevent click
   d,
   (s, sv=1),                     // optional group-argument
   r
