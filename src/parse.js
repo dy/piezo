@@ -170,9 +170,7 @@ binary('**', PREC_POW, true)
 binary('%%', PREC_MULT, true)
 
 // clamps
-binary('-<', PREC_CLAMP)
-binary('-/', PREC_CLAMP)
-binary('-*', PREC_CLAMP)
+binary('~', PREC_CLAMP)
 binary('~/', PREC_CLAMP)
 binary('~*', PREC_CLAMP)
 

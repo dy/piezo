@@ -18,12 +18,11 @@ Compiles to compact 0-runtime WASM with linear memory.<br/>
 & | ^ ~ >> <<                 // binary (integer)
 <<< >>>                       // rotate left, right
 && || !                       // logical
-> >= < <= == != ~=            // comparisons (boolean)
+> >= < <= == !=               // comparisons (boolean)
 ?: ? ?= ?:=                   // conditions
 x[i] x[]                      // member access, length
 a..b                          // range
--<                            // clamp/min/max
--/ -* ~/ ~*                   // step/normalize, lerp, smoothstep, inverse
+~ ~= ~/ ~*                    // clamp, normalize, lerp
 ^ ^^ ^^^                      // continue, break, return
 |> #                          // loop, item
 
@@ -56,7 +55,7 @@ sign = a < 0 ? -1 : +1;       // ternary conditional
   3 <= 1..2 ? log(2) :        // else if
   log(3);                     // else
 a && b || c;                  // (a and b) or c
-a ~= b;                       // if a almost equal b (f32 tolerance)
+a <= (b-.1)..(b+.1);          // if a almost equal b (0.1 tolerance)
 
 //////////////////////////////// groups
 a, b=1, c=2;                  // declare
@@ -78,9 +77,8 @@ a,b,c = 0..3;                 // a=0, b=1, c=2
 x < 0..10;                    // is x in 0..10 range, 10 exclusive
 x >= 0..10;                   // is x out 0..10 range, 10 inclusive
 (-10..10)[];                  // range span 20
-x -< 0..10;                   // clamp(x, 0, 10)
-x -/ 0..10; x -* 0..10;       // normalize(x, 0, 10); lerp(x, 0, 10)
-x ~/ 0..10; x ~* 0..10;       // smoothstep(x, 0, 10); ismoothstep(x, 0, 10)
+x ~ 0..10; x ~= 0..10;        // clamp(x, 0, 10); x = clamp(x, 0, 10);
+x ~/ 0..10; x ~* 0..10;       // normalize(x, 0, 10); lerp(x, 0, 10)
 
 //////////////////////////////// arrays
 m = [..10];                   // array of 10 elements

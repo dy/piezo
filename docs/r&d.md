@@ -1501,7 +1501,7 @@
     - nah, just do `(a,b,c) = d`
     ? Alternatively: do we need nested structures at all? Maybe just flat all the time?
 
-## [x] -< operator purpose? `-<` for range
+## [ ] -< operator purpose?
 
   * ? splits list by some sorter: `a,b,c -< v -> v`
   * ? or in fact multiplexor? selects input by condition? like a,b,c -< x -> x > 2 ? 1 : 0
@@ -4468,7 +4468,7 @@
     + allows merging analyser into 1-pass compiler
     + retains precision
 
-## [x] mix, smoothstep, lerp operators -> `-/, -*`, `~/, ~*`
+## [ ] mix, smoothstep, lerp operators -> `-/, -*`, `~/, ~*`
 
   * `x -< a..b` ~~defines clamping~~
   * `x -/ a..b` or `x -| a` for step / smoothstep?
@@ -4477,9 +4477,10 @@
       - x is clamped, but here x is mapped
     + `(0-1) * threshold = (0-threshold)`, then `(0-tsh)/tsh=(0,1)`, then `(min-max) -/ min..max = (0,1)` is step
       + and then `(0-1) -* min..max = (min-max)` is inverse step
+    - `-|` turnstile has different meaning in math
   ? `-//` for smoothstep
     - can't use `//`, unless we change comments style back to `\`
-  * ALT: smoothness range modifier, along with exp, step etc `0..10 ~ 0.2`
+  * ALT: smoothness range modifier, along with exp, step etc `0..10 ** 0.2`
     + makes use of step operator
     + gives wide variety of possible range transitions
     + resolves `//` issue
@@ -4494,7 +4495,9 @@
   * `x >< a..b` for mix/lerp?
   * `x =< a..b` for mix?
     - what's infinity then?
-  * `x / a..b` for smoothstep?
+  * `x / a..b` for step/normalize, `x * a..b` for lerp?
+    + logical meaning for operators
+    - can be confused with applying to each value in a range
   * `x <= a..b`
     - can be used to compare ranges
 
@@ -4547,7 +4550,7 @@
     + `+` has no meaning as operator anyways
     - `10..-+10` vs `10..+-10` is weird, vs `10..=-10`
 
-## [x] replace `x -< 0..10` with `x =< 0..10`? -> clamp is `x <? 0..10`
+## [x] replace `x -< 0..10` with `x =< 0..10`? -> clamp is `x ~ 0..10`
 
   ? do we ever need `clamp(x, 0, 10)`, opposed to `x = clamp(x, 0, 10)`?
     + it seems from examples we always `x = clamp(x, 0..10)`
@@ -4587,7 +4590,7 @@
   + Converts back to f64 on export
   + Gives extreme precision/dimension
 
-## [x] min, max, clamp as `a <? 0..100`? ~~yes~~ keep `a <? 0..100` for in, and `a <= 0..100` for clamp
+## [ ] min, max, clamp as `a <? 0..100`? ~~yes~~ keep `a <= 0..100` for in, and `a ~ 0..100` for clamp
 
   * `a |< ..10`, `a >| 10` for
   * can be solved via clamp operator `a <> ..10`, `a <> 10..`
@@ -4608,6 +4611,7 @@
       - logically it's `a = a <> 0..10`, which is assigning to boolean
     + allows reverse clamp as `a >< 0..10`
     + visual logic
+    - spaceship, not equal meaning already
   * ALT: `a <= 0..10` for clamp, `a <? 0..10` is within check
     + more meaningful for function arguments
     - less matching definition of `a < 10 ? 10 : a > 0 ? 0 : a`
@@ -4616,6 +4620,15 @@
     + visually clear
     + aligns with `-/` for smoothstep operator
     + looks cooler than `<?`
+  * `a ~ 0..10` for clamp, `a ~= 0..10` for `a = a ~ 0..10`
+    + super short
+    + has matching mathy meaning
+    + it is very natural
+    - `a ~= 10` can be almost equal
+      ~+ we remake almost equal to `a <= (from-f32)..(from+f32)`
+    + makes sense as `a ~/ 0..10` for normalize, `a ~* 0..10` for lerp
+    ? what about smoothstep
+      ~ likely we'd need to have a range modifier
 
 
 ## [x] Create empty array - how? -> `[..10]` since range is exclusive
@@ -4727,6 +4740,7 @@
     - ~~conflicts with~~
     + possible, : is free now
     + similar to type definition, but more meaningful
+    - conflicts with brainching `?:` - meaning "code after branch"
     ? can be used as stride in mem reading as uint8? `x = y[2:u8]`
   * `[0..20 <| @*0.5]`
     - very verbose
@@ -4740,7 +4754,7 @@
 ## [ ] Range modifiers: how, when?
 
   * `0..100 ** 0.01`
-    * `a <? 0..100 ** .01` - maps to pow range?
+    * `a ~ 0..100 ** .01` - maps to pow range?
       + reinforces meaning of max operator, which is nice
 
 ## [ ] Early return: how to consolidate type? -> just enforce f64 for now for early returns

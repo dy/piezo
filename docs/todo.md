@@ -22,9 +22,8 @@
 * [x] get rid of `.` (less = more)
 * [x] make use of `^`, `^^`, `^^^`
 * [ ] make use of `#` topic placeholder
-* [ ] -/ for step / smoothstep
-* [ ] -< for lerp
-* [ ] almost equal ~=
+* [ ] ~/, ~*
+* [ ] ~, ~=
 * [ ] all readmes test
   * [x] inline global consts
   * [ ] standard operators
