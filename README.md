@@ -450,17 +450,18 @@ const arrValues = new Float64Array(memory, arr.value, 3)
 ## Motivation
 
 _Melo_ is personal take on what would well designed language look like.
-It has narrow focus by design - audio processing & DSP, mainly to give advantage over JS / Web Audio in terms of performance & memory.
+It has narrow focus - audio processing & DSP, mainly to give advantage over JS / Web Audio in terms of performance & memory.
 
-_Web Audio API_ is unreliable - it has unpredictable pauses, glitches and so on, so <q>audio is better handled in WASM worklet</q> ([@stagas](https://github.com/stagas)). Besides that, audio processing in general has no cross-platform solution, various environments deal with audio differently, some don't have audio processing at all. Good old audio code gets dated, in 20 years most of the soft is unable to run.
+_Web Audio_ is unreliable - it has unpredictable pauses, glitches and so on, so <q>audio is better handled in WASM worklet</q> ([@stagas](https://github.com/stagas)). Besides, audio processing in general has no cross-platform solution, various environments deal with audio differently, some don't have audio processing at all. Good old audio code gets dated, in 20 years most of the soft is unable to run.
 
-So _melo_ attempts to fill that gap, trying to provide a standard foundation layer.
-It compiles to WASM to enable it for browsers, [audio/worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) and any envs with WASM support. In the future it aims at GL and JS as compile targets.
+So _melo_ attempts to fill that gap, trying to provide a standard layer.
+WASM enables it for browsers, [audio/worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) and any other envs. In the future it aims at GL and JS as compile targets.
 
 <!--
 ### Principles
 
-* _0 entry_: common syntax, intuitive patterns, simplicity.
+* _0 entry_: common syntax, simplicity.
+* _Poetic_: intuitive typographic patterns.
 * _No keywords_: word means variable, symbol means operator - allows truly i18l code.
 * _No types_: type is defined by operator – better focus on logic rather than language.
 * _Space-agnostic_: spaces/newlines (excluding comments) can be safely removed or added, eg. for compression or prettifying.
@@ -482,13 +483,6 @@ It compiles to WASM to enable it for browsers, [audio/worklets](https://develope
 
 ### Inspiration
 
-* [_mono_](https://github.com/stagas/mono)
-* [_zzfx_](https://killedbyapixel.github.io/ZzFX/)
-* [_bytebeat_](https://sarpnt.github.io/bytebeat-composer/)
-* [_glitch_](https://github.com/naivesound/glitch)
-* [_hxos_](https://github.com/stagas/hxos)
-* [_min_](https://github.com/r-lyeh/min)
-* [_roland_](https://github.com/DenialAdams/roland)
-* [_porffor_](https://github.com/CanadaHonk/porffor)
+[_mono_](https://github.com/stagas/mono), [_zzfx_](https://killedbyapixel.github.io/ZzFX/), [_bytebeat_](https://sarpnt.github.io/bytebeat-composer/), [_glitch_](https://github.com/naivesound/glitch), [_hxos_](https://github.com/stagas/hxos), [_min_](https://github.com/r-lyeh/min), [_roland_](https://github.com/DenialAdams/roland), [_porffor_](https://github.com/CanadaHonk/porffor)
 
 <p align=center><a href="https://github.com/krsnzd/license/">🕉</a></p>
