@@ -1877,7 +1877,7 @@
         ? how do we map arrays then
           * list comprehension: i <- arr <| i * 10
 
-## [x] Comma / group precedence: a,b=c,d -> let's use more familiar flowy JS style a=1, b=2
+## [x] Group (comma) precedence: a,b=c,d -> let's use more familiar flowy JS style a=1, b=2 and force groups be scoped
 
   1. `a,b=c,d` is `(a,b)=(c,d)`
     + python style
@@ -1886,7 +1886,7 @@
     - unscoped groups make language a real line noise, very unusual pattern:
       ```
       y1, y2 = y+1, y+2;
-      y1, y2 >= height ? y1, y2 = height - 1;
+      (y1, y2) >= height ? (y1, y2) = height - 1;
       ptr0, ptr1, ptr2 = y, y1, y2 * width;
       ```
 
@@ -1905,17 +1905,38 @@
         - maybe a bit too intensive grouping sometimes
           + but easier to understand what's going on
     + allows comma-style operations sequence, rather than python-like meaning, eg a++, b+=2, c=4,
+    + arrays are always scoped
+    - in JS the meaning of comma isn't loaded with grouping, it's just sequence of operations
+      - if you look at the code, it's oversaturated with () for grouping
+        ~+ that helps visually identifying groups
+      - sequence without meaning of group is needed only on declaration/args, but is mainly useless anywhere else
+      - vars declaration can be as well done in Python style `a, b, c = 1, 2, 3`
 
   3. Single assignment is group, multiple is seq: `a,b = c,d` vs `a=b, c=d`
     + Allows unparented assignments `a,b=c,d;`
     ? What are potential confusions?
       - `a,b=c,d=e,f` - not allowed sequence of multiple assignments
       - `c=d,e` as return member or elsewhere considers only `c` as return instead of `c=d, e`
+      - fn args `(a,b=1)` makes it as `a,b = 1` vs `a, b=1`
     - breaks regular parsing logic
 
-## [ ] Raise `,` precedence for groups? ->
+  4. `=` balances number of left/right members, `a,b=c,d, e=f, g,h,i=j`
+    ? `a,b,c=3` in fn arguments?
+      + can throw error on unbalanced assignments
+      +? to assign one value to multiple targets, use grouping `(a, b, c) = 1`
+    - `a, b=1` declaration - is that `(a,b)=1` or `a, (b=1)`?
+    + can be the case of assignment only, any other ops require grouping `(a,b) + (b,c)`
+      - creates confusions in code - some parts are grouped, others are not - forces knowledge of precedence
+      - it can be pretty high: `x1, x2 = y1, y2 * 2` - what'd you expect here?
+    ~ ```
+      y1, y2 = y+1, y+2; \\ ok, since sequence doesn't make sense here
+      y1, y2 >= height ? y1, y2 = height - 1; \\ hmm
+      ptr0, ptr1, ptr2 = y, y1, y2 * width; \\ which y gets multiplied here?
+      ```
 
-  - not having `()` around sequence can be misleading, `()` nicely delineates group
+## [x] Raise `,` precedence for groups? -> nah, let's keep groups scoped
+
+  - not having `()` around sequence can be misleading, `()` visually outlines group
   + `^ a,b,c` ~~`a,b,c.` - naturally done via `x ? a,b,c .` operator~~
   + ~~`a,b,c |>`~~
     + `i = a,b,c : x()`
@@ -4852,7 +4873,6 @@
 
   * `[-10..10..0.5]`
   * `[-10..0.5..10]`
-    - `[20..0.5..+-20]`
   * ~~`[0..10 : 0.5]`~~
     - directly loop
     + possible, : is free now

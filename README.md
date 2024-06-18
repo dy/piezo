@@ -40,6 +40,7 @@ inf = 1/0, nan = 0/0;        \\ alias infinity, NaN
 2m35s;                       \\ combinations
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ statements
+a, b=1, c=2;                 \\ declare vars in C style
 foo();                       \\ semi-colons are mandatory
 (c = a + b; c);              \\ group returns last statement
 (a = b+1; a,b,c);            \\ return multiple values
@@ -57,14 +58,13 @@ sign = a < 0 ? -1 : +1;      \\ ternary conditional
 a && b || c;                 \\ (a and b) or c
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ groups
-(a, b=1, c=2);               \\ declare
-(a, b, c)++;                 \\ (a++, b++, c++)
 (a,b,c) = (d,e,f);           \\ assign (a=d, b=e, c=f)
 (a,b) = (b,a);               \\ swap
-(a,b) + (c,d);               \\ any operator: (a+c, b+d)
-(a,b)[1] = c[2,3];           \\ props: (a[1]=c[2], b[1]=c[3])
 (a,b,c) = d;                 \\ duplicate: (a, b, c) = (d, d, d);
 (a,,b) = (c,d,e);            \\ skip: (a=c, d, b=e);
+(a,b) + (c,d);               \\ any operator: (a+c, b+d)
+(a, b, c)++;                 \\ (a++, b++, c++)
+(a,b)[1] = c[2,3];           \\ props: (a[1]=c[2], b[1]=c[3])
 a = (b,c,d);                 \\ a=b; a=c; a=d; (see loops)
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ ranges
@@ -73,7 +73,7 @@ a = (b,c,d);                 \\ a=b; a=c; a=d; (see loops)
 10..1;                       \\ reverse range
 1.08..108.0;                 \\ float range
 (a-1)..(a+1);                \\ computed range
-a,b,c = 0..3 * 2;            \\ a=0, b=2, c=4
+(a,b,c) = 0..3 * 2;          \\ a=0, b=2, c=4
 a ~ 0..10; a ~= 0..10;       \\ clamp(a, 0, 10); a = clamp(a, 0, 10);
 a ~/ 0..10; a ~* 0..10;      \\ normalize(a, 0, 10); lerp(a, 0, 10);
 a ~// 0..10; a ~** 0..10;    \\ smoothstep(a, 0, 10); ismoothstep(a, 0, 10);
@@ -207,18 +207,18 @@ lpf(                              \\ per-sample processing function
 
   \\ lpf formula
   w = 2pi * freq / 1s;
-  (sin_w, cos_w) = (sin(w), cos(w));
+  sin_w, cos_w = sin(w), cos(w);
   a = sin_w / (2.0 * Q);
 
-  (b0, b1, b2) = ((1.0 - cos_w) / 2.0, 1.0 - cos_w, b0);
-  (a0, a1, a2) = (1.0 + a, -2.0 * cos_w, 1.0 - a);
+  b0, b1, b2 = (1.0 - cos_w) / 2.0, 1.0 - cos_w, b0;
+  a0, a1, a2 = 1.0 + a, -2.0 * cos_w, 1.0 - a;
 
-  (b0, b1, b2, a1, a2) *= 1.0 / a0;
+  b0, b1, b2, a1, a2 *= 1.0 / a0;
 
   y0 = b0*x0 + b1*x1 + b2*x2 - a1*y1 - a2*y2;
 
-  (x1, x2) = (x0, x1);            \\ shift state
-  (y1, y2) = (y0, y1);
+  x1, x2 = x0, x1;            \\ shift state
+  y1, y2 = y0, y1;
 
   y0                              \\ return y0
 );
@@ -471,6 +471,7 @@ WASM enables it for browsers, [audio/worklets](https://developer.mozilla.org/en-
 * _Low-level_: no fancy features beyond math and buffers.
 * _Static/Linear memory_: no garbage to collect, static-size heap.
 * _Readability_: produced WASM must be readable.
+* _Normalized_: there's no smart or inconsistent parsing: everything is done via unary, binary, nary operators
 -->
 
 <!--
