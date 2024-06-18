@@ -77,7 +77,7 @@
 // j = jumpspeed (optional)
 
 M(p, o, q, m, s, m2, j) = (
-	j = j || 0x2000,
+	j ||= 0x2000,
 	r = m[q] || 0,
 	q = m2 != null ? m2[q] || 0 : 0,
 	r = q === 0 ? r : (r - q) * ((t % j) / j) + q,
@@ -86,7 +86,7 @@ M(p, o, q, m, s, m2, j) = (
 	// This section is used by both saw and triangle wave (as tri is nothing more than abs(saw))
 	x = (g % 255) / 128 - 1;
 	// The real magic: decide between pulse, saw and triangle and synthesize them.
-	return s ? s < 2 ? x : s < 3 ? abs(x) * 3 : sin(PI * x) : (g & 128) / 64 - 1;
+	s ? s < 2 ? x : s < 3 ? abs(x) * 3 : sin(PI * x) : (g & 128) / 64 - 1
 );
 
 // Main arpeggio
@@ -108,7 +108,7 @@ m7 = ": ::: ::: ::: ::6 666 666 666 66",
 
 // Basedrum
 btime = 2 << 12,
-bm = (80 - 40) * pow(1 - (t % btime) / btime, 10) - 80,
+bm = (80 - 40) * (1 - (t % btime) / btime) ** 10 - 80,
 bm2 = 0x01,
 bd = (bm2 >> (t / btime) % 2) & 1 ?
 	sin(PI * (t % btime) * pow(2, bm / 12 - 1)) * pow(1 - (t % btime) / btime, 10) : 0,
@@ -160,4 +160,4 @@ f(t) = (
 	M(6, 5, (t >> 12) % 32, m7, 2) * (1 - (t % (2 << 11)) / (2 << 11)) * 0.05 +
 	// Distorted drum effect
 	((t >> 15) % 4 ? 0 : ((((sqrt(t % 0x2000) << 6 & 255) / 127 - 1)) / ((t >> 13) % 4 + 1)) * 0.15)
-).
+)

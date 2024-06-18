@@ -411,7 +411,7 @@
   + better indicator of fn primitive
   ? batch output: `~() -> 1` vs `() -> ~1` vs `() ~> 1`
 
-## [x] Ranges: f(x <= 0..100=100, y <= 0..100, p <= 0.001..5, shape<=(tri,sin,tan)=sin)
+## [x] Ranges: f(x ~ 0..100=100, y ~ 0..100, p ~ 0.001..5, shape = sin)
 
   * ~~`f(x=100 in 0..100, y=1 in 0..100, z in 1..100, p in 0.001..5) = ...`~~
     - conflicts with no-keywords policy
@@ -435,8 +435,8 @@
       + matches direct groups
       + parens are just means to group items
     + ~ punctuationally refers to range, but direct ~ is too little info
-    - `i ~ 0..x :|` not the most apparent indicator of assigning to i, intuition wants assignment to be here
-      ~+ can be
+    - `i ~ 0..x` not the most apparent indicator of assigning to i, intuition wants assignment to be here
+      ~+ can be as meaning of clamp
     + less characters than ~=
 
   * `f(x = 100: 0..100, y: 0..100 = 1, z: 1..100, p: 0.001..5, shape: (tri, sin, tan) = sin)`
@@ -489,6 +489,7 @@
     + matches `element of` notation `<-`
     + no ordering problem with `<=` and `=`
     + frees `:` for technical needs, like import or named args
+    - `x <= 0..3` means `x <= 0, x <= 1, x <= 2`
 
   * ~~`f(x = 100 -| 0..100, y -| 0..100 = 1, z -| 1..100, p -| 0.001..5, shape -| (tri, sin, tan) = sin)`~~
     - looks too much like table separators
@@ -578,7 +579,7 @@
 ## [x] Numbers: float64 by default, unless it's statically inferrable as int32, like ++, +-1 etc ops only
   * Boolean operators turn float64 into int64
 
-## [x] ~~Pipes: → | with anon functions~~ ~~transform ternary `list | x -> a(x) | x -> b(x)`~~ no pipes for now - chain of loops instead `x <| # * 0.6 + reverb(#) * 0.4 <| `
+## [x] ~~Pipes: → | with anon functions~~ ~~transform ternary `list | x -> a(x) | x -> b(x)`~~ no pipes for now - chain of loops instead `x |> # * 0.6 + reverb(#) * 0.4 |> `
 
   1. Placeholder as `x | #*0.6 + reverb() * 0.4`, `source | lp($, frq, Q)`?
     ? can there be multiple args to pipe operator? `a,b |` runs 2 pipes, not multiarg.
@@ -1100,7 +1101,7 @@
     + that solves problem of instancing
     + identified by callstack
 
-## [x] Stateful variable syntax → `*` seems to match "save value" pointers intuition
+## [ ] Stateful variable syntax → `*` seems to match "save value" pointers intuition
 
   * There's disagreement on `...` is best candidate for loading prev state. Let's consider alternatives.
   1. `...x1,y1,x2,y2`
@@ -1152,7 +1153,7 @@
     + used in JS for generators and other "additional" stuff
     - a bit hard to "find all" since * is not part of id
     ```
-    lp([x0], freq = 100 in 1..10000, Q = 1.0 in 0.001..3.0) = (
+    lp(x0, freq = 100 ~ 1..10000, Q = 1.0 ~ 0.001..3.0) = (
       *(x1, x2, y1, y2) = 0;    // internal state
 
       w = pi2 * freq / sampleRate;
@@ -1169,21 +1170,23 @@
       x1, x2 = x0, x1;
       y1, y2 = y0, y1;
 
-      [y0]
+      y0
     )
     ```
     ~ `song()=(*t=0;)`
     +! can use postfix `x1*;` to save state, that's just hidden hack
+    - looks like Python's splat operator `*(a,b,c)`
   3.1 ~~`x1*, x2*, y1*, y2*`~~
     + typographic meaning as footnote
     - `x1*=2`
-  4. ~~`#x1, #x2, #y1, #y2`~~
-    + internal, private state, act as instance private properties
+  4. `#x1, #x2, #y1, #y2`, `#(x1,x2,x3)`
+    + private state from JS, act as instance private properties
     + indicator of special meaning
-    ~ conflict with note names
+    - conflict with note names A#
     - pollutes the code with #x1 etc.
+      - doesn't look like operator
     - often means compiler directive or comment
-    - may conflict with cardinal number (count) operator
+    - ~~may conflict with cardinal number (count) operator~~
   5. ~~`[x1, x2, y1, y2] = #`~~
     + involves destructuring syntax
     - introduces unnecessary token
@@ -1285,11 +1288,11 @@
   + named group items are also useful: `oscillators = (a: x->y, b: x-y)`
     - we don't have groups as primitives
   - conflicting convention: we don't really use labels anywhere (we use variables instead)
-  - it kind-of enforces lambdas, which we want to avoid also.
-  - require strings to implement dynamic access `x['first']`
+  - it kind-of entails lambdas, which we want to avoid also (see `a: x->y` above)
+  - requires strings to implement dynamic access `x['first']`
   - some arrays have aliases, others don't: we're not going to make aliases dynamic
 
-## [x] If `a ? b`, elvis: `a ?: b`? -> ~~likely yes to simple condition~~ no, use `a && b` or early return `a ? ^b;`
+## [ ] If `a ? b`, elvis: `a ?: b`? -> why not?
   + organic extension of ternary `a ? b`, `a ?: b`.
   - weirdly confusing, as if very important part is lost. Maybe just introduce elvis `a>b ? a=1` → `a<=b ?: a=1`
   - it has no definite returning type. What's the result of `(a ? b)`?
@@ -1310,13 +1313,13 @@
 
   ! ALT: can be done via early return as `(a ? b.; )`
 
-## [ ] mix, smoothstep operators
+## [ ] mix, smoothstep operators: `~*` for mix
 
   * `x -< a..b` defines clamping?
   * `a..b -> x` looks like function, but is possible
   * can be done via external lib
 
-## [x] Loops: ~~`i <- 0..10 <| a + i`, `i <- list <| a`, `[x <- 1,2,3 <| x*2]`~~ ~~`0..10 | i -> a + i`~~ `list |> # * 2;`
+## [x] Loops: ~~`i <- 0..10 <| a + i`, `i <- list <| a`, `[x <- 1,2,3 <| x*2]`~~ ~~`0..10 | i -> a + i`~~ ~~`list |> # * 2;`~~
 
   * `for i in 0..10 (a,b,c)`, `for i in src a;`
   * alternatively as elixir does: `item <- 0..10 a,b,c`
@@ -1472,6 +1475,92 @@
 
 ### [x] loops can return a value: `(isActive(it): action(it))` - the last result of action is returned
   + useful for many loop cases where we need internal variable result.
+
+## [ ] Loops 2.0: since requirements are new, what's meaningful look -> `i = a..b : do` and `..(i < 10)/0 : i++`
+
+  * `0..h |> (y,y1,y2)=(#,#+1,#+2)` doesn't look good in any form:
+  * `:` defines branch, as in `a ? b : c`
+  * we need named variable, using `#` in code isn't nice
+    * naming will also emphasize the variable is local & cannot be overwritten as `# = 123`
+  * `in` operator can be `a -< x..y` or `x..y -> a`
+  * we need piping as `out[..] |>= oscillator[shape](phase) |> adsr(#, 0, 0, .06, .24) |> curve(#, 1.82);`
+  * we need overwrite assignment
+  * for functions we use brackets to indicate arguments `fn(a,b,c)=(code)`
+  1. `from..to -> item : (code)`
+    * `0..h -> y : ( (y1,y2)=(y+1,y+2) )`
+    * ```
+        out[..] -> s : oscillator[shape](phase)
+          : adsr(s,0,0,.06,.24)
+          : curve(s, 1.82)
+      ```
+    - confusable with arrow function as `0..h | x -> ...`
+  2. `from..to | item -> (code)`
+    * `0..h | y -> ( (y1,y2)=(y+1,y+2) )`
+    * ```
+        out[..] | s -> oscillator[shape](phase)
+                | x -> adsr(x,0,0,.06,.24)
+                | x -> curve(x, 1.82)
+      ```
+  3. `from..to |> x: (code)`
+    * `0..h |> y : ( (y1,y2)=(y+1,y+2) )`
+    * ```
+        out[..] |> oscillator[shape](phase)
+                |> x: adsr(x,0,0,.06,.24)
+                |> x: curve(x, 1.82)
+      ```
+    + allows writes out
+  3.1 `x = from..to |> code |> dest[..]`
+  4. `from..to |x> (code)`
+    * `0..h |y> (y1, y2) = (y+1, y+2)`
+    * ```
+      out[..] |> oscillator[shape](phase)
+              |x> adsr(x,0,0,.06,.24)
+              |x> curve(x, 1.82)
+      ```
+  5. `from..to | x : (code)`
+    * `0..h | y : (y1, y2) = (y+1, y+2)`
+    * ```
+      out[..] |: oscillator[shape](phase)
+              |x: adsr(x, 0,0,.06,.24)
+              |x: curve(x, 1.82)
+      ```
+    + qualifies as pipe, branch, range, named var
+    + gives all benefits of `|:` operator
+    + matches elvis short notation `?:` as `|:`
+    + very short
+    + nicely combines short form `|:` with named form `| x :`
+      + allows unlimited loop form `.. |:`
+    + `a..b | i: ` reminds label, which is cool
+    -? rewrite is not the most elegant `a..b | i := c`
+  !6. `from..to ? value;` - this will run branch as many times.
+    + `from..to < 5 ? do;` - this will run from .. to
+  !7. `x = from..to : do;`
+    + no new operators
+    + organically uses ranges
+    * `y = 0..h : (y1, y2) = (y+1, y+2)`
+    * ```
+      x = out[..] := oscillator[shape](phase)
+              : adsr(x, 0,0,.06,.24)
+              : curve(x, 1.82)
+      ```
+    + pipe automatically rewrites x
+    -? `x..y : a ? b : c` - is that `(x..y : a ? b) : c` or `x..y : (a ? b : c)`
+    - not ideal pipe-write, eg `out[..] = i = out[..] : gen() : lp(i) : vol(i)`
+      ~ pipe can be `i = out[..] : (gen(); lp(i); vol(i)) `
+    - too similar to lambda fns: `fn = lambda x, y : x + y`
+      ~ we really need inverted order as `x..y ~> x : x + y`
+
+  7.1 `from..to -> i : do`, `from..to => x : do` or `from..to ~> item : do`
+    + `out[..] -> i : gen() : lp(i) : vol(i)`
+      - `dest[..] = src[..] -> i : gen() : lp() : vol()`
+    + reinforces notion of "element of"
+    -? keeps `x = from..to` unused
+
+  !8. `x < 10 ?? do;`
+    + more natural while .. do than `..(x < 10) / 0 : do;`
+    + includes "range" via two dots, kind of special range
+    - introduces new confusable single-purpose operator, too much.
+      ? Can we reuse ranges? mb a special range
 
 ## [x] ? Is there a way to multi-export without apparent `export` keyword for every function? -> `x,y,z.`
 
@@ -1726,7 +1815,7 @@
     + unnamed strings can be used to store program comments, removed by compiler
     ~ can conflict a-bit-ish with compiler directives
 
-## [x] Groups: basic operations -> syntax sugar
+## [x] Groups: what's that? -> just syntax sugar, not runtime construct like tuple
 
   * `a,b = b,a`
   * `a,b,c + d,e,f → (a+d, b+e, c+f)`
@@ -1750,7 +1839,7 @@
   . (a,b,c,d) = (a,b,..cd)
   . (a,..bcd) = e → a=e[0], bdc=e[1..]
 
-## [x] Groups: always-flat? yes, but pipe function accounts for number of args in mapper
+## [x] Groups: always flat? yes, but loop accounts for number of args in mapper
 
   * It seems nested grouping creates more syntax confusion than resolves, like `..combs | a -> comb(a,b,c) |> a,b -> a+b`.
     - not clear if that's supposed to pass a group or a single value.
@@ -1781,6 +1870,69 @@
         - no, pipe is not mapper...
         ? how do we map arrays then
           * list comprehension: i <- arr <| i * 10
+
+## [x] Comma / group precedence: a,b=c,d -> let's use more familiar flowy JS style a=1, b=2
+
+  1. `a,b=c,d` is `(a,b)=(c,d)`
+    + python style
+    + allows shothand nice swaps
+    - problem with fn arguments parsing `(a=1,b=2) => `
+    - unscoped groups make language a real line noise, very unusual pattern:
+      ```
+      y1, y2 = y+1, y+2;
+      y1, y2 >= height ? y1, y2 = height - 1;
+      ptr0, ptr1, ptr2 = y, y1, y2 * width;
+      ```
+
+  2. `a,b=c,d` is `(a),(b=c),(d)`
+    + js style
+    + more fluent imho
+    + allows function arguments
+    - forces group-assign be parenthesized (a,b,c) = (d, e, f)
+      - which is extra keystrokes
+      + that visually indicates groups better:
+      ```
+      (y1, y2) = (y+1, y+2);
+      (y1, y2) >= height ? (y1, y2) = height - 1;
+      (ptr0, ptr1, ptr2) = (y, y1, y2) * width;
+      ```
+        - maybe a bit too intensive grouping sometimes
+          + but easier to understand what's going on
+    + allows comma-style operations sequence, rather than python-like meaning, eg a++, b+=2, c=4,
+
+  3. Single assignment is group, multiple is seq: `a,b = c,d` vs `a=b, c=d`
+    + Allows unparented assignments `a,b=c,d;`
+    ? What are potential confusions?
+      - `a,b=c,d=e,f` - not allowed sequence of multiple assignments
+      - `c=d,e` as return member or elsewhere considers only `c` as return instead of `c=d, e`
+    - breaks regular parsing logic
+
+## [ ] Raise `,` precedence for groups? ->
+
+  - not having `()` around sequence can be misleading, `()` nicely delineates group
+  + `^ a,b,c` ~~`a,b,c.` - naturally done via `x ? a,b,c .` operator~~
+  + ~~`a,b,c |>`~~
+    + `i = a,b,c : x()`
+  + ~~`a,b,c -> a,b,c`~~
+    * we don't have arrow function anymore
+  + `x ? a,b,c;`
+  - `*a,b,c, d=1` vs `*(a,b,c), d=1;`
+    - `*` elements cannot be part of sequence
+  * generally `,` can be above all operators which cannot be part of group, eg. `^(a,b),c` is impossible
+
+## [x] Group ops: how? deconstruct to per-component ops with duplication
+
+  * Must not introduce any dynamic tax
+
+  1. Simple members: deconstruct to component ops
+    * `(a,b) >= h ? (a,b) = h-1`
+    * `(a>=h, b>=h) ? (a=h-1,b=h-1)`
+    * `(a>=h ? a=h-1, b>=h ? b=h-1)`
+
+  2. Complex multiple members: write to heap and multiply from it
+    * `(x ? a,b : c,d) * (y ? e,f : g,h);`
+    * `(... (x ? ^ a,b); ...; c,d) * y();` - where y returns multiple values also
+    * `(a <| @) * (b <| @);`
 
 ## [x] Convolver operator? -> let's try to hold on until use-case comes
 
@@ -3045,7 +3197,7 @@
       + complementary with `*` as `*a=0; /a++;`
         - reinforces meaning of opposites `*/`, which is not the case here
       + doesn't feel like part of identifier
-      - too many slashes `/a/b\\divide a by b`
+      - too many slashes `/a/b //divide a by b`
       - too strong association with something not-end, like `/imagine` or etc.
       - doesn't feel right typing `/` as meaning for defer.
     * `x() = (&a; b,c; &d)`
@@ -3095,7 +3247,7 @@
         ~ loop has never defers (?)
         ? can we change loop to `?>`, so it means "until condition holds, defer code"
       - a bit heavy, ruby-like, unfamiliar vibe
-    * `x() = (*i=0;>>|i++)`
+    * `x() = (*i=0;>|i++)`
       + `skip forward`
       - too many symbols
       - somehow related to pipes
@@ -3112,8 +3264,10 @@
       + includes notion of "double", like double hash `//` in it
         ? is that why python uses # instead of // for comment?
       + associates with comment, something that comes "after"
-    * `x() = (*i=0;::i++;)`, `x()=(::a; b,c,; ::d;)`, `x(a) = (::log(a); ::a+=1; a)`
+    * `x() = (*i=0::i++;)`, `x()=(::a; b,c,; ::d;)`, `x(a) = (::log(a); ::a+=1; a)`
       - noisy
+      + meaningful in semantic sense (after all ops)
+        - not really. `a : : b` means do it once now
     * `x() = (*i=0;:i++;)`, `x()=(:a; b,c,; :d;)`, `x(a) = (:log(a); :a+=1; a)`
       + 1-character only
       + kind-of matches meaning of labels in JS
@@ -3282,7 +3436,7 @@
     + allows fast direct static ranges easily
     + removes tacky problems: ranges combination, min/max reading (since they're immediately available)
 
-## [x] Drop ints and use only f64? -> let's try to use only f64 for variables
+## [x] Drop ints and use only f64? -> let's try to use only f64 for variables, but operands cast to types
 
   + waay less code
   + no type conversion question, since values are floats always
@@ -3323,45 +3477,6 @@
     - not really, mistakes accumulate
   + more cross-platform compatible
   - not really
-
-## [x] Comma operator precedence: a,b=c,d -> let's use more familiar flowy JS style a=1, b=2
-
-  1. a,b=c,d -> (a,b)=(c,d)
-
-  + python style
-  + allows shothand nice swaps
-  - problem with fn arguments parsing `(a=1,b=2) => `
-  - unscoped groups make language a real line noise, very unusual pattern:
-    ```
-    y, y1, y2 = #, #+1, #+2;
-    y1, y2 >= height ? y1, y2 = height - 1;
-    ptr0, ptr1, ptr2 = y, y1, y2 * width;
-    ```
-
-  2. a,b=c,d -> (a),(b=c),(d)
-
-  + js style
-  + more fluent imho
-  + allows function arguments
-  - forces group-assign be parenthesized (a,b,c) = (d, e, f)
-    - which is extra keystrokes
-    + that visually indicates groups better:
-    ```
-    (y, y1, y2) = (#, #+1, #+2);
-    (y1, y2) >= height ? (y1, y2) = height - 1;
-    (ptr0, ptr1, ptr2) = (y, y1, y2) * width;
-    ```
-      - maybe a bit too intensive grouping sometimes
-        + but easier to understand what's going on
-  + allows comma-style operations sequence, rather than python-like meaning, eg a++, b+=2, c=4,
-
-  3. Single assignment is group, multiple is seq: `a,b = c,d` vs `a=b, c=d`
-
-  + Allows unparented assignments `a,b=c,d;`
-  ? What are potential confusions?
-    - `a,b=c,d=e,f` - not allowed sequence of multiple assignments
-    - `c=d,e` as return member or elsewhere considers only `c` as return instead of `c=d, e`
-  - breaks regular parsing logic
 
 ## [x] Should var scope be defined by parens `(x=1;(y=2;);y)` or by function? -> use per-function scope
 
@@ -4378,18 +4493,6 @@
       ~ so `label:` works more as part of block/group as `(name: a,b,c)` rather than individual items.
         + which makes sense in terms of importing `@modul:a,b,c`
 
-## [x] Raise `,` precedence? -> deal with `?` and `|>` only for intuition
-
-  - not having `()` around sequence can be misleading, `()` nicely delineates group
-  + ~~`^ a,b,c`~~ `a,b,c.` - naturally done via `x ? a,b,c .` operator
-  + `a,b,c |>`
-  + ~~`a,b,c -> a,b,c`~~
-    * we don't have arrow function anymore
-  + `x ? a,b,c;`
-  - `*a,b,c, d=1` vs `*(a,b,c), d=1;`
-    - `*` elements cannot be part of sequence
-  * generally `,` can be above all operators which don't cannot be part of group, eg. `^(a,b),c` is impossible, as well as `a,b`
-
 ## [x] Control flow blocks: loop, condition -> deal with precedence of `|>` and `?` operators only, they're lower than commas.
 
   * these are apparently a separate syntax group
@@ -4472,7 +4575,7 @@
     + allows merging analyser into 1-pass compiler
     + retains precision
 
-## [ ] mix, smoothstep operators ->
+## [x] mix, smoothstep operators -> normalize is `a ~/ x..y`, mix is `a ~* x..y`
 
   * `x -< a..b` defines clamping?
   * `x -/ a..b` for smoothstep?
@@ -4505,6 +4608,8 @@
   * `x <= a..b`
     - can be used to compare ranges
 
+### [ ] Smoothstep operator?
+
 ## [x] how do we represent infinity? -> `1/0`, `0/0`
 
   * `oo`
@@ -4518,7 +4623,7 @@
     + even simpler and more mathy
     + reminds actual infinity sign
 
-## [x] exclusive / non-inclusive range: how? -> use `0..10` as exclusive, operators decide inclusivity like `a <= 0..10`
+## [x] exclusive / non-inclusive range: how? -> use `0..10` as exclusive, operators decide inclusivity
 
   * `0..<10`, `0<..10`
     - `0 > ..10`, `0.. < 10`
@@ -4539,6 +4644,7 @@
     + more laconic kind of
   * inclusive as `0..=10`, `0..10` is exclusive
     - `=` has wrong association, there must be `<`
+    - `a.. = 10`
     + `Rust` has that
     + open-right range seems to be ubiquotous & mathematically standard
     -~ clamp is weird: `x <? 0..=10`
@@ -4554,7 +4660,7 @@
     + `+` has no meaning as operator anyways
     - `10..-+10` vs `10..+-10` is weird, vs `10..=-10`
 
-## [x] replace `x -< 0..10` with `x =< 0..10`? -> ~~clamp is `x <? 0..10`~~ clamp is `x ~ 0..10`
+## [x] replace clamp `x -< 0..10` with clamp-assign `x =< 0..10`? -> ~~clamp is `x <? 0..10`~~ clamp is `x ~ 0..10`
 
   ? do we ever need `clamp(x, 0, 10)`, opposed to `x = clamp(x, 0, 10)`?
     + it seems from examples we always `x = clamp(x, 0..10)`
@@ -4594,7 +4700,7 @@
   + Converts back to f64 on export
   + Gives extreme precision/dimension
 
-## [ ] min, max, clamp as `a <? 0..100`? ~~yes~~ keep `a <= 0..100` for in, and `a ~ 0..100` for clamp
+## [x] min, max, clamp as `a <? 0..100`? ~~yes~~ ~~keep `a <= 0..100` for in, and~~ `a ~ 0..100` for clamp
 
   * `a |< ..10`, `a >| 10` for
   * can be solved via clamp operator `a <> ..10`, `a <> 10..`
@@ -4630,11 +4736,11 @@
     + it is very natural
     - `a ~= 10` can be almost equal
       ~+ we remake almost equal to `a <= (from-f32)..(from+f32)`
+      + or better from-f32 < a < from+f32
     + makes sense as `a ~/ 0..10` for normalize, `a ~* 0..10` for lerp
     + enables definitions like `x = 10 ~ 0..10;`
     ? what about smoothstep
       ~ likely we'd need to have a range modifier, eg. `x = 10 ~ 0..10**0.2`
-
 
 ## [x] Create empty array - how? -> `[..10]` since range is exclusive
 
@@ -4704,7 +4810,7 @@
     + defines arguments to skip
   + removes questions, merges pattern
 
-## [x] How to create sublist/subarray? -> @latr.sublist or directly math `y+=2;y[]-=2;`
+## [x] How to create sublist/subarray? -> @latr.sublist or directly math `y+=2; y[]-=2;`
 
   * `x[] = y[1,2..3]`
     - syntactically creates copy of y
@@ -4736,7 +4842,7 @@
     * that's just math trick, not actual operator.
     * that's why we can wrap it into `@latr.subarray(x, start, end)`
 
-## [ ] Range step: how
+## [ ] Range step
 
   * `[0..+10..0.5]`
   * `[0..0.5..+10]`
@@ -4756,7 +4862,7 @@
     + compatible with range modifiers
     - can be confusable with `(0,1,2,3,4,...) + 0.01`
 
-## [ ] Range modifiers: how, when?
+## [ ] Range modifiers:
 
   * `0..100 ** 0.01`
     * `a ~ 0..100 ** .01` - maps to pow range?
@@ -5109,20 +5215,6 @@
   * `(a,b,c |> ^*2) + 1;` produces group
   + allows better precedence
 
-## [x] Group ops: how? deconstruct to per-component ops with duplication
-
-  * Must not introduce any dynamic tax
-
-  1. Simple members: deconstruct to component ops
-    * `(a,b) >= h ? (a,b) = h-1`
-    * `(a>=h, b>=h) ? (a=h-1,b=h-1)`
-    * `(a>=h ? a=h-1, b>=h ? b=h-1)`
-
-  2. Complex multiple members: write to heap and multiply from it
-    * `(x ? a,b : c,d) * (y ? e,f : g,h);`
-    * `(... (x ? ../ a,b); ...; c,d) * y();` - where y returns multiple values also
-    * `(a <| @) * (b <| @);`
-
 ## [x] pow, stdlib -> compiled
 
   1. https://chromium.googlesource.com/external/github.com/WebAssembly/musl/+/landing-branch/src/math
@@ -5255,7 +5347,6 @@
       - not as nice for multiline
   - not convinced yet, way too fancy
   - no obvious way to write to destination
-
 2. `|>`
   + looks like play
   + indicates direction
@@ -5284,3 +5375,49 @@
 
 * research was done somewhere here, but keyword "void" wasn't used, so to clarify
 - same as elvis `a ?: b` is not void, this is not void
+
+## [ ] Element of range: `a in b`?
+
+* Range can be iterable, so comparison can cause evaluation
+
+0. `x < 0..2`
+  - `x < 0..2` is `x < 0, x < 1`
+1. `x ~< from..to`, `x ~< a,b,c`
+  - `x <~ from..to` is `x < ~from..to`
+    + `from..to ~> x`
+  - conflicts with `x ~ from..to` for just clamp
+  - heavy
+  - doesn't play well with sets
+  + logical in a sense referring to `~` for ranges
+2. `from < x < to`
+  - makes comparison nary operator
+  - destroys range, meaning it cannot be calculable
+  - doesn't play with sets
+3. `x = from..to ? ^`
+4. `x <> from..to`
+  - wrong direction of `>`
+4.1 `x >< from..to`, `x ><= from..to`, `x >< a,b,c`
+  + right direction of operands `x > from && x < to`
+  - refers to intersection
+5. `from..to -> x`, `a,b,c -> x`
+  + follows https://en.wikipedia.org/wiki/Element_(mathematics)
+  ?+ can be used for loops: `x[..] -> i : i+1 : i + 2 => x[..]`
+    - conflict with `i = a,b,c : i**2`
+6. `a ==|| (b,c,d)` for set comparison
+  + `a == b || a == c || a == d`
+  - non-conventional use joined operator, usually that's assignment
+7. `a ?:== (b,c,d)`
+8. `a -| b..c`
+9. `a <: b..c`, `a <=: b..c`
+9.1 `a :< b..c`, `a :<= b..c`
+
+## [ ] Write out operator `x[..] : a : b : x[..]`
+
+* we need it for copying loops or redirection, since `a = b` is not always the most useful
+1. `a..b -> x[..]`
+1.1 `a..b => x[..]`
+  - conflict with arrow fns
+2. `a..b := x[..]`
+  - reads as `a..b : a..b = x[..]`
+2.1 `a..b =: x[..]`
+  - breaks end pipe alignment

@@ -15,15 +15,16 @@
 
 ## Stage 1
 
-* [ ] update subscript
+* [x] update subscript
+* [ ] fix parsing
 * [ ] detect expected number of returns from operation so it may have internal optimization.
-  * [ ] merge `<|` and `|>` into `|>`
-* [ ] precedence of `,` over `x ? a,b,c;` and `a,b,c |>`
+* [ ] implement `i = from..to : do`
+* [ ] precedence of `,` over `x ? a,b,c;` and `a,b,c :`
 * [x] get rid of `.` (less = more)
 * [x] make use of `^`, `^^`, `^^^`
-* [ ] make use of `#` topic placeholder
-* [ ] ~/, ~*
-* [ ] ~, ~=
+* [ ] ~~make use of `#` topic placeholder~~
+* [ ] `~/, ~*`
+* [ ] `~, ~=`
 * [ ] all readmes test
   * [x] inline global consts
   * [ ] standard operators
@@ -132,7 +133,6 @@
   * [ ] Audio gain example
   * [ ] Sine gen example
 * [ ] Ignore unassigned immediate constructs like `[1,2,3]` or `"abc"`.
-* [ ]
 
 ## MVP
 
@@ -157,7 +157,10 @@
   * [ ] https://github.com/stellartux/websynth
   * [ ] https://github.com/radavis/bytebeat
 
-* [ ]
+* [ ] Targets
+  * [ ] WASM
+  * [ ] WebGL
+  * [ ] JS
 
 ## 2
 

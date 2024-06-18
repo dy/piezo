@@ -1,4 +1,4 @@
-# mel ![stability](https://img.shields.io/badge/stability-experimental-black)
+# melo ![stability](https://img.shields.io/badge/stability-experimental-black)
 
 Micro language for floatbeats and audio with smooth operator and organic sugar.<br/>
 Compiles to compact 0-runtime WASM with linear memory.<br/>
@@ -19,12 +19,11 @@ Compiles to compact 0-runtime WASM with linear memory.<br/>
 <<< >>>                       // rotate left, right
 && || !                       // logical
 > >= < <= == !=               // comparisons (boolean)
-?: ? ?= ?:=                   // conditions
-x[i] x[]                      // member access, length
-a..b                          // range
+?: ? :                        // conditions, loops
+a..b                          // ranges
 ~ ~= ~/ ~*                    // clamp, normalize, lerp
 ^ ^^ ^^^                      // continue, break, return
-|> #                          // loop, item
+x[i] x[]                      // member access, length
 
 //////////////////////////////// variables
 foo=1, bar=2.0;               // declare vars
@@ -49,16 +48,16 @@ foo();                        // semi-colons are mandatory
 (((a ? ^^^; c); d); e);       // break to the root scope
 
 //////////////////////////////// conditions
-a ? b;                        // if a then b (single-branch conditional)
+a ? b;                        // if a then b (question operator)
+a ?: b;                       // if not a then b (elvis operator)
 sign = a < 0 ? -1 : +1;       // ternary conditional
 (2+2 >= 4) ? log(1) :         // multiline/switch
   3 <= 1..2 ? log(2) :        // else if
   log(3);                     // else
 a && b || c;                  // (a and b) or c
-a <= (b-.1)..(b+.1);          // if a almost equal b (0.1 tolerance)
 
 //////////////////////////////// groups
-a, b=1, c=2;                  // declare
+(a, b=1, c=2);                // declare
 (a, b, c)++;                  // (a++, b++, c++)
 (a,b,c) = (d,e,f);            // assign (a=d, b=e, c=f)
 (a,b) = (b,a);                // swap
@@ -66,53 +65,51 @@ a, b=1, c=2;                  // declare
 (a,b)[1] = c[2,3];            // props: (a[1]=c[2], b[1]=c[3])
 (a,b,c) = d;                  // duplicate: (a, b, c) = (d, d, d);
 (a,,b) = (c,d,e);             // skip: (a=c, d, b=e);
+a = (b,c,d);                  // a=b; a=c; a=d; (see loops)
 
 //////////////////////////////// ranges
 0..10;                        // from 1 to 9 (10 exclusive)
 0.., ..10, ..;                // open ranges
 10..1;                        // reverse range
 1.08..108.0;                  // float range
-(x-1)..(x+1);                 // calculated ranges
-a,b,c = 0..3;                 // a=0, b=1, c=2
-x < 0..10;                    // is x in 0..10 range, 10 exclusive
-x >= 0..10;                   // is x out 0..10 range, 10 inclusive
-(-10..10)[];                  // range span 20
-x ~ 0..10; x ~= 0..10;        // clamp(x, 0, 10); x = clamp(x, 0, 10);
-x ~/ 0..10; x ~* 0..10;       // normalize(x, 0, 10); lerp(x, 0, 10)
+(a-1)..(a+1);                 // computed range
+a,b,c = 0..3 * 2;             // a=0, b=2, c=4
+a ~ 0..10; a ~= 0..10;        // clamp(a, 0, 10); a = clamp(a, 0, 10);
+a ~/ 0..10; a ~* 0..10;       // normalize(a, 0, 10); lerp(a, 0, 10)
 
 //////////////////////////////// arrays
 m = [..10];                   // array of 10 elements
-m = [..10 |> 2];              // filled with 2
+m = [..10 : 2];               // filled with 2
 m = [1,2,3,4];                // array of 4 elements
-m = [n[0..]];                 // copy n
+m = [n[..]];                  // copy n
 m = [1, 2..4, 5];             // mixed definition
 m = [1, [2, 3, [4]]];         // nested arrays (tree)
-m = [0..4 |> # * 2];          // list comprehension
+m = [i = 0..4 : i ** 2];      // list comprehension
 (first, last) = (m[0], m[-1]);// get by index
 (second, ..last) = m[1, 2..]; // get multiple values
 length = m[];                 // get length
 m[0] = 1;                     // set value
 m[2..] = (1, 2..4, n[1..3]);  // set multiple values from offset 2
-m[0..] = 0..4 |> # * 2        // set via iteration
-m[1,2] = m[2,1];              // rearrange
+m[0..] = 0..4 * 2;            // set from range
+m[1,2] = m[2,1];              // swap
 m[0..] = m[-1..0];            // reverse order
 m[0..] = m[1..,0];            // rotate
+min ~=..m[..], max ~=m[..]..; // find min/max in array
 
 //////////////////////////////// loops
-a, b, c |> f(#);              // for each a, b, c do f(item)
-10.. |> (                     // descend over range
-  # < 5 ? ^;                  // if item < 5 continue
-  # < 0 ? ^^;                 // if item < 0 break
+i = a, b, c : f(i);           // for each item in a, b, c do f(item)
+i = 10.. : (                  // descend over range
+  i < 5 ? ^;                  // if item < 5 continue
+  i < 0 ? ^^;                 // if item < 0 break
 );                            //
-items[..] |> f(#);            // iterate over array
-items[..] |> f(#) |> g(#);    // pipe
-0..w |> (                     // nest iterations
-  x = #;                      // assign top-level item
-  0..h |> f(x, #);            // f(x,y)
+i = x[..] : f(i) : g(i);      // sequence of ops
+y[..] = (i = x[..] : i * 2);  // write to destination
+i = 0..w : (                  // nest iterations
+  j = 0..h : f(i, j);         // f(x,y)
 );                            //
-(x,,y) = a, b, c |> #;        // x = a, y = c;
-x[3..5] |>= # * 2;            // overwrite source
-.. |> (i >= 10 ? ^; f(i++));  // while i < 10 do f(i++)
+(x,,y) = (i = a,b,c : i * 2); // x = a * 2, y = c * 2;
+..: i < 10 ? i++ : ^;         // while i < 10 i++
+..(i < 10) / 0 : i++;         // alternative while
 
 //////////////////////////////// functions
 double(n) = n*2;              // define a function
@@ -176,15 +173,16 @@ gain(                              // define a function with block, volume argum
   block,                           // block is a array argument
   volume ~ 0..100                  // volume is limited to 0..100 range
 ) = (
-  block[..] |>= # * volume         // multiply each sample by volume value
+  block[..] =
+    i = block[..] : i * volume     // multiply each sample by volume value
 );
 
-gain([0..5 |> # * 0.1], 2);        // 0, .2, .4, .6, .8, 1
+gain([0..5 * 0.1], 2);             // 0, .2, .4, .6, .8, 1
 
-gain.                              // export gain function
+gain                               // export gain function
 ```
 
-Minifies as `gain(b,v)=b|>=#*v.`
+Minifies as `gain(b,v)=b[..]=i=b[..]:i*v`
 
 </details>
 
@@ -206,7 +204,7 @@ lpf(                               // per-sample processing function
 ) = (
   *(x1, y1, x2, y2) = 0;           // define filter state
 
-// lpf formula
+  // lpf formula
   w = 2pi * freq / 1s;
   (sin_w, cos_w) = (sin(w), cos(w));
   a = sin_w / (2.0 * Q);
@@ -224,9 +222,9 @@ lpf(                               // per-sample processing function
   y0                               // return y0
 );
 
-// [0, .1, .3] |> lpf(#, 108, 5);
+// i = [0, .1, .3] : lpf(i, 108, 5);
 
-lpf.                               // export lpf function, end program
+lpf                                // export lpf function, end program
 ```
 
 </details>
@@ -250,7 +248,7 @@ oscillator = [
 // applies adsr curve to sequence of samples
 adsr(
   x,
-  a ~= 1ms..,                    // prevent click
+  a ~ 1ms..,                     // prevent click
   d,
   (s, sv=1),                     // optional group-argument
   r
@@ -273,7 +271,7 @@ adsr(
 );
 
 // curve effect
-curve(x, amt<=0..10=1.82) = (sign(x) * abs(x)) ** amt;
+curve(x, amt~0..10=1.82) = (sign(x) * abs(x)) ** amt;
 
 // coin = triangle with pitch jump, produces block
 coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
@@ -282,10 +280,13 @@ coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
   *phase = 0;                    // current phase
   t = i / 1s;
 
-// generate samples block, apply adsr/curve, write result to out
-  out[..] |>= oscillator[shape](phase)
-          |> adsr(#, 0, 0, .06, .24)
-          |> curve(#, 1.82);
+  // generate samples block, apply adsr/curve, write result to out
+  out[..] = (
+    i = out[..]
+      : oscillator[shape](phase)
+      : adsr(i, 0, 0, .06, .24)
+      : curve(i, 1.82)
+  );
 
   i++;
   phase += (freq + (t > delay && jump)) * 2pi / 1s;
@@ -310,13 +311,13 @@ coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
 // TODO: stretch
 
 reverb(input, room=0.5, damp=0.5) = (
-  *combs_a = a0,a1,a2,a3 | a -> stretch(a),
-  *combs_b = b0,b1,b2,b3 | b -> stretch(b),
-  *aps = p0,p1,p2,p3 | p -> stretch(p);
+  *combs_a = a0,a1,a2,a3 | a: stretch(a),
+  *combs_b = b0,b1,b2,b3 | b: stretch(b),
+  *aps = p0,p1,p2,p3 | p: stretch(p);
 
   combs = (
-    (combs_a | x -> comb(x, input, room, damp) |> (a,b) -> a+b) +
-    (combs_b | x -> comb(x, input, room, damp) |> (a,b) -> a+b)
+    (combs_a | x -> comb(x, input, room, damp) |: (a,b) -> a+b) +
+    (combs_b | x -> comb(x, input, room, damp) |: (a,b) -> a+b)
   );
 
   (combs, aps) | (input, coef) -> p + allpass(p, coef, room, damp)
@@ -326,7 +327,7 @@ reverb(input, room=0.5, damp=0.5) = (
 Features:
 
 * _multiarg pipes_ − pipe can consume groups. Depending on arity of target it can act as convolver: `a,b,c | (a,b) -> a+b` becomes  `(a,b | (a,b)->a+b), (b,c | (a,b)->a+b)`.
-* _fold operator_ − `a,b,c |> fn` acts as `reduce(a,b,c, fn)`, provides efficient way to reduce a group or array to a single value.
+* _fold operator_ − `a,b,c |: fn` acts as `reduce(a,b,c, fn)`, provides efficient way to reduce a group or array to a single value.
 
 ### [Floatbeat](https://dollchan.net/bytebeat/index.html#v3b64fVNRS+QwEP4rQ0FMtnVNS9fz9E64F8E38blwZGvWDbaptCP2kP3vziTpumVPH0qZyXzfzHxf8p7U3aNJrhK0rYHfgHAOZZkrlVVu0+saKbd5dTXazolRwnvlKuwNvvYORjiB/LpyO6pt7XhYqTNYZ1DP64WGBYgczuhAQgpiTXEtIwP29pteBZXqwTrB30jwc7i/i0jX2cF8g2WIGKlhriTRcPjSvcVMBn5NxvgCOc3TmqZ7/IdmmEnAMkX2UPB3oMHdE9WcKqVK+i5Prz+PKa98uOl60RgE6zP0+wUr+qVpZNsDUjKhtyLkKvS+LID0FYVSrJql8KdSMptKKlx9eTIbcllvdf8HxabpaJrIXEiycV7WGPeEW9Y4v5CBS07WBbUitvRqVbg7UDtQRRG3dqtZv3C7bsBbFUVcALvwH86MfSDws62fD7CTb0eIghE/mDAPyw9O9+aoa9h63zxXl2SW/GKOFNRyxbyF3N+FA8bPyzFb5misC9+J/XCC14nVKfgRQ7RY5ivKeKmmjOJMaBJSbEZJoiZZMuj2pTEPGunZhqeatOEN3zadxrXRmOw+AA==)
 
@@ -384,14 +385,14 @@ See [all examples](/examples)
 
 ## Usage
 
-_mel_ is available as CLI or JS package.
+_melo_ is available as CLI or JS package.
 
-`npm i mel`
+`npm i melo`
 
 ### CLI
 
 ```sh
-mel source.mel -o dest.mel
+melo source.me -o dest.me
 ```
 
 This produces compiled WASM binary.
@@ -399,7 +400,7 @@ This produces compiled WASM binary.
 ### JS
 
 ```js
-import mel from 'mel'
+import melo from 'melo'
 
 // create memory buffer (optional)
 const memory = new WebAssembly.Memory({
@@ -408,7 +409,7 @@ const memory = new WebAssembly.Memory({
 });
 
 // create wasm arrayBuffer
-const buffer = mel.compile(`
+const buffer = melo.compile(`
   n=1;
   mult(x) = x*PI;
   arr=[1, 2, sin(1.08)];
@@ -447,20 +448,22 @@ const arrValues = new Float64Array(memory, arr.value, 3)
 
 ## Motivation
 
-_Web Audio API_ has unpredictable pauses, glitches and so on, so <q>audio is better handled in WASM worklet</q> ([@stagas](https://github.com/stagas)).<br/>
-Audio processing in general has no cross-platform solution, various environments deal with audio differently, some don't have audio processing at all.<br/>
-_mel_ is personal take on what would no-bs language would look like.
-It compiles to WASM to enable it for browsers, [audio worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) and any other env with wasm.<br/>
+_Melo_ is personal take on what would smooth language look like.
+It has narrow focus by design - audio processing & DSP, mainly to give advantage over JS / Web Audio in terms of performance & memory.
 
+_Web Audio API_ is unreliable - it has unpredictable pauses, glitches and so on, so <q>audio is better handled in WASM worklet</q> ([@stagas](https://github.com/stagas)). Besides that, audio processing in general has no cross-platform solution, various environments deal with audio differently, some don't have audio processing at all. Good old audio code gets dated, in 20 years most of the soft is unable to run.
+
+So _melo_ attempts to fill that gap, trying to provide a standard foundation layer.
+It compiles to WASM to enable it for browsers, [audio/worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) and any envs with WASM support. In the future it aims at GL and JS as compile targets.
 
 <!--
 ### Principles
 
-* _Expressive_: common familiar expressions syntax, useful language patterns like range clamping, group operations etc.
-* _No-keywords_: word means variable, symbol means operator. Allows truly i18l code.
-* _Case-agnostic_: changing case doesn't break code: URL-safe. Typo-proof, eg. no `sampleRate` vs `samplerate` mistake.
+* _0 entry_: common syntax, intuitive patterns, simplicity.
+* _No keywords_: word means variable, symbol means operator - allows truly i18l code.
+* _No types_: type is defined by operator – better focus on logic rather than language.
 * _Space-agnostic_: spaces/newlines (excluding comments) can be safely removed or added, eg. for compression or prettifying.
-* _No types_: type is internal feature defined by operator. Focus on processing logic rather than language.
+* _Case-agnostic_: changing case doesn't break code: URL-safe. Typo-proof, eg. no `sampleRate` vs `samplerate` mistake.
 * _0 runtime_: statically analyzable, no OOP, no structures, no lamda functions, no dynamic scopes.
 * _Explicit_: no implicit globals, no import-alls, no file conventions (like package.json).
 * _Low-level_: no fancy features beyond math and buffers.
