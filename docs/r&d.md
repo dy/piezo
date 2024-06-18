@@ -332,18 +332,18 @@
     + рёв
   * waev
 
-## Free operators
+## [ ] Free operators
 
   * `<>`, `><`
     ~-- not always available
   * `::`
-  * ~~`-<`, `=<`, `~<`~~
-  * `-/`, `=/`, `~/`
+  * `-<`, `=<`, `~<`
+  * `-/`, `=/`, ~~`~/`~~
   * `-|`, `=|`, `~|`
-  * `-\`, `=\`, `~\`
-  * `=>`, `~>`
+  * ~~`-\`, `=\`, `~\`~~
+  * `=>`, `~>`, `->`
   * `''`, ``
-  * `?=`, `~=`
+  * `?=`, `:=` ~~`~=`~~
 
 ## [x] WAT, WASM? All targets
 
@@ -4850,21 +4850,24 @@
 
 ## [ ] Range step
 
-  * `[0..+10..0.5]`
-  * `[0..0.5..+10]`
+  * `[-10..10..0.5]`
+  * `[-10..0.5..10]`
     - `[20..0.5..+-20]`
-  * `[0..10 : 0.5]`
-    - ~~conflicts with~~
+  * ~~`[0..10 : 0.5]`~~
+    - directly loop
     + possible, : is free now
     + similar to type definition, but more meaningful
     - conflicts with brainching `?:` - meaning "code after branch"
     ? can be used as stride in mem reading as uint8? `x = y[2:u8]`
-  * `[0..20 <| @*0.5]`
+  * `[i=0..20 : i*0.5]`
     - very verbose
-  * `[0..10 / 0.01]`
+  * `0..20 += .01 : `
+    - each member is increased by .01
+  * `0..20 ~| 1`, `0..20 |~ 1`
+  * ~~`[0..10 / 0.01]`~~
     + recommended by gpt
     - divides each item from range by 0.01
-  * `[0..10 + 0.01]`
+  * ~~`[0..10 + 0.01]`~~
     + compatible with range modifiers
     - can be confusable with `(0,1,2,3,4,...) + 0.01`
 
@@ -4873,6 +4876,7 @@
   * `0..100 ** 0.01`
     * `a ~ 0..100 ** .01` - maps to pow range?
       + reinforces meaning of max operator, which is nice
+    - pows each member
 
 ## [ ] Early return: how to consolidate type? -> just enforce f64 for now for early returns
 
