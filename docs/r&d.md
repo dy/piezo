@@ -1631,7 +1631,7 @@
   + `x -<= 0..10` is just a nice construct
   -  `x <- y` vs `x < -y`
 
-## [x] Comments: `//`, `/*` vs `;;` and `(; ;)` → `//` is safest choice. ~~`\\` gives too many benefits~~
+## [x] Comments: `//`, `/*` vs `;;` and `(; ;)` → ~~`//` is safest choice.~~ `\\` gives too many benefits
 
   1. `;;`
   + ;; make more sense, since ; is separator, and everything behind it doesn't matter
@@ -1727,16 +1727,17 @@
   + association with "escape" sequence in strings
   - if strings come in (likely yes), then select-alling comments will select a bunch of escapes
     ~ can be `\\`
-  + cooler than `;;`
-    + `\` is cool
-  + looks fresh directionally, shadow effect `\\\\\\\\\\\\\\\\\\\\\\\\\`
-    + shadow makes sense as comments hide in "shadow" of real code
+    ~ escapes are rare
   - possible conflict with string escapes
     + can be resolved with `\\`
       + creates clear separation of "comments" area
     + `;;` can as well have conflict with strings, that's not a feature of this comment
       - string escapes are more likely
     + strings in JS/anywhere ignore comments
+  + cooler than `;;`
+    + `\` is cool
+  + looks fresh directionally, shadow effect `\\\\\\\\\\\\\\\\\\\\\\\\\`
+    + shadow makes sense as comments hide in "shadow" of real code
   - syntax highlighters don't know that
     ~ neither `;;`
     - maintaining all possible highlighters can be a lifetime effort
@@ -1744,19 +1745,24 @@
     ~+ not so heavy, can be done once
     ~+ existing highlighters don't know melo anyways
   - takes primary semantic meaning, rather than "safe" secondary meaning
-  ?- what's inline pairing? `\* *\`?
-    + `\ inline comment \`
+  ?- what's inline pairing?
+    * `\* *\`?
+    * `\ inline comment \`
+      -~ prohibits-ish `\\ abc`, `\\\\\\\ abc \\\\\\\`
   - sometimes ascii art includes these - becomes cumbersome
     ~ can be `\\`
+    + comments become part of ascii art which is cool
   - `\\`` is pessimist comment, // is optimist
     ~ not necessarily bad
   + not confusable with http://
   + allows `-//`, `//` operators
     ~ we don't need them as much, `-//` is not best choice anyways
   - writing that comment by hand requires escaping each of these, so comment becomes `\\\\`
-  - maybe too much if all programs will use that, that's a bit weird
+    ~+ just `\` is good enough
   - too ground-breaking
+    ~+ maybe that's good
   - complicates copy-paste
+    ~ not so much
 
   4. `/* */`
   + popular (CSS, C-family, PHP, Swift, Kotlin, Java, JS)
