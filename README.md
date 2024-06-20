@@ -19,11 +19,12 @@ Compiles to compact 0-runtime WASM with linear memory.<br/>
 <<< >>>                      \\ rotate left, right
 && || !                      \\ logical
 > >= < <= == !=              \\ comparisons (boolean)
-?: ? :                       \\ conditions, loops
+?: ?                         \\ conditions
 a..b                         \\ ranges
 ~ ~= ~/ ~* ~// ~**           \\ clamp, normalize, lerp
 ^ ^^ ^^^                     \\ continue, break, return
 x[i] x[]                     \\ member access, length
+|> %                         \\ pipe, loop
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ variables
 foo=1, bar=2.0;              \\ declare vars
@@ -80,12 +81,12 @@ a ~// 0..10; a ~** 0..10;    \\ smoothstep(a, 0, 10); ismoothstep(a, 0, 10);
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ arrays
 m = [..10];                  \\ array of 10 elements
-m = [..10 : 2];              \\ filled with 2
+m = [..10 |> 2];             \\ filled with 2
 m = [1,2,3,4];               \\ array of 4 elements
 m = [n[..]];                 \\ copy n
 m = [1, 2..4, 5];            \\ mixed definition
 m = [1, [2, 3, [4]]];        \\ nested arrays (tree)
-m = [i = 0..4 : i ** 2];     \\ list comprehension
+m = [i = 0..4 |> i ** 2];    \\ list comprehension
 (first,last) = (m[0], m[-1]);\\ get by index
 (second, ..last) = m[1, 2..];\\ get multiple values
 length = m[];                \\ get length
@@ -98,19 +99,19 @@ m[0..] = m[1..,0];           \\ rotate
 min ~=..m[..], max ~=m[..]..;\\ find min/max in array
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ loops
-i = a, b, c : f(i);          \\ for each item in a, b, c do f(item)
-i = 10.. : (                 \\ descend over range
+i = a, b, c |> f(i);         \\ for each item in a, b, c do f(item)
+i = 10.. |> (                \\ descend over range
   i < 5 ? ^;                 \\ if item < 5 continue
   i < 0 ? ^^;                \\ if item < 0 break
 );                           \\
-i = x[..] : f(i) : g(i);     \\ sequence of ops
-y[..] = (i = x[..] : i * 2); \\ write to destination
-i = 0..w : (                 \\ nest iterations
-  j = 0..h : f(i, j);        \\ f(x,y)
+x[..] |> f(%) |> g(%);       \\ sequence of ops
+x[..] |> % * 2 |> y[..];     \\ write to destination
+i = 0..w |> (                \\ nest iterations
+  j = 0..h |> f(i, j);       \\ f(x,y)
 );                           \\
-(x,,y) = (i = a,b,c : i * 2);\\ x = a * 2, y = c * 2;
-..: i < 10 ? i++ : ^;        \\ while i < 10 i++
-..(i < 10) / 0 : i++;        \\ alternative while
+(x,,y) = (a,b,c |> % * 2);   \\ x = a * 2, y = c * 2;
+.. |> i < 10 ? i++ : ^;      \\ while i < 10 i++
+..(i < 10) / 0 |> i++;       \\ alternative while
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ functions
 double(n) = n*2;             \\ define a function
@@ -174,8 +175,9 @@ gain(                             \\ define a function with block, volume argume
   block,                          \\ block is a array argument
   volume ~ 0..100                 \\ volume is limited to 0..100 range
 ) = (
-  block[..] =
-    i = block[..] : i * volume    \\ multiply each sample by volume value
+  block[..]
+    |> % * volume                 \\ multiply each sample by volume value
+    |> block[..]
 );
 
 gain([0..5 * 0.1], 2);            \\ 0, .2, .4, .6, .8, 1
@@ -183,7 +185,7 @@ gain([0..5 * 0.1], 2);            \\ 0, .2, .4, .6, .8, 1
 gain                              \\ export gain function
 ```
 
-Minifies as `gain(b,v)=b[..]=i=b[..]:i*v`
+Minifies as `gain(b,v)=b[..]|>%*v|>b[..]`
 
 </details>
 
@@ -223,7 +225,7 @@ lpf(                              \\ per-sample processing function
   y0                              \\ return y0
 );
 
-\\ i = [0, .1, .3] : lpf(i, 108, 5);
+\\ i = [0, .1, .3] |> lpf(i, 108, 5);
 
 lpf                               \\ export lpf function, end program
 ```
@@ -284,9 +286,9 @@ coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
   \\ generate samples block, apply adsr/curve, write result to out
   out[..] = (
     i = out[..]
-      : oscillator[shape](phase)
-      : adsr(i, 0, 0, .06, .24)
-      : curve(i, 1.82)
+      |> oscillator[shape](phase)
+      |> adsr(i, 0, 0, .06, .24)
+      |> curve(i, 1.82)
   );
 
   i++;

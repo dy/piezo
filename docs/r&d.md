@@ -1476,7 +1476,7 @@
 ### [x] loops can return a value: `(isActive(it): action(it))` - the last result of action is returned
   + useful for many loop cases where we need internal variable result.
 
-## [ ] Loops 2.0: since requirements are new, what's meaningful look -> `i = a..b : do` and `..(i < 10)/0 : i++`
+## [ ] Loops 2.0: since requirements are new, what's meaningful look -> `a..b |> do` and `..(i < 10)/0 |> i++`
 
   * `0..h |> (y,y1,y2)=(#,#+1,#+2)` doesn't look good in any form:
   * `:` defines branch, as in `a ? b : c`
@@ -1509,7 +1509,6 @@
                 |> x: curve(x, 1.82)
       ```
     + allows writes out
-  3.1 `x = from..to |> code |> dest[..]`
   4. `from..to |x> (code)`
     * `0..h |y> (y1, y2) = (y+1, y+2)`
     * ```
@@ -1549,6 +1548,7 @@
       ~ pipe can be `i = out[..] : (gen(); lp(i); vol(i)) `
     - too similar to lambda fns: `fn = lambda x, y : x + y`
       ~ we really need inverted order as `x..y ~> x : x + y`
+    - creates precedence riddle `a = b?c:d`, `a ? b=c : d=e`, `i=x : d`
 
   7.1 `from..to -> i : do`, `from..to => x : do` or `from..to ~> item : do`
     + `out[..] -> i : gen() : lp(i) : vol(i)`
@@ -1561,6 +1561,22 @@
     + includes "range" via two dots, kind of special range
     - introduces new confusable single-purpose operator, too much.
       ? Can we reuse ranges? mb a special range
+
+  9. `x = from..to |> code` or `.. |> code`
+    * `y = 0..h |> ( (y1,y2)=(y+1,y+2) )`
+    * ```
+      out[..] |> oscillator[shape](phase)
+        |> adsr(%,0,0,.06,.24)
+        |> curve(%, 1.82)
+        |> dest[..]
+      ```
+      + follows natural assignment pattern
+      + permits "stream to destination"
+      + pipe doesn't look like a loop but applies classical pipe as `a |> adsr(#)` (one operation)
+        + can even support placeholder like `%`
+      + literally JS pipe proposal + ranges
+      + doesn't reinvent the meaning of `:` & create clutter
+      + easier to find-all loops, opposed to mixup of `?:` and `:`
 
 ## [x] ? Is there a way to multi-export without apparent `export` keyword for every function? -> `x,y,z.`
 
@@ -5451,3 +5467,14 @@
   - reads as `a..b : a..b = x[..]`
 2.1 `a..b =: x[..]`
   - breaks end pipe alignment
+
+## [x] ~~`, : ? =` precedence riddle~~ -> we use pipe instead of `:` for loops
+
+* `a ? b : c`
+  * `:` >= `?`
+* `a = b : b`
+  ? `=` >= `:`
+  + can be `:` > `=` for loops
+  - must be `:` < `=` in `a ? b=c : d=e`
+* `a = b ? c`
+  *  `=` <= `?`
