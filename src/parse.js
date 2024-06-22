@@ -16,8 +16,8 @@ const PREC_SEMI = 1,
   PREC_EXPORT = 2,
   PREC_RETURN = 4, // x ? ^a,b : y
   PREC_STATE = 4, // FIXME: *a,b,c, d=4 is confusing group
-  PREC_LOOP = 5, // <| |>
-  PREC_SEQ = 7, //  ^a,b,c;  a, b ? (c,d) : (e,f);
+  PREC_PIPE = 5, // |>
+  PREC_SEQ = 6, //  ^a,b,c;  a, b ? (c,d) : (e,f);
   PREC_IF = 8,    // a ? b=c;  a = b?c;
   PREC_ASSIGN = 8.25,  // a=b, c=d,  a = b||c,  a = b | c,   a = b&c
   PREC_LOR = 11,
@@ -164,6 +164,7 @@ binary('/=', PREC_ASSIGN, true)
 binary('%=', PREC_ASSIGN, true)
 binary('+=', PREC_ASSIGN, true)
 binary('-=', PREC_ASSIGN, true)
+binary('~=', PREC_ASSIGN, true)
 
 // pow, mod
 binary('**', PREC_POW, true)
@@ -175,7 +176,7 @@ binary('~/', PREC_CLAMP)
 binary('~*', PREC_CLAMP)
 
 // loop a[..] |> #
-nary('|>', PREC_LOOP)
+nary('|>', PREC_PIPE)
 
 // range a..b, ..b, a..
 token('..', PREC_RANGE, a => (['..', a, expr(PREC_RANGE)]))
@@ -200,6 +201,7 @@ unary('*', PREC_STATE)
 // a?b - returns b if a is true, else returns a
 binary('?', PREC_IF, true)
 binary('?:', PREC_IF, true)
+// binary(':', PREC_COLON)
 
 // ?: - we use modified ternary for our cases
 token('?', PREC_IF, (a, b, c) => a && (b = expr(PREC_IF - 0.5)) && next(c => c === COLON) && (c = expr(PREC_IF - 0.5), ['?:', a, b, c]))

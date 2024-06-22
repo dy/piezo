@@ -1,7 +1,6 @@
 import t, { is, ok, same, throws } from 'tst'
 import { FLOAT, INT } from '../src/const.js'
 import parse from '../src/parse.js'
-import { lookup } from 'subscript/parse'
 
 
 t('parse: common', t => {
@@ -64,7 +63,7 @@ t('parse: clamp operator', t => {
   is(parse('x ~ 0..10;'), [';', ['~', 'x', ['..', [INT, 0], [INT, 10]]], ,], 'clamp(x, 0, 10)')
   is(parse('x ~ ..10;'), [';', ['~', 'x', ['..', undefined, [INT, 10]]], ,], 'min(x, 10)')
   is(parse('x ~ 0..;'), [';', ['~', 'x', ['..', [INT, 0], undefined]], ,], 'max(0, x)')
-  // is(parse('x <?= 0..10;'), [';', ['<?=', 'x', ['..', [INT, 0], [INT, 10]]], ,], 'x = clamp(x, 0, 10)')
+  is(parse('x ~= 0..10;'), [';', ['~=', 'x', ['..', [INT, 0], [INT, 10]]], ,], 'x = clamp(x, 0, 10)')
 })
 
 t('parse: length operator', t => {
@@ -112,7 +111,7 @@ t('parse: lists', t => {
   // NOTE: we don't support labels/aliases
   // is(parse('list = [l:2, r:4]'), ['=','list',['[',[',',[':','l',[INT,2]], [':','r',[INT,4]]]]],'list with aliases')
   is(parse('[0..10]'), ['[]', ['..', [INT, 0], [INT, 10]]], 'list from range')
-  is(parse('[0..8 |> #*2]'), ['[]', ['|>', ['..', [INT, 0], [INT, 8]], ['*', '#', [INT, 2]]]], 'list comprehension')
+  is(parse('[i = 0..8 |> i*2]'), ['[]', ['|>', ['=', 'i', ['..', [INT, 0], [INT, 8]]], ['*', 'i', [INT, 2]]]], 'list comprehension')
   // is(parse('[2]list = list1'), ['=',['[',[INT,2],'list'],'list1'], '(sub)list of fixed size')
   // is(parse('list.0, list.1'), [',',['.','list',[INT,0]],['.','list',[INT,1]]],'short index access notation')
   // is(parse('list.l = 2'), ['=',['.','list','l'], [INT, 2]],'alias index access')
@@ -365,8 +364,15 @@ t('parse: sequence precedence', t => {
   // is(parse(`a?b,c`), ['?', 'a', [',', 'b', 'c']]);
   is(parse(`a?b,c`), [',', ['?', 'a', 'b'], 'c']);
   is(parse(`a=b,c=d`), [',', ['=', 'a', 'b'], ['=', 'c', 'd']]);
-  is(parse(`a,b|>c,d`), ['|>', [',', 'a', 'b'], [',', 'c', 'd']]);
+  is(parse(`a,b=c,d`), [',', 'a', ['=', 'b', 'c'], 'd']);
+  is(parse(`a=b?c`), ['=', 'a', ['?', 'b', 'c']]);
 
   is(parse(`a=b?c=d:e=f`), ['=', 'a', ['?:', 'b', ['=', 'c', 'd'], ['=', 'e', 'f']]]);
-  is(parse(`a=b?c`), ['=', 'a', ['?', 'b', 'c']]);
+})
+
+t('parse: loop precedence riddle', t => {
+  is(parse(`a ? b : c`), ['?:', 'a', 'b', 'c']);
+  is(parse(`a = b |> c`), ['|>', ['=', 'a', 'b'], 'c']);
+  is(parse(`a = b ? c`), ['=', 'a', ['?', 'b', 'c']]);
+  is(parse(`a = b ? c : d`), ['=', 'a', ['?:', 'b', 'c', 'd']]);
 })

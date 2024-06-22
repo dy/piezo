@@ -579,7 +579,7 @@
 ## [x] Numbers: float64 by default, unless it's statically inferrable as int32, like ++, +-1 etc ops only
   * Boolean operators turn float64 into int64
 
-## [x] ~~Pipes: → | with anon functions~~ ~~transform ternary `list | x -> a(x) | x -> b(x)`~~ no pipes for now - chain of loops instead `x |> # * 0.6 + reverb(#) * 0.4 |> `
+## [x] ~~Pipes: → | with anon functions~~ ~~transform ternary `list | x -> a(x) | x -> b(x)`~~ pipes are loops `x |> % * 0.6 + reverb(%) * 0.4 |> `
 
   1. Placeholder as `x | #*0.6 + reverb() * 0.4`, `source | lp($, frq, Q)`?
     ? can there be multiple args to pipe operator? `a,b |` runs 2 pipes, not multiarg.
@@ -1182,6 +1182,8 @@
   4. `#x1, #x2, #y1, #y2`, `#(x1,x2,x3)`
     + private state from JS, act as instance private properties
     + indicator of special meaning
+    + doesn't clash with known operators
+    + closer to name of the variable than * etc
     - conflict with note names A#
     - pollutes the code with #x1 etc.
       - doesn't look like operator
@@ -5457,7 +5459,7 @@
 9. `a <: b..c`, `a <=: b..c`
 9.1 `a :< b..c`, `a :<= b..c`
 
-## [ ] Write out operator `x[..] : a : b : x[..]`
+## [x] Write out operator `x[..] : a : b : x[..]` -> `x[..] |> a() |> b() |> x[..]`
 
 * we need it for copying loops or redirection, since `a = b` is not always the most useful
 1. `a..b -> x[..]`
