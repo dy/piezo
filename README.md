@@ -1,4 +1,4 @@
-# melo ![stability](https://img.shields.io/badge/stability-experimental-black)
+# melo ![stability](https://img.shields.io/badge/stability-experimental-black) [![test](https://github.com/dy/melo/actions/workflows/test.yml/badge.svg)](https://github.com/dy/melo/actions/workflows/test.yml)
 
 Micro language for floatbeats and audio with smooth operator and organic sugar.<br/>
 Compiles to compact 0-runtime WASM with linear memory.<br/>
