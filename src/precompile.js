@@ -61,37 +61,38 @@ Object.assign(expr, {
       return [a]
     })
   },
-  './'([, a]) {
-    return ['./', expr(a)]
+  '^'([, a]) {
+    return ['^', expr(a)]
   },
-  '../'([, a]) {
-    return ['../', expr(a)]
+  '^^'([, a]) {
+    return ['^^', expr(a)]
   },
-  '.../'([, a]) {
-    return ['.../', expr(a)]
+  '^^^'([, a]) {
+    return ['^^^', expr(a)]
   },
 
-  '('([, a]) {
+  '()'([, a]) {
     // NOTE: we make sure parens are present only if internal condition is dynamic
     // otherwise parents are unwrapped
     a = expr(a)
     // a=() -> a=()
-    if (!a) return ['(']
+    if (!a) return ['()']
     // ((x)) -> (x)
-    if (a[0] === '(') return a
+    if (a[0] === '()') return a
     // (0.5) -> 0.5
     if (typeof a[1] === 'number') return a
     // (0..10) -> 0..10
     if (a[1] === '..') return a
     // (a,b,c) -> a,b,c
     if (a[0] === ',') return a
-    return ['(', a]
+    return ['()', a]
   },
 
   // f(a,b,c)
-  '()'([, name, args]) {
+  '('([, name, args]) {
+    console.log(123, args)
     args = !args ? [,] : args[0] === ',' ? args : [',', args]
-    return ['()', name, args]
+    return ['(', name, args]
   },
 
   // [1,2,3]
@@ -127,17 +128,18 @@ Object.assign(expr, {
     a = expr(a), b = expr(b)
     return ['..', a, b]
   },
-  '<|'([, a, b]) {
+
+  '|>'([, a, b]) {
     a = expr(a), b = expr(b)
 
     // FIXME: 1..10 -> 1,2,3,4,5,6,7,8,9
     // if (typeof a[1] === 'number' && typeof b[1] === 'number' && Math.abs(b[1]-a[1]) < 108) {
     // }
-    return ['<|', a, b]
+    return ['|>', a, b]
   },
 
   // a[0]
-  '[]'([, a, b]) {
+  '['([, a, b]) {
     a = expr(a)
 
     if (!b) return ['[]', a]
@@ -146,25 +148,25 @@ Object.assign(expr, {
 
     // a[0,1] -> a[0], a[1]
     return unroll('[]', a, b) || (
-      ['[]', a, b]
+      ['[', a, b]
     )
   },
 
   '='([, a, b]) {
     b = expr(b)
 
-    // ignore fns a()
+    // a() = ...
     // FIXME: can handle better: collect args, returns etc.
-    if (a[0] === '()') {
-      // normalize body to (a;b;) form
-      b = b[0] === '(' ? b : ['(', b]
-      b[1] = !b[1] ? [';'] : b[1][0] === ';' ? b[1] : [';', b[1]]
+    if (a[0] === '(') {
+      // normalize body to (a;b;) form, incl. handling of [] comments stubs
+      b = b[0] === '()' ? b : ['()', b]
+      b[1] = !b[1] ? [';'] : b[1][0] === ';' ? b[1] : b[1].length ? [';', b[1]] : [';']
 
       // normalize args list
       let [, name, args] = a
       args = !args ? [,] : args[0] === ',' ? args : [',', args];
 
-      return ['=', ['()', name, args], b]
+      return ['=', ['(', name, args], b]
     }
 
     // 1k = expr - define units
@@ -180,7 +182,7 @@ Object.assign(expr, {
     // (a,b)=(b,a) -> (t0=b,t1=a;a=t0,b=t1);
     if (a[0] === ',' && intersect(ids(a), ids(b))) {
       const n = a.length - 1
-      return ['(', [';',
+      return ['()', [';',
         unroll('=', [',', ...Array.from({ length: n }, (b, i) => `t:${i}`)], b),
         unroll('=', a, [',', ...Array.from({ length: n }, (a, i) => `t:${i}`)])
       ]]
@@ -196,16 +198,13 @@ Object.assign(expr, {
     return unroll('=', a, b) || ['=', a, b]
   },
 
-  // FIXME: move it to parser, ++ for a++, += for ++a
-  '++'([, a]) { return expr(['+=', a, [INT, 1]]) },
-  '--'([, a]) { return expr(['-=', a, [INT, 1]]) },
   '+='([, a, b]) { return expr(['=', a, ['+', a, b]]) },
   '-='([, a, b]) { return expr(['=', a, ['-', a, b]]) },
   '*='([, a, b]) { return expr(['=', a, ['*', a, b]]) },
   '/='([, a, b]) { return expr(['=', a, ['/', a, b]]) },
   '%='([, a, b]) { return expr(['=', a, ['%', a, b]]) },
   '**='([, a, b]) { return expr(['=', a, ['**', a, b]]) },
-  '<?='([, a, b]) { return expr(['=', a, ['<?', a, b]]) },
+  '~='([, a, b]) { return expr(['=', a, ['~', a, b]]) },
 
   '+'([, a, b]) {
     a = expr(a), b = expr(b);
@@ -337,6 +336,7 @@ Object.assign(expr, {
         ['>>', a, b]
     )
   },
+
   '~'([, a]) { a = expr(a); return unroll('~', a) || (typeof a[1] === 'number' ? [INT, ~a[1]] : ['~', a]) },
 
   '>'([, a, b]) { a = expr(a), b = expr(b); return unroll('>', a, b) || ['>', a, b] },
@@ -359,6 +359,7 @@ Object.assign(expr, {
               ['&&', a, b]
     )
   },
+
   '||'([, a, b]) {
     a = expr(a), b = expr(b); return unroll('||', a, b) || (
       // 0 || b

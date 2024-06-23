@@ -16,7 +16,8 @@
 ## Stage 1
 
 * [x] update subscript
-* [ ] fix parsing
+* [x] fix parsing
+* [x] a++, a--, a+=1, a-=n
 * [ ] detect expected number of returns from operation so it may have internal optimization.
 * [ ] implement `i = from..to : do`
 * [ ] precedence of `,` over `x ? a,b,c;` and `a,b,c :`

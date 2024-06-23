@@ -75,7 +75,7 @@ t('parse: length operator', t => {
 
 t('parse: groups', t => {
   is(parse('a, b, c'), [',', 'a', 'b', 'c'], 'groups are syntactic sugar, not data type')
-  is(parse('++(a, b, c)'), ['++', ['()', [',', 'a', 'b', 'c']]], 'they apply operation to multiple elements: (a++, b++, c++)')
+  is(parse('++(a, b, c)'), ['+=', ['()', [',', 'a', 'b', 'c']], [INT, 1]], 'they apply operation to multiple elements: (a++, b++, c++)')
   is(parse('(a, (b, c)) == (a, b, c)'), ['==', ['()', [',', 'a', ['()', [',', 'b', 'c']]]], ['()', [',', 'a', 'b', 'c']]], 'groups are always flat')
   is(parse('(a,b,c) = (d,e,f)'), ['=', ['()', [',', 'a', 'b', 'c']], ['()', [',', 'd', 'e', 'f']]], 'assign: a=d, b=e, c=f')
   is(parse('(a,b) = (b,a)'), ['=', ['()', [',', 'a', 'b']], ['()', [',', 'b', 'a']]], 'swap: temp=a; a=b; b=temp;')
@@ -143,7 +143,7 @@ t('parse: statements', t => {
 
 t('parse: conditions', t => {
   is(parse(`sign = a < 0 ? -1 : +1`), ['=', 'sign', ['?:', ['<', 'a', [INT, 0]], ['-', [INT, 1]], ['+', [INT, 1]]]], 'inline ternary')
-  is(parse('a > b ? ++b'), ['?', ['>', 'a', 'b'], ['++', 'b']], 'if operator')
+  is(parse('a > b ? ++b'), ['?', ['>', 'a', 'b'], ['+=', 'b', [INT, 1]]], 'if operator')
   is(parse('a = b ? c'), ['=', 'a', ['?', 'b', 'c']], 'if operator precedence')
   is(parse('a ? b = c'), ['?', 'a', ['=', 'b', 'c']], 'if operator precedence')
   is(parse('a = b ? c : d'), ['=', 'a', ['?:', 'b', 'c', 'd']], 'ternary precedence')
@@ -195,7 +195,7 @@ t('parse: loops', t => {
   ))`), ['()', [';',
     ['=', 'i', [INT, 0]],
     ['|>',
-      ['<', ['++', 'i'], [INT, 10]],
+      ['<', ['+=', 'i', [INT, 1]], [INT, 10]],
       ['()', [';',
         ['&&', ['<', 'i', [INT, 3]], ['^^']],
         ['&&', ['<', 'i', [INT, 5]], ['^']],
@@ -203,10 +203,10 @@ t('parse: loops', t => {
       ]]
     ]
   ]], 'multiline loop')
-  is(parse('[++j < 10 |> j * 2]'), ['[]', ['|>', ['<', ['++', 'j'], [INT, 10]], ['*', 'j', [INT, 2]]]], 'list comprehension via loop')
+  is(parse('[++j < 10 |> j * 2]'), ['[]', ['|>', ['<', ['+=', 'j', [INT, 1]], [INT, 10]], ['*', 'j', [INT, 2]]]], 'list comprehension via loop')
 
   is(parse('i<3 |> x[i]=++i'), [
-    '|>', ['<', 'i', [INT, 3]], ['=', ['[', 'x', 'i'], ['++', 'i']]
+    '|>', ['<', 'i', [INT, 3]], ['=', ['[', 'x', 'i'], ['+=', 'i', [INT, 1]]]
   ], '|> precedence vs =')
 
   is(parse('a|>#'), ['|>', 'a', '#'])
@@ -239,7 +239,7 @@ t('parse: stateful variables', t => {
     a() = ( *i=0; ++i );      \\ stateful variable persist value between fn calls
     a(), a();                     \\ 0, 1
   `), [';',
-    ['=', ['(', 'a', ,], ['()', [';', ['*', ['=', 'i', [INT, 0]]], ['++', 'i']]]],
+    ['=', ['(', 'a', ,], ['()', [';', ['*', ['=', 'i', [INT, 0]]], ['+=', 'i', [INT, 1]]]]],
     [',', ['(', 'a', ,], ['(', 'a', ,]]
     , [],
   ])

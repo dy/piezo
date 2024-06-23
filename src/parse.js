@@ -131,8 +131,8 @@ binary('+', PREC_ADD)
 binary('-', PREC_ADD)
 
 // increments
-token('++', PREC_UNARY, a => a ? ['++-', a] : ['++', expr(PREC_UNARY - 1)])
-token('--', PREC_UNARY, a => a ? ['--+', a] : ['--', expr(PREC_UNARY - 1)])
+token('++', PREC_UNARY, a => a ? ['++', a] : ['+=', expr(PREC_UNARY - 1), [INT, 1]])
+token('--', PREC_UNARY, a => a ? ['--', a] : ['-=', expr(PREC_UNARY - 1), [INT, 1]])
 
 // bitwises
 unary('~', PREC_UNARY)

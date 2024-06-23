@@ -41,6 +41,7 @@ export default function compile(node, obj) {
 
   // collect exports from last statement
   const lastNode = node[0] === ';' ? node[node.length - 1] : node
+
   // generic exports, excluding private names
   for (let id of ids(lastNode)) if (!id.includes(':')) exports[id] = globals[id] || err('Unknown export member `' + id + `'`)
 
@@ -161,7 +162,7 @@ Object.assign(expr, {
   },
 
   // (a)
-  '('([, body]) {
+  '()'([, body]) {
     // FIXME: make sure returning nothing is fine here (when empty brackets)
     if (!body) return op('')
 
@@ -186,7 +187,7 @@ Object.assign(expr, {
   },
 
   // a()
-  '()'([, name, [, ...args]]) {
+  '('([, name, [, ...args]]) {
     if (!globals[name]) err('Unknown function call: ' + name)
 
     // FIXME: make sure default args are gotten values?
@@ -203,7 +204,7 @@ Object.assign(expr, {
   },
 
   // [1,2,3]
-  '['([, [, ...inits]]) {
+  '[]'([, [, ...inits]]) {
     mem ||= 0
 
     // [] - skip
@@ -296,7 +297,7 @@ Object.assign(expr, {
   },
 
   // a[b] or a[]
-  '[]'([, a, b]) {
+  '['([, a, b]) {
     inc('arr.len'), inc('i32.modwrap')
 
     // a[] - length
@@ -314,7 +315,7 @@ Object.assign(expr, {
 
   '='([, a, b]) {
     // x[y]=1, x.y=1
-    if (a[0] === '[]') {
+    if (a[0] === '[') {
       let [, buf, idx] = a
 
       // a[0] - static index read
@@ -342,7 +343,7 @@ Object.assign(expr, {
     }
 
     // x(a,b) = y
-    if (a[0] === '()') {
+    if (a[0] === '(') {
       let [, name, [, ...args]] = a, body = b, inits = [], result, dfn = [], prepare = [], defer = []
 
       // functions defined within scope of other functions, `x()=(y(a)=a;)`
@@ -365,7 +366,7 @@ Object.assign(expr, {
         // x(a=1,b=2), x(a=(1;2))
         else if (arg[0] === '=') [, name, init] = arg, inits.push(['?', ['!=', name, name], ['=', name, init]])
         // x(x<?2..3)
-        else if (arg[0] === '<?') [, name, init] = arg, inits.push(['<?=', name, arg[2]])
+        else if (arg[0] === '~') [, name, init] = arg, inits.push(['~=', name, arg[2]])
         else err('Unknown function argument')
 
         locals[name] = { arg: true, type: 'f64' }
@@ -383,7 +384,7 @@ Object.assign(expr, {
       result = expr(body)
 
       // define result, comes after (param) before (local)
-      if (result.type.length) dfn.push(`(result ${result.type.join(' ')})`)
+      if (result?.type?.length) dfn.push(`(result ${result.type.join(' ')})`)
 
       // declare locals
       for (let name in locals) if (!locals[name].arg) dfn.push(`(local $${name} ${locals[name].type})`)
@@ -434,8 +435,6 @@ Object.assign(expr, {
   // a |> b
   '|>'([, a, b]) {
     // a..b |> ...
-    // FIXME: step via a..b/step?
-    // FIXME: curve via a..b?
     if (a[0] === '..') {
       depth++
       // i = from; to; while (i < to) {^ = i; ...; i++}
@@ -518,11 +517,6 @@ Object.assign(expr, {
 
     depth--
     return op(out, 'f64', { dynamic: true })
-  },
-
-  // a <| (b,c)->d
-  '<|'([, a, b]) {
-    err('<| unimplemented')
   },
 
   '-'([, a, b]) {
@@ -630,9 +624,17 @@ Object.assign(expr, {
     return inc('f64.modwrap'), inc('f64.rem'), op(`(call $f64.modwrap ${asFloat(aop)} ${asFloat(bop)})`, `f64`)
   },
 
-  '~'([, a]) {
-    let aop = expr(a)
-    return op(`(i32.xor (i32.const -1) ${asInt(aop)})`, 'i32')
+  '++'([, a]) {
+    if (typeof a !== 'string') err('Invalid left-hand side expression')
+    // NOTE: by default vars are f64, so passing type doesn't make much sense here
+    let def = locals?.[a] || slocals?.[a] || globals[a]
+    return op(`${get(a)}${set(a, expr(['+', a, [INT, 1]]))}`, def.type)
+  },
+
+  '--'([, a]) {
+    if (typeof a !== 'string') err('Invalid left-hand side expression')
+    let def = locals?.[a] || slocals?.[a] || globals[a]
+    return op(`${get(a)}${set(a, expr(['-', a, [INT, 1]]))}`, def.type)
   },
 
   '|'([, a, b]) {
@@ -736,22 +738,28 @@ Object.assign(expr, {
     return op(`(if (result f64) ${aop.type[0] == 'i32' ? aop : `(f64.ne ${aop} (f64.const 0))`} (then ${asFloat(bop)} ) (else ${asFloat(cop)}))`, 'f64')
   },
 
-  // a <? range - clamp a to indicated range
-  '<?'([, a, b]) {
+  // a ~ range - clamp a to indicated range
+  '~'([, a, b]) {
+    // ~a - just do binary inverse
+    if (!b) {
+      let aop = expr(a)
+      return op(`(i32.xor (i32.const -1) ${asInt(aop)})`, 'i32')
+    }
+
     if (b[0] !== '..') err('Non-range passed as right side of clamp operator')
     let [, min, max] = b, aop = expr(a), minop = min && expr(min), maxop = max && expr(max)
 
-    // a <? 0..
+    // a ~ 0..
     if (!max) {
       if (aop.type[0] === 'i32' && minop.type[0] === 'i32') return inc('i32.smax'), op(`(call $i32.max ${aop} ${minop})`, 'i32')
       return op(`(f64.max ${asFloat(aop)} ${asFloat(minop)})`, 'f64')
     }
-    // a <? ..10
+    // a ~ ..10
     if (!min) {
       if (aop.type[0] === 'i32' && maxop.type[0] === 'i32') return inc('i32.smin'), op(`(call $i32.min ${aop} ${maxop})`, 'i32')
       return op(`(f64.min ${asFloat(aop)} ${asFloat(maxop)})`, 'f64')
     }
-    // a <? 0..10
+    // a ~ 0..10
     if (aop.type == 'i32' && minop.type == 'i32' && maxop.type == 'i32') {
       return inc('i32.smax'), inc('i32.smin'), op(`(call $i32.smax (call $i32.smin ${aop} ${maxop}) ${minop})`, 'i32')
     }
@@ -800,7 +808,7 @@ Object.assign(expr, {
   // },
 
   // ./a,b
-  './'([, a]) {
+  '^'([, a]) {
     let aop = expr(a)
     returns.push(aop)
     // we enforce early returns to be f64
@@ -808,21 +816,24 @@ Object.assign(expr, {
   }
 })
 
-// return (local.set) or (global.set) (if no init - takes from stack)
+// (local.set) or (global.set) (if no init - takes from stack)
 function set(name, init = '') {
   return op(`(${locals?.[name] || slocals?.[name] ? 'local' : 'global'}.set $${name} ${init})`, null)
 }
 
+// (local.get) or (global.get)
 function get(name) {
   return op(`(${locals?.[name] || slocals?.[name] ? 'local' : 'global'}.get $${name})`, (locals?.[name] || slocals?.[name] || globals[name]).type)
 }
 
-function tee(name, init) {
+// conventional wrapper for global.tee
+function tee(name, init = '') {
   return op(locals?.[name] || slocals?.[name] ? `(local.tee $${name} ${init})` : `(global.set $${name} ${init})(global.get $${name})`, init.type)
 }
 
 // define variable in current scope, export if necessary; returns resolved name
 // FIXME if name includes `:` - it enforces local name (in start local function)
+// definition includes { var, type, init } object
 function define(name, type = 'f64', init) {
   if (locals?.[name] || slocals?.[name] || globals?.[name]) return name;
   ; (locals || (name.includes(':') ? slocals : globals))[name] = { var: true, type, init }
@@ -830,15 +841,15 @@ function define(name, type = 'f64', init) {
 }
 
 // wrap expression to float, if needed
-function asFloat(o) {
-  if (o.type[0] === 'f64') return o
-  if (o.startsWith('(i32.const')) return op(o.replace('(i32.const', '(f64.const'), 'f64')
-  return op(`(f64.convert_i32_s ${o})`, 'f64')
+function asFloat(opStr) {
+  if (opStr.type[0] === 'f64') return opStr
+  if (opStr.startsWith('(i32.const')) return op(opStr.replace('(i32.const', '(f64.const'), 'f64')
+  return op(`(f64.convert_i32_s ${opStr})`, 'f64')
 }
 // cast expr to int
-function asInt(o) {
-  if (o.type[0] === 'i32') return o
-  return op(`(i32.trunc_f64_s ${o})`, 'i32')
+function asInt(opStr) {
+  if (opStr.type[0] === 'i32') return opStr
+  return op(`(i32.trunc_f64_s ${opStr})`, 'i32')
 }
 
 // add include from stdlib and return call
@@ -879,7 +890,7 @@ function pick(count, input) {
   // putting them directly to stack is identical to passing to pick(b,c,a) as args
 }
 
-// create op result
+// create op result, a string with extra info like types
 // holds number of returns (ops)
 // makes sure it stringifies properly into wasm expression
 // provides any additional info: types, static, min/max etc
@@ -892,7 +903,7 @@ function op(str = '', type, info = {}) {
 
 // fetch source file by path - uses import maps algorighm
 // FIXME: can extend with importmap
-const coreModules = { math: './math.lino' }
+const coreModules = { math: './math.melo' }
 function fetchSource(path) {
   let fullPath = import.meta.resolve(coreModules[path])
   let xhr = new XMLHttpRequest()
