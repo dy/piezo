@@ -395,7 +395,7 @@ _melo_ is available as CLI or JS package.
 ### CLI
 
 ```sh
-melo source.me -o dest.me
+melo source.melo -o dest.melo
 ```
 
 This produces compiled WASM binary.
@@ -421,7 +421,7 @@ const buffer = melo.compile(`
   // js objects or paths to files
   imports: {
     math: Math,
-    mylib: './path/to/my/lib.me'
+    mylib: './path/to/my/lib.melo'
   },
 
   memory,
@@ -487,5 +487,10 @@ WASM enables it for browsers, [audio/worklets](https://developer.mozilla.org/en-
 ### Inspiration
 
 [_mono_](https://github.com/stagas/mono), [_zzfx_](https://killedbyapixel.github.io/ZzFX/), [_bytebeat_](https://sarpnt.github.io/bytebeat-composer/), [_glitch_](https://github.com/naivesound/glitch), [_hxos_](https://github.com/stagas/hxos), [_min_](https://github.com/r-lyeh/min), [_roland_](https://github.com/DenialAdams/roland), [_porffor_](https://github.com/CanadaHonk/porffor)
+
+### Acknowledgement
+
+* @stagas for initial drive & ideas
+* for package name
 
 <p align=center><a href="https://github.com/krsnzd/license/">🕉</a></p>
