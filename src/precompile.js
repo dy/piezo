@@ -75,8 +75,8 @@ Object.assign(expr, {
     // NOTE: we make sure parens are present only if internal condition is dynamic
     // otherwise parents are unwrapped
     a = expr(a)
-    // a=() -> a=()
-    if (!a) return ['()']
+    // a=() -> a=(), ignore comment stubs
+    if (!a || !a.length) return ['()']
     // ((x)) -> (x)
     if (a[0] === '()') return a
     // (0.5) -> 0.5
@@ -96,7 +96,7 @@ Object.assign(expr, {
   },
 
   // [1,2,3]
-  '['([, inits]) {
+  '[]'([, inits]) {
     inits = expr(inits)
 
     // normalize to [,] form
@@ -116,7 +116,7 @@ Object.assign(expr, {
       return [el]
     })
 
-    return ['[', inits]
+    return ['[]', inits]
   },
 
   '..'([, a, b]) {
@@ -142,12 +142,12 @@ Object.assign(expr, {
   '['([, a, b]) {
     a = expr(a)
 
-    if (!b) return ['[]', a]
+    if (!b) return ['[', a]
 
     b = expr(b)
 
     // a[0,1] -> a[0], a[1]
-    return unroll('[]', a, b) || (
+    return unroll('[', a, b) || (
       ['[', a, b]
     )
   },
@@ -158,9 +158,9 @@ Object.assign(expr, {
     // a() = ...
     // FIXME: can handle better: collect args, returns etc.
     if (a[0] === '(') {
-      // normalize body to (a;b;) form, incl. handling of [] comments stubs
+      // normalize body to (a;b;) form
       b = b[0] === '()' ? b : ['()', b]
-      b[1] = !b[1] ? [';'] : b[1][0] === ';' ? b[1] : b[1].length ? [';', b[1]] : [';']
+      b[1] = !b[1] ? [';'] : b[1][0] === ';' ? b[1] : [';', b[1]]
 
       // normalize args list
       let [, name, args] = a

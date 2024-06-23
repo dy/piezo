@@ -315,12 +315,10 @@ t('compile: vars misc', t => {
   x = compileWat(compileMelo(`x=1;x`)).instance.exports.x // int type
   x = compileWat(compileMelo(`x=1.0;x`)).instance.exports.x // float type
   x = compileWat(compileMelo(`x()=1;x`)).instance.exports.x // func type
-  // x = compileWat(compileMelo(`x=0..10;x`)).instance.exports.x // range type
   x = compileWat(compileMelo(`x=[];x`)).instance.exports.x // arr type
   x = compileWat(compileMelo(`x;x=1;x`)).instance.exports.x // late-int type
   x = compileWat(compileMelo(`x;x=1.0;x`)).instance.exports.x // late-float type
   // x = compileWat(compileMelo(`x;x()=1;x`)).instance.exports.x // late-func type
-  // x = compileWat(compileMelo(`x;x=0..10;x`)).instance.exports.x // late-range type
   x = compileWat(compileMelo(`x;x=[];x`)).instance.exports.x // late-arr type
 })
 
