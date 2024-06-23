@@ -64,9 +64,9 @@ function len(n) {
 t('compile: comments', t => {
   let wat = compileLino(`x(a,w,h)=(
     a=1
-    // a=2
+    \\ a=2
   ), y()=(
-    // (
+    \\ (
   )`)
   let mod = compileWat(wat)
   let { x } = mod.instance.exports

@@ -1746,6 +1746,7 @@
   - if strings come in (likely yes), then select-alling comments will select a bunch of escapes
     ~ can be `\\`
     ~ escapes are rare
+    + doesn't conflict with JSy // comments on select-all
   - possible conflict with string escapes
     + can be resolved with `\\`
       + creates clear separation of "comments" area
