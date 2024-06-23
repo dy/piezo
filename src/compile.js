@@ -654,6 +654,14 @@ Object.assign(expr, {
     return op(`(i32.and ${asInt(aop)} ${asInt(bop)})`, `i32`)
   },
   '^'([, a, b]) {
+    if (!b) {
+      // ^a
+      let aop = expr(a)
+      returns.push(aop)
+      // we enforce early returns to be f64
+      return op(`(return ${asFloat(aop)})`, aop.type)
+    }
+
     // a ^ b
     let aop = expr(a), bop = expr(b);
     return op(`(i32.xor ${asInt(aop)} ${asInt(bop)})`, `i32`)
@@ -806,14 +814,6 @@ Object.assign(expr, {
   //   let idx = isNaN(Number(b)) ? err('Alias access is unimplemented') : Number(b)
   //   return op(`(f64.load (i32.add ${asInt(expr(a))} (i32.const ${idx << 3})))`, 'f64')
   // },
-
-  // ./a,b
-  '^'([, a]) {
-    let aop = expr(a)
-    returns.push(aop)
-    // we enforce early returns to be f64
-    return op(`(return ${asFloat(aop)})`, aop.type)
-  }
 })
 
 // (local.set) or (global.set) (if no init - takes from stack)

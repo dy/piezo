@@ -612,7 +612,7 @@ t.skip('compile: memory grow', t => {
 })
 
 t('compile: early returns', t => {
-  let wat = compileMelo(`x(a)=(a ? ./-a; 123), y(a)=(a?./12;13.4), z(a)=(a?./11:./12.1;./13)`)
+  let wat = compileMelo(`x(a)=(a ? ^-a; 123), y(a)=(a?^12;13.4), z(a)=(a?^11:^12.1;^13)`)
   let mod = compileWat(wat)
   let { __memory: memory, x, y, z } = mod.instance.exports
   is(x(0), 123);
@@ -625,7 +625,7 @@ t('compile: early returns', t => {
   is(z(1), 11);
 
   throws(() => {
-    compileMelo(`y(a,b)=(a ? ./b; a,b)`)
+    compileMelo(`y(a,b)=(a ? ^b; a,b)`)
   }, 'Inconsistent')
 })
 

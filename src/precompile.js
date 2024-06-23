@@ -61,8 +61,16 @@ Object.assign(expr, {
       return [a]
     })
   },
-  '^'([, a]) {
-    return ['^', expr(a)]
+  '^'([, a, b]) {
+    if (!b) return ['^', expr(a)]
+
+    // a ^ b
+    a = expr(a), b = expr(b)
+
+    return unroll('^', a, b) || (
+      typeof a[1] === 'number' && typeof b[1] === 'number' ? [INT, a[1] ^ b[1]] :
+        ['^', a, b]
+    )
   },
   '^^'([, a]) {
     return ['^^', expr(a)]
@@ -312,15 +320,6 @@ Object.assign(expr, {
         // FIXME: a | 0 -> asInt(a)
         // (a[1] === 0 || b[1] === 0) ? ['|', b, a] :
         ['|', a, b]
-    )
-  },
-
-  '^'([, a, b]) {
-    a = expr(a), b = expr(b)
-
-    return unroll('^', a, b) || (
-      typeof a[1] === 'number' && typeof b[1] === 'number' ? [INT, a[1] ^ b[1]] :
-        ['^', a, b]
     )
   },
 
