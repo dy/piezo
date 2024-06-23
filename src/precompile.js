@@ -337,7 +337,13 @@ Object.assign(expr, {
     )
   },
 
-  '~'([, a]) { a = expr(a); return unroll('~', a) || (typeof a[1] === 'number' ? [INT, ~a[1]] : ['~', a]) },
+  '~'([, a, b]) {
+    if (!b) {
+      a = expr(a); return unroll('~', a) || (typeof a[1] === 'number' ? [INT, ~a[1]] : ['~', a])
+    }
+
+    a = expr(a), b = expr(b); return unroll('~', a, b) || ['~', a, b]
+  },
 
   '>'([, a, b]) { a = expr(a), b = expr(b); return unroll('>', a, b) || ['>', a, b] },
   '>='([, a, b]) { a = expr(a), b = expr(b); return unroll('>=', a, b) || ['>=', a, b] },

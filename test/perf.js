@@ -33,7 +33,7 @@ t.todo('perf: sobel', t => {
           gx = -1 * val0 + -2 * val3 + -1 * val6 + val2 + 2 * val5 + val8;
           gy = -1 * val0 + -2 * val1 + -1 * val2 + val6 + 2 * val7 + val8;
           mag = (gx * gx + gy * gy) ** .5;
-          mag <?= 0..1;
+          mag ~= 0..1;
           data[x + y * width] = mag;
         )
       )

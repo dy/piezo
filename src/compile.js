@@ -365,7 +365,7 @@ Object.assign(expr, {
         if (typeof arg === 'string') name = arg
         // x(a=1,b=2), x(a=(1;2))
         else if (arg[0] === '=') [, name, init] = arg, inits.push(['?', ['!=', name, name], ['=', name, init]])
-        // x(x<?2..3)
+        // x(x~2..3)
         else if (arg[0] === '~') [, name, init] = arg, inits.push(['~=', name, arg[2]])
         else err('Unknown function argument')
 

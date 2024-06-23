@@ -323,15 +323,15 @@ t('compile: vars misc', t => {
 })
 
 t('compile: ranges basic', t => {
-  let wat = compileMelo(`x = 11 <? 0..10`)
+  let wat = compileMelo(`x = 11 ~ 0..10`)
   let mod = compileWat(wat)
   is(mod.instance.exports.x.value, 10)
 
-  wat = compileMelo(`x = 0 <? 1..10`)
+  wat = compileMelo(`x = 0 ~ 1..10`)
   mod = compileWat(wat)
   is(mod.instance.exports.x.value, 1)
 
-  wat = compileMelo(`clamp(x) = (x <? 0..10)`)
+  wat = compileMelo(`clamp(x) = (x ~ 0..10)`)
   mod = compileWat(wat)
   is(mod.instance.exports.clamp(11), 10)
   is(mod.instance.exports.clamp(-1), 0)
@@ -792,7 +792,7 @@ t.todo('compile: import non-existent', t => {
 t.todo('compile: audio-gain', t => {
   let wat = compileMelo(`
   blockSize = 1024;
-  gain = ([blockSize]data, volume <? 0..1000) -> [data | x -> x * volume];
+  gain = ([blockSize]data, volume ~ 0..1000) -> [data | x -> x * volume];
   `)
   let mod = compileWat(wat)
   let { gain } = mod.instance.exports
@@ -800,7 +800,7 @@ t.todo('compile: audio-gain', t => {
 
   // let wat = compileMelo(`
   //   blockSize = 1024;
-  //   gain = ([2, blockSize]data, volume <? 0..1000) -> [data | ch -> (ch | x -> x * volume)];
+  //   gain = ([2, blockSize]data, volume ~ 0..1000) -> [data | ch -> (ch | x -> x * volume)];
   // `)
 })
 
