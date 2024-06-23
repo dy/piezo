@@ -37,6 +37,7 @@ const PREC_SEMI = 1,
   PREC_CALL = 27, // a(b), a.b, a[b], a[]
   PREC_TOKEN = 28 // [a,b] etc
 
+export const TOPIC = '%'
 
 // make id support #@
 const isId = parse.id = char => id(char) || char === HASH
@@ -186,8 +187,8 @@ token('^', PREC_TOKEN, (a, b) => !a && (b = expr(PREC_RETURN), b ? ['^', b] : ['
 token('^^', PREC_TOKEN, (a, b) => (!a && (b = expr(PREC_RETURN), b ? ['^^', b] : ['^^']))) // break: ../
 token('^^^', PREC_TOKEN, (a, b) => !a && (b = expr(PREC_RETURN), b ? ['^^^', b] : ['^^^'])) // return: ../
 
-// #
-// token('#', PREC_TOKEN, (a, b) => !a && '#')
+// % - topic holder
+token(TOPIC, PREC_TOKEN, (a) => !a && TOPIC)
 
 // a.b
 // NOTE: we don't parse expression to avoid 0..1 recognizing as 0[.1]

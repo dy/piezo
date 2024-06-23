@@ -1,6 +1,6 @@
 // compile source/ast to WAST
 import { FLOAT, INT } from './const.js';
-import parse from './parse.js';
+import parse, { TOPIC } from './parse.js';
 import stdlib from './stdlib.js';
 import precompile from './precompile.js';
 import { ids, stringify, err, u82s } from './util.js';
@@ -316,13 +316,13 @@ Object.assign(expr, {
   '='([, a, b]) {
     // x[y]=1, x.y=1
     if (a[0] === '[') {
-      let [, buf, idx] = a
+      let [, name, idx] = a
 
       // a[0] - static index read
       // FIXME: static optimization property - to avoid calling i32.modwrap if idx/len is known
       // FIXME: another static optimization: if length is known in advance (likely yes) - make static modwrap
 
-      return inc('arr.len'), inc('arr.set'), inc('i32.modwrap'), op(`(call $arr.tee ${expr(buf)} ${asInt(expr(idx))} ${asFloat(expr(b))})`, 'f64')
+      return inc('arr.len'), inc('arr.set'), inc('i32.modwrap'), op(`(call $arr.tee ${expr(name)} ${asInt(expr(idx))} ${asFloat(expr(b))})`, 'f64')
     }
 
     // a = b,  a = (b,c),   a = (b;c,d)
@@ -437,9 +437,9 @@ Object.assign(expr, {
     // a..b |> ...
     if (a[0] === '..') {
       depth++
-      // i = from; to; while (i < to) {^ = i; ...; i++}
+      // i = from; to; while (i < to) {% = i; ...; i++}
       const [, min, max] = a
-      const cur = define('^', 'f64'),
+      const cur = define(TOPIC, 'f64'),
         idx = define(`idx:${depth}`, 'f64'),
         end = define(`end:${depth}`, 'f64'),
         body = expr(b), type = body.type.join(' ')
@@ -449,7 +449,7 @@ Object.assign(expr, {
         `(local.set $${end} ${asFloat(expr(max))})\n` +
         body.type.map(t => `(${t}.const 0)`).join('') + '\n' + // init result values
         `(loop (param ${type}) (result ${type})\n` +
-        `(if (param ${type}) (result ${type}) (f64.le ${get(idx)} (local.get $${end}))\n` + // if (^ < end)
+        `(if (param ${type}) (result ${type}) (f64.le ${get(idx)} (local.get $${end}))\n` + // if (% < end)
         `(then\n` +
         `${`(drop)`.repeat(body.type.length)}\n` +
         `${set(cur, get(idx))} \n` +
@@ -494,7 +494,7 @@ Object.assign(expr, {
       }
       // list <| ...
       else {
-        // i = 0; to=buf[]; while (i < to) {^ = buf[i]; ...; i++}
+        // i = 0; to=buf[]; while (i < to) {% = buf[i]; ...; i++}
         inc('arr.len'), inc('arr.get')
 
         const src = tmp('src'), len = tmp('len', 'i32')
@@ -625,16 +625,18 @@ Object.assign(expr, {
   },
 
   '++'([, a]) {
-    if (typeof a !== 'string') err('Invalid left-hand side expression')
-    // NOTE: by default vars are f64, so passing type doesn't make much sense here
-    let def = locals?.[a] || slocals?.[a] || globals[a]
-    return op(`${get(a)}${set(a, expr(['+', a, [INT, 1]]))}`, def.type)
+    // NOTE: for a[n]++ it's cheaper to (a[n]+=1)-1 (a[n];drop(a[n]=a[n]+1)) due to read
+    if (a[0] === '[') return expr(['-', ['=', a, ['+', a, [INT, 1]]], [INT, 1]])
+
+    let aop = expr(a)
+    return op(`${aop}${set(a, expr(['+', a, [INT, 1]]))}`, aop.type[0])
   },
 
   '--'([, a]) {
-    if (typeof a !== 'string') err('Invalid left-hand side expression')
-    let def = locals?.[a] || slocals?.[a] || globals[a]
-    return op(`${get(a)}${set(a, expr(['-', a, [INT, 1]]))}`, def.type)
+    if (a[0] === '[') return expr(['+', ['=', a, ['-', a, [INT, 1]]], [INT, 1]])
+
+    let aop = expr(a)
+    return op(`${expr(a)}${set(a, expr(['-', a, [INT, 1]]))}`, aop.type[0])
   },
 
   '|'([, a, b]) {

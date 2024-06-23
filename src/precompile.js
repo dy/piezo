@@ -1,5 +1,5 @@
-// Static optimizations, denormalizations etc.
-// Prepares tree for compiler.
+// Static optimizations, denormalizations, left-hand-side checks etc
+// Prepares tree for compiler which expects valid executable tree
 
 import { INT, FLOAT } from './const.js';
 import { err, ids, intersect } from './util.js';

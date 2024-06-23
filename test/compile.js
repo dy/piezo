@@ -638,7 +638,7 @@ t.todo('compile: break/continue', t => {
 
 t('compile: loops range global', t => {
   let wat, mod
-  wat = compileMelo(`x=[1..3]; 0..2 |> x[^]=^+1; x`)
+  wat = compileMelo(`x=[1..3]; 0..2 |> x[%]=%+1; x`)
   mod = compileWat(wat)
   let { __memory: memory, x } = mod.instance.exports
 
@@ -651,7 +651,7 @@ t('compile: loops range global', t => {
 
 t('compile: loops range local', t => {
   let wat, mod
-  wat = compileMelo(`x=[1..3]; fill() = (0..x[] |> x[^]=^+1); fill, x`)
+  wat = compileMelo(`x=[1..3]; fill() = (0..x[] |> x[%]=%+1); fill, x`)
   mod = compileWat(wat)
   let { __memory: memory, x, fill } = mod.instance.exports
 
@@ -665,8 +665,8 @@ t('compile: loops range local', t => {
 
 t('compile: loop range in range', t => {
   let wat = compileMelo(`a=[..9], f(a,w,h)=(
-    0..w |> (x=^;
-      0..h |> (y=^;
+    0..w |> (x=%;
+      0..h |> (y=%;
         a[y*w + x] = x+y*w
       )
     )
@@ -823,8 +823,8 @@ t.todo('compile: sine gen', t => {
 
 t('compile: readme numbers', t => {
   let numbers = compileMelo(`
-    a=16, b=0x10, c=0b0;                 // int, hex or binary
-    d=16.0, e=.1, f=1e3, g=2e-3;           // float
+    a=16, b=0x10, c=0b0;                 \\ int, hex or binary
+    d=16.0, e=.1, f=1e3, g=2e-3;           \\ float
     a,b,c,d,e,f,g
   `, { imports: {} })
   let { a, b, c, d, e, f, g } = compileWat(numbers, {}).instance.exports
@@ -841,10 +841,10 @@ t('compile: readme standard operators', t => {
       o17, o18, o19, o20, o21, o22,
       o23, o24, o25, o26
     ) = (
-      a + b, a-b, a*b, a/b, a%b, --a, ++a, b++, b--,                // arithmetical (float)
-      a&&b, a||b, !a, a?b:c,                    // logical (boolean)
-      a>b, a>=b, a<b, a<=b, a==b, a!=b,                // comparisons (boolean)
-      a&b, a|b, a^b, ~a, a>>b, a<<b,                  // binary (integer)
+      a + b, a-b, a*b, a/b, a%b, --a, ++a, b++, b--,                \\ arithmetical (float)
+      a&&b, a||b, !a, a?b:c,                    \\ logical (boolean)
+      a>b, a>=b, a<b, a<=b, a==b, a!=b,                \\ comparisons (boolean)
+      a&b, a|b, a^b, ~a, a>>b, a<<b,                  \\ binary (integer)
       a**b, -a %% b, a <<< b, a >>> b
     )
   `, {})

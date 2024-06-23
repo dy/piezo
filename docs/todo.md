@@ -18,14 +18,13 @@
 * [x] update subscript
 * [x] fix parsing
 * [x] a++, a--, a+=1, a-=n
-* [ ] detect expected number of returns from operation so it may have internal optimization.
-* [ ] implement `i = from..to : do`
-* [ ] precedence of `,` over `x ? a,b,c;` and `a,b,c :`
+* [x] fix compiling
+* [ ] separate mixed ops like `^a` and `a^b`, `*a` and `a*b`, `a[]=`, `a()=`, `a=`
+* [ ] account ops for expected number of returns instead of forcing drops
 * [x] get rid of `.` (less = more)
 * [x] make use of `^`, `^^`, `^^^`
-* [ ] ~~make use of `#` topic placeholder~~
+* [x] `~, ~=`
 * [ ] `~/, ~*`
-* [ ] `~, ~=`
 * [ ] all readmes test
   * [x] inline global consts
   * [ ] standard operators
