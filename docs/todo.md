@@ -19,7 +19,7 @@
 * [x] fix parsing
 * [x] a++, a--, a+=1, a-=n
 * [x] fix compiling
-* [ ] separate mixed ops like `^a` and `a^b`, `*a` and `a*b`, `a[]=`, `a()=`, `a=`
+* [ ] separate mixed ops like `^a` and `a^b`, `*a` and `a*b`, `a[]=`, `a()=`, `a=` for compiler
 * [ ] account ops for expected number of returns instead of forcing drops
 * [x] get rid of `.` (less = more)
 * [x] make use of `^`, `^^`, `^^^`

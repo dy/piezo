@@ -866,7 +866,7 @@
   - less is more
   - no-period allows easier concat of modules.
 
-## [x] Early return operator? → keep `a ? ^;` for now, no need for separate operator -> ~~use `./`, `../`, `.../`~~
+## [ ] Early return operator? → keep `a ? ^;` for now, no need for separate operator -> ~~use `./`, `../`, `.../`~~
 
   * can often see `if (a) return;` - useful construct. How's that in lino?
   1. `a ? value.`
@@ -935,6 +935,7 @@
     + literally paths
       - confusable pattern in mind
         + memorable due to that
+      - can get mixed up with imports
     + has "close" hint `/` with end hint `.`
     + gets rid of "end" operator
     - not early return
@@ -944,6 +945,7 @@
       + no conflict with XOR really
       + conventional pipe `|> ^`
     + resolves conflict of `#` as topic placeholder vs variable
+    - some interference with ranges `..; ../; ./; .../; ..a/b;`
   * `cond ?./; cond ?./ x; cond ?../x; cond ?.../x;`
   * `cond && ./; cond && ./x; cond && ../x; cond && .../x;`
     - mind-bending to see `(a && return b)`
@@ -993,7 +995,7 @@
   * `cond<>; cond<a>; cond<<b>>;`
   * `<cond>; <cond> a; <<cond>> b;`
 
-## [x] Return operator: alternatives → try using ~~`^`~~ `./` for returning value from block.
+## [x] Return operator: alternatives → try using ~~`^`~~ `^` for returning value from block.
 
   1. `.`
     + erlang-y
@@ -1017,6 +1019,8 @@
     - enforces `?`, `^` operators
   6. `a ? ./b;`
     + frees `^`
+  7. `a ? \; a ? \b; a ? \\b,c;`
+    - without return doesn't look good
 
 ## [x] Always return result, or allow no-result functions? → implicit return, same as (a;b) in scopes; solved by required number of output as well
 
@@ -1031,7 +1035,7 @@
       * or else `.` depends on `()`: `(a.)` is result, `a.` is export.
   + Since `(a;b;c)` naturally returns last element, so must function body.
 
-## [x] Break, continue, return? -> `^` for continue, `^^` for return, `^^^` for root return.
+## [ ] Break, continue, return? -> `^` for continue, `^^` for return, `^^^` for root return.
 
   1. `^` for continue, `^^` for break;
     + nice pattern to skip callstack;
@@ -1649,7 +1653,7 @@
   + `x -<= 0..10` is just a nice construct
   -  `x <- y` vs `x < -y`
 
-## [x] Comments: `//`, `/*` vs `;;` and `(; ;)` → ~~`//` is safest choice.~~ `\\` gives too many benefits
+## [ ] Comments: `//`, `/*` vs `;;` and `(; ;)` → ~~`//` is safest choice.~~ `\\` gives too many benefits
 
   1. `;;`
   + ;; make more sense, since ; is separator, and everything behind it doesn't matter
@@ -4653,8 +4657,6 @@
     - can be confused with applying to each value in a range
   * `x <= a..b`
     - can be used to compare ranges
-
-### [ ] Smoothstep operator?
 
 ## [x] how do we represent infinity? -> `1/0`, `0/0`
 

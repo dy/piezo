@@ -12,7 +12,7 @@ export default parse
 const OPAREN = 40, CPAREN = 41, OBRACK = 91, CBRACK = 93, SPACE = 32, QUOTE = 39, DQUOTE = 34, PERIOD = 46, BSLASH = 92, _0 = 48, _9 = 57, COLON = 58, HASH = 35, AT = 64, PLUS = 43, MINUS = 45, GT = 62
 
 // precedences
-const PREC_SEMI = 1,
+const PREC_SEMI = 1, // a; b;
   PREC_EXPORT = 2,
   PREC_RETURN = 4, // x ? ^a,b : y
   PREC_STATE = 4, // FIXME: *a,b,c, d=4 is confusing group
