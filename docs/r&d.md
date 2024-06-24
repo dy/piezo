@@ -1053,6 +1053,15 @@
       -> can be used as `tsd(i) = (i < 10 ? (log('lower'); 10).; i)`
     + the most laconic version
   4. webassembly doesn't use continue, just `^` for break.
+  5. `a ? >| : >>|;`
+    + fast forward, skip, break
+    + matches pipes
+    - not in code fonts
+    - noisy: `a |> _ ? >||>>||> ` - is that `|> >| |> >|` or `| >> || >> ||`
+  7. `a ? -| : --|`
+    - not associated with skip/forward
+  6. `a ? -> : =>`
+    - too heavy assoc with fns / maps
 
   ? If `?.` is return from function, then how to break (early return) current scope?
   ? If `?..` is early return current scope, then how to break loop?
@@ -1779,7 +1788,9 @@
     ~+ just `\` is good enough
   - too ground-breaking
     ~+ maybe that's good
-  - complicates copy-paste
+  - disturbs convention of C, JS, Scala, Rust, Java, Go etc
+    - forcing all programmers from these lands learn that new comments syntax
+  - complicates copy-paste of floatbeats
     ~ not so much
 
   4. `/* */`

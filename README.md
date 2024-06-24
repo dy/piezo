@@ -24,7 +24,7 @@ a..b                         \\ ranges
 ~ ~= ~/ ~* ~// ~**           \\ clamp, normalize, lerp
 ^ ^^ ^^^                     \\ continue, break, return
 x[i] x[]                     \\ member access, length
-|> %                         \\ pipe, loop
+|> _                         \\ pipe, loop
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ variables
 foo=1, bar=2.0;              \\ declare vars
@@ -77,7 +77,7 @@ a = (b,c,d);                 \\ a=b; a=c; a=d; (see loops)
 (a,b,c) = 0..3 * 2;          \\ a=0, b=2, c=4
 a ~ 0..10; a ~= 0..10;       \\ clamp(a, 0, 10); a = clamp(a, 0, 10);
 a ~/ 0..10; a ~* 0..10;      \\ normalize(a, 0, 10); lerp(a, 0, 10);
-a ~// 0..10; a ~** 0..10;    \\ smoothstep(a, 0, 10); ismoothstep(a, 0, 10);
+a ~~/ 0..10; a ~~* 0..10;    \\ smoothstep(a, 0, 10); ismoothstep(a, 0, 10);
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ arrays
 m = [..10];                  \\ array of 10 elements
