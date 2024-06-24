@@ -28,7 +28,7 @@ x[i] x[]                     \\ member access, length
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ variables
 foo=1, bar=2.0;              \\ declare vars
-AbCF, $0, Δx, _;             \\ names permit alnum, unicodes, _$
+AbCF, $0, Δx, _;             \\ names permit alnum, unicodes, _$#@
 fooBar123 != FooBar123;      \\ case-sensitive
 default=1, eval=fn, else=0;  \\ freedom of speech
 true = 0b1, false = 0b0;     \\ alias bools
@@ -104,12 +104,12 @@ i = 10.. |> (                \\ descend over range
   i < 5 ? ^;                 \\ if item < 5 continue
   i < 0 ? ^^;                \\ if item < 0 break
 );                           \\
-x[..] |> f(%) |> g(%);       \\ sequence of ops
-x[..] |> % * 2 |> y[..];     \\ write to destination
+x[..] |> f(_) |> g(_);       \\ sequence of ops
+x[..] |> _ * 2 |> y[..];     \\ write to destination
 i = 0..w |> (                \\ nest iterations
   j = 0..h |> f(i, j);       \\ f(x,y)
 );                           \\
-(x,,y) = (a,b,c |> % * 2);   \\ x = a * 2, y = c * 2;
+(x,,y) = (a,b,c |> _ * 2);   \\ x = a * 2, y = c * 2;
 .. |> i < 10 ? i++ : ^;      \\ while i < 10 i++
 ..(i < 10) / 0 |> i++;       \\ alternative while
 
@@ -176,7 +176,7 @@ gain(                             \\ define a function with block, volume argume
   volume ~ 0..100                 \\ volume is limited to 0..100 range
 ) = (
   block[..]
-    |> % * volume                 \\ multiply each sample by volume value
+    |> _ * volume                 \\ multiply each sample by volume value
     |> block[..]
 );
 
@@ -284,16 +284,14 @@ coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
   t = i / 1s;
 
   \\ generate samples block, apply adsr/curve, write result to out
-  out[..] = (
-    i = out[..]
-      |> oscillator[shape](phase)
-      |> adsr(i, 0, 0, .06, .24)
-      |> curve(i, 1.82)
-  );
+  ..  |> oscillator[shape](phase)
+      |> adsr(_, 0, 0, .06, .24)
+      |> curve(_, 1.82)
+      |> out[..];
 
   i++;
   phase += (freq + (t > delay && jump)) * 2pi / 1s;
-).
+)
 ```
 
 </details>
@@ -451,13 +449,9 @@ const arrValues = new Float64Array(memory, arr.value, 3)
 
 ## Motivation
 
-_Melo_ is personal take on what would well designed language look like.
-It has narrow focus - audio processing & DSP, mainly to give advantage over JS / Web Audio in terms of performance & memory.
+_Web Audio_ is unreliable - it has unpredictable pauses, glitches and so on, so <q>audio is better handled in WASM worklet</q> ([@stagas](https://github.com/stagas)). Besides, audio processing in general has no cross-platform solution, various environments deal with audio differently, some don't have audio processing at all.
 
-_Web Audio_ is unreliable - it has unpredictable pauses, glitches and so on, so <q>audio is better handled in WASM worklet</q> ([@stagas](https://github.com/stagas)). Besides, audio processing in general has no cross-platform solution, various environments deal with audio differently, some don't have audio processing at all. Good old audio code gets dated, in 20 years most of the soft is unable to run.
-
-So _melo_ attempts to fill that gap, trying to provide a standard layer.
-WASM enables it for browsers, [audio/worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) and any other envs. In the future it aims at GL and JS as compile targets.
+_Melo_ attempts to fill that gap, providing a common layer for audio processing. It is personal attempt in language design - with foundation from C, JS, Python, Rust, Scala and bits of inspiration from indie langs. WASM enables it for browsers, [audio/worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) and any other envs.
 
 <!--
 ### Principles

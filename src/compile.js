@@ -1,6 +1,6 @@
 // compile source/ast to WAST
 import { FLOAT, INT } from './const.js';
-import parse, { TOPIC } from './parse.js';
+import parse from './parse.js';
 import stdlib from './stdlib.js';
 import precompile from './precompile.js';
 import { ids, stringify, err, u82s } from './util.js';
@@ -439,7 +439,7 @@ Object.assign(expr, {
       depth++
       // i = from; to; while (i < to) {% = i; ...; i++}
       const [, min, max] = a
-      const cur = define(TOPIC, 'f64'),
+      const cur = define('_', 'f64'),
         idx = define(`idx:${depth}`, 'f64'),
         end = define(`end:${depth}`, 'f64'),
         body = expr(b), type = body.type.join(' ')

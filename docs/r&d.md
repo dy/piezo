@@ -1105,7 +1105,7 @@
     + that solves problem of instancing
     + identified by callstack
 
-## [ ] Stateful variable syntax → `*` seems to match "save value" pointers intuition
+## [ ] Stateful vars syntax → `*` seems to match "save value" pointers intuition
 
   * There's disagreement on `...` is best candidate for loading prev state. Let's consider alternatives.
   1. `...x1,y1,x2,y2`
@@ -1298,7 +1298,7 @@
   - requires strings to implement dynamic access `x['first']`
   - some arrays have aliases, others don't: we're not going to make aliases dynamic
 
-## [ ] If `a ? b`, elvis: `a ?: b`? -> why not?
+## [x] If `a ? b`, elvis: `a ?: b`? -> why not?
   + organic extension of ternary `a ? b`, `a ?: b`.
   - weirdly confusing, as if very important part is lost. Maybe just introduce elvis `a>b ? a=1` → `a<=b ?: a=1`
   - it has no definite returning type. What's the result of `(a ? b)`?
@@ -1318,12 +1318,6 @@
   - tiny profit, big discrepancy with convention
 
   ! ALT: can be done via early return as `(a ? b.; )`
-
-## [ ] mix, smoothstep operators: `~*` for mix
-
-  * `x -< a..b` defines clamping?
-  * `a..b -> x` looks like function, but is possible
-  * can be done via external lib
 
 ## [x] Loops: ~~`i <- 0..10 <| a + i`, `i <- list <| a`, `[x <- 1,2,3 <| x*2]`~~ ~~`0..10 | i -> a + i`~~ ~~`list |> # * 2;`~~
 
@@ -1737,6 +1731,7 @@
     * Such comments would make sense if: code was case-sensitive; it had standard allowed chars (no #@); code had if|else|while|for|return|in keywords.
       - code is case-sensitive now
     + gives fresh feeling of old standard, since syntax is updated to be cool
+    + and still it's like scala also
 
   3. `\` or `\\`
   + mono lang reference
@@ -4132,31 +4127,34 @@
 
   ? ALT: `<( x>2?!; )>`
 
-### [x] What's the best character for placeholder? -> within `_#$%^@&` `#` feels the best
+### [ ] What's the best character for topic placeholder? -> within `_#$%^@&` ~~`#` feels the best~~ `_` means "insert here"
 
   * `list |> #*2`, `list |> #>2?^^#:^#;`
     + `#` is almost perfect for topic/reference, associates with `#`th item
+      - pipe is not loop, it's "previous expressino output insert here"
     - has more meaning as "number of" rather than i-th number
       ~+ current item number as well
-    + has typographival meaning as placeholder, or "insertion field"
+    + has typographical meaning as placeholder, or "insertion field"
+      - less of "insert here" more of template
     - needs prohibiting variables starting from # though
       - which is problematic for mono buffers `#tri = [..1s] <|= tri(# * 2)`
       ~+ no, doesn't need, why?
     -~ interferes with `<math#a,b,c>`
       ~ these imports are unwieldy tbh, too much legacy mixup: JSX, C++, types, URLs.
     + no "select-all" problem as acute as with `_`
-  * `list |> &*2`, `list |> &>2?^^&:^&;`
+  * ~~`list |> &*2`, `list |> &>2?^^&:^&;`~~
     + & is almost-character, feels more like an id
     - has weird connotation as binary
     - makes `list |> ^^&&&` a valid construct, ugh
     - there's too much meaning for `&` character as `&`, `&&` already
   * `list |> @ * 2`, `list |> @>2?^^@:^@`
     + relatively safe
-    + associates with id / character quite a bit
-    + is not overused by other meanings, except for import
-    + allows reserved name, no var name `#` shadowing
+    + associates with id / character
+    + not reserved by other meanings
+      -~ import
+    + allows reserved name, no var name like `#` shadowing
     + `items |> filter(@)` looks softer than `items |> filter(#)`
-    ~- unusual convention (no such precedence)
+    ~- unusual convention (no such precedents)
     - conflicts/associates with import (import can be `<>`, but still)
     - makefile denotes `$@` as target file (exports?), and `$^` as current file
     + matches `au-` from language name, also looks like aura around a
@@ -4168,18 +4166,22 @@
   * `list |> _ * 2`, `list |> _>2?^^_:^_`
     + less mystery than with `@`
     + more conventional (Elixir, Julia, Scala, Perl, PowerShell)
+    + not an operator
+    + literally means "insert here" like in written forms for fields
     - not as distinguished from code, as `^@#&`
     - select-all problem, esp. since default separator in vars is `_`, like `sin_w`
+      ~ not necessary, since we are likely case-sensitive
     - has tinge of "throwaway variable"
       ~+ we don't need throwaways, since we support skipped args `(,,)`
     - has tinge of "private variable"
       ~ we don't have privates
     + literally means "placeholder", for "placeholder" variable
+    + we don't have special designation for lowdash otherwise
   * `list |> ^ * 2`
     - conflicts with `^` for return `list |> ^>2?^^^:^^;`
     + compatible with js proposal; compatible with makefile;
-  * `list |> ~ * 2`
-  * `list |> () * 2`
+  * ~~`list |> ~ * 2`~~
+  * ~~`list |> () * 2`~~
   * `list |> . * 2`
     - conflicts with export
     - field is taken by `..`, `.` as export, `x.2` as prop, `.2` as float
@@ -4646,6 +4648,7 @@
   * `x ~/ a..b`
     + allows `x -/ a..b` for lerp
   * `x ~< a..b`
+  * `x ~~/ a..b` for smoothstep
   * `a..b -> x`
     - looks like function
   * can be done via external lib
@@ -4657,6 +4660,7 @@
     - can be confused with applying to each value in a range
   * `x <= a..b`
     - can be used to compare ranges
+
 
 ## [x] how do we represent infinity? -> `1/0`, `0/0`
 

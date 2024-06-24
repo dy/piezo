@@ -638,7 +638,7 @@ t.todo('compile: break/continue', t => {
 
 t('compile: loops range global', t => {
   let wat, mod
-  wat = compileMelo(`x=[1..3]; 0..2 |> x[%]=%+1; x`)
+  wat = compileMelo(`x=[1..3]; 0..2 |> x[_]=_+1; x`)
   mod = compileWat(wat)
   let { __memory: memory, x } = mod.instance.exports
 
@@ -651,7 +651,7 @@ t('compile: loops range global', t => {
 
 t('compile: loops range local', t => {
   let wat, mod
-  wat = compileMelo(`x=[1..3]; fill() = (0..x[] |> x[%]=%+1); fill, x`)
+  wat = compileMelo(`x=[1..3]; fill() = (0..x[] |> x[_]=_+1); fill, x`)
   mod = compileWat(wat)
   let { __memory: memory, x, fill } = mod.instance.exports
 
@@ -665,8 +665,8 @@ t('compile: loops range local', t => {
 
 t('compile: loop range in range', t => {
   let wat = compileMelo(`a=[..9], f(a,w,h)=(
-    0..w |> (x=%;
-      0..h |> (y=%;
+    0..w |> (x=_;
+      0..h |> (y=_;
         a[y*w + x] = x+y*w
       )
     )
