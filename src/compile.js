@@ -743,27 +743,31 @@ Object.assign(expr, {
     return op(`${pick(2, aop)}(if (param i32) (result f64) (then (f64.convert_i32_s)) (else (drop) ${asFloat(bop)}))`, 'f64')
   },
   '&&'([, a, b], out) {
-    let aop = expr(a), bop = expr(b)
+    let aop = expr(a, true), bop = expr(b, out)
+
     if (aop.type[0] == 'f64') return op(`${pick(2, aop)}(if (param f64) (result f64) (f64.ne (f64.const 0)) (then (drop) ${asFloat(bop)}))`, 'f64')
     if (bop.type[0] == 'i32') return op(`${pick(2, aop)}(if (param i32) (result i32) (then (drop) ${bop}))`, 'i32')
     return op(`${pick(2, aop)}(if (param i32) (result f64) (then (f64.convert_i32_s) (drop) ${asFloat(bop)}))`, 'f64')
   },
 
-  // parsing alias ? -> ?:
+  // a ? b; - differs from a && b so that it returns 0 if condition doesn't meet
   '?'([, a, b], out) {
-    let aop = expr(a), bop = expr(b)
-    if (aop.type.length > 1) err('Group condition is not supported.')
-    return op(`(if ${aop.type[0] == 'i32' ? aop : `(f64.ne ${aop} (f64.const 0))`} (then ${asFloat(bop)}(drop) ))`, null)
+    let aop = expr(a, true), bop = expr(b, out)
+    if (aop.type.length > 1) err('Group condition is not supported yet.')
+
+    return op(`(if ${out ? `(result f64)` : ``} ${aop.type[0] == 'i32' ? aop : `(f64.ne ${aop} (f64.const 0))`} (then ${bop.type[0] === 'i32' ? bop : asFloat(bop)} )) (else (${bop.type[0]}.const 0))`, null)
   },
   '?:'([, a, b, c], out) {
-    let aop = expr(a), bop = expr(b), cop = expr(c)
-
-    if (aop.type.length > 1) err('Group condition is not supported.')
+    let aop = expr(a, true), bop = expr(b, out), cop = expr(c, out)
 
     // FIXME: (a,b) ? c : d
     // FIXME: (a,b) ? (c,d) : (e,f)
     // FIXME: a ? (b,c) : (d,e)
-    return op(`(if (result f64) ${aop.type[0] == 'i32' ? aop : `(f64.ne ${aop} (f64.const 0))`} (then ${asFloat(bop)} ) (else ${asFloat(cop)}))`, 'f64')
+    if (aop.type.length > 1) err('Group condition is not supported yet.')
+
+    if (bop.type[0] === 'i32' && cop.type[0] === 'i32') return op(`(if ${out ? `(result i32)` : ``} ${aop.type[0] == 'i32' ? aop : `(f64.ne ${aop} (f64.const 0))`} (then ${bop} ) (else ${cop}))`, 'i32')
+
+    return op(`(if ${out ? `(result f64)` : ``} ${aop.type[0] == 'i32' ? aop : `(f64.ne ${aop} (f64.const 0))`} (then ${asFloat(bop)} ) (else ${asFloat(cop)}))`, 'f64')
   },
 
   // a ~ range - clamp a to indicated range
@@ -898,6 +902,7 @@ function pick(count, input) {
     // a = b - skip picking
     if (count === 1) return input
     // (a,b,c) = d - duplicating via tmp var is tentatively faster & more compact than calling a dup function
+    // FIXME: can be single global variable
     const name = define(`dup:${input.type[0]}`, input.type[0])
     return op(
       `(local.set $${name} ${input})${`(local.get $${name})`.repeat(count)}`,

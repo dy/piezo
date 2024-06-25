@@ -900,6 +900,7 @@
     - a bit unnatural order
   * `cond ? b.; cond ?. ; cond ?..; cond ? c..;` (see 1.)
     + ideal from the natural point of view
+    + works nicely with pipes: `a |> (_ > 10 ?.;)`
     ~ some conflict with optional JS paths
     ? how to make break 2 scopes, or alternatively continue loop?
       !? for continue `a < tsh ?..;`
@@ -909,6 +910,8 @@
           ? is that so bad that it matches range? it is kind-of indicator to "continue" range
             * yes: how do we know if it returns sequence or just one element?
               +~ noone returns infinite sequence as result
+          ? continue / break don't return values, do they
+            ~ it can return result, or can discard result.
           - confusable `a < tsh ? ..4;` and `a < tsh ? 4..;`
             ~+ continue with infinite sequence from either side is meaningless
               ~ we can make some meaning for `..4`, like "put value at the end" or something
@@ -967,6 +970,7 @@
       + doesn't have to introduce separate `?` and `^`.
     + matches beginning of ternary
     ~ we may still want to have if operator `?`.
+      ~ or not
   * `cond!; cond!b; cond!!b;`
     - `!a ! b;`
     + clear option for guards, like `a > 3 !;`
@@ -995,7 +999,9 @@
   * `cond<>; cond<a>; cond<<b>>;`
   * `<cond>; <cond> a; <<cond>> b;`
 
-## [x] Return operator: alternatives → try using ~~`^`~~ `^` for returning value from block.
+  4. `a..b |> (x < 10 ?>; x > 100 ?.)`
+
+## [x] Return operator: alternatives → try using `^` for returning value from block.
 
   1. `.`
     + erlang-y
@@ -1046,6 +1052,7 @@
     + it seems going to live longer than `value.`
     + gives nice feeling of direction in language, meaning visually "get out of this scope"
       + that supports piper `|>`
+    - a bit cryptic to see `^^^a`, as if some magic happens
   2. `>>` for continue, `^` for break.
   3. `.` for break or return, acting within the block; `^` for continue.
     - break can be used without stack argument, `.` by itself doesn't do much sense although possible
@@ -1062,6 +1069,8 @@
     - not associated with skip/forward
   6. `a ? -> : =>`
     - too heavy assoc with fns / maps
+  7. `.. |> x > 3 |?> ` - rethink into pipe filtering
+    - doesn't bail out arbitrarily
 
   ? If `?.` is return from function, then how to break (early return) current scope?
   ? If `?..` is early return current scope, then how to break loop?
@@ -1307,7 +1316,7 @@
   - requires strings to implement dynamic access `x['first']`
   - some arrays have aliases, others don't: we're not going to make aliases dynamic
 
-## [x] If `a ? b`, elvis: `a ?: b`? -> why not?
+## [x] If conditional: `a ? b` returning b or 0, elvis: `a ?: b`
   + organic extension of ternary `a ? b`, `a ?: b`.
   - weirdly confusing, as if very important part is lost. Maybe just introduce elvis `a>b ? a=1` → `a<=b ?: a=1`
   - it has no definite returning type. What's the result of `(a ? b)`?
@@ -1485,7 +1494,7 @@
 ### [x] loops can return a value: `(isActive(it): action(it))` - the last result of action is returned
   + useful for many loop cases where we need internal variable result.
 
-## [ ] Loops 2.0: since requirements are new, what's meaningful look -> `a..b |> do` and `..(i < 10)/0 |> i++`
+## [x] Loops 2.0: since requirements are new, what's meaningful look -> `a..b |> do` and `..(i < 10)/0 |> i++`
 
   * `0..h |> (y,y1,y2)=(#,#+1,#+2)` doesn't look good in any form:
   * `:` defines branch, as in `a ? b : c`
@@ -4138,7 +4147,7 @@
 
   ? ALT: `<( x>2?!; )>`
 
-### [ ] What's the best character for topic placeholder? -> within `_#$%^@&` ~~`#` feels the best~~ `_` means "insert here"
+### [x] What's the best character for topic placeholder? -> ~~`#` feels the best~~ `_` means "insert here" and scala-compatible
 
   * `list |> #*2`, `list |> #>2?^^#:^#;`
     + `#` is almost perfect for topic/reference, associates with `#`th item
@@ -4909,14 +4918,16 @@
 
   * `[-10..10..0.5]`
   * `[-10..0.5..10]`
-  * ~~`[0..10 : 0.5]`~~
-    - directly loop
+  * `[0..10 : 0.5]`
     + possible, : is free now
     + similar to type definition, but more meaningful
-    - conflicts with brainching `?:` - meaning "code after branch"
+    + double-symbol refers to iteration
+    - conflicts with brainching `?:` - meaning "code after branch" `a ? 0..10:0.5;` vs `a ? 0..10 : 0.5;`
+      ~ technically none of these make sense
     ? can be used as stride in mem reading as uint8? `x = y[2:u8]`
-  * `[i=0..20 : i*0.5]`
-    - very verbose
+  * `[0..20 |> _*0.5]`
+    - verbose
+    - messes up initial range
   * `0..20 += .01 : `
     - each member is increased by .01
   * `0..20 ~| 1`, `0..20 |~ 1`
@@ -4926,13 +4937,17 @@
   * ~~`[0..10 + 0.01]`~~
     + compatible with range modifiers
     - can be confusable with `(0,1,2,3,4,...) + 0.01`
+  * `[0..10 \ .5]`
+    + makes use of `\` nicely
+  * `[0..10 ++ .5]`
+    - what about descending range?
 
 ## [ ] Range modifiers:
 
   * `0..100 ** 0.01`
     * `a ~ 0..100 ** .01` - maps to pow range?
       + reinforces meaning of max operator, which is nice
-    - pows each member
+    - pow each member
 
 ## [ ] Early return: how to consolidate type? -> just enforce f64 for now for early returns
 
@@ -5477,7 +5492,7 @@
 9. `a <: b..c`, `a <=: b..c`
 9.1 `a :< b..c`, `a :<= b..c`
 
-## [x] Write out operator `x[..] : a : b : x[..]` -> `x[..] |> a() |> b() |> x[..]`
+## [x] Write out operator `x[..] : a : b : x[..]` -> `x[..] |> a() |> b() |> x[..] = _`
 
 * we need it for copying loops or redirection, since `a = b` is not always the most useful
 1. `a..b -> x[..]`

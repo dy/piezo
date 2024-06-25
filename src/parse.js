@@ -176,6 +176,7 @@ binary('~*', PREC_CLAMP)
 
 // loop a[..] |> #
 nary('|>', PREC_PIPE)
+binary('|>=', PREC_PIPE, true)
 
 // range a..b, ..b, a..
 token('..', PREC_RANGE, a => (['..', a, expr(PREC_RANGE)]))
