@@ -158,20 +158,20 @@ Object.assign(expr, {
     // FIXME: handle escapes
     // we convert string from uint8 to f64 chars
     datas[mem] = [...(new TextEncoder()).encode(str)]
-    const out = op(`(call $arr.ref ${mem} ${str.length})`, 'f64')
+    const result = op(`(call $arr.ref ${mem} ${str.length})`, 'f64')
     mem += (str.length << 3)
-    return out
+    return result
   },
 
   // a; b; c;
+  // NOTE: [;, a] returns a, [;, a,,] returns nop
   ';'([, ...statements], out) {
     let list = [], last = statements[statements.length - 1];
     for (let s of statements) s && list.push(expr(s, true)); // we drop results regardless since ; doesn't create stack entry
-    list = list.filter(Boolean)
 
     if (!list.length) return
 
-    return op(list.join('\n'))
+    return op(list.join('\n'), list[list.length - 1].type)
   },
 
   ','([, ...statements], out) {
@@ -315,7 +315,7 @@ Object.assign(expr, {
     inc('arr.len'), inc('i32.modwrap')
 
     // x[a+b]; -> a+b;
-    if (!out) return b && expr(a, false)
+    if (!out) return op(expr(a, false) + expr(b, false))
 
     // a[] - length
     if (!b) return op(`(call $arr.len ${expr(a)})`, 'i32')
@@ -339,7 +339,7 @@ Object.assign(expr, {
       // FIXME: static optimization property - to avoid calling i32.modwrap if idx/len is known
       // FIXME: another static optimization: if length is known in advance (likely yes) - make static modwrap
 
-      return inc('arr.len'), inc('arr.set'), inc('i32.modwrap'), op(`(call $arr.tee ${expr(name)} ${asInt(expr(idx))} ${asFloat(expr(b))})`, 'f64')
+      return inc('arr.len'), inc('arr.set'), inc('i32.modwrap'), op(`(call $arr.${out ? 'tee' : 'set'} ${expr(name)} ${asInt(expr(idx))} ${asFloat(expr(b))})`, 'f64')
     }
 
     // a = b,  a = (b,c),   a = (b;c,d)
@@ -349,14 +349,14 @@ Object.assign(expr, {
       // global constants init doesn't require operation
       if (!locals && (b[0] === INT || b[0] === FLOAT)) {
         a = define(a, 'f64', b[1])
+        // FIXME: are we sure we don't need returning value here?
         return
       }
 
       a = define(a, 'f64')
-      const bop = expr(b)
-      if (!bop.type?.length) err(`Cannot use void operator \`${b[0]}\` as right-side value`)
+      const bop = expr(b, true)
 
-      return tee(a, asFloat(bop))
+      return (out ? tee : set)(a, asFloat(bop))
     }
 
     // x(a,b) = y
@@ -397,9 +397,7 @@ Object.assign(expr, {
       globals[name] = { func: true, args, type: 'i32' };
 
       body[1].splice(1, 0, ...inits) // prepend inits
-
-      result = expr(body)
-
+      result = expr(body, true)
       // define result, comes after (param) before (local)
       if (result?.type?.length) dfn.push(`(result ${result.type.join(' ')})`)
 
@@ -434,7 +432,7 @@ Object.assign(expr, {
       }
 
       // init body - expressions write themselves to body
-      funcs[name] = String(`(func $${name} ${dfn.join(' ')}` +
+      funcs[name] = new String(`(func $${name} ${dfn.join(' ')}` +
         (prepare.length ? `\n${prepare.join('\n')}` : ``) +
         (result ? `\n${result}` : ``) +
         (defer.length ? `\n${defer.join(' ')}` : ``) + // defers have 0 stack outcome, so result is still there
@@ -452,6 +450,7 @@ Object.assign(expr, {
 
   // a |> b
   '|>'([, a, b], out) {
+    // FIXME: account for out flag
     // a..b |> ...
     if (a[0] === '..') {
       depth++
@@ -540,20 +539,23 @@ Object.assign(expr, {
   '-'([, a, b], out) {
     // [-, [int, a]] -> (i32.const -a)
     if (!b) {
-      let res = expr(a)
+      let res = expr(a, out)
+      if (!out) return res
       if (res.type.length > 1) err('Group negation: unimplemented')
       if (res.type[0] === 'i32') return op(`(i32.sub (i32.const 0) ${res})`, 'i32')
       return op(`(f64.neg ${res})`, 'f64')
     }
 
-    let aop = expr(a), bop = expr(b)
+    let aop = expr(a, out), bop = expr(b, out)
+    if (!out) return op(aop + bop)
 
     if (aop.type.length > 1 || bop.type.length > 1) err('Group subtraction: unimplemented')
     if (aop.type[0] === 'i32' && bop.type[0] === 'i32') return op(`(i32.sub ${aop} ${bop})`, 'i32')
     return op(`(f64.sub ${asFloat(aop)} ${asFloat(bop)})`, 'f64')
   },
   '+'([, a, b], out) {
-    let aop = expr(a), bop = expr(b)
+    let aop = expr(a, out), bop = expr(b, out);
+    if (!out) return op(aop + bop);
 
     if (aop.type[0] == 'i32' && bop.type[0] == 'i32') return op(`(i32.add ${aop} ${bop})`, 'i32')
     return op(`(f64.add ${asFloat(aop)} ${asFloat(bop)})`, 'f64')
@@ -585,16 +587,16 @@ Object.assign(expr, {
             // first calculate state cell
             `(local.set $${adr} ${state.length ? `(i32.add (global.get $${stateName}) (i32.const ${state.length << 2}))` : `(global.get $${stateName})`})\n` +
             // if pointer is zero - init state
-            `(if (result f64) (i32.eqz (i32.load (local.get $${adr})))\n` +
+            `(if ${out ? `(result f64)` : ``} (i32.eqz (i32.load (local.get $${adr})))\n` +
             `(then\n` +
             // allocate memory for a single variable
             `(i32.store (local.get $${adr}) (local.tee $${adr} (call $malloc (i32.const 8))))\n` +
             // initialize value in that location (saved to memory by fn defer)
-            `(local.tee $${name} ${asFloat(expr(init))})\n` +
+            `(local.${out ? 'tee' : 'set'} $${name} ${asFloat(expr(init))})\n` +
             `)\n` +
             `(else \n` +
             // local variable from state ptr
-            `(local.tee $${name} (f64.load (local.tee $${adr} (i32.load (local.get $${adr})))))\n` +
+            `(local.${out ? 'tee' : 'set'} $${name} (f64.load (local.tee $${adr} (i32.load (local.get $${adr})))))\n` +
             `)` +
             `)\n`
 
@@ -607,7 +609,8 @@ Object.assign(expr, {
     }
 
     // group multiply
-    let aop = expr(a), bop = expr(b)
+    let aop = expr(a, out), bop = expr(b, out)
+    if (!out) return op(aop + bop);
 
     if (aop.type.length > 1 || bop.type.length > 1) {
       err('Complex group multiplication is not supported')
@@ -620,16 +623,19 @@ Object.assign(expr, {
     return op(`(f64.mul ${asFloat(aop)} ${asFloat(bop)})`, 'f64')
   },
   '/'([, a, b], out) {
-    let aop = expr(a), bop = expr(b)
+    let aop = expr(a, out), bop = expr(b, out)
+    if (!out) return op(aop + bop);
     return op(`(f64.div ${asFloat(aop)} ${asFloat(bop)})`, 'f64')
   },
   '**'([, a, b], out) {
-    if (b[1] === 0.5) return op(`(f64.sqrt ${asFloat(expr(a))})`, 'f64');
-    let aop = expr(a), bop = expr(b)
+    let aop = expr(a, out), bop = expr(b, out)
+    if (!out) return op(aop + bop);
+    if (b[1] === 0.5) return op(`(f64.sqrt ${asFloat(aop)})`, 'f64');
     return inc('f64.pow'), op(`(call $f64.pow ${asFloat(aop)} ${asFloat(bop)})`, 'f64')
   },
   '%'([, a, b], out) {
-    let aop = expr(a), bop = expr(b);
+    let aop = expr(a, out), bop = expr(b, out);
+    if (!out) return op(aop + bop);
     // x % inf
     if (b[1] === Infinity) return aop;
     if (aop.type[0] === 'i32' && bop.type[0] === 'i32') op(`(i32.rem_s ${aop} ${bop})`, 'i32')
@@ -637,117 +643,144 @@ Object.assign(expr, {
   },
   '%%'([, a, b], out) {
     // common case of int is array index access
-    let aop = expr(a), bop = expr(b);
+    let aop = expr(a, out), bop = expr(b, out);
+    if (!out) return op(aop + bop);
     if (aop.type[0] === 'i32' && bop.type[0] === 'i32') return inc('i32.modwrap'), op(`(call $i32.modwrap ${a} ${b})`, 'i32')
     return inc('f64.modwrap'), inc('f64.rem'), op(`(call $f64.modwrap ${asFloat(aop)} ${asFloat(bop)})`, `f64`)
   },
 
   '++'([, a], out) {
-    // NOTE: for a[n]++ it's cheaper to (a[n]+=1)-1 (a[n];drop(a[n]=a[n]+1)) due to read
-    if (a[0] === '[') return expr(['-', ['=', a, ['+', a, [INT, 1]]], [INT, 1]])
+    if (!out) return expr(['=', a, ['+', a, [INT, 1]]], false)
 
-    let aop = expr(a)
-    return op(`${aop}${set(a, expr(['+', a, [INT, 1]]))}`, aop.type[0])
+    // NOTE: for a[n]++ it's cheaper to (a[n]+=1)-1 (a[n];drop(a[n]=a[n]+1)) due to read
+    if (a[0] === '[') return expr(['-', ['=', a, ['+', a, [INT, 1]]], [INT, 1]], true)
+    if (typeof a !== 'string') err('Invalid left hand-side expression in prefix operation')
+
+    let aop = expr(a, true)
+    return op(`${aop}${set(a, expr(['+', a, [INT, 1]], true))}`, aop.type[0])
   },
 
   '--'([, a], out) {
-    if (a[0] === '[') return expr(['+', ['=', a, ['-', a, [INT, 1]]], [INT, 1]])
+    if (!out) return expr(['=', a, ['-', a, [INT, 1]]], false)
 
-    let aop = expr(a)
-    return op(`${expr(a)}${set(a, expr(['-', a, [INT, 1]]))}`, aop.type[0])
+    // FIXME: this can be moved to precompile
+    if (a[0] === '[') return expr(['+', ['=', a, ['-', a, [INT, 1]]], [INT, 1]], true)
+    if (typeof a !== 'string') err('Invalid left hand-side expression in prefix operation')
+
+    let aop = expr(a, true)
+    return op(`${aop}${set(a, expr(['-', a, [INT, 1]], true))}`, aop.type[0])
   },
 
-  '|'([, a, b], out) {
-    let aop = expr(a), bop = expr(b);
-    // x | 0
-    if (b[1] === 0) return asInt(aop);
-    return op(`(i32.or ${asInt(aop)} ${asInt(bop)})`, 'i32')
-  },
   '!'([, a], out) {
-    let aop = expr(a)
+    let aop = expr(a, out)
+    if (!out) return op(aop);
     if (aop.type.length > 1) err('Group inversion: unimplemented')
     if (aop.type[0] === 'i32') return op(`(if (result i32) (i32.eqz ${aop}) (then (i32.const 1)) (else (i32.const 0)))`, 'i32')
     return op(`(if (result i32) (f64.eq ${aop} (f64.const 0)) (then (i32.const 1)) (else (i32.const 0)))`, 'i32')
   },
+  '|'([, a, b], out) {
+    let aop = expr(a, out), bop = expr(b, out);
+    if (!out) return op(aop + bop);
+    // x | 0
+    if (b[1] === 0) return asInt(aop);
+    return op(`(i32.or ${asInt(aop)} ${asInt(bop)})`, 'i32')
+  },
   '&'([, a, b], out) {
-    let aop = expr(a), bop = expr(b);
+    let aop = expr(a, out), bop = expr(b, out);
+    if (!out) return op(aop + bop);
     return op(`(i32.and ${asInt(aop)} ${asInt(bop)})`, `i32`)
   },
   '^'([, a, b], out) {
     if (!b) {
       // ^a
-      let aop = expr(a)
+      let aop = expr(a, true)
       returns.push(aop)
       // we enforce early returns to be f64
       return op(`(return ${asFloat(aop)})`, aop.type)
     }
 
     // a ^ b
-    let aop = expr(a), bop = expr(b);
+    let aop = expr(a, out), bop = expr(b, out);
+    if (!out) return op(aop + bop);
     return op(`(i32.xor ${asInt(aop)} ${asInt(bop)})`, `i32`)
   },
   '<<'([, a, b], out) {
-    let aop = expr(a), bop = expr(b);
+    let aop = expr(a, out), bop = expr(b, out);
+    if (!out) return op(aop + bop);
     return op(`(i32.shl ${asInt(aop)} ${asInt(bop)})`, `i32`)
   },
   '>>'([, a, b], out) {
-    let aop = expr(a), bop = expr(b);
+    let aop = expr(a, out), bop = expr(b, out);
+    if (!out) return op(aop + bop);
     return op(`(i32.shr_s ${asInt(aop)} ${asInt(bop)})`, `i32`)
   },
   '<<<'([, a, b], out) {
-    let aop = expr(a), bop = expr(b);
+    let aop = expr(a, out), bop = expr(b, out);
+    if (!out) return op(aop + bop);
     return op(`(i32.rotl ${asInt(aop)} ${asInt(bop)})`, `i32`)
   },
   '>>>'([, a, b], out) {
-    let aop = expr(a), bop = expr(b);
+    let aop = expr(a, out), bop = expr(b, out);
+    if (!out) return op(aop + bop);
     return op(`(i32.rotr ${asInt(aop)} ${asInt(bop)})`, `i32`)
   },
 
   // comparisons
   '<'([, a, b], out) {
-    let aop = expr(a), bop = expr(b)
+    let aop = expr(a, out), bop = expr(b, out)
+    if (!out) return op(aop + bop);
     if (aop.type[0] === 'i32' && bop.type[0] === 'i32') return op(`(i32.lt_s ${aop} ${bop})`, 'i32')
     return op(`(f64.lt ${asFloat(aop)} ${asFloat(bop)})`, 'i32')
   },
   '<='([, a, b], out) {
-    let aop = expr(a), bop = expr(b)
+    let aop = expr(a, out), bop = expr(b, out)
+    if (!out) return op(aop + bop);
     if (aop.type[0] === 'i32' && bop.type[0] === 'i32') return op(`(i32.le_s ${aop} ${bop})`, 'i32')
     return op(`(f64.le ${asFloat(aop)} ${asFloat(bop)})`, 'i32')
   },
   '>'([, a, b], out) {
-    let aop = expr(a), bop = expr(b)
+    let aop = expr(a, out), bop = expr(b, out)
+    if (!out) return op(aop + bop);
     if (aop.type[0] === 'i32' && bop.type[0] === 'i32') return op(`(i32.gt_s ${aop} ${bop})`, 'i32')
     return op(`(f64.gt ${asFloat(aop)} ${asFloat(bop)})`, 'i32')
   },
   '>='([, a, b], out) {
-    let aop = expr(a), bop = expr(b)
+    let aop = expr(a, out), bop = expr(b, out)
+    if (!out) return op(aop + bop);
     if (aop.type[0] === 'i32' && bop.type[0] === 'i32') return op(`(i32.ge_s ${aop} ${bop})`, 'i32')
     return op(`(f64.ge ${asFloat(aop)} ${asFloat(bop)})`, 'i32')
   },
   '=='([, a, b], out) {
-    let aop = expr(a), bop = expr(b)
+    let aop = expr(a, out), bop = expr(b, out)
+    if (!out) return op(aop + bop);
     if (aop.type[0] === 'i32' && bop.type[0] === 'i32') return op(`(i32.eq_s ${aop} ${bop})`, 'i32')
     return op(`(f64.eq ${asFloat(aop)} ${asFloat(bop)})`, 'i32')
   },
   '!='([, a, b], out) {
-    let aop = expr(a), bop = expr(b)
+    let aop = expr(a, out), bop = expr(b, out)
+    if (!out) return op(aop + bop);
     if (aop.type[0] === 'i32' && bop.type[0] === 'i32') return op(`(i32.ne_s ${aop} ${bop})`, 'i32')
     return op(`(f64.ne ${asFloat(aop)} ${asFloat(bop)})`, 'i32')
   },
 
   // logical - we put value twice to the stack and then just drop if not needed
   '||'([, a, b], out) {
-    let aop = expr(a), bop = expr(b)
+    let aop = expr(a, true), bop = expr(b, out)
+
+    if (!out) return op(`(if ${aop.type[0] == 'i32' ? aop : `(f64.ne ${aop} (f64.const 0))`} (else ${bop}))`)
+
     if (aop.type[0] == 'f64') return op(`${pick(2, aop)}(if (param f64) (result f64) (f64.ne (f64.const 0)) (then) (else (drop) ${asFloat(bop)}))`, 'f64')
     if (bop.type[0] == 'i32') return op(`${pick(2, aop)}(if (param i32) (result i32) (then) (else (drop) ${bop}))`, 'i32')
-    return op(`${pick(2, aop)}(if (param i32) (result f64) (then (f64.convert_i32_s)) (else (drop) ${asFloat(bop)}))`, 'f64')
+    return op(`${pick(2, aop)}(if (param i32) (result f64) (then (f64.convert_i32_s)) (else (drop) ${bop}))`, 'f64')
   },
   '&&'([, a, b], out) {
     let aop = expr(a, true), bop = expr(b, out)
 
+    if (!out) return op(`(if ${aop.type[0] == 'i32' ? aop : `(f64.ne ${aop} (f64.const 0))`} (then ${bop}))`)
+
     if (aop.type[0] == 'f64') return op(`${pick(2, aop)}(if (param f64) (result f64) (f64.ne (f64.const 0)) (then (drop) ${asFloat(bop)}))`, 'f64')
     if (bop.type[0] == 'i32') return op(`${pick(2, aop)}(if (param i32) (result i32) (then (drop) ${bop}))`, 'i32')
-    return op(`${pick(2, aop)}(if (param i32) (result f64) (then (f64.convert_i32_s) (drop) ${asFloat(bop)}))`, 'f64')
+    return op(`${pick(2, aop)}(if (param i32) (result f64) (then (drop) ${bop})) (else (f64.convert_i32_s))`, 'f64')
   },
 
   // a ? b; - differs from a && b so that it returns 0 if condition doesn't meet
