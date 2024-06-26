@@ -788,7 +788,7 @@ Object.assign(expr, {
     let aop = expr(a, true), bop = expr(b, out)
     if (aop.type.length > 1) err('Group condition is not supported yet.')
 
-    return op(`(if ${out ? `(result f64)` : ``} ${aop.type[0] == 'i32' ? aop : `(f64.ne ${aop} (f64.const 0))`} (then ${bop.type[0] === 'i32' ? bop : asFloat(bop)} )) (else (${bop.type[0]}.const 0))`, null)
+    return op(`(if ${out ? `(result f64)` : ``} ${aop.type[0] == 'i32' ? aop : `(f64.ne ${aop} (f64.const 0))`} (then ${bop.type[0] === 'i32' ? bop : asFloat(bop)} ) (else (${bop.type[0]}.const 0)))`, bop.type)
   },
   '?:'([, a, b, c], out) {
     let aop = expr(a, true), bop = expr(b, out), cop = expr(c, out)
