@@ -37,7 +37,7 @@ export default function compile(node, obj) {
   config = obj || {}
 
   // run global in start function
-  let init = expr(node).trim(), code = ``
+  let init = expr(node, true).trim(), code = ``
 
   // collect exports from last statement
   const lastNode = node[0] === ';' ? node[node.length - 1] : node
@@ -112,7 +112,7 @@ export default function compile(node, obj) {
 // convert statement to operation string
 // @out suggests if output value[s] must be saved on stack or discarded
 // since some expressions can be optimized (loops) if value can be discarded
-function expr(statement, out = 0) {
+function expr(statement, out) {
   if (!statement) return ''
 
   // a; - just declare in proper scope
@@ -166,8 +166,8 @@ Object.assign(expr, {
   // a; b; c;
   // NOTE: [;, a] returns a, [;, a,,] returns nop
   ';'([, ...statements], out) {
-    let list = [], last = statements[statements.length - 1];
-    for (let s of statements) s && list.push(expr(s, true)); // we drop results regardless since ; doesn't create stack entry
+    if (!statements[statements.length - 1]) out = false;
+    let list = statements.map((s, i) => i === statements.length - 1 ? expr(s, out) : expr(s, false));
 
     if (!list.length) return
 
@@ -788,7 +788,9 @@ Object.assign(expr, {
     let aop = expr(a, true), bop = expr(b, out)
     if (aop.type.length > 1) err('Group condition is not supported yet.')
 
-    return op(`(if ${out ? `(result f64)` : ``} ${aop.type[0] == 'i32' ? aop : `(f64.ne ${aop} (f64.const 0))`} (then ${bop.type[0] === 'i32' ? bop : asFloat(bop)} ) (else (${bop.type[0]}.const 0)))`, bop.type)
+    if (!out) return op(`(if ${aop.type[0] == 'i32' ? aop : `(f64.ne ${aop} (f64.const 0))`} (then ${bop}))`);
+
+    return op(`(if (result ${bop.type[0]}) ${aop.type[0] == 'i32' ? aop : `(f64.ne ${aop} (f64.const 0))`} (then ${bop.type[0] === 'i32' ? bop : asFloat(bop)} ) (else (${bop.type[0]}.const 0)))`, bop.type)
   },
   '?:'([, a, b, c], out) {
     let aop = expr(a, true), bop = expr(b, out), cop = expr(c, out)
