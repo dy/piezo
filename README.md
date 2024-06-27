@@ -447,7 +447,7 @@ const arrValues = new Float64Array(memory, arr.value, 3)
 
 _Web Audio_ is unreliable - it has unpredictable pauses, glitches and so on, so <q>audio is better handled in WASM worklet</q> ([@stagas](https://github.com/stagas)). Besides, audio processing in general has no cross-platform solution, various environments deal with audio differently, some don't have audio processing at all.
 
-_Melo_ attempts to fill that gap, providing a common layer for audio processing. It is personal attempt in language design - with foundation from C, JS, Python, Rust, Scala and bits of inspiration from indie langs. WASM enables it for browsers, [audio/worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) and any other envs.
+_Melo_ attempts to fill that gap, providing a common layer for audio processing. It is personal attempt in language design - with foundation from C, JS, Python, Scala and bits of inspiration from everywhere. It's easy tap into WASM, which enables code for browsers, [audio/worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) and any other envs.
 
 <!--
 ### Principles
@@ -465,6 +465,7 @@ _Melo_ attempts to fill that gap, providing a common layer for audio processing.
 * _Static/Linear memory_: no garbage to collect, static-size heap.
 * _Readability_: produced WASM must be readable.
 * _Normalized_: there's no smart or inconsistent parsing: everything is done via unary, binary, nary operators
+* _0 security_: security checks complicate and inhibit coding. Language is open to hackers, you can read random memory etc.
 -->
 
 <!--

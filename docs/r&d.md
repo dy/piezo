@@ -531,7 +531,7 @@
   ALT: can we introduce alternative syntax for HEX/data?
     * `{0xabaababa13241abbabaabbabab123451236546389}` or something like
 
-### [ ] String is array of uint8, but lino supports only f64 numbers. How to read as uint8s? ->
+### [ ] String is array of uint8, but melo supports only f64 numbers. How to read as uint8s? ->
 
   1. discard uint8 and just do f64 instead?
     ~ since strings are static, we at-part know what type it has.
@@ -549,8 +549,9 @@
     + allows uint8 arrays
     + we need just 1 bit for that info
     -~ slows down array access/write a bit
-      - can be a trouble reading big amounts
+      - can be a trouble reading large amounts of arrays
     -~ enables types via data
+    -~ no obvious location for such bit: screws up address
 
   3. String is sequence, not array
     + `["abcdef"]` - to create an array - visually more apparent
@@ -559,6 +560,19 @@
       + it's not a good practice anyways to have long strings
     ~ at least good optimization technique
     ~- not clear how to save string into a variable, unless we make groups saveable items
+
+  4. String must be ints, i32 array
+    + CharCodes are never floats, so it's logical to have both int/float
+    + Allows better JS interop, no custom transforms
+    ? how to flag that list is u32?
+      ~ suppose we store array length in bytes, not in members
+      a. last bit indicates even/odd number for length, we can use it as indicator of f64/i32 array, and store length in bytes (cross-op for f64/i32)
+        - complicates calc a bit - we'd need to read that flag and shift depending on it
+        - limits available types to one flag
+      b. store few bits for data type, eg. up to 16 types
+        + there's 14 ways to read memory: https://developer.mozilla.org/en-US/docs/WebAssembly/Reference/Memory/Load, f24 is coming
+      c. store stride
+        - doesn't help making sense which type to read from memory
 
 ## [ ] !? atoms: 'hello' (not string)
   * Atoms are useful for referencing:
@@ -4233,7 +4247,7 @@
       - unlikely, same use-case can include both `[0,1,2<|@*2, 0,1,2|>@*2]`
     + first uses heap, the second doesn't (is faster)
 
-## [x] `list <| x` vs `a < 1 <| x` - how do we know lh type for while loops. -> .. |> (cond ? ./;)
+## [x] `list <| x` vs `a < 1 <| x` - how do we know lh type for while loops. -> .. |> (cond ? ^;)
 
   * type can be unknown, like `x(arg)=(arg <| ...)`
     ? do we run it until condition holds true?
@@ -4326,17 +4340,20 @@
       - generally it's precision scaling problem
     + possible to use as ptr directly in JS `new Float64Array(memory, ptr, ptr%1)`
     - value needs to be checked somehow if that's an array = we don't have clear understanding if that's an array or float
-      ?+ we can avoid value check if we consider it an array by-operation, so that all array ops are non-overlapping with math. Eg. `a |> b` and `a ?> b`
-        + we just enforce lhs `a <| #+1` to be a list
+      ?+ we can avoid value check if we consider it an array by-operation, so that all array ops are non-overlapping with math. Eg. `a |> b` and `a ~ b`
+        + we just enforce lhs `a |> #+1` to be a list
+        + also, we force `a[..] |>` for pipe loops
     + to get length: reinterpret f64 as i64; apply length mask 0xffffff; wrap to i32.
     * if we stick to this, essentially it means any number becomes memory pointer
-    ~- any number for `<|` operator is treated as memory pointer, which might be undesired effect
-      ~- we may expect `3 <| # + 1` to be loop of 3 items
+    ~- any number for `|>` operator is treated as memory pointer, which might be undesired effect
+      ~- we may expect `3 |> # + 1` to be loop of 3 items
         ~+ it's sort of fine to treat it as `3.0` and just skip looping
-      ~ `3.000xxx <| # + 1` means iterate memory at offset 3 for 14 elements
+      ~ `3.000xxx |> _ + 1` means iterate memory at offset 3 for 14 elements
         ?+ kind of useful for logging memory state?
         + kind of reinforces notion of singleton-memory
         + can be useful for sound hackers - iterations of fragments of waveforms (granular synth) etc.
+      + since we limit pipe to `a[..]` that means we prevent too obvious hacking this way
+        - passing arbitrary number instead of expected array opens up access to memory
     ~- some dec combinations are impossible, eg. `1.102` turns into `1.10200000000000009059`
       + we need to encode int24 into fractional part as binary, allows up to 99999999 memory address value
 

@@ -512,7 +512,7 @@ Object.assign(expr, {
       // list |> ...
       // FIXME: this should be prohibited in favor of range
       else {
-        // i = 0; to=buf[]; while (i < to) {% = buf[i]; ...; i++}
+        // i = 0; to=buf[]; while (i < to) {_ = buf[i]; ...; i++}
         inc('arr.len'), inc('arr.get')
 
         const src = tmp('src'), len = tmp('len', 'i32')
