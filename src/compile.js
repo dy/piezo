@@ -120,7 +120,7 @@ function expr(statement, out) {
   if (typeof statement === 'string') {
     // just x,y; or a=x; where x is undefined
     statement = define(statement);
-    return get(statement)
+    return out ? get(statement) : op()
   }
 
   // cached
