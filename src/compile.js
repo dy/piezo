@@ -112,7 +112,7 @@ export default function compile(node, obj) {
 // convert statement to operation string
 // @out suggests if output value[s] must be saved on stack or discarded
 // since some expressions can be optimized (loops) if value can be discarded
-function expr(statement, out) {
+function expr(statement, out = true) {
   if (!statement) return ''
 
   // a; - just declare in proper scope
@@ -224,7 +224,7 @@ Object.assign(expr, {
     }
 
     // FIXME: output type must match function signature
-    return op(`(call $${name} ${args.map(arg => asFloat(expr(arg, true))).join(' ')})` + `(drop)`.repeat(out && funcs[name].type.length), out && funcs[name].type)
+    return op(`(call $${name} ${args.map(arg => asFloat(expr(arg))).join(' ')})` + `(drop)`.repeat(out && funcs[name].type.length), out && funcs[name].type)
   },
 
   // [1,2,3]
@@ -354,7 +354,7 @@ Object.assign(expr, {
       }
 
       a = define(a, 'f64')
-      const bop = expr(b, true)
+      const bop = expr(b)
 
       return (out ? tee : set)(a, asFloat(bop))
     }
@@ -397,7 +397,7 @@ Object.assign(expr, {
       globals[name] = { func: true, args, type: 'i32' };
 
       body[1].splice(1, 0, ...inits) // prepend inits
-      result = expr(body, true)
+      result = expr(body)
       // define result, comes after (param) before (local)
       if (result?.type?.length) dfn.push(`(result ${result.type.join(' ')})`)
 
@@ -487,21 +487,21 @@ Object.assign(expr, {
     else {
       err('loop over list: unimplemented')
       let aop = expr(a)
-      // (a,b,c) <| ...
+      // (a,b,c) |> ...
       if (aop.type.length > 1) {
         // we create tmp list for this group and iterate over it, then after loop we dump it into stack and free memory
         // i=0; to=types.length; while (i < to) {^ = stack.pop(); ...; i++}
         from = `(f64.const 0)`, to = `(f64.const ${aop.type.length})`
         next = `(f64.load (i32.add (global.get $__heap) (local.get $${idx})))`
         // push args into heap
-        // FIXME: there must be more generic copy-to-heap thing, eg. `(a, b..c, d<|e)`
+        // FIXME: there must be more generic copy-to-heap thing, eg. `(a, b..c, d|>e)`
         err('Sequence iteration is not implemented')
         for (let i = 0; i < aop.type.length; i++) {
           let t = aop.type[aop.type.length - i - 1]
           out += `${t === 'i32' ? '(f64.convert_i32_s)' : ''}(f64.store (i32.add (global.get $__heap) (i32.const 8)))`
         }
       }
-      // (0..10 <| a ? ./b : c) <| ...
+      // (0..10 |> a ? ./b : c) |> ...
       else if (aop.dynamic) {
         err('Unimplemented: dynamic loop arguments')
         // dynamic args are already in heap
@@ -509,7 +509,8 @@ Object.assign(expr, {
         next = `(f64.load (i32.add (global.get $__heap) (local.get $${idx})))`
         // FIXME: must be reading from heap: heap can just be a list also
       }
-      // list <| ...
+      // list |> ...
+      // FIXME: this should be prohibited in favor of range
       else {
         // i = 0; to=buf[]; while (i < to) {% = buf[i]; ...; i++}
         inc('arr.len'), inc('arr.get')
@@ -617,7 +618,7 @@ Object.assign(expr, {
       // FIXME: complex multiple members, eg.
       // (x ? a,b : c,d) * (y ? e,f : g,h);
       // (... (x ? ../a,b); ...; c,d) * y(); ;; where y returns multiple values also
-      // (a <| ^) * (b <| ^);
+      // (a |> ^) * (b |> ^);
     }
 
     return op(`(f64.mul ${asFloat(aop)} ${asFloat(bop)})`, 'f64')
@@ -653,22 +654,22 @@ Object.assign(expr, {
     if (!out) return expr(['=', a, ['+', a, [INT, 1]]], false)
 
     // NOTE: for a[n]++ it's cheaper to (a[n]+=1)-1 (a[n];drop(a[n]=a[n]+1)) due to read
-    if (a[0] === '[') return expr(['-', ['=', a, ['+', a, [INT, 1]]], [INT, 1]], true)
+    if (a[0] === '[') return expr(['-', ['=', a, ['+', a, [INT, 1]]], [INT, 1]])
     if (typeof a !== 'string') err('Invalid left hand-side expression in prefix operation')
 
-    let aop = expr(a, true)
-    return op(`${aop}${set(a, expr(['+', a, [INT, 1]], true))}`, aop.type[0])
+    let aop = expr(a)
+    return op(`${aop}${set(a, expr(['+', a, [INT, 1]]))}`, aop.type[0])
   },
 
   '--'([, a], out) {
     if (!out) return expr(['=', a, ['-', a, [INT, 1]]], false)
 
     // FIXME: this can be moved to precompile
-    if (a[0] === '[') return expr(['+', ['=', a, ['-', a, [INT, 1]]], [INT, 1]], true)
+    if (a[0] === '[') return expr(['+', ['=', a, ['-', a, [INT, 1]]], [INT, 1]])
     if (typeof a !== 'string') err('Invalid left hand-side expression in prefix operation')
 
-    let aop = expr(a, true)
-    return op(`${aop}${set(a, expr(['-', a, [INT, 1]], true))}`, aop.type[0])
+    let aop = expr(a)
+    return op(`${aop}${set(a, expr(['-', a, [INT, 1]]))}`, aop.type[0])
   },
 
   '!'([, a], out) {
@@ -693,7 +694,7 @@ Object.assign(expr, {
   '^'([, a, b], out) {
     if (!b) {
       // ^a
-      let aop = expr(a, true)
+      let aop = expr(a)
       returns.push(aop)
       // we enforce early returns to be f64
       return op(`(return ${asFloat(aop)})`, aop.type)
@@ -765,7 +766,7 @@ Object.assign(expr, {
 
   // logical - we put value twice to the stack and then just drop if not needed
   '||'([, a, b], out) {
-    let aop = expr(a, true), bop = expr(b, out)
+    let aop = expr(a), bop = expr(b, out)
 
     if (!out) return op(`(if ${aop.type[0] == 'i32' ? aop : `(f64.ne ${aop} (f64.const 0))`} (else ${bop}))`)
 
@@ -774,7 +775,7 @@ Object.assign(expr, {
     return op(`${pick(2, aop)}(if (param i32) (result f64) (then (f64.convert_i32_s)) (else (drop) ${bop}))`, 'f64')
   },
   '&&'([, a, b], out) {
-    let aop = expr(a, true), bop = expr(b, out)
+    let aop = expr(a), bop = expr(b, out)
 
     if (!out) return op(`(if ${aop.type[0] == 'i32' ? aop : `(f64.ne ${aop} (f64.const 0))`} (then ${bop}))`)
 
@@ -785,7 +786,7 @@ Object.assign(expr, {
 
   // a ? b; - differs from a && b so that it returns 0 if condition doesn't meet
   '?'([, a, b], out) {
-    let aop = expr(a, true), bop = expr(b, out)
+    let aop = expr(a), bop = expr(b, out)
     if (aop.type.length > 1) err('Group condition is not supported yet.')
 
     if (!out) return op(`(if ${aop.type[0] == 'i32' ? aop : `(f64.ne ${aop} (f64.const 0))`} (then ${bop}))`);
@@ -793,7 +794,7 @@ Object.assign(expr, {
     return op(`(if (result ${bop.type[0]}) ${aop.type[0] == 'i32' ? aop : `(f64.ne ${aop} (f64.const 0))`} (then ${bop.type[0] === 'i32' ? bop : asFloat(bop)} ) (else (${bop.type[0]}.const 0)))`, bop.type)
   },
   '?:'([, a, b, c], out) {
-    let aop = expr(a, true), bop = expr(b, out), cop = expr(c, out)
+    let aop = expr(a), bop = expr(b, out), cop = expr(c, out)
 
     // FIXME: (a,b) ? c : d
     // FIXME: (a,b) ? (c,d) : (e,f)
@@ -809,7 +810,7 @@ Object.assign(expr, {
   '~'([, a, b], out) {
     // ~a - just do binary inverse
     if (!b) {
-      return out && op(`(i32.xor (i32.const -1) ${asInt(expr(a, true))})`, 'i32')
+      return out && op(`(i32.xor (i32.const -1) ${asInt(expr(a))})`, 'i32')
     }
 
     // a ~ b
