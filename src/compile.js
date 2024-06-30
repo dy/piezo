@@ -224,7 +224,7 @@ Object.assign(expr, {
     }
 
     // FIXME: output type must match function signature
-    return op(`(call $${name} ${args.map(arg => asFloat(expr(arg))).join(' ')})` + `(drop)`.repeat(out && funcs[name].type.length), out && funcs[name].type)
+    return op(`(call $${name} ${args.map(arg => asFloat(expr(arg))).join(' ')})` + `(drop)`.repeat(!out && funcs[name].type.length), out && funcs[name].type)
   },
 
   // [1,2,3]
@@ -697,7 +697,8 @@ Object.assign(expr, {
       let aop = expr(a)
       returns.push(aop)
       // we enforce early returns to be f64
-      return op(`(return ${asFloat(aop)})`, aop.type)
+      // FIXME: consolidate it across all fn returns
+      return op(`(return ${asFloat(aop)})`, 'f64')
     }
 
     // a ^ b
@@ -801,9 +802,9 @@ Object.assign(expr, {
     // FIXME: a ? (b,c) : (d,e)
     if (aop.type.length > 1) err('Group condition is not supported yet.')
 
-    if (bop.type[0] === 'i32' && cop.type[0] === 'i32') return op(`(if ${out ? `(result i32)` : ``} ${aop.type[0] == 'i32' ? aop : `(f64.ne ${aop} (f64.const 0))`} (then ${bop} ) (else ${cop}))`, 'i32')
+    if (bop.type[0] === 'i32' && cop.type[0] === 'i32') return op(`(if ${out ? `(result i32)` : ``} ${aop.type[0] == 'i32' ? aop : `(f64.ne ${aop} (f64.const 0))`} (then ${bop} ) (else ${cop}))`, out ? 'i32' : [])
 
-    return op(`(if ${out ? `(result f64)` : ``} ${aop.type[0] == 'i32' ? aop : `(f64.ne ${aop} (f64.const 0))`} (then ${asFloat(bop)} ) (else ${asFloat(cop)}))`, 'f64')
+    return op(`(if ${out ? `(result f64)` : ``} ${aop.type[0] == 'i32' ? aop : `(f64.ne ${aop} (f64.const 0))`} (then ${asFloat(bop)} ) (else ${asFloat(cop)}))`, out ? 'f64' : [])
   },
 
   // a ~ range - clamp a to indicated range
