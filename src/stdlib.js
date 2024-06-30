@@ -91,6 +91,7 @@ export const std = {
     `(return))`,
 
   // reads array address from ref (likely not needed to use since can be just converted float to int)
+  // address is float number truncated to int
   "arr.adr": `(func $arr.adr (param f64) (result i32) (i32.trunc_f64_u (local.get 0)) (return))`,
 
   // reads array length as last 24 bits of f64 number

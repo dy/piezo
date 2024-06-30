@@ -531,7 +531,7 @@
   ALT: can we introduce alternative syntax for HEX/data?
     * `{0xabaababa13241abbabaabbabab123451236546389}` or something like
 
-### [ ] String is array of uint8, but lino supports only f64 numbers. How to read as uint8s? ->
+### [ ] String is array of uint8, but melo supports only f64 numbers. How to read as uint8s? ->
 
   1. discard uint8 and just do f64 instead?
     ~ since strings are static, we at-part know what type it has.
@@ -549,8 +549,9 @@
     + allows uint8 arrays
     + we need just 1 bit for that info
     -~ slows down array access/write a bit
-      - can be a trouble reading big amounts
+      - can be a trouble reading large amounts of arrays
     -~ enables types via data
+    -~ no obvious location for such bit: screws up address
 
   3. String is sequence, not array
     + `["abcdef"]` - to create an array - visually more apparent
@@ -559,6 +560,19 @@
       + it's not a good practice anyways to have long strings
     ~ at least good optimization technique
     ~- not clear how to save string into a variable, unless we make groups saveable items
+
+  4. String must be ints, i32 array
+    + CharCodes are never floats, so it's logical to have both int/float
+    + Allows better JS interop, no custom transforms
+    ? how to flag that list is u32?
+      ~ suppose we store array length in bytes, not in members
+      a. last bit indicates even/odd number for length, we can use it as indicator of f64/i32 array, and store length in bytes (cross-op for f64/i32)
+        - complicates calc a bit - we'd need to read that flag and shift depending on it
+        - limits available types to one flag
+      b. store few bits for data type, eg. up to 16 types
+        + there's 14 ways to read memory: https://developer.mozilla.org/en-US/docs/WebAssembly/Reference/Memory/Load, f24 is coming
+      c. store stride
+        - doesn't help making sense which type to read from memory
 
 ## [ ] !? atoms: 'hello' (not string)
   * Atoms are useful for referencing:
@@ -575,6 +589,16 @@
     - nah, very confusing
   ! We can reserve atoms for import directives.
   + can be useful for throwing expressions
+
+## [ ] strings: interpolation -> likely `"a $<b> c"`
+
+1. `"a {b} c"`
+2. `"a $<b> c"`
+  + matches includes signature `<math#x,y>`
+  + matches JS regex signature
+  + `<>` means insert something here
+
+## [ ] strings: string operations - concat, split, join etc
 
 ## [x] Numbers: float64 by default, unless it's statically inferrable as int32, like ++, +-1 etc ops only
   * Boolean operators turn float64 into int64
@@ -900,6 +924,7 @@
     - a bit unnatural order
   * `cond ? b.; cond ?. ; cond ?..; cond ? c..;` (see 1.)
     + ideal from the natural point of view
+    + works nicely with pipes: `a |> (_ > 10 ?.;)`
     ~ some conflict with optional JS paths
     ? how to make break 2 scopes, or alternatively continue loop?
       !? for continue `a < tsh ?..;`
@@ -909,6 +934,8 @@
           ? is that so bad that it matches range? it is kind-of indicator to "continue" range
             * yes: how do we know if it returns sequence or just one element?
               +~ noone returns infinite sequence as result
+          ? continue / break don't return values, do they
+            ~ it can return result, or can discard result.
           - confusable `a < tsh ? ..4;` and `a < tsh ? 4..;`
             ~+ continue with infinite sequence from either side is meaningless
               ~ we can make some meaning for `..4`, like "put value at the end" or something
@@ -967,6 +994,7 @@
       + doesn't have to introduce separate `?` and `^`.
     + matches beginning of ternary
     ~ we may still want to have if operator `?`.
+      ~ or not
   * `cond!; cond!b; cond!!b;`
     - `!a ! b;`
     + clear option for guards, like `a > 3 !;`
@@ -995,7 +1023,9 @@
   * `cond<>; cond<a>; cond<<b>>;`
   * `<cond>; <cond> a; <<cond>> b;`
 
-## [x] Return operator: alternatives → try using ~~`^`~~ `^` for returning value from block.
+  4. `a..b |> (x < 10 ?>; x > 100 ?.)`
+
+## [x] Return operator: alternatives → try using `^` for returning value from block.
 
   1. `.`
     + erlang-y
@@ -1046,6 +1076,7 @@
     + it seems going to live longer than `value.`
     + gives nice feeling of direction in language, meaning visually "get out of this scope"
       + that supports piper `|>`
+    - a bit cryptic to see `^^^a`, as if some magic happens
   2. `>>` for continue, `^` for break.
   3. `.` for break or return, acting within the block; `^` for continue.
     - break can be used without stack argument, `.` by itself doesn't do much sense although possible
@@ -1053,6 +1084,17 @@
       -> can be used as `tsd(i) = (i < 10 ? (log('lower'); 10).; i)`
     + the most laconic version
   4. webassembly doesn't use continue, just `^` for break.
+  5. `a ? >| : >>|;`
+    + fast forward, skip, break
+    + matches pipes
+    - not in code fonts
+    - noisy: `a |> _ ? >||>>||> ` - is that `|> >| |> >|` or `| >> || >> ||`
+  7. `a ? -| : --|`
+    - not associated with skip/forward
+  6. `a ? -> : =>`
+    - too heavy assoc with fns / maps
+  7. `.. |> x > 3 |?> ` - rethink into pipe filtering
+    - doesn't bail out arbitrarily
 
   ? If `?.` is return from function, then how to break (early return) current scope?
   ? If `?..` is early return current scope, then how to break loop?
@@ -1298,7 +1340,7 @@
   - requires strings to implement dynamic access `x['first']`
   - some arrays have aliases, others don't: we're not going to make aliases dynamic
 
-## [x] If `a ? b`, elvis: `a ?: b`? -> why not?
+## [x] If conditional: `a ? b` returning b or 0, elvis: `a ?: b`
   + organic extension of ternary `a ? b`, `a ?: b`.
   - weirdly confusing, as if very important part is lost. Maybe just introduce elvis `a>b ? a=1` → `a<=b ?: a=1`
   - it has no definite returning type. What's the result of `(a ? b)`?
@@ -1476,7 +1518,7 @@
 ### [x] loops can return a value: `(isActive(it): action(it))` - the last result of action is returned
   + useful for many loop cases where we need internal variable result.
 
-## [ ] Loops 2.0: since requirements are new, what's meaningful look -> `a..b |> do` and `..(i < 10)/0 |> i++`
+## [x] Loops 2.0: since requirements are new, what's meaningful look -> `a..b |> do` and `..(i < 10)/0 |> i++`
 
   * `0..h |> (y,y1,y2)=(#,#+1,#+2)` doesn't look good in any form:
   * `:` defines branch, as in `a ? b : c`
@@ -1779,7 +1821,9 @@
     ~+ just `\` is good enough
   - too ground-breaking
     ~+ maybe that's good
-  - complicates copy-paste
+  - disturbs convention of C, JS, Scala, Rust, Java, Go etc
+    - forcing all programmers from these lands learn that new comments syntax
+  - complicates copy-paste of floatbeats
     ~ not so much
 
   4. `/* */`
@@ -1895,16 +1939,16 @@
         ? how do we map arrays then
           * list comprehension: i <- arr <| i * 10
 
-## [x] Group (comma) precedence: a,b=c,d -> let's use more familiar flowy JS style a=1, b=2 and force groups be scoped
+## [ ] Group (comma) precedence: a,b=c,d -> let's use more familiar flowy JS style a=1, b=2 and force groups be scoped
 
   1. `a,b=c,d` is `(a,b)=(c,d)`
     + python style
-    + allows shothand nice swaps
+    + allows shorthand nice swaps
     - problem with fn arguments parsing `(a=1,b=2) => `
     - unscoped groups make language a real line noise, very unusual pattern:
       ```
       y1, y2 = y+1, y+2;
-      (y1, y2) >= height ? (y1, y2) = height - 1;
+      y1, y2 >= height ? y1, y2 = height - 1;
       ptr0, ptr1, ptr2 = y, y1, y2 * width;
       ```
 
@@ -1932,11 +1976,9 @@
 
   3. Single assignment is group, multiple is seq: `a,b = c,d` vs `a=b, c=d`
     + Allows unparented assignments `a,b=c,d;`
-    ? What are potential confusions?
-      - `a,b=c,d=e,f` - not allowed sequence of multiple assignments
-      - `c=d,e` as return member or elsewhere considers only `c` as return instead of `c=d, e`
-      - fn args `(a,b=1)` makes it as `a,b = 1` vs `a, b=1`
-    - breaks regular parsing logic
+    - `a,b = c,d = e,f` - not allowed sequence of multiple assignments
+    - `c=d,e` as return member or elsewhere considers only `c` as return instead of `c=d, e`
+    - fn args `(a,b=1)` makes it as `a,b = 1` vs `a, b=1`
 
   4. `=` balances number of left/right members, `a,b=c,d, e=f, g,h,i=j`
     ? `a,b,c=3` in fn arguments?
@@ -1951,6 +1993,9 @@
       y1, y2 >= height ? y1, y2 = height - 1; \\ hmm
       ptr0, ptr1, ptr2 = y, y1, y2 * width; \\ which y gets multiplied here?
       ```
+  5.
+    * lhs can only be ids, props, range or fn
+    * lhs member on its own without assignment doesn't make sense
 
 ## [x] Raise `,` precedence for groups? -> nah, let's keep groups scoped
 
@@ -4127,7 +4172,7 @@
 
   ? ALT: `<( x>2?!; )>`
 
-### [ ] What's the best character for topic placeholder? -> within `_#$%^@&` ~~`#` feels the best~~ `_` means "insert here"
+### [x] What's the best character for topic placeholder? -> ~~`#` feels the best~~ `_` means "insert here" and scala-compatible
 
   * `list |> #*2`, `list |> #>2?^^#:^#;`
     + `#` is almost perfect for topic/reference, associates with `#`th item
@@ -4213,7 +4258,7 @@
       - unlikely, same use-case can include both `[0,1,2<|@*2, 0,1,2|>@*2]`
     + first uses heap, the second doesn't (is faster)
 
-## [x] `list <| x` vs `a < 1 <| x` - how do we know lh type for while loops. -> .. |> (cond ? ./;)
+## [x] `list <| x` vs `a < 1 <| x` - how do we know lh type for while loops. -> .. |> (cond ? ^;)
 
   * type can be unknown, like `x(arg)=(arg <| ...)`
     ? do we run it until condition holds true?
@@ -4306,17 +4351,20 @@
       - generally it's precision scaling problem
     + possible to use as ptr directly in JS `new Float64Array(memory, ptr, ptr%1)`
     - value needs to be checked somehow if that's an array = we don't have clear understanding if that's an array or float
-      ?+ we can avoid value check if we consider it an array by-operation, so that all array ops are non-overlapping with math. Eg. `a |> b` and `a ?> b`
-        + we just enforce lhs `a <| #+1` to be a list
+      ?+ we can avoid value check if we consider it an array by-operation, so that all array ops are non-overlapping with math. Eg. `a |> b` and `a ~ b`
+        + we just enforce lhs `a |> #+1` to be a list
+        + also, we force `a[..] |>` for pipe loops
     + to get length: reinterpret f64 as i64; apply length mask 0xffffff; wrap to i32.
     * if we stick to this, essentially it means any number becomes memory pointer
-    ~- any number for `<|` operator is treated as memory pointer, which might be undesired effect
-      ~- we may expect `3 <| # + 1` to be loop of 3 items
+    ~- any number for `|>` operator is treated as memory pointer, which might be undesired effect
+      ~- we may expect `3 |> # + 1` to be loop of 3 items
         ~+ it's sort of fine to treat it as `3.0` and just skip looping
-      ~ `3.000xxx <| # + 1` means iterate memory at offset 3 for 14 elements
+      ~ `3.000xxx |> _ + 1` means iterate memory at offset 3 for 14 elements
         ?+ kind of useful for logging memory state?
         + kind of reinforces notion of singleton-memory
         + can be useful for sound hackers - iterations of fragments of waveforms (granular synth) etc.
+      + since we limit pipe to `a[..]` that means we prevent too obvious hacking this way
+        - passing arbitrary number instead of expected array opens up access to memory
     ~- some dec combinations are impossible, eg. `1.102` turns into `1.10200000000000009059`
       + we need to encode int24 into fractional part as binary, allows up to 99999999 memory address value
 
@@ -4898,14 +4946,16 @@
 
   * `[-10..10..0.5]`
   * `[-10..0.5..10]`
-  * ~~`[0..10 : 0.5]`~~
-    - directly loop
+  * `[0..10 : 0.5]`
     + possible, : is free now
     + similar to type definition, but more meaningful
-    - conflicts with brainching `?:` - meaning "code after branch"
+    + double-symbol refers to iteration
+    - conflicts with brainching `?:` - meaning "code after branch" `a ? 0..10:0.5;` vs `a ? 0..10 : 0.5;`
+      ~ technically none of these make sense
     ? can be used as stride in mem reading as uint8? `x = y[2:u8]`
-  * `[i=0..20 : i*0.5]`
-    - very verbose
+  * `[0..20 |> _*0.5]`
+    - verbose
+    - messes up initial range
   * `0..20 += .01 : `
     - each member is increased by .01
   * `0..20 ~| 1`, `0..20 |~ 1`
@@ -4915,13 +4965,17 @@
   * ~~`[0..10 + 0.01]`~~
     + compatible with range modifiers
     - can be confusable with `(0,1,2,3,4,...) + 0.01`
+  * `[0..10 \ .5]`
+    + makes use of `\` nicely
+  * `[0..10 ++ .5]`
+    - what about descending range?
 
 ## [ ] Range modifiers:
 
   * `0..100 ** 0.01`
     * `a ~ 0..100 ** .01` - maps to pow range?
       + reinforces meaning of max operator, which is nice
-    - pows each member
+    - pow each member
 
 ## [ ] Early return: how to consolidate type? -> just enforce f64 for now for early returns
 
@@ -5466,7 +5520,7 @@
 9. `a <: b..c`, `a <=: b..c`
 9.1 `a :< b..c`, `a :<= b..c`
 
-## [x] Write out operator `x[..] : a : b : x[..]` -> `x[..] |> a() |> b() |> x[..]`
+## [x] Write out operator `x[..] : a : b : x[..]` -> `x[..] |> a() |> b() |> x[..] = _`
 
 * we need it for copying loops or redirection, since `a = b` is not always the most useful
 1. `a..b -> x[..]`

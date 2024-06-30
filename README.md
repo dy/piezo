@@ -1,167 +1,169 @@
-# melo ![stability](https://img.shields.io/badge/stability-experimental-black) [![test](https://github.com/dy/melo/actions/workflows/test.yml/badge.svg)](https://github.com/dy/melo/actions/workflows/test.yml)
+# mel ![stability](https://img.shields.io/badge/stability-experimental-black) [![test](https://github.com/dy/mel/actions/workflows/test.yml/badge.svg)](https://github.com/dy/mel/actions/workflows/test.yml)
 
-Micro language for floatbeats and audio with smooth operator and organic sugar.<br/>
+Minimal language for audio processing purposes and floatbeats.<br/>
 Compiles to compact 0-runtime WASM with linear memory.<br/>
+It has implicit types, organic sugar and smooth operator.
 
 <!--[Motivation](./docs/motivation.md)  |  [Documentation](./docs/reference.md)  |  [Examples](./docs/examples.md).-->
 
 ## Reference
 
 ```
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ numbers
-16, 0x10, 0b0;               \\ int, hex or binary
-16.0, .1, 1e3, 2e-3;         \\ float
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ numbers
+16, 0x10, 0b0;                \\ int, hex or binary
+16.0, .1, 1e3, 2e-3;          \\ float
 
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ operators
-+ - * / % -- ++              \\ arithmetical (float)
-** %% //                     \\ power, unsigned mod, floor div
-& | ^ ~ >> <<                \\ binary (integer)
-<<< >>>                      \\ rotate left, right
-&& || !                      \\ logical
-> >= < <= == !=              \\ comparisons (boolean)
-?: ?                         \\ conditions
-a..b                         \\ ranges
-~ ~= ~/ ~* ~// ~**           \\ clamp, normalize, lerp
-^ ^^ ^^^                     \\ continue, break, return
-x[i] x[]                     \\ member access, length
-|> %                         \\ pipe, loop
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ operators
++ - * / % -- ++               \\ arithmetical (float)
+** %% //                      \\ power, unsigned mod, floor div
+& | ^ ~ >> <<                 \\ binary (integer)
+<<< >>>                       \\ rotate left, right
+&& || !                       \\ logical
+> >= < <= == !=               \\ comparisons (boolean)
+?: ?                          \\ conditions
+x[i] x[]                      \\ member access, length
+a..b                          \\ ranges
+~ ~= ~/ ~* ~// ~**            \\ clamp, normalize, lerp
+^ ^^ ^^^                      \\ continue, break, return
+|> _                          \\ pipe, loop
 
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ variables
-foo=1, bar=2.0;              \\ declare vars
-AbCF, $0, Δx, _;             \\ names permit alnum, unicodes, _$#@
-fooBar123 != FooBar123;      \\ case-sensitive
-default=1, eval=fn, else=0;  \\ freedom of speech
-true = 0b1, false = 0b0;     \\ alias bools
-inf = 1/0, nan = 0/0;        \\ alias infinity, NaN
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ variables
+foo=1, bar=2.0;               \\ declare vars
+AbC, $0, Δx, x@1, A#;         \\ names permit alnum, unicodes, _$#@
+fooBar123 != FooBar123;       \\ case-sensitive
+default=1, eval=fn, else=0;   \\ no reserved words
+true = 0b1, false = 0b0;      \\ alias bools
+inf = 1/0, nan = 0/0;         \\ alias infinity, NaN
 
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ units
-1k = 1000; 1pi = 3.1415926;  \\ define units
-1s = 44100; 1m = 60s;        \\ useful for sample indexes
-10.1k, 2pi;                  \\ 10100, 6.283...
-2m35s;                       \\ combinations
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ units
+1k = 1000; 1pi = 3.1415926;   \\ define units
+1s = 44100; 1m = 60s;         \\ as sample indexes
+10.1k, 2pi;                   \\ 10100, 6.283...
+2m35s;                        \\ combinations
 
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ statements
-a, b=1, c=2;                 \\ declare vars in C style
-foo();                       \\ semi-colons are mandatory
-(c = a + b; c);              \\ group returns last statement
-(a = b+1; a,b,c);            \\ return multiple values
-(a ? ^b; c);                 \\ break current scope, return b
-((a ? ^^; c); d);            \\ break 2 scopes
-(((a ? ^^^; c); d); e);      \\ break to the root scope
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ statements & scopes
+a, b=1, c=2;                  \\ declare vars in C style
+foo();                        \\ semi-colons are mandatory
+(c = a + b; c);               \\ group returns last statement
+(a = b+1; a,b,c);             \\ return multiple values
+(a ? ^b; c);                  \\ break current scope, return b
+((a ? ^^; c); d);             \\ break 2 scopes
+(((a ? ^^^; c); d); e);       \\ break to the root scope
 
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ conditions
-a ? b;                       \\ if a then b (question operator)
-a ?: b;                      \\ if not a then b (elvis operator)
-sign = a < 0 ? -1 : +1;      \\ ternary conditional
-(2+2 >= 4) ? log(1) :        \\ multiline/switch
-  3 <= 1..2 ? log(2) :       \\ else if
-  log(3);                    \\ else
-a && b || c;                 \\ (a and b) or c
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ conditions
+a ? b;                        \\ if a then b else 0 (question operator)
+a ?: b;                       \\ if not a then b (elvis operator)
+sign = a < 0 ? -1 : +1;       \\ ternary conditional
+(2+2 >= 4) ? log(1) :         \\ multiline/switch
+  3 <= 1..2 ? log(2) :        \\ else if
+  log(3);                     \\ else
+a && b || c;                  \\ (a and b) or c
 
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ groups
-(a,b,c) = (d,e,f);           \\ assign (a=d, b=e, c=f)
-(a,b) = (b,a);               \\ swap
-(a,b,c) = d;                 \\ duplicate: (a, b, c) = (d, d, d);
-(a,,b) = (c,d,e);            \\ skip: (a=c, d, b=e);
-(a,b) + (c,d);               \\ any operator: (a+c, b+d)
-(a, b, c)++;                 \\ (a++, b++, c++)
-(a,b)[1] = c[2,3];           \\ props: (a[1]=c[2], b[1]=c[3])
-a = (b,c,d);                 \\ a=b; a=c; a=d; (see loops)
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ groups
+(a,b,c) = (d,e,f);            \\ assign (a=d, b=e, c=f)
+(a,b) = (b,a);                \\ swap
+(a,b,c) = d;                  \\ duplicate: (a, b, c) = (d, d, d);
+(a,,b) = (c,d,e);             \\ skip: (a=c, d, b=e);
+(a,b) + (c,d);                \\ any operator: (a+c, b+d)
+(a, b, c)++;                  \\ (a++, b++, c++)
+(a,b)[1] = c[2,3];            \\ props: (a[1]=c[2], b[1]=c[3])
+a = (b,c,d);                  \\ a=b; a=c; a=d; (see loops)
 
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ ranges
-0..10;                       \\ from 1 to 9 (10 exclusive)
-0.., ..10, ..;               \\ open ranges
-10..1;                       \\ reverse range
-1.08..108.0;                 \\ float range
-(a-1)..(a+1);                \\ computed range
-(a,b,c) = 0..3 * 2;          \\ a=0, b=2, c=4
-a ~ 0..10; a ~= 0..10;       \\ clamp(a, 0, 10); a = clamp(a, 0, 10);
-a ~/ 0..10; a ~* 0..10;      \\ normalize(a, 0, 10); lerp(a, 0, 10);
-a ~// 0..10; a ~** 0..10;    \\ smoothstep(a, 0, 10); ismoothstep(a, 0, 10);
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ ranges
+0..10;                        \\ from 1 to 9 (10 exclusive)
+0.., ..10, ..;                \\ open ranges
+10..1;                        \\ reverse range
+1.08..108.0;                  \\ float range
+(a-1)..(a+1);                 \\ computed range
+(a,b,c) = 0..3 * 2;           \\ a=0, b=2, c=4
+a ~ 0..10; a ~= 0..10;        \\ clamp(a, 0, 10); a = clamp(a, 0, 10);
+a ~/ 0..10; a ~* 0..10;       \\ normalize(a, 0, 10); lerp(a, 0, 10);
+a ~~/ 0..10; a ~~* 0..10;     \\ smoothstep(a, 0, 10); ismoothstep(a, 0, 10);
 
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ arrays
-m = [..10];                  \\ array of 10 elements
-m = [..10 |> 2];             \\ filled with 2
-m = [1,2,3,4];               \\ array of 4 elements
-m = [n[..]];                 \\ copy n
-m = [1, 2..4, 5];            \\ mixed definition
-m = [1, [2, 3, [4]]];        \\ nested arrays (tree)
-m = [i = 0..4 |> i ** 2];    \\ list comprehension
-(first,last) = (m[0], m[-1]);\\ get by index
-(second, ..last) = m[1, 2..];\\ get multiple values
-length = m[];                \\ get length
-m[0] = 1;                    \\ set value
-m[2..] = (1, 2..4, n[1..3]); \\ set multiple values from offset 2
-m[0..] = 0..4 * 2;           \\ set from range
-m[1,2] = m[2,1];             \\ swap
-m[0..] = m[-1..0];           \\ reverse order
-m[0..] = m[1..,0];           \\ rotate
-min ~=..m[..], max ~=m[..]..;\\ find min/max in array
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ arrays
+m = [..10];                   \\ array of 10 elements
+m = [..10 |> 2];              \\ filled with 2
+m = [1,2,3,4];                \\ array of 4 elements
+m = [n[..]];                  \\ copy n
+m = [1, 2..4, 5];             \\ mixed definition
+m = [1, [2, 3, [4]]];         \\ nested arrays (tree)
+m = [0..4 |> _ ** 2];         \\ list comprehension
+(first, last) = (m[0], m[-1]);\\ get by index
+(second, ..last) = m[1, 2..]; \\ get multiple values
+length = m[];                 \\ get length
+m[0] = 1;                     \\ set value
+m[2..] = (1, 2..4, n[1..3]);  \\ set multiple values from offset 2
+m[0..] = 0..4 * 2;            \\ set from range
+m[1,2] = m[2,1];              \\ swap
+m[0..] = m[-1..0];            \\ reverse order
+m[0..] = m[1..,0];            \\ rotate
+min ~= ..m[..], max ~= m[..]..;\ find min/max in array
 
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ loops
-i = a, b, c |> f(i);         \\ for each item in a, b, c do f(item)
-i = 10.. |> (                \\ descend over range
-  i < 5 ? ^;                 \\ if item < 5 continue
-  i < 0 ? ^^;                \\ if item < 0 break
-);                           \\
-x[..] |> f(_) |> g(_);       \\ sequence of ops
-x[..] |> _ * 2 |> y[..];     \\ write to destination
-i = 0..w |> (                \\ nest iterations
-  j = 0..h |> f(i, j);       \\ f(x,y)
-);                           \\
-(x,,y) = (a,b,c |> _ * 2);   \\ x = a * 2, y = c * 2;
-.. |> i < 10 ? i++ : ^;      \\ while i < 10 i++
-..(i < 10) / 0 |> i++;       \\ alternative while
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ loops
+(a, b, c) |> f(_);            \\ for each item in a, b, c do f(item)
+(i = 10..) |> (               \\ descend over range
+  i < 5 ? ^;                  \\ if item < 5 continue
+  i < 0 ? ^^;                 \\ if item < 0 break
+);                            \\
+x[..] |> f(_) |> g(_);        \\ sequence of ops
+x[..] |>= _ * 2;              \\ overwrite source
+(i = 0..w) |> (               \\ nest iterations
+  (j = 0..h) |> f(i, j);      \\ f(x,y)
+);                            \\
+(x,,y) = (a,b,c) |> _ * 2;    \\ x = a * 2, y = c * 2;
+.. |> i < 10 ? i++ : ^;       \\ while i < 10 i++
+..(i < 10) / 0 |> i++;        \\ alternative while
 
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ functions
-double(n) = n*2;             \\ define a function
-times(m = 1, n ~ 1..) = (    \\ optional, clamped arg
-  n == 0 ? ^n;               \\ early return
-  m * n                      \\ default return
-);                           \\
-times(3,2);                  \\ 6
-times(5);                    \\ 5 - optional argument
-times(,10);                  \\ 10 - skipped argument
-copy = triple;               \\ capture function
-copy(10);                    \\ also 30
-dup(x) = (x,x);              \\ return multiple values
-(a,b) = dup(b);              \\ multiple returns
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ functions
+double(n) = n*2;              \\ define a function
+times(m = 1, n ~ 1..) = (     \\ optional, clamped arg
+  n == 0 ? ^n;                \\ early return
+  m * n                       \\ default return
+);                            \\
+times(3,2);                   \\ 6
+times(5);                     \\ 5 - optional argument
+times(,10);                   \\ 10 - skipped argument
+copy = triple;                \\ capture function
+copy(10);                     \\ also 30
+dup(x) = (x,x);               \\ return multiple values
+(a,b) = dup(b);               \\ multiple returns
 
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ state vars
-a() = ( *i=0; ++i );         \\ i persists value between calls
-a(), a();                    \\ 1, 2
-fib() = (                    \\
-  *i=[1,0,0];                \\ local memory of 3 items
-  i[1..] = i[0..];           \\ shift memory
-  i[0] = i[1] + i[2];        \\ sum prev 2 items
-);                           \\
-fib(), fib(), fib();         \\ 1, 2, 3
-c() = (fib(), fib(), fib()); \\ state is defined by fn scope
-fib(); c();                  \\ 5; 1, 2, 3;
-d(fn) = (fib(), fn());       \\ to get external state, pass fn as argument
-d(c);                        \\ 1, 8;
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ state vars
+a() = ( *i=0; ++i );          \\ i persists value between calls
+a(), a();                     \\ 1, 2
+fib() = (                     \\
+  *i=[1,0,0];                 \\ local memory of 3 items
+  i[1..] = i[0..];            \\ shift memory
+  i[0] = i[1] + i[2];         \\ sum prev 2 items
+);                            \\
+fib(), fib(), fib();          \\ 1, 2, 3
+c() = (fib(), fib(), fib());  \\ state is defined by fn scope
+fib(); c();                   \\ 5; 1, 2, 3;
+d(fn) = (fib(), fn());        \\ to get external state, pass fn as argument
+d(c);                         \\ 1, 8;
 
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ export
-x, y, z                      \\ exports last statement
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ export
+x, y, z                       \\ exports last statement
 ```
 
 <!--
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ strings
-hi="Hello, World!\n\t\x22\x27";\ creates static array (uint8)
-string="{hi} world";          \\ interpolate: "hello world"
+hi="Hello, World!\n\t\x22\x27";\ creates static array (uint)
+string="$<hi> world";         \\ interpolate: "hello world"
 string[1];                    \\ positive indexing from first element [0]: 'e'
 string[-3];                   \\ negative indexing from last element [-1]: 'r'
 string[2..10];                \\ substring
 string[1, 2..10, -1];         \\ slice/pick multiple elements
-string[-1..0];                \\ reverse
+string[-1..0];                \\ reversed
 string[];                     \\ length
-string == string;             \\ compare (==,!=,>,<)
-string .+ string;              \\ concat: "hello worldhello world"
-string .- string;              \\ removes all occurences of the right string in the left string: ""
-string ./ string;              \\ split: "a b" / " " = ["a", "b"]
-string .* list;                \\ join: " " * ["a", "b"] = "a b"
-string .* 2;                   \\ repeat: "abc" * 2 = "abcabc"
--->
+string .= string;             \\ compare (==,!=,>,<)
+string .+ string;             \\ concat: "hello worldhello world"
+string .- string;             \\ removes all occurences of the right string in the left string: ""
+string ./ string;             \\ split: "a b" / " " = ["a", "b"]
+string .* list;               \\ join: " " * ["a", "b"] = "a b"
+string .* 2;                  \\ repeat: "abc" * 2 = "abcabc"
+
+ -->
 
 ## Examples
 
@@ -175,17 +177,13 @@ gain(                             \\ define a function with block, volume argume
   block,                          \\ block is a array argument
   volume ~ 0..100                 \\ volume is limited to 0..100 range
 ) = (
-  block[..]
-    |> _ * volume                 \\ multiply each sample by volume value
-    |> block[..]
+  block[..] |>= _ * volume        \\ multiply each sample by volume value
 );
 
 gain([0..5 * 0.1], 2);            \\ 0, .2, .4, .6, .8, 1
 
 gain                              \\ export gain function
 ```
-
-Minifies as `gain(b,v)=b[..]|>%*v|>b[..]`
 
 </details>
 
@@ -287,7 +285,7 @@ coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
   ..  |> oscillator[shape](phase)
       |> adsr(_, 0, 0, .06, .24)
       |> curve(_, 1.82)
-      |> out[..];
+      |> out[..] = _;
 
   i++;
   phase += (freq + (t > delay && jump)) * 2pi / 1s;
@@ -386,14 +384,14 @@ See [all examples](/examples)
 
 ## Usage
 
-_melo_ is available as CLI or JS package.
+_mel_ is available as CLI or JS package.
 
-`npm i melo`
+`npm i mel`
 
 ### CLI
 
 ```sh
-melo source.melo -o dest.melo
+mel source.mel -o dest.mel
 ```
 
 This produces compiled WASM binary.
@@ -401,7 +399,7 @@ This produces compiled WASM binary.
 ### JS
 
 ```js
-import melo from 'melo'
+import mel from 'mel'
 
 // create memory buffer (optional)
 const memory = new WebAssembly.Memory({
@@ -410,7 +408,7 @@ const memory = new WebAssembly.Memory({
 });
 
 // create wasm arrayBuffer
-const buffer = melo.compile(`
+const buffer = mel.compile(`
   n=1;
   mult(x) = x*PI;
   arr=[1, 2, sin(1.08)];
@@ -419,7 +417,7 @@ const buffer = melo.compile(`
   // js objects or paths to files
   imports: {
     math: Math,
-    mylib: './path/to/my/lib.melo'
+    mylib: './path/to/my/lib.mel'
   },
 
   memory,
@@ -451,12 +449,13 @@ const arrValues = new Float64Array(memory, arr.value, 3)
 
 _Web Audio_ is unreliable - it has unpredictable pauses, glitches and so on, so <q>audio is better handled in WASM worklet</q> ([@stagas](https://github.com/stagas)). Besides, audio processing in general has no cross-platform solution, various environments deal with audio differently, some don't have audio processing at all.
 
-_Melo_ attempts to fill that gap, providing a common layer for audio processing. It is personal attempt in language design - with foundation from C, JS, Python, Rust, Scala and bits of inspiration from indie langs. WASM enables it for browsers, [audio/worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) and any other envs.
+_Mel_ attempts to fill that gap, providing a common layer for audio processing. It is personal attempt in language design - with foundation from C, JS, Python, Scala and bits of inspiration from everywhere. It's easy tap into WASM, which enables code for browsers, [audio/worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) and any other envs.
 
 <!--
 ### Principles
 
 * _0 entry_: common syntax, simplicity.
+* _Compact_: expressions must be allowed in a very concise way.
 * _Poetic_: intuitive typographic patterns.
 * _No keywords_: word means variable, symbol means operator - allows truly i18l code.
 * _No types_: type is defined by operator – better focus on logic rather than language.
@@ -468,6 +467,7 @@ _Melo_ attempts to fill that gap, providing a common layer for audio processing.
 * _Static/Linear memory_: no garbage to collect, static-size heap.
 * _Readability_: produced WASM must be readable.
 * _Normalized_: there's no smart or inconsistent parsing: everything is done via unary, binary, nary operators
+* _0 security_: security checks complicate and inhibit coding. Language is open to hackers, you can read random memory etc.
 -->
 
 <!--

@@ -235,13 +235,15 @@ t('compile: conditions', t => {
   mod = compileWat(wat)
   is(mod.instance.exports.c.value, 2.1)
 
-  throws(() => {
-    wat = compileMelo(`a=0.0;b=2.1;c=a?b`)
-  }, /void/)
+  wat = compileMelo(`a=0.0;b=2.1;c=a?b`)
+  mod = compileWat(wat)
+  is(mod.instance.exports.c.value, 0)
 
-  throws(() => {
-    wat = compileMelo(`a=0.1;b=2.1;c=a?b`)
-  }, /void/)
+  wat = compileMelo(`a=0.1;b=2.1;c=a?b`)
+  mod = compileWat(wat)
+  is(mod.instance.exports.c.value, 2.1)
+
+  console.log('--------------')
   wat = compileMelo(`x(px) = (px < 0 ? px = 0; px)`)
   mod = compileWat(wat)
   is(mod.instance.exports.x(-10), 0)
@@ -282,7 +284,7 @@ t('compile: function oneliners', t => {
   mod = compileWat(compileMelo(` mult(a, b) = (a * b)`))
   is(mod.instance.exports.mult(2, 4), 8)
 
-  // console.log(compileMelo(` mult = (a, b) -> (b; a * b)`))
+  console.log('------')
   mod = compileWat(compileMelo(` mult(a, b) = (b; a * b)`))
   is(mod.instance.exports.mult(2, 4), 8)
 
@@ -612,7 +614,7 @@ t.skip('compile: memory grow', t => {
 })
 
 t('compile: early returns', t => {
-  let wat = compileMelo(`x(a)=(a ? ^-a; 123), y(a)=(a?^12;13.4), z(a)=(a?^11:^12.1;^13)`)
+  let wat = compileMelo(`x(a)=(a ? ^-a; 123), y(a)=(a?^12;13.4)`)
   let mod = compileWat(wat)
   let { __memory: memory, x, y, z } = mod.instance.exports
   is(x(0), 123);
@@ -621,6 +623,10 @@ t('compile: early returns', t => {
   is(y(0), 13.4);
   is(y(1), 12);
 
+  console.log('---------compile z')
+  wat = compileMelo(`z(a)=(a ? ^11 : ^12.1; ^13)`)
+  mod = compileWat(wat);
+  z = mod.instance.exports.z
   is(z(0), 12.1);
   is(z(1), 11);
 

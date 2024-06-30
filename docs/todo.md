@@ -19,15 +19,13 @@
 * [x] fix parsing
 * [x] a++, a--, a+=1, a-=n
 * [x] fix compiling
-* [ ] separate mixed ops like `^a` and `a^b`, `*a` and `a*b`, `a[]=`, `a()=`, `a=` for compiler
+* [ ] separate int/float definition `x=1` vs `x=1.0`
 * [ ] account ops for expected number of returns instead of forcing drops
 * [x] get rid of `.` (less = more)
-* [x] make use of `^`, `^^`, `^^^`
-* [x] `~, ~=`
+* [ ] make use of `^`, `^^`, `^^^`
+* [ ] `~, ~=`
 * [ ] `~/, ~*`
 * [ ] all readmes test
-  * [x] inline global consts
-  * [ ] standard operators
 * [ ] first bytebeat
 * [ ] strings
 * [x] make use of watr compiler
@@ -133,9 +131,13 @@
   * [ ] Audio gain example
   * [ ] Sine gen example
 * [ ] Ignore unassigned immediate constructs like `[1,2,3]` or `"abc"`.
+* [ ] All FIXMEs
 
-## MVP
+## Application
 
+* [ ] Floatbeats collection
+* [ ] MelFX - ZZFX binary
+* [ ] Web-Audio-API
 * [ ] Metronome app: variable speed, variable tone
 
 ## 1.1
