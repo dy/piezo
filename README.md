@@ -1,4 +1,4 @@
-# melo ![stability](https://img.shields.io/badge/stability-experimental-black) [![test](https://github.com/dy/melo/actions/workflows/test.yml/badge.svg)](https://github.com/dy/melo/actions/workflows/test.yml)
+# mel ![stability](https://img.shields.io/badge/stability-experimental-black) [![test](https://github.com/dy/mel/actions/workflows/test.yml/badge.svg)](https://github.com/dy/mel/actions/workflows/test.yml)
 
 Micro language for floatbeats and audio with smooth operator and organic sugar.<br/>
 Compiles to compact 0-runtime WASM with linear memory.<br/>
@@ -382,14 +382,14 @@ See [all examples](/examples)
 
 ## Usage
 
-_melo_ is available as CLI or JS package.
+_mel_ is available as CLI or JS package.
 
-`npm i melo`
+`npm i mel`
 
 ### CLI
 
 ```sh
-melo source.melo -o dest.melo
+mel source.mel -o dest.mel
 ```
 
 This produces compiled WASM binary.
@@ -397,7 +397,7 @@ This produces compiled WASM binary.
 ### JS
 
 ```js
-import melo from 'melo'
+import mel from 'mel'
 
 // create memory buffer (optional)
 const memory = new WebAssembly.Memory({
@@ -406,7 +406,7 @@ const memory = new WebAssembly.Memory({
 });
 
 // create wasm arrayBuffer
-const buffer = melo.compile(`
+const buffer = mel.compile(`
   n=1;
   mult(x) = x*PI;
   arr=[1, 2, sin(1.08)];
@@ -415,7 +415,7 @@ const buffer = melo.compile(`
   // js objects or paths to files
   imports: {
     math: Math,
-    mylib: './path/to/my/lib.melo'
+    mylib: './path/to/my/lib.mel'
   },
 
   memory,
@@ -447,7 +447,7 @@ const arrValues = new Float64Array(memory, arr.value, 3)
 
 _Web Audio_ is unreliable - it has unpredictable pauses, glitches and so on, so <q>audio is better handled in WASM worklet</q> ([@stagas](https://github.com/stagas)). Besides, audio processing in general has no cross-platform solution, various environments deal with audio differently, some don't have audio processing at all.
 
-_Melo_ attempts to fill that gap, providing a common layer for audio processing. It is personal attempt in language design - with foundation from C, JS, Python, Scala and bits of inspiration from everywhere. It's easy tap into WASM, which enables code for browsers, [audio/worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) and any other envs.
+_Mel_ attempts to fill that gap, providing a common layer for audio processing. It is personal attempt in language design - with foundation from C, JS, Python, Scala and bits of inspiration from everywhere. It's easy tap into WASM, which enables code for browsers, [audio/worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) and any other envs.
 
 <!--
 ### Principles
