@@ -590,6 +590,16 @@
   ! We can reserve atoms for import directives.
   + can be useful for throwing expressions
 
+## [ ] strings: interpolation -> likely `"a $<b> c"`
+
+1. `"a {b} c"`
+2. `"a $<b> c"`
+  + matches includes signature `<math#x,y>`
+  + matches JS regex signature
+  + `<>` means insert something here
+
+## [ ] strings: string operations - concat, split, join etc
+
 ## [x] Numbers: float64 by default, unless it's statically inferrable as int32, like ++, +-1 etc ops only
   * Boolean operators turn float64 into int64
 
@@ -1929,16 +1939,16 @@
         ? how do we map arrays then
           * list comprehension: i <- arr <| i * 10
 
-## [x] Group (comma) precedence: a,b=c,d -> let's use more familiar flowy JS style a=1, b=2 and force groups be scoped
+## [ ] Group (comma) precedence: a,b=c,d -> let's use more familiar flowy JS style a=1, b=2 and force groups be scoped
 
   1. `a,b=c,d` is `(a,b)=(c,d)`
     + python style
-    + allows shothand nice swaps
+    + allows shorthand nice swaps
     - problem with fn arguments parsing `(a=1,b=2) => `
     - unscoped groups make language a real line noise, very unusual pattern:
       ```
       y1, y2 = y+1, y+2;
-      (y1, y2) >= height ? (y1, y2) = height - 1;
+      y1, y2 >= height ? y1, y2 = height - 1;
       ptr0, ptr1, ptr2 = y, y1, y2 * width;
       ```
 
@@ -1966,11 +1976,9 @@
 
   3. Single assignment is group, multiple is seq: `a,b = c,d` vs `a=b, c=d`
     + Allows unparented assignments `a,b=c,d;`
-    ? What are potential confusions?
-      - `a,b=c,d=e,f` - not allowed sequence of multiple assignments
-      - `c=d,e` as return member or elsewhere considers only `c` as return instead of `c=d, e`
-      - fn args `(a,b=1)` makes it as `a,b = 1` vs `a, b=1`
-    - breaks regular parsing logic
+    - `a,b = c,d = e,f` - not allowed sequence of multiple assignments
+    - `c=d,e` as return member or elsewhere considers only `c` as return instead of `c=d, e`
+    - fn args `(a,b=1)` makes it as `a,b = 1` vs `a, b=1`
 
   4. `=` balances number of left/right members, `a,b=c,d, e=f, g,h,i=j`
     ? `a,b,c=3` in fn arguments?
@@ -1985,6 +1993,9 @@
       y1, y2 >= height ? y1, y2 = height - 1; \\ hmm
       ptr0, ptr1, ptr2 = y, y1, y2 * width; \\ which y gets multiplied here?
       ```
+  5.
+    * lhs can only be ids, props, range or fn
+    * lhs member on its own without assignment doesn't make sense
 
 ## [x] Raise `,` precedence for groups? -> nah, let's keep groups scoped
 

@@ -1,7 +1,8 @@
 # mel ![stability](https://img.shields.io/badge/stability-experimental-black) [![test](https://github.com/dy/mel/actions/workflows/test.yml/badge.svg)](https://github.com/dy/mel/actions/workflows/test.yml)
 
-Micro language for floatbeats and audio with smooth operator and organic sugar.<br/>
+Minimal language for audio processing purposes and floatbeats.<br/>
 Compiles to compact 0-runtime WASM with linear memory.<br/>
+It has implicit types, organic sugar and smooth operator.
 
 <!--[Motivation](./docs/motivation.md)  |  [Documentation](./docs/reference.md)  |  [Examples](./docs/examples.md).-->
 
@@ -20,27 +21,27 @@ Compiles to compact 0-runtime WASM with linear memory.<br/>
 && || !                       \\ logical
 > >= < <= == !=               \\ comparisons (boolean)
 ?: ?                          \\ conditions
+x[i] x[]                      \\ member access, length
 a..b                          \\ ranges
 ~ ~= ~/ ~* ~// ~**            \\ clamp, normalize, lerp
 ^ ^^ ^^^                      \\ continue, break, return
-x[i] x[]                      \\ member access, length
 |> _                          \\ pipe, loop
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ variables
 foo=1, bar=2.0;               \\ declare vars
-AbCF, $0, Δx, _;              \\ names permit alnum, unicodes, _$#@
+AbC, $0, Δx, x@1, A#;         \\ names permit alnum, unicodes, _$#@
 fooBar123 != FooBar123;       \\ case-sensitive
-default=1, eval=fn, else=0;   \\ freedom of speech
+default=1, eval=fn, else=0;   \\ no reserved words
 true = 0b1, false = 0b0;      \\ alias bools
 inf = 1/0, nan = 0/0;         \\ alias infinity, NaN
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ units
 1k = 1000; 1pi = 3.1415926;   \\ define units
-1s = 44100; 1m = 60s;         \\ useful for sample indexes
+1s = 44100; 1m = 60s;         \\ as sample indexes
 10.1k, 2pi;                   \\ 10100, 6.283...
 2m35s;                        \\ combinations
 
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ statements
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ statements & scopes
 a, b=1, c=2;                  \\ declare vars in C style
 foo();                        \\ semi-colons are mandatory
 (c = a + b; c);               \\ group returns last statement
@@ -87,7 +88,7 @@ m = [n[..]];                  \\ copy n
 m = [1, 2..4, 5];             \\ mixed definition
 m = [1, [2, 3, [4]]];         \\ nested arrays (tree)
 m = [0..4 |> _ ** 2];         \\ list comprehension
-(first,last) = (m[0], m[-1]); \\ get by index
+(first, last) = (m[0], m[-1]);\\ get by index
 (second, ..last) = m[1, 2..]; \\ get multiple values
 length = m[];                 \\ get length
 m[0] = 1;                     \\ set value
@@ -96,20 +97,20 @@ m[0..] = 0..4 * 2;            \\ set from range
 m[1,2] = m[2,1];              \\ swap
 m[0..] = m[-1..0];            \\ reverse order
 m[0..] = m[1..,0];            \\ rotate
-min ~=..m[..], max ~=m[..]..; \\ find min/max in array
+min ~= ..m[..], max ~= m[..]..;\ find min/max in array
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ loops
-i = a, b, c |> f(i);          \\ for each item in a, b, c do f(item)
-i = 10.. |> (                 \\ descend over range
+(a, b, c) |> f(_);            \\ for each item in a, b, c do f(item)
+(i = 10..) |> (               \\ descend over range
   i < 5 ? ^;                  \\ if item < 5 continue
   i < 0 ? ^^;                 \\ if item < 0 break
 );                            \\
 x[..] |> f(_) |> g(_);        \\ sequence of ops
 x[..] |>= _ * 2;              \\ overwrite source
-i = 0..w |> (                 \\ nest iterations
-  j = 0..h |> f(i, j);        \\ f(x,y)
+(i = 0..w) |> (               \\ nest iterations
+  (j = 0..h) |> f(i, j);      \\ f(x,y)
 );                            \\
-(x,,y) = (a,b,c |> _ * 2);    \\ x = a * 2, y = c * 2;
+(x,,y) = (a,b,c) |> _ * 2;    \\ x = a * 2, y = c * 2;
 .. |> i < 10 ? i++ : ^;       \\ while i < 10 i++
 ..(i < 10) / 0 |> i++;        \\ alternative while
 
@@ -147,21 +148,22 @@ x, y, z                       \\ exports last statement
 
 <!--
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ strings
-hi="Hello, World!\n\t\x22\x27";\ creates static array (uint8)
-string="{hi} world";          \\ interpolate: "hello world"
+hi="Hello, World!\n\t\x22\x27";\ creates static array (uint)
+string="$<hi> world";         \\ interpolate: "hello world"
 string[1];                    \\ positive indexing from first element [0]: 'e'
 string[-3];                   \\ negative indexing from last element [-1]: 'r'
 string[2..10];                \\ substring
 string[1, 2..10, -1];         \\ slice/pick multiple elements
-string[-1..0];                \\ reverse
+string[-1..0];                \\ reversed
 string[];                     \\ length
-string == string;             \\ compare (==,!=,>,<)
+string .= string;             \\ compare (==,!=,>,<)
 string .+ string;             \\ concat: "hello worldhello world"
 string .- string;             \\ removes all occurences of the right string in the left string: ""
 string ./ string;             \\ split: "a b" / " " = ["a", "b"]
 string .* list;               \\ join: " " * ["a", "b"] = "a b"
 string .* 2;                  \\ repeat: "abc" * 2 = "abcabc"
--->
+
+ -->
 
 ## Examples
 

@@ -133,8 +133,11 @@
 * [ ] Ignore unassigned immediate constructs like `[1,2,3]` or `"abc"`.
 * [ ] All FIXMEs
 
-## MVP
+## Application
 
+* [ ] Floatbeats collection
+* [ ] MelFX - ZZFX binary
+* [ ] Web-Audio-API
 * [ ] Metronome app: variable speed, variable tone
 
 ## 1.1
