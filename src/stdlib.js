@@ -44,9 +44,9 @@ export const std = {
     `(local.get 1)\n` +
     `)`,
 
-  // fill mem area at @offset with range values @from, @to via @step param; returns ptr to address after range
+  // fill mem area at $offset with range values $from, $to via $step param; returns ptr to address after range
   "range": `
-    (func $range (param i32 f64 f64 f64) (result i32)
+    (func $range (param $offset i32) (param $from f64) (param $to f64) (param $step f64) (result i32)
       (local.get 0)(local.get 1)(local.get 2)(local.get 3)
       (if (param i32 f64 f64 f64) (result i32) (f64.gt (local.get 2)(local.get 1))
         (then (call $range.asc))(else (call $range.dsc))

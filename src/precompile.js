@@ -128,6 +128,8 @@ Object.assign(expr, {
   },
 
   '..'([, a, b]) {
+    // ..
+    if (!a && !b) return ['..', [FLOAT, -Infinity], [FLOAT, Infinity]]
     // ..b
     if (!a) return ['..', [FLOAT, -Infinity], expr(b)]
     // a..

@@ -510,11 +510,11 @@ t('compile: list from dynamic range', t => {
   is(xl.value, 3, 'xlen')
 })
 
-t.todo('compile: lists from invalid ranges', t => {
-  let wat = compileMelo(`x=[2..]`)
-  wat = compileMelo(`x=[..]`)
-  wat = compileMelo(`x=[..-2]`)
-  wat = compileMelo(`x=[..-2]`)
+t('compile: lists from invalid ranges', t => {
+  let wat
+  throws(() => { wat = compileMelo(`x=[2..]`) }, /range/)
+  throws(() => { wat = compileMelo(`x=[..]`) }, /range/)
+  throws(() => { wat = compileMelo(`x=[..-2]`) }, /range/)
 })
 
 t('compile: lists nested static', t => {
@@ -592,14 +592,15 @@ t('compile: list group write', t => {
   is(mem[2], 3)
 })
 
-
-t.todo('compile: sublist', t => {
+t('compile: sublist', t => {
   let wat = compileMelo(`x = [1,2,3], y = [x]`)
   let mod = compileWat(wat)
-  let { __memory: memory, x } = mod.instance.exports
-  let arr = new Float64Array(memory.buffer, 0, 2), ptr = x.value
-  is(arr[ptr], 1)
-  is(arr[ptr + 1], 2)
+  let { __memory: memory, x, y } = mod.instance.exports
+  let xarr = new Float64Array(memory.buffer, x, 3), yarr = new Float64Array(memory.buffer, y, 1)
+  is(xarr[0], 1)
+  is(xarr[1], 2)
+  is(xarr[2], 3)
+  is(yarr[0], x.value)
 })
 
 t.skip('compile: memory grow', t => {

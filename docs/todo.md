@@ -19,14 +19,13 @@
 * [x] fix parsing
 * [x] a++, a--, a+=1, a-=n
 * [x] fix compiling
-* [ ] separate int/float definition `x=1` vs `x=1.0`
-* [ ] account ops for expected number of returns instead of forcing drops
+* [x] account ops for expected number of returns instead of forcing drops
 * [x] get rid of `.` (less = more)
 * [ ] make use of `^`, `^^`, `^^^`
-* [ ] `~, ~=`
-* [ ] `~/, ~*`
 * [ ] all readmes test
 * [ ] first bytebeat
+* [ ] `~, ~=`
+* [ ] `~/, ~*`
 * [ ] strings
 * [x] make use of watr compiler
   * [x] fix watr discrepancies with wabt in lino context

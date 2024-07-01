@@ -1988,14 +1988,20 @@
     + can be the case of assignment only, any other ops require grouping `(a,b) + (b,c)`
       - creates confusions in code - some parts are grouped, others are not - forces knowledge of precedence
       - it can be pretty high: `x1, x2 = y1, y2 * 2` - what'd you expect here?
-    ~ ```
-      y1, y2 = y+1, y+2; \\ ok, since sequence doesn't make sense here
-      y1, y2 >= height ? y1, y2 = height - 1; \\ hmm
-      ptr0, ptr1, ptr2 = y, y1, y2 * width; \\ which y gets multiplied here?
-      ```
-  5.
+    ~ y1, y2 = y+1, y+2; // ok, since sequence doesn't make sense here
+      y1, y2 >= height ? y1, y2 = height - 1; // hmm
+      ptr0, ptr1, ptr2 = y, y1, y2 * width; // which y gets multiplied here?
+
+  5. one-member requires group `a, b, c=1` / `(a,b,c)=1`, but multiple can be flat `a,b,c = 1,2,3`
+    + separates group op vs group visually
+    - `fn(a,b,c=1,d,e)`
+
+  5.1 stack-balancing `a,b,c=1` is `a, b, c=1`, `a,b,c=1,2,3` is `a=1, b=2, c=3`
+    ? mb based on number of lhs-idables
     * lhs can only be ids, props, range or fn
-    * lhs member on its own without assignment doesn't make sense
+    * lhs member on its own without assignment doesn't make sense other than in definition
+    + to make single-assign do `(a,b,c)=1`
+
 
 ## [x] Raise `,` precedence for groups? -> nah, let's keep groups scoped
 

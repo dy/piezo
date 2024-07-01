@@ -270,10 +270,12 @@ Object.assign(expr, {
       // [a..b], [..b]
       if (init[0] === '..') {
         let [, min, max] = init
-        if (max[1] === Infinity) err('Arrays cannot be constructed from right-open ranges, TODO passed')
+        if (max[1] === Infinity) err(`Arrays cannot be constructed from right-open ranges`)
 
         // [..1] - just skips heap
         if (min[1] === -Infinity && typeof max[1] === 'number') {
+          // [..-1]
+          if (max[1] < 0) err(`Bad array range`)
           str += `(local.set $${cur} (i32.add (local.get $${cur})(i32.const ${max[1] << 3})))\n`
         }
         // [x..y] - generic computed range
