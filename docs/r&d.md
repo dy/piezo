@@ -776,7 +776,7 @@
   ! → operator must uniquely identify type and be macros
   ?! Try x(..args) -> operation for regular functions?
 
-## [x] ~~Reduce/fold operator: let's use |> with lambdas~~ easier to use just loops `sum=0; list |> sum+=#`
+## [x] ~~Reduce/fold operator: let's use |> with lambdas~~ easier to use just loops `sum=0; list |> sum+=_; sum`
 
   * ? Reduce operator? It can be eg. `:>` (2 become 1), or `=>`.
     * ? `a,b,c :> reducer`, like `signals :> #0 + #1`

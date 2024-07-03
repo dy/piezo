@@ -116,7 +116,7 @@ t('compile: globals multiple', () => {
 t.skip('compile: export - no junk exports', () => {
   let wat = compileMelo(`w()=(); y=[1]; x()=(*i=0), z=[y[0], v=[1]]`)
   let mod = compileWat(wat)
-  same(Object.keys(mod.instance.exports), ['__memory', 'x', 'z'])
+  same(Object.keys(mod.instance.exports), ['memory', 'x', 'z'])
 })
 
 t('compile: numbers negatives', t => {
@@ -303,11 +303,11 @@ t.skip('debugs', t => {
   const memory = new WebAssembly.Memory({ initial: 1 });
   const importObject = { x: { y: () => 123, z: 123 } };
   let { instance } = compileWat(`
-    (memory (export "__memory") 1 2048)
+    (memory (export "memory") 1 2048)
 
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;; Data
     (data (i32.const 0) "//")`, importObject)
-  console.log(new Uint8Array(instance.exports.__memory.buffer))
+  console.log(new Uint8Array(instance.exports.memory.buffer))
   // instance.exports.x(instance.exports.x(instance.exports.cb))
 })
 
@@ -438,7 +438,7 @@ t.todo('compile: strings', t => {
   let wat = compileMelo(`x = "abc"`)
   // console.log(wat)
   let mod = compileWat(wat)
-  let { __memory: memory, x } = mod.instance.exports
+  let { memory, x } = mod.instance.exports
 
   let xarr = new Uint8Array(memory.buffer, x.value, 3)
 
@@ -449,7 +449,7 @@ t.todo('compile: strings', t => {
 t('compile: list basic', t => {
   let wat = compileMelo(`x = [1.1, 2.22, 3.333], y = [4.1234,5.54321,654321.123456,7.7777777]; x,y,xl=x[],yl=y[]`)
   let mod = compileWat(wat)
-  let { __memory: memory, x, y, xl, yl } = mod.instance.exports
+  let { memory, x, y, xl, yl } = mod.instance.exports
   let xarr = new Float64Array(memory.buffer, x.value, 3)
   is(xarr[0], 1.1, 'x0')
   is(xarr[1], 2.22, 'x1')
@@ -466,7 +466,7 @@ t('compile: list basic', t => {
 t('compile: list basic local', t => {
   let wat = compileMelo(`x() = [1, 2]`)
   let mod = compileWat(wat)
-  let { __memory: memory, x } = mod.instance.exports
+  let { memory, x } = mod.instance.exports
   let x0 = new Float64Array(memory.buffer, x(), 2)
   is(x0[0], 1, 'x0')
   is(x0[1], 2, 'x1')
@@ -478,7 +478,7 @@ t('compile: list from static range', t => {
   let wat = compileMelo(`x=[..3], y=[0..4]; z=[4..0], x,y,xl=x[],yl=y[]`)
   // console.log(wat)
   let mod = compileWat(wat)
-  let { __memory: memory, x, y, xl, yl, z } = mod.instance.exports
+  let { memory, x, y, xl, yl, z } = mod.instance.exports
   let xarr = new Float64Array(memory.buffer, x.value, 10)
   is(xarr[0], 0, 'x0')
   is(xarr[1], 0, 'x1')
@@ -502,7 +502,7 @@ t('compile: list from dynamic range', t => {
   // , y=[1, x[0]..x[2], 2..-2]; x,y, xl=x[],yl=y[]`)
   // console.log(wat)
   let mod = compileWat(wat)
-  let { __memory: memory, x, y, xl, yl } = mod.instance.exports
+  let { memory, x, y, xl, yl } = mod.instance.exports
   let xarr = new Float64Array(memory.buffer, x.value, 3)
   is(xarr[0], 0, 'x0')
   is(xarr[1], 1, 'x1')
@@ -522,7 +522,7 @@ t('compile: lists nested static', t => {
   // let wat = compileMelo(`y=[2], x=[1, y], w=[4,5]`)
   // console.log(wat)
   let mod = compileWat(wat)
-  let { __memory: memory, x, y, w } = mod.instance.exports
+  let { memory, x, y, w } = mod.instance.exports
   console.log(new Float64Array(memory.buffer))
   let xarr = new Float64Array(memory.buffer, x.value, 10)
   is(xarr[0], 1, 'x0')
@@ -542,7 +542,7 @@ t('compile: lists nested static', t => {
 })
 
 t.todo('compile: list comprehension', t => {
-  let wat = compileMelo(`x = [1..3 <| ^ * 2]`)
+  let wat = compileMelo(`x = [1..3 |> _ * 2]`)
 })
 
 t.todo('compile: list nested comprehension', t => {
@@ -553,7 +553,7 @@ t('compile: list simple write', t => {
   let wat = compileMelo(`x=[..3]; x[0]=1; x[1]=2; x[-1]=x[]; x`)
   // console.log(wat)
   let mod = compileWat(wat)
-  let { __memory: memory, x } = mod.instance.exports
+  let { memory, x } = mod.instance.exports
   let xarr = new Float64Array(memory.buffer, x.value, 3)
   is(xarr[0], 1, 'x0')
   is(xarr[1], 2, 'x1')
@@ -585,8 +585,8 @@ t('compile: list group write', t => {
   let wat = compileMelo(`x = [..3]; x[0,1,2]=(1,2,3)`)
   // console.log(wat)
   let mod = compileWat(wat)
-  let { x, __memory } = mod.instance.exports
-  const mem = new Float64Array(__memory.buffer, x.value, 3)
+  let { x, memory } = mod.instance.exports
+  const mem = new Float64Array(memory.buffer, x.value, 3)
   is(mem[0], 1)
   is(mem[1], 2)
   is(mem[2], 3)
@@ -595,7 +595,7 @@ t('compile: list group write', t => {
 t('compile: sublist', t => {
   let wat = compileMelo(`x = [1,2,3], y = [x]`)
   let mod = compileWat(wat)
-  let { __memory: memory, x, y } = mod.instance.exports
+  let { memory, x, y } = mod.instance.exports
   let xarr = new Float64Array(memory.buffer, x, 3), yarr = new Float64Array(memory.buffer, y, 1)
   is(xarr[0], 1)
   is(xarr[1], 2)
@@ -607,7 +607,7 @@ t.skip('compile: memory grow', t => {
   // FIXME: possibly add option to export internals
   let wat = compileMelo(`grow()=[..8192]`)
   let mod = compileWat(wat)
-  let { __memory, __mem, grow } = mod.instance.exports
+  let { memory, __mem, grow } = mod.instance.exports
   for (let i = 1; i < 100; i++) {
     is(__mem.value, 65536 * i)
     grow()
@@ -617,7 +617,7 @@ t.skip('compile: memory grow', t => {
 t('compile: early returns', t => {
   let wat = compileMelo(`x(a)=(a ? ^-a; 123), y(a)=(a?^12;13.4)`)
   let mod = compileWat(wat)
-  let { __memory: memory, x, y, z } = mod.instance.exports
+  let { memory, x, y, z } = mod.instance.exports
   is(x(0), 123);
   is(x(1), -1);
 
@@ -647,7 +647,7 @@ t('compile: loops range global', t => {
   let wat, mod
   wat = compileMelo(`x=[1..3]; 0..2 |> x[_]=_+1; x`)
   mod = compileWat(wat)
-  let { __memory: memory, x } = mod.instance.exports
+  let { memory, x } = mod.instance.exports
 
   let arr = new Float64Array(memory.buffer, x.value, 3)
 
@@ -660,7 +660,7 @@ t('compile: loops range local', t => {
   let wat, mod
   wat = compileMelo(`x=[1..3]; fill() = (0..x[] |> x[_]=_+1); fill, x`)
   mod = compileWat(wat)
-  let { __memory: memory, x, fill } = mod.instance.exports
+  let { memory, x, fill } = mod.instance.exports
 
   let arr = new Float64Array(memory.buffer, x.value, 3)
   is(fill(), 3);
@@ -679,7 +679,7 @@ t('compile: loop range in range', t => {
     )
   )`)
   let mod = compileWat(wat)
-  let { __memory: memory, a, f } = mod.instance.exports
+  let { memory, a, f } = mod.instance.exports
 
   let arr = new Float64Array(memory.buffer, a.value, 9)
   is(arr, [0, 0, 0, 0, 0, 0, 0, 0, 0])
@@ -701,7 +701,7 @@ t.todo('compile: loop in loop', t => {
     );
   x`)
   let mod = compileWat(wat)
-  let { __memory: memory, x } = mod.instance.exports
+  let { memory, x } = mod.instance.exports
 
   let arr = new Float64Array(memory.buffer, x.value, 4)
 
@@ -745,15 +745,15 @@ t('compile: state variable - scope', t => {
 t('compile: state variable - array init', t => {
   let wat = compileMelo(`x()=(*i=[..2]; i[0]++ + i[1]++), y()=x()`)
   let mod = compileWat(wat)
-  let { x, y, __memory } = mod.instance.exports
+  let { x, y, memory } = mod.instance.exports
   is(x(), 0)
-  console.log(new Float64Array(__memory.buffer))
+  console.log(new Float64Array(memory.buffer))
   is(x(), 2)
-  console.log(new Float64Array(__memory.buffer))
+  console.log(new Float64Array(memory.buffer))
   is(x(), 4)
-  console.log(new Float64Array(__memory.buffer))
+  console.log(new Float64Array(memory.buffer))
   is(y(), 0)
-  console.log(new Float64Array(__memory.buffer))
+  console.log(new Float64Array(memory.buffer))
   is(y(), 2)
   is(y(), 4)
 })

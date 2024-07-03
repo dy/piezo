@@ -21,6 +21,7 @@
 * [x] fix compiling
 * [x] account ops for expected number of returns instead of forcing drops
 * [x] get rid of `.` (less = more)
+* [ ] list comprehension
 * [ ] make use of `^`, `^^`, `^^^`
 * [ ] all readmes test
 * [ ] first bytebeat

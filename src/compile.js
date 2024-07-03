@@ -6,12 +6,12 @@ import precompile from './precompile.js';
 import { ids, stringify, err, u82s } from './util.js';
 import { print, compile as watr } from 'watr';
 
-let prevCtx, includes, imports, globals, locals, slocals, funcs, func, exports, datas, mem, returns, config, depth;
+let prevCtx, includes, imports, globals, locals, slocals, funcs, func, exports, datas, mem, returns, depth;
 
 // limit of memory is defined as: (max array length i24) / (number of f64 per memory page i13)
 const MAX_MEMORY = 2048, HEAP_SIZE = 1024
 
-export default function compile(node, obj) {
+export default function compile(node, config = {}) {
   if (typeof node === 'string') node = parse(node)
 
   node = precompile(node);
@@ -19,7 +19,7 @@ export default function compile(node, obj) {
   console.log('compile', node)
 
   // save previous compiling context
-  prevCtx = { prevCtx, includes, imports, globals, locals, slocals, funcs, func, exports, datas, mem, returns, config, depth };
+  prevCtx = { prevCtx, includes, imports, globals, locals, slocals, funcs, func, exports, datas, mem, returns, depth };
 
   // init compiling context
   globals = {} // global scope (as name props), {var: #isNotConstant, init: #initValue, type: 'f64'}
@@ -34,7 +34,6 @@ export default function compile(node, obj) {
   mem = false // indicates if memory must be included and how much bytes
   depth = 0 // current loop/nested block counter
   datas = {} // static-size data sections
-  config = obj || {}
 
   // run global in start function
   let init = expr(node, true).trim(), code = ``
@@ -52,8 +51,14 @@ export default function compile(node, obj) {
     code += `\n`
   }
 
-  if (mem !== false) code += `;;;;;;;;;;;;;;;;;;;;;;;;;;;; Memory\n` +
-    `(memory (export "__memory") ${Math.ceil(mem / 65536)} ${MAX_MEMORY})\n(global $__mem (mut i32) (i32.const ${mem}))\n\n`;
+  if (mem !== false) {
+    code += `;;;;;;;;;;;;;;;;;;;;;;;;;;;; Memory\n`
+
+    if (config.memory) {
+      code += `(import "imports" "memory" (memory ${Math.ceil(mem / 65536)} ${MAX_MEMORY}))\n`
+    }
+    code += `(memory (export "memory") ${Math.ceil(mem / 65536)} ${MAX_MEMORY})\n(global $__mem (mut i32) (i32.const ${mem}))\n\n`;
+  }
 
   // declare datas
   for (let data in datas) { code += `;;;;;;;;;;;;;;;;;;;;;;;;;;;; Data\n`; break }
@@ -95,13 +100,13 @@ export default function compile(node, obj) {
   // provide exports
   for (let name in exports) { code += `;;;;;;;;;;;;;;;;;;;;;;;;;;;; Exports\n`; break }
   for (let name in exports)
-    code += `(export "${name}" (${exports[name].func ? 'func' : 'global'} $${name}))\n`
+    code += `(export "${name}" (${exports[name].func ? 'func' : 'global'} $${name}))\n`;
 
-  console.log(code);
+
   // console.log(...parseWat(code))
 
   // restore previous compiling context
-  ({ prevCtx, includes, imports, globals, funcs, func, locals, slocals, exports, datas, mem, returns, config, depth } = prevCtx);
+  ; ({ prevCtx, includes, imports, globals, funcs, func, locals, slocals, exports, datas, mem, returns, depth } = prevCtx);
 
   if (config?.target === 'wasm')
     code = watr(code)

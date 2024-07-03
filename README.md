@@ -97,7 +97,7 @@ m[0..] = 0..4 * 2;            // set from range
 m[1,2] = m[2,1];              // swap
 m[0..] = m[-1..0];            // reverse order
 m[0..] = m[1..,0];            // rotate
-min ~= ..m[..], max ~= m[..]..;\ find min/max in array
+min~= ..m[..], max~= m[..]..; // find min/max in array
 
 //////////////////////////////// loops
 (a, b, c) |> f(_);            // for each item in a, b, c do f(item)
@@ -148,7 +148,7 @@ x, y, z                       // exports last statement
 
 <!--
 //////////////////////////////// strings
-hi="Hello, World!\n\t\x22\x27";\ creates static array (uint)
+hi="Hello, World!\n\t\x22\x27";// creates static array (uint)
 string="$<hi> world";         // interpolate: "hello world"
 string[1];                    // positive indexing from first element [0]: 'e'
 string[-3];                   // negative indexing from last element [-1]: 'r'
@@ -156,8 +156,8 @@ string[2..10];                // substring
 string[1, 2..10, -1];         // slice/pick multiple elements
 string[-1..0];                // reversed
 string[];                     // length
-a[..] == b[..] |> ;           // compare (==,!=,>,<)
-a = [b[..], c[..]];           // concat: "hello worldhello world"
+(..a[] |> a[_] == b[_] ?: ^)[-1];   // compare (==,!=,>,<)
+a = "$<b>$<c>";           // concat: "hello worldhello world"
 a[..] |> _==" " ? (a[from..to],from=to) : to++              // split: "a b" / " " = ["a", "b"]
 (list[..]|>(_[..]," "))[..-1];// join: " " * ["a", "b"] = "a b"
 ..2 |> b[..]                  // repeat: "abc" * 2 = "abcabc"
@@ -400,12 +400,6 @@ This produces compiled WASM binary.
 ```js
 import mel from 'mel'
 
-// create memory buffer (optional)
-const memory = new WebAssembly.Memory({
-  initial: 10,
-  maximum: 100,
-});
-
 // create wasm arrayBuffer
 const buffer = mel.compile(`
   n=1;
@@ -418,21 +412,25 @@ const buffer = mel.compile(`
     math: Math,
     mylib: './path/to/my/lib.mel'
   },
-
-  memory,
-
-  // target: `wat` for text or `wasm`
-  target: 'wasm'
+  // optional: import memory
+  memory: true
 })
 
 // create wasm instance
 const module = new WebAssembly.Module(buffer)
 const instance = new WebAssembly.Instance(module, {
-  imports: {math: Math}
+  imports: {
+    math: Math,
+    // imported memory
+    memory: new WebAssembly.Memory({
+      initial: 10,
+      maximum: 100,
+    })
+  }
 })
 
 // use API
-const { mult, n, arr } = instance.exports
+const { mult, n, arr, memory } = instance.exports
 
 // number exported as global
 n.value = 2;
