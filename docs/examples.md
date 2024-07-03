@@ -8,7 +8,7 @@
 
 pi2 = pi*2;
 
-\\ by default input/params are a-rate
+// by default input/params are a-rate
 lp(x, freq = 100 ~ 1..1k, Q = 1.0 ~ 0.001..3.0) = (
   *(x1, x2, y1, y2);
 

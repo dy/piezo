@@ -1689,9 +1689,10 @@
   + `x -<= 0..10` is just a nice construct
   -  `x <- y` vs `x < -y`
 
-## [ ] Comments: `//`, `/*` vs `;;` and `(; ;)` → ~~`//` is safest choice.~~ `\\` gives too many benefits
+## [ ] Comments: `//`, `/*` vs `;;` and `(; ;)` → `//` is most based choice. ~~`\\` gives too many benefits~~
 
   1. `;;`
+  * Message: mel is like assembly, expect low-level stuff & reading docs
   + ;; make more sense, since ; is separator, and everything behind it doesn't matter
   + (; makes more sense as "group with comments", since we use only ( for groups.
   + ;; is less noisy than //
@@ -1741,7 +1742,8 @@
       ~ no need to strip, just replace to `;`
     - doesn't allow inserting inline comments within sequences like `a,;;xxx\n b`
 
-  2. `//`
+  2. `//`, `/**/`
+  * Message: mel is like C / JS / Scala, expect similar intuition
   - // is noisy conflict with / and occupies operator space, eg.:
   ```
     tri(freq in 10..10000) = (
@@ -1776,12 +1778,15 @@
     + and still it's like scala also
 
   3. `\` or `\\`
+  * Message: mel is breaking new, but also weirdish like Julia, you gotta expect fancy stuff
   + mono lang reference
   +~ Forth?
   + \ is almost never used in langs & that's unique
   + reminds `//`
   - sort-of constant footgun to confuse with `//`
     ~ can be `\`
+    - imagine mood of "let's have fun write some floatbeat" - you'd need to remember that difference from JS always
+  - mental load to remember the comment style
   + it's short
   + association with "escape" sequence in strings
   - if strings come in (likely yes), then select-alling comments will select a bunch of escapes
@@ -1825,6 +1830,7 @@
     - forcing all programmers from these lands learn that new comments syntax
   - complicates copy-paste of floatbeats
     ~ not so much
+  - we're not creating language from scratch, we extend existing common syntax, and comments are standard part...
 
   4. `/* */`
   + popular (CSS, C-family, PHP, Swift, Kotlin, Java, JS)
@@ -1857,6 +1863,7 @@
     - reserves object syntax space
 
   7. `# xxx`
+    * Message: mel is like python - quirky, inlinish, unintuitive
     + Python, Perl, R, Raku, PHP, Shells, Ruby, Julia, Nim, Make
     - reserves `#` from the name, loop placeholder
     - too black, dark, heavy
@@ -1939,7 +1946,12 @@
         ? how do we map arrays then
           * list comprehension: i <- arr <| i * 10
 
-## [ ] Group (comma) precedence: a,b=c,d -> let's use more familiar flowy JS style a=1, b=2 and force groups be scoped
+## [ ] Group assignment: a,b=c,d -> let's use more familiar flowy JS style a=1, b=2 and force groups be scoped
+
+  * lhs can only be ids, props or fn
+  * lhs member on its own without assignment doesn't make sense other than in definition `a,b,c`
+  * sequence of assignments `a=1,b=2` almost never makes sense - why, instead of just `a=1;b=2;`
+    * only when we need a group and some members need to receive new value
 
   1. `a,b=c,d` is `(a,b)=(c,d)`
     + python style
@@ -1955,7 +1967,7 @@
   2. `a,b=c,d` is `(a),(b=c),(d)`
     + js style
     + more fluent imho
-    + allows function arguments
+    + in sync with function arguments
     - forces group-assign be parenthesized (a,b,c) = (d, e, f)
       - which is extra keystrokes
       + that visually indicates groups better:
@@ -1966,6 +1978,7 @@
       ```
         - maybe a bit too intensive grouping sometimes
           + but easier to understand what's going on
+      ~+ in JS that's array destructuring anyways: `[a,b]=[b,a]`
     + allows comma-style operations sequence, rather than python-like meaning, eg a++, b+=2, c=4,
     + arrays are always scoped
     - in JS the meaning of comma isn't loaded with grouping, it's just sequence of operations
@@ -1998,8 +2011,6 @@
 
   5.1 stack-balancing `a,b,c=1` is `a, b, c=1`, `a,b,c=1,2,3` is `a=1, b=2, c=3`
     ? mb based on number of lhs-idables
-    * lhs can only be ids, props, range or fn
-    * lhs member on its own without assignment doesn't make sense other than in definition
     + to make single-assign do `(a,b,c)=1`
 
 
@@ -3422,28 +3433,30 @@
     + which is less ambiguity
     + keeps loops logic simple
 
-## [x] Case-insensitive variable names? -> likely yes: AbB/ABb, x1/X1, @math.E/@math.e, export names, strings, atoms
+## [ ] Case-insensitive variable names? -> likely yes: AbB/ABb, x1/X1, ~~@math.E/@math.e~~, export names, import names, constants, strings, atoms
   * should not be too smart, should be very simple
 
   0. Case-insensitive
 
   + simple
-  + it's safe: like html attributes, no gnasty name conflicts
+  + it's safe: like html attributes, no gnastly name conflicts
   + https://twitter.com/bloomofthehours/status/1491797450595528713?s=20&t=1aJpwIDrbNhIjwIohsvxiw
   + reduces use of camelcase convention
   + lowcase constants are fun `4p * i`
     - can define via units
   - `AbB` vs `ABb` can be different chords, but lino mixes them up together
+    ~ can be addressed via separators `Ab_B`, `A_Bb` or (?) `Ab.B`, `A.Bb`
   - `X1` and `x1` can be different things in math
-    ~ can be solved as eg. `x1` and `_x1` or ~~`@x1`~~
+    ~ can be solved as eg. `x1` and `_x1`, `@x1`, `#x1`, `$x1`
   - `sampleRate` becomes `samplerate` - can be confusing
     ~ doesn't have to lowcase
-  - export naming requirement: `'AbB': AbB, 'sampleRate': sampleRate.`?
+  - export naming: `'AbB': AbB, 'sampleRate': sampleRate.`?
     + can take exact name though
     + lowcase-enforced export is kind of cool, `exports.samplerate`
   - not much conventional, only MySQL and other oldies
   - import question: `@math:E` vs `@math.e`
     ~ can be solved via manual imports
+    ~ can be checked for undefined on compile stage
   + solves problem mentioned by despawnerer (`dateRange` vs `daterange`)
   + lowcase is typographycally more expressive
   + code is robust to changing case, eg. as url string
@@ -3454,6 +3467,7 @@
   - Strings don't allow code to be case-change robust.
     * we either discard strings or make it (half) case-sensitive
   - Atoms may require case-sensitivity, eg. for error messages
+  - user constants make no much sense `PI = 3.14`
 
   0.5 Capfirst-sensitive, (`Abc` == `ABc`) != (`aBC` == `abc`)
 
@@ -3461,11 +3475,11 @@
   + fixes problem of math/class capfirst difference (math `X1` vs `x1`, `Oscillator` vs `oscillator`)
   + fixes problem of despawnerer's `fullName` == `fullname`
   + capfirst is typographycally meaningful
-  + can fix problem of units size
+  + fixes problem of units
+  + more-less intuitive, good balance between 1 and 0, having mixed definitions `aBc` and `abc` is bad practice anyways
   - code is not robust to case-insensitive environments
     ~ we still support strings so we don't target these environments anymore
-  - import looks like `@math#Pi` still
-    ~ we don't need imports for now
+  - import looks like `@math#PI` still
   - doesn't solve constants issue, `PI` vs `pi` - would be cool to have `pi`
 
   1. Case-sensitive
@@ -3481,22 +3495,7 @@
     ~ can be replaced with units
   - less meaning to atoms
 
-  ? Maybe keep it case-insensitive, but match case by-export?
-
-  2. Export operator `'a': a, 'sampleRate': sampleRate.`
-  + Explicit export
-  + Reverence to erlang and natural languages
-  + Extra use & meaning of atoms
-  + Quotes make nicer indicator of case-sensitivity
-  + Solves problem of default exporting `0..10` or `() -> x`
-  - redundancy: case can be figured out from name directly
-  - some conflict with function return
-  ~- we can use `^` operator for that purpose: `^sampleRate;`
-    ? Can we use `.` postfix as indicator of procedure / void return? nah.
-  - must be last, therefore redundant, since last expression is already exported.
-    ~ nah - export and return are different operations
-
-  3. Use atoms as case-sensitive variable names
+  2. Use atoms as case-sensitive variable names
   + enables quote-less imports `@math#pi` and `@'math#PI'`
     + `#` is part of variable name anyways
   - `'Oscillator'()` is unusual construct...

@@ -150,9 +150,9 @@ t('parse: conditions', t => {
   is(parse('a ? b = c : d'), ['?:', 'a', ['=', 'b', 'c'], 'd'], 'ternary precedence')
   // FIXME: confusable with a > -b
   // is(parse('a,b,c >- x ? a : b : c'), ['?', ['>-', [',','a','b','c'], [':','a','b','c']]], 'switch operator')
-  is(parse(`2+2 >= 4 ?        \\ multiline ternary
+  is(parse(`2+2 >= 4 ?        // multiline ternary
     a
-  : a < b ?               \\ else if
+  : a < b ?               // else if
     b
   : (c)`), ['?:',
     ['>=', ['+', [INT, 2], [INT, 2]], [INT, 4]],
@@ -189,9 +189,9 @@ t('parse: loops', t => {
 
   is(parse('s[] < 50 |> (s += hi)'), ['|>', ['<', ['[', 's', undefined], [INT, 50]], ['()', ['+=', 's', 'hi']]], 'inline loop')
   is(parse(`
-  (i=0; ++i < 10 |> (             \\ multiline loop
-    i < 3 && ^^;                 \\ to break loop (can return value as ^^x)
-    i < 5 && ^;                  \\ to continue loop (can return value as ^x)
+  (i=0; ++i < 10 |> (             // multiline loop
+    i < 3 && ^^;                 // to break loop (can return value as ^^x)
+    i < 5 && ^;                  // to continue loop (can return value as ^x)
   ))`), ['()', [';',
     ['=', 'i', [INT, 0]],
     ['|>',
@@ -217,8 +217,8 @@ t('parse: functions', () => {
   console.log(parse(`a,,b`))
   is(parse('double(n) = n*2'), ['=', ['(', 'double', 'n'], ['*', 'n', [INT, 2]]], 'inline function')
   is(parse(`triple(n=1) = (
-    n == 0 && ^n;                \\ preliminarily return n
-    n*3                         \\ returns last value
+    n == 0 && ^n;                // preliminarily return n
+    n*3                         // returns last value
   )`), ['=', ['(', 'triple', ['=', 'n', [INT, 1]]], ['()', [';', ['&&', ['==', 'n', [INT, 0]], ['^', 'n']], ['*', 'n', [INT, 3]]]]], 'multiline')
   is(parse('triple()'), ['(', 'triple', ,], '3')
   is(parse('triple(5)'), ['(', 'triple', [INT, 5]], '15')
@@ -236,18 +236,18 @@ t('parse: argument cases', t => {
 
 t('parse: stateful variables', t => {
   is(parse(`
-    a() = ( *i=0; ++i );      \\ stateful variable persist value between fn calls
-    a(), a();                     \\ 0, 1
+    a() = ( *i=0; ++i );      // stateful variable persist value between fn calls
+    a(), a();                     // 0, 1
   `), [';',
     ['=', ['(', 'a', ,], ['()', [';', ['*', ['=', 'i', [INT, 0]]], ['+=', 'i', [INT, 1]]]]],
     [',', ['(', 'a', ,], ['(', 'a', ,]]
     , [],
   ])
   // is(parse('*[4]i'), ['*',['[',[INT,4],'i']], 'memory')
-  is(parse(`b() = (                   \\
-    *i=[..4];                   \\ memory of 4 items
-    i[0] = i[1]+1;              \\ read previous value
-    i[0]                        \\ return currrent value
+  is(parse(`b() = (                   //
+    *i=[..4];                   // memory of 4 items
+    i[0] = i[1]+1;              // read previous value
+    i[0]                        // return currrent value
   );`), [';', ['=', ['(', 'b', ,], ['()', [';',
     ['*', ['=', 'i', ['[]', ['..', undefined, [INT, 4]]]]],
     ['=', ['[', 'i', [INT, 0]], ['+', ['[', 'i', [INT, 1]], [INT, 1]]],

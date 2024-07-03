@@ -64,9 +64,9 @@ function len(n) {
 t('compile: comments', t => {
   let wat = compileMelo(`x(a,w,h)=(
     a=1
-    \\ a=2
+    // a=2
   ), y()=(
-    \\ (
+    // (
   )`)
   let mod = compileWat(wat)
   let { x } = mod.instance.exports
@@ -830,8 +830,8 @@ t.todo('compile: sine gen', t => {
 
 t('compile: readme numbers', t => {
   let numbers = compileMelo(`
-    a=16, b=0x10, c=0b0;                 \\ int, hex or binary
-    d=16.0, e=.1, f=1e3, g=2e-3;           \\ float
+    a=16, b=0x10, c=0b0;                 // int, hex or binary
+    d=16.0, e=.1, f=1e3, g=2e-3;           // float
     a,b,c,d,e,f,g
   `, { imports: {} })
   let { a, b, c, d, e, f, g } = compileWat(numbers, {}).instance.exports
@@ -848,10 +848,10 @@ t('compile: readme standard operators', t => {
       o17, o18, o19, o20, o21, o22,
       o23, o24, o25, o26
     ) = (
-      a + b, a-b, a*b, a/b, a%b, --a, ++a, b++, b--,                \\ arithmetical (float)
-      a&&b, a||b, !a, a?b:c,                    \\ logical (boolean)
-      a>b, a>=b, a<b, a<=b, a==b, a!=b,                \\ comparisons (boolean)
-      a&b, a|b, a^b, ~a, a>>b, a<<b,                  \\ binary (integer)
+      a + b, a-b, a*b, a/b, a%b, --a, ++a, b++, b--,                // arithmetical (float)
+      a&&b, a||b, !a, a?b:c,                    // logical (boolean)
+      a>b, a>=b, a<b, a<=b, a==b, a!=b,                // comparisons (boolean)
+      a&b, a|b, a^b, ~a, a>>b, a<<b,                  // binary (integer)
       a**b, -a %% b, a <<< b, a >>> b
     )
   `, {})

@@ -9,159 +9,158 @@ It has implicit types, organic sugar and smooth operator.
 ## Reference
 
 ```
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ numbers
-16, 0x10, 0b0;                \\ int, hex or binary
-16.0, .1, 1e3, 2e-3;          \\ float
+//////////////////////////////// numbers
+16, 0x10, 0b0;                // int, hex or binary
+16.0, .1, 1e3, 2e-3;          // float
 
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ operators
-+ - * / % -- ++               \\ arithmetical (float)
-** %% //                      \\ power, unsigned mod, floor div
-& | ^ ~ >> <<                 \\ binary (integer)
-<<< >>>                       \\ rotate left, right
-&& || !                       \\ logical
-> >= < <= == !=               \\ comparisons (boolean)
-?: ?                          \\ conditions
-x[i] x[]                      \\ member access, length
-a..b                          \\ ranges
-~ ~= ~/ ~* ~// ~**            \\ clamp, normalize, lerp
-^ ^^ ^^^                      \\ continue, break, return
-|> _                          \\ pipe, loop
+//////////////////////////////// operators
++ - * / % -- ++               // arithmetical (float)
+** %%                         // power, unsigned mod
+& | ^ ~ >> <<                 // binary (integer)
+<<< >>>                       // rotate left, right
+&& || !                       // logical
+> >= < <= == !=               // comparisons (boolean)
+?: ?                          // conditions
+x[i] x[]                      // member access, length
+a..b                          // ranges
+~ ~= ~/ ~* ~~/ ~~*            // clamp, normalize, lerp
+^ ^^ ^^^                      // continue, break, return
+|> _                          // pipe, loop
 
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ variables
-foo=1, bar=2.0;               \\ declare vars
-AbC, $0, Δx, x@1, A#;         \\ names permit alnum, unicodes, _$#@
-fooBar123 != FooBar123;       \\ case-sensitive
-default=1, eval=fn, else=0;   \\ no reserved words
-true = 0b1, false = 0b0;      \\ alias bools
-inf = 1/0, nan = 0/0;         \\ alias infinity, NaN
+//////////////////////////////// variables
+foo=1, bar=2.0;               // declare vars
+AbC, $0, Δx, x@1, A#;         // names permit alnum, unicodes, _$#@
+foo != Foo, bar == bAr;       // capfirst-sensitive
+default=1, eval=fn, else=0;   // no reserved words
+true = 0b1, false = 0b0;      // alias bools
+inf = 1/0, nan = 0/0;         // alias infinity, NaN
 
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ units
-1k = 1000; 1pi = 3.1415926;   \\ define units
-1s = 44100; 1m = 60s;         \\ as sample indexes
-10.1k, 2pi;                   \\ 10100, 6.283...
-2m35s;                        \\ combinations
+//////////////////////////////// units
+1k = 1000; 1pi = 3.1415926;   // define units
+1s = 44100; 1m = 60s;         // as sample indexes
+10.1k, 2pi;                   // 10100, 6.283...
+2m35s;                        // combinations
 
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ statements & scopes
-a, b=1, c=2;                  \\ declare vars in C style
-foo();                        \\ semi-colons are mandatory
-(c = a + b; c);               \\ group returns last statement
-(a = b+1; a,b,c);             \\ return multiple values
-(a ? ^b; c);                  \\ break current scope, return b
-((a ? ^^; c); d);             \\ break 2 scopes
-(((a ? ^^^; c); d); e);       \\ break to the root scope
+//////////////////////////////// statements & scopes
+a, b=1, c=2;                  // declare vars in C style
+foo();                        // semi-colons are mandatory
+(c = a + b; c);               // group returns last statement
+(a = b+1; a,b,c);             // return multiple values
+(a ? ^b; c);                  // break current scope, return b
+((a ? ^^; c); d);             // break 2 scopes
+(((a ? ^^^; c); d); e);       // break to the root scope
 
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ conditions
-a ? b;                        \\ if a then b else 0 (question operator)
-a ?: b;                       \\ if not a then b (elvis operator)
-sign = a < 0 ? -1 : +1;       \\ ternary conditional
-(2+2 >= 4) ? log(1) :         \\ multiline/switch
-  3 <= 1..2 ? log(2) :        \\ else if
-  log(3);                     \\ else
-a && b || c;                  \\ (a and b) or c
+//////////////////////////////// conditions
+a ? b;                        // if a then b else 0 (question operator)
+a ?: b;                       // if not a then b (elvis operator)
+sign = a < 0 ? -1 : +1;       // ternary conditional
+(2+2 >= 4) ? log(1) :         // multiline/switch
+  3 <= 1..2 ? log(2) :        // else if
+  log(3);                     // else
+a && b || c;                  // (a and b) or c
 
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ groups
-(a,b,c) = (d,e,f);            \\ assign (a=d, b=e, c=f)
-(a,b) = (b,a);                \\ swap
-(a,b,c) = d;                  \\ duplicate: (a, b, c) = (d, d, d);
-(a,,b) = (c,d,e);             \\ skip: (a=c, d, b=e);
-(a,b) + (c,d);                \\ any operator: (a+c, b+d)
-(a, b, c)++;                  \\ (a++, b++, c++)
-(a,b)[1] = c[2,3];            \\ props: (a[1]=c[2], b[1]=c[3])
-a = (b,c,d);                  \\ a=b; a=c; a=d; (see loops)
+//////////////////////////////// groups
+(a,b,c) = (d,e,f);            // assign (a=d, b=e, c=f)
+(a,b) = (b,a);                // swap
+(a,b,c) = d;                  // duplicate: (a, b, c) = (d, d, d);
+(a,,b) = (c,d,e);             // skip: (a=c, d, b=e);
+(a,b) + (c,d);                // any operator: (a+c, b+d)
+(a, b, c)++;                  // (a++, b++, c++)
+(a,b)[1] = c[2,3];            // props: (a[1]=c[2], b[1]=c[3])
+a = (b,c,d);                  // a=b; a=c; a=d; (see loops)
 
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ ranges
-0..10;                        \\ from 1 to 9 (10 exclusive)
-0.., ..10, ..;                \\ open ranges
-10..1;                        \\ reverse range
-1.08..108.0;                  \\ float range
-(a-1)..(a+1);                 \\ computed range
-(a,b,c) = 0..3 * 2;           \\ a=0, b=2, c=4
-a ~ 0..10; a ~= 0..10;        \\ clamp(a, 0, 10); a = clamp(a, 0, 10);
-a ~/ 0..10; a ~* 0..10;       \\ normalize(a, 0, 10); lerp(a, 0, 10);
-a ~~/ 0..10; a ~~* 0..10;     \\ smoothstep(a, 0, 10); ismoothstep(a, 0, 10);
+//////////////////////////////// ranges
+0..10;                        // from 1 to 9 (10 exclusive)
+0.., ..10, ..;                // open ranges
+10..1;                        // reverse range
+1.08..108.0;                  // float range
+(a-1)..(a+1);                 // computed range
+(a,b,c) = 0..3 * 2;           // a=0, b=2, c=4
+a ~ 0..10; a ~= 0..10;        // clamp(a, 0, 10); a = clamp(a, 0, 10);
+a ~/ 0..10; a ~* 0..10;       // normalize(a, 0, 10); lerp(a, 0, 10);
+a ~~/ 0..10; a ~~* 0..10;     // smoothstep(a, 0, 10); ismoothstep(a, 0, 10);
 
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ arrays
-m = [..10];                   \\ array of 10 elements
-m = [..10 |> 2];              \\ filled with 2
-m = [1,2,3,4];                \\ array of 4 elements
-m = [n[..]];                  \\ copy n
-m = [1, 2..4, 5];             \\ mixed definition
-m = [1, [2, 3, [4]]];         \\ nested arrays (tree)
-m = [0..4 |> _ ** 2];         \\ list comprehension
-(first, last) = (m[0], m[-1]);\\ get by index
-(second, ..last) = m[1, 2..]; \\ get multiple values
-length = m[];                 \\ get length
-m[0] = 1;                     \\ set value
-m[2..] = (1, 2..4, n[1..3]);  \\ set multiple values from offset 2
-m[0..] = 0..4 * 2;            \\ set from range
-m[1,2] = m[2,1];              \\ swap
-m[0..] = m[-1..0];            \\ reverse order
-m[0..] = m[1..,0];            \\ rotate
+//////////////////////////////// arrays
+m = [..10];                   // array of 10 elements
+m = [..10 |> 2];              // filled with 2
+m = [1,2,3,4];                // array of 4 elements
+m = [n[..]];                  // copy n
+m = [1, 2..4, 5];             // mixed definition
+m = [1, [2, 3, [4]]];         // nested arrays (tree)
+m = [0..4 |> _ ** 2];         // list comprehension
+(first, last) = (m[0], m[-1]);// get by index
+(second, ..last) = m[1, 2..]; // get multiple values
+length = m[];                 // get length
+m[0] = 1;                     // set value
+m[2..] = (1, 2..4, n[1..3]);  // set multiple values from offset 2
+m[0..] = 0..4 * 2;            // set from range
+m[1,2] = m[2,1];              // swap
+m[0..] = m[-1..0];            // reverse order
+m[0..] = m[1..,0];            // rotate
 min ~= ..m[..], max ~= m[..]..;\ find min/max in array
 
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ loops
-(a, b, c) |> f(_);            \\ for each item in a, b, c do f(item)
-(i = 10..) |> (               \\ descend over range
-  i < 5 ? ^;                  \\ if item < 5 continue
-  i < 0 ? ^^;                 \\ if item < 0 break
-);                            \\
-x[..] |> f(_) |> g(_);        \\ sequence of ops
-x[..] |>= _ * 2;              \\ overwrite source
-(i = 0..w) |> (               \\ nest iterations
-  (j = 0..h) |> f(i, j);      \\ f(x,y)
-);                            \\
-(x,,y) = (a,b,c) |> _ * 2;    \\ x = a * 2, y = c * 2;
-.. |> i < 10 ? i++ : ^;       \\ while i < 10 i++
-..(i < 10) / 0 |> i++;        \\ alternative while
+//////////////////////////////// loops
+(a, b, c) |> f(_);            // for each item in a, b, c do f(item)
+(i = 10..) |> (               // descend over range
+  i < 5 ? ^;                  // if item < 5 continue
+  i < 0 ? ^^;                 // if item < 0 break
+);                            //
+x[..] |> f(_) |> g(_);        // sequence of ops
+x[..] |>= _ * 2;              // overwrite source
+(i = 0..w) |> (               // nest iterations
+  (j = 0..h) |> f(i, j);      // f(x,y)
+);                            //
+(x,,y) = (a,b,c) |> _ * 2;    // x = a * 2, y = c * 2;
+.. |> i < 10 ? i++ : ^;       // while i < 10 i++
+..(i < 10) / 0 |> i++;        // alternative while
 
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ functions
-double(n) = n*2;              \\ define a function
-times(m = 1, n ~ 1..) = (     \\ optional, clamped arg
-  n == 0 ? ^n;                \\ early return
-  m * n                       \\ default return
-);                            \\
-times(3,2);                   \\ 6
-times(5);                     \\ 5 - optional argument
-times(,10);                   \\ 10 - skipped argument
-copy = triple;                \\ capture function
-copy(10);                     \\ also 30
-dup(x) = (x,x);               \\ return multiple values
-(a,b) = dup(b);               \\ multiple returns
+//////////////////////////////// functions
+double(n) = n*2;              // define a function
+times(m = 1, n ~ 1..) = (     // optional, clamped arg
+  n == 0 ? ^n;                // early return
+  m * n                       // default return
+);                            //
+times(3,2);                   // 6
+times(5);                     // 5 - optional argument
+times(,10);                   // 10 - skipped argument
+copy = triple;                // capture function
+copy(10);                     // also 30
+dup(x) = (x,x);               // return multiple values
+(a,b) = dup(b);               // multiple returns
 
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ state vars
-a() = ( *i=0; ++i );          \\ i persists value between calls
-a(), a();                     \\ 1, 2
-fib() = (                     \\
-  *i=[1,0,0];                 \\ local memory of 3 items
-  i[1..] = i[0..];            \\ shift memory
-  i[0] = i[1] + i[2];         \\ sum prev 2 items
-);                            \\
-fib(), fib(), fib();          \\ 1, 2, 3
-c() = (fib(), fib(), fib());  \\ state is defined by fn scope
-fib(); c();                   \\ 5; 1, 2, 3;
-d(fn) = (fib(), fn());        \\ to get external state, pass fn as argument
-d(c);                         \\ 1, 8;
+//////////////////////////////// state vars
+a() = ( *i=0; ++i );          // i persists value between calls
+a(), a();                     // 1, 2
+fib() = (                     //
+  *i=[1,0,0];                 // local memory of 3 items
+  i[1..] = i[0..];            // shift memory
+  i[0] = i[1] + i[2];         // sum prev 2 items
+);                            //
+fib(), fib(), fib();          // 1, 2, 3
+c() = (fib(), fib(), fib());  // state is defined by fn scope
+fib(); c();                   // 5; 1, 2, 3;
+d(fn) = (fib(), fn());        // to get external state, pass fn as argument
+d(c);                         // 1, 8;
 
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ export
-x, y, z                       \\ exports last statement
+//////////////////////////////// export
+x, y, z                       // exports last statement
 ```
 
 <!--
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ strings
+//////////////////////////////// strings
 hi="Hello, World!\n\t\x22\x27";\ creates static array (uint)
-string="$<hi> world";         \\ interpolate: "hello world"
-string[1];                    \\ positive indexing from first element [0]: 'e'
-string[-3];                   \\ negative indexing from last element [-1]: 'r'
-string[2..10];                \\ substring
-string[1, 2..10, -1];         \\ slice/pick multiple elements
-string[-1..0];                \\ reversed
-string[];                     \\ length
-string .= string;             \\ compare (==,!=,>,<)
-string .+ string;             \\ concat: "hello worldhello world"
-string .- string;             \\ removes all occurences of the right string in the left string: ""
-string ./ string;             \\ split: "a b" / " " = ["a", "b"]
-string .* list;               \\ join: " " * ["a", "b"] = "a b"
-string .* 2;                  \\ repeat: "abc" * 2 = "abcabc"
+string="$<hi> world";         // interpolate: "hello world"
+string[1];                    // positive indexing from first element [0]: 'e'
+string[-3];                   // negative indexing from last element [-1]: 'r'
+string[2..10];                // substring
+string[1, 2..10, -1];         // slice/pick multiple elements
+string[-1..0];                // reversed
+string[];                     // length
+a[..] == b[..] |> ;           // compare (==,!=,>,<)
+a = [b[..], c[..]];           // concat: "hello worldhello world"
+a[..] |> _==" " ? (a[from..to],from=to) : to++              // split: "a b" / " " = ["a", "b"]
+(list[..]|>(_[..]," "))[..-1];// join: " " * ["a", "b"] = "a b"
+..2 |> b[..]                  // repeat: "abc" * 2 = "abcabc"
 
  -->
 
@@ -173,16 +172,16 @@ string .* 2;                  \\ repeat: "abc" * 2 = "abcabc"
 Provides k-rate amplification for block of samples.
 
 ```
-gain(                             \\ define a function with block, volume arguments.
-  block,                          \\ block is a array argument
-  volume ~ 0..100                 \\ volume is limited to 0..100 range
+gain(                             // define a function with block, volume arguments.
+  block,                          // block is a array argument
+  volume ~ 0..100                 // volume is limited to 0..100 range
 ) = (
-  block[..] |>= _ * volume        \\ multiply each sample by volume value
+  block[..] |>= _ * volume        // multiply each sample by volume value
 );
 
-gain([0..5 * 0.1], 2);            \\ 0, .2, .4, .6, .8, 1
+gain([0..5 * 0.1], 2);            // 0, .2, .4, .6, .8, 1
 
-gain                              \\ export gain function
+gain                              // export gain function
 ```
 
 </details>
@@ -194,18 +193,18 @@ gain                              \\ export gain function
 A-rate (per-sample) biquad filter processor.
 
 ```
-1pi = pi;                         \\ define pi units
-1s = 44100;                       \\ define time units in samples
-1k = 10000;                       \\ basic si units
+1pi = pi;                         // define pi units
+1s = 44100;                       // define time units in samples
+1k = 10000;                       // basic si units
 
-lpf(                              \\ per-sample processing function
-  x0,                             \\ input sample value
-  freq = 100 ~ 1..10k,            \\ filter frequency, float
-  Q = 1.0 ~ 0.001..3.0            \\ quality factor, float
+lpf(                              // per-sample processing function
+  x0,                             // input sample value
+  freq = 100 ~ 1..10k,            // filter frequency, float
+  Q = 1.0 ~ 0.001..3.0            // quality factor, float
 ) = (
-  *(x1, y1, x2, y2) = 0;          \\ define filter state
+  *(x1, y1, x2, y2) = 0;          // define filter state
 
-  \\ lpf formula
+  // lpf formula
   w = 2pi * freq / 1s;
   sin_w, cos_w = sin(w), cos(w);
   a = sin_w / (2.0 * Q);
@@ -217,15 +216,15 @@ lpf(                              \\ per-sample processing function
 
   y0 = b0*x0 + b1*x1 + b2*x2 - a1*y1 - a2*y2;
 
-  x1, x2 = x0, x1;            \\ shift state
+  x1, x2 = x0, x1;            // shift state
   y1, y2 = y0, y1;
 
-  y0                              \\ return y0
+  y0                              // return y0
 );
 
-\\ i = [0, .1, .3] |> lpf(i, 108, 5);
+// i = [0, .1, .3] |> lpf(i, 108, 5);
 
-lpf                               \\ export lpf function, end program
+lpf                               // export lpf function, end program
 ```
 
 </details>
@@ -240,48 +239,48 @@ Generates ZZFX's [coin sound](https://codepen.io/KilledByAPixel/full/BaowKzv) `z
 1s = 44100;
 1ms = 1s / 1000;
 
-\\ define waveform generators
+// define waveform generators
 oscillator = [
   saw(phase) = (1 - 4 * abs( round(phase/2pi) - phase/2pi )),
   sine(phase) = sin(phase)
 ];
 
-\\ applies adsr curve to sequence of samples
+// applies adsr curve to sequence of samples
 adsr(
   x,
-  a ~ 1ms..,                    \\ prevent click
+  a ~ 1ms..,                    // prevent click
   d,
-  (s, sv=1),                    \\ optional group-argument
+  (s, sv=1),                    // optional group-argument
   r
 ) = (
-  *i = 0;                       \\ internal counter, increments after fn body
+  *i = 0;                       // internal counter, increments after fn body
   t = i / 1s;
 
   total = a + d + s + r;
 
   y = t >= total ? 0 : (
-    t < a ? t/a :               \\ attack
-    t < a + d ?                 \\ decay
-    1-((t-a)/d)*(1-sv) :        \\ decay falloff
-    t < a  + d + s ?            \\ sustain
-    sv :                        \\ sustain volume
+    t < a ? t/a :               // attack
+    t < a + d ?                 // decay
+    1-((t-a)/d)*(1-sv) :        // decay falloff
+    t < a  + d + s ?            // sustain
+    sv :                        // sustain volume
     (total - t)/r * sv
   ) * x;
   i++;
   y
 );
 
-\\ curve effect
+// curve effect
 curve(x, amt~0..10=1.82) = (sign(x) * abs(x)) ** amt;
 
-\\ coin = triangle with pitch jump, produces block
+// coin = triangle with pitch jump, produces block
 coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
   *out=[..1024];
   *i=0;
-  *phase = 0;                   \\ current phase
+  *phase = 0;                   // current phase
   t = i / 1s;
 
-  \\ generate samples block, apply adsr/curve, write result to out
+  // generate samples block, apply adsr/curve, write result to out
   ..  |> oscillator[shape](phase)
       |> adsr(_, 0, 0, .06, .24)
       |> curve(_, 1.82)
