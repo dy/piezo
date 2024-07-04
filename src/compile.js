@@ -3,7 +3,7 @@ import { FLOAT, INT } from './const.js';
 import parse from './parse.js';
 import stdlib from './stdlib.js';
 import precompile from './precompile.js';
-import { ids, stringify, err, u82s } from './util.js';
+import { ids, stringify, err } from './util.js';
 import { print, compile as watr } from 'watr';
 
 let prevCtx, includes, imports, globals, locals, slocals, funcs, func, exports, datas, mem, returns, depth;
@@ -263,14 +263,14 @@ Object.assign(expr, {
       // x()=([1,2,3]) must allocate new instance every time
       if (func) {
         let tmp = define(`arr:${depth}`, 'i32')
-        return inc('malloc'), inc('arr.ref'), op(
+        return include('malloc'), include('arr.ref'), op(
           `(local.set $${tmp} (call $malloc (i32.const ${f64s.length << 3})))` +
           `(memory.copy (local.get $${tmp}) (i32.const ${offset}) (i32.const ${f64s.length << 3}))` +
           `(call $arr.ref (local.get $${tmp}) (i32.const ${f64s.length}))`
           , 'f64')
       }
       else {
-        return inc('arr.ref'), out && op(`(call $arr.ref (i32.const ${offset}) (i32.const ${f64s.length}))`, 'f64')
+        return include('arr.ref'), out && op(`(call $arr.ref (i32.const ${offset}) (i32.const ${f64s.length}))`, 'f64')
       }
     }
 
@@ -322,7 +322,7 @@ Object.assign(expr, {
     }
 
     // move buffer to static memory: references static address, deallocates heap tail
-    inc('malloc'), inc('arr.ref')
+    include('malloc'), include('arr.ref')
 
     // deallocate memory (set beginning of free memory to pointer after array)
     str += `(global.set $__mem (local.get $${ptr}))`
@@ -338,7 +338,7 @@ Object.assign(expr, {
 
   // a[b] or a[]
   '['([, a, b], out) {
-    inc('arr.len'), inc('i32.modwrap')
+    include('arr.len'), include('i32.modwrap')
 
     // x[a+b]; -> a+b;
     if (!out) return op(expr(a, false) + expr(b, false))
@@ -353,7 +353,7 @@ Object.assign(expr, {
     }
 
     // a[b] - regular access
-    return inc('arr.get'), op(`(call $arr.get ${expr(a)} ${asInt(expr(b))})`, 'f64')
+    return include('arr.get'), op(`(call $arr.get ${expr(a)} ${asInt(expr(b))})`, 'f64')
   },
 
   '='([, a, b], out) {
@@ -365,7 +365,7 @@ Object.assign(expr, {
       // FIXME: static optimization property - to avoid calling i32.modwrap if idx/len is known
       // FIXME: another static optimization: if length is known in advance (likely yes) - make static modwrap
 
-      return inc('arr.len'), inc('arr.set'), inc('i32.modwrap'), op(`(call $arr.${out ? 'tee' : 'set'} ${expr(name)} ${asInt(expr(idx))} ${asFloat(expr(b))})`, 'f64')
+      return include('arr.len'), include('arr.set'), include('i32.modwrap'), op(`(call $arr.${out ? 'tee' : 'set'} ${expr(name)} ${asInt(expr(idx))} ${asFloat(expr(b))})`, 'f64')
     }
 
     // a = b,  a = (b,c),   a = (b;c,d)
@@ -443,7 +443,7 @@ Object.assign(expr, {
       if (globals[name].state) {
         // state is just region of memory storing sequence of i32s - pointers to memory holding actual state values
         define(name + '.state', 'i32')
-        inc('malloc'), mem ||= 0
+        include('malloc'), mem ||= 0
         initState = op(`(global.set $${name}.state (call $malloc (i32.const ${globals[name].state.length << 2})))`)
       }
 
@@ -541,7 +541,7 @@ Object.assign(expr, {
       // FIXME: this should be prohibited in favor of range
       else {
         // i = 0; to=buf[]; while (i < to) {_ = buf[i]; ...; i++}
-        inc('arr.len'), inc('arr.get')
+        include('arr.len'), include('arr.get')
 
         const src = tmp('src'), len = tmp('len', 'i32')
         str +=
@@ -607,7 +607,7 @@ Object.assign(expr, {
       if (a[0] === '=') {
         let [, name, init] = a
         name = define(name);
-        inc('malloc'), mem ||= 0
+        include('malloc'), mem ||= 0
 
         let ptr = define(name + '.cur', 'i32'), // i.cur points to state instance + offset
           adr = define(name + '.adr', 'i32'), // i.adr stores address of variable value
@@ -660,7 +660,7 @@ Object.assign(expr, {
     let aop = expr(a, out), bop = expr(b, out)
     if (!out) return op(aop + bop);
     if (b[1] === 0.5) return op(`(f64.sqrt ${asFloat(aop)})`, 'f64');
-    return inc('f64.pow'), op(`(call $f64.pow ${asFloat(aop)} ${asFloat(bop)})`, 'f64')
+    return include('f64.pow'), op(`(call $f64.pow ${asFloat(aop)} ${asFloat(bop)})`, 'f64')
   },
   '%'([, a, b], out) {
     let aop = expr(a, out), bop = expr(b, out);
@@ -668,14 +668,14 @@ Object.assign(expr, {
     // x % inf
     if (b[1] === Infinity) return aop;
     if (aop.type[0] === 'i32' && bop.type[0] === 'i32') op(`(i32.rem_s ${aop} ${bop})`, 'i32')
-    return inc('f64.rem'), op(`(call $f64.rem ${asFloat(aop)} ${asFloat(bop)})`, `f64`)
+    return include('f64.rem'), op(`(call $f64.rem ${asFloat(aop)} ${asFloat(bop)})`, `f64`)
   },
   '%%'([, a, b], out) {
     // common case of int is array index access
     let aop = expr(a, out), bop = expr(b, out);
     if (!out) return op(aop + bop);
-    if (aop.type[0] === 'i32' && bop.type[0] === 'i32') return inc('i32.modwrap'), op(`(call $i32.modwrap ${a} ${b})`, 'i32')
-    return inc('f64.modwrap'), inc('f64.rem'), op(`(call $f64.modwrap ${asFloat(aop)} ${asFloat(bop)})`, `f64`)
+    if (aop.type[0] === 'i32' && bop.type[0] === 'i32') return include('i32.modwrap'), op(`(call $i32.modwrap ${a} ${b})`, 'i32')
+    return include('f64.modwrap'), include('f64.rem'), op(`(call $f64.modwrap ${asFloat(aop)} ${asFloat(bop)})`, `f64`)
   },
 
   '++'([, a], out) {
@@ -852,17 +852,17 @@ Object.assign(expr, {
 
     // a ~ min..
     if (!max) {
-      if (aop.type[0] === 'i32' && minop.type[0] === 'i32') return inc('i32.smax'), op(`(call $i32.max ${aop} ${minop})`, 'i32')
+      if (aop.type[0] === 'i32' && minop.type[0] === 'i32') return include('i32.smax'), op(`(call $i32.max ${aop} ${minop})`, 'i32')
       return op(`(f64.max ${asFloat(aop)} ${asFloat(minop)})`, 'f64')
     }
     // a ~ ..max
     if (!min) {
-      if (aop.type[0] === 'i32' && maxop.type[0] === 'i32') return inc('i32.smin'), op(`(call $i32.min ${aop} ${maxop})`, 'i32')
+      if (aop.type[0] === 'i32' && maxop.type[0] === 'i32') return include('i32.smin'), op(`(call $i32.min ${aop} ${maxop})`, 'i32')
       return op(`(f64.min ${asFloat(aop)} ${asFloat(maxop)})`, 'f64')
     }
     // a ~ min..max
     if (aop.type == 'i32' && minop.type == 'i32' && maxop.type == 'i32') {
-      return inc('i32.smax'), inc('i32.smin'), op(`(call $i32.smax (call $i32.smin ${aop} ${maxop}) ${minop})`, 'i32')
+      return include('i32.smax'), include('i32.smin'), op(`(call $i32.smax (call $i32.smin ${aop} ${maxop}) ${minop})`, 'i32')
     }
 
     // FIXME: a ~ .., maybe not-nan?
@@ -913,6 +913,8 @@ Object.assign(expr, {
   // },
 })
 
+// Builder fns
+
 // (local.set) or (global.set) (if no init - takes from stack)
 function set(name, init = '') {
   return op(`(${locals?.[name] || slocals?.[name] ? 'local' : 'global'}.set $${name} ${init})`, null)
@@ -950,7 +952,7 @@ function asInt(opStr) {
 }
 
 // add include from stdlib and return call
-function inc(name) {
+function include(name) {
   if (!includes.includes(name)) includes.push(name)
 }
 
@@ -998,4 +1000,23 @@ function fetchSource(path) {
   xhr.send(null)
   // result = (nodeRequire ('fs').readFileSync (path, { encoding: 'utf8' }))
   return xhr.responseText
+}
+
+
+// uint8 array to string
+function u82s(uint8Array) {
+  let result = '';
+  for (const byte of uint8Array) {
+    // Convert uint8 value to its ASCII character equivalent
+    const asciiChar = String.fromCharCode(byte);
+    // Handle special characters that need escaping
+    if (asciiChar === '"' || asciiChar === '\\') {
+      result += '\\' + asciiChar;
+    } else if (byte >= 32 && byte <= 126) {
+      result += asciiChar; // Regular printable ASCII characters
+    } else {
+      result += `\\${byte.toString(16).padStart(2, '0')}`; // Non-printable characters
+    }
+  }
+  return result;
 }

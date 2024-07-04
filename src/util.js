@@ -35,28 +35,10 @@ export function intersect(set1, set2) {
   return false;
 }
 
-// wast code from ast
-export function stringify(str) {
-  if (typeof str === 'string') return str
-  let [op, a, ...args] = str
+// wast code from tree
+export function stringify(tree) {
+  if (typeof tree === 'string') return tree
+  let [op, a, ...args] = tree
   if (op === INT || op === FLOAT) return a + args.join('')
   return `${stringify(a)} ${op} ${args.length ? stringify(args[0]) : ''}`
-}
-
-// uint8 array to string
-export function u82s(uint8Array) {
-  let result = '';
-  for (const byte of uint8Array) {
-    // Convert uint8 value to its ASCII character equivalent
-    const asciiChar = String.fromCharCode(byte);
-    // Handle special characters that need escaping
-    if (asciiChar === '"' || asciiChar === '\\') {
-      result += '\\' + asciiChar;
-    } else if (byte >= 32 && byte <= 126) {
-      result += asciiChar; // Regular printable ASCII characters
-    } else {
-      result += `\\${byte.toString(16).padStart(2, '0')}`; // Non-printable characters
-    }
-  }
-  return result;
 }
