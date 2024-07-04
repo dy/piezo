@@ -8,6 +8,7 @@ export const i32 = {
   load: a => op(`(i32.load ${a})`, 'i32'),
   store: (a, v) => op(`(i32.store ${a} ${v})`),
   add: (a, b) => op(`(i32.add ${a} ${b})`, 'i32'),
+  sub: (a, b) => op(`(i32.sub ${a} ${b})`, 'i32'),
   eqz: (a) => op(`(i32.eqz ${a})`, 'i32')
 }
 
@@ -15,7 +16,8 @@ export const f64 = {
   const: a => op(`(f64.const ${a})`, 'f64'),
   load: a => op(`(f64.load ${a})`, 'f64'),
   store: (a, v) => op(`(f64.store ${a} ${v})`),
-  add: (a, b) => op(`(f64.add ${a} ${b})`, 'f64')
+  add: (a, b) => op(`(f64.add ${a} ${b})`, 'f64'),
+  sub: (a, b) => op(`(f64.sub ${a} ${b})`, 'f64')
 }
 
 export function cond(i, t, e) {

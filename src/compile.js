@@ -246,14 +246,13 @@ Object.assign(expr, {
       if (func) {
         let tmp = define(`arr:${depth}`, 'i32')
         return include('malloc'), include('arr.ref'), op(
-          set(tmp, call('malloc', `(i32.const ${f64s.length << 3})`)) +
-          // `(local.set $${tmp} ${call('malloc', `(i32.const ${f64s.length << 3})`)})` +
+          set(tmp, call('malloc', i32.const(f64s.length << 3))) +
           `(memory.copy (local.get $${tmp}) (i32.const ${offset}) (i32.const ${f64s.length << 3}))` +
-          call('arr.ref', get(tmp), `(i32.const ${f64s.length})`)
+          call('arr.ref', get(tmp), i32.const(f64s.length))
           , 'f64')
       }
       else {
-        return include('arr.ref'), out && call('arr.ref', `(i32.const ${offset})`, `(i32.const ${f64s.length})`)
+        return include('arr.ref'), out && call('arr.ref', i32.const(offset), i32.const(f64s.length))
       }
     }
 
@@ -261,7 +260,7 @@ Object.assign(expr, {
     let start = define(`arr.start:${depth}`, 'i32'), ptr = define(`arr.ptr:${depth}`, 'i32')
     include('malloc')
     // allocate array of HEAP_SIZE (trimmed after)
-    let str = set(ptr, tee(start, call('malloc', `(i32.const ${HEAP_SIZE})`)))
+    let str = set(ptr, tee(start, call('malloc', i32.const(HEAP_SIZE))))
 
     // each element saves value to memory and increases heap pointer in stack
     for (let init of inits) {
@@ -274,7 +273,7 @@ Object.assign(expr, {
         if (min[1] === -Infinity && typeof max[1] === 'number') {
           // [..-1]
           if (max[1] < 0) err(`Bad array range`)
-          str += `(local.set $${ptr} (i32.add (local.get $${ptr})(i32.const ${max[1] << 3})))\n`
+          str += set(ptr, i32.add(get(ptr), i32.const(max[1] << 3)))
         }
         // [x..y] - generic computed range
         else {
@@ -285,8 +284,8 @@ Object.assign(expr, {
             (if (f64.lt ${get(i)}${get(to)})
               (then
                 (f64.store ${get(ptr)} ${get(i)})
-                ${set(ptr, `(i32.add ${get(ptr)} (i32.const 8))`)}
-                ${set(i, `(f64.add ${get(i)} (f64.const 1))`)}
+                ${set(ptr, i32.add(get(ptr), i32.const(8)))}
+                ${set(i, f64.add(get(i), f64.const(1)))}
                 (br 1)
               )
             )
@@ -303,20 +302,20 @@ Object.assign(expr, {
       }
       // [x*2, y] - single value
       // FIXME: can be unwrapped in precompiler as @memory[ptr++] = init;
-      else str += `(f64.store (i32.sub (local.tee $${ptr} (i32.add (local.get $${ptr}) (i32.const 8))) (i32.const 8)) ${float(expr(init))})\n`
+      else str += `(f64.store (i32.sub (local.tee $${ptr} ${i32.add(get(ptr), i32.const(8))}) ${i32.const(8)}) ${float(expr(init))})\n`
     }
 
     // move buffer to static memory: references static address, deallocates heap tail
     include('malloc'), include('arr.ref')
 
     // deallocate memory (set beginning of free memory to pointer after array)
-    str += `(global.set $__mem (local.get $${ptr}))`
+    str += `(global.set $__mem ${get(ptr)})`
 
     // FIXME: defragment (move) internal arrays, now each array has heap size
     depth--
 
     // create array reference
-    if (out) return op(str + call('arr.ref', `(local.get $${start}) (i32.shr_u (i32.sub (local.get $${ptr}) (local.get $${start})) (i32.const 3))\n`), 'f64', { buf: true })
+    if (out) return op(str + call('arr.ref', `${get(start)} (i32.shr_u (i32.sub ${get(ptr)} ${get(start)}) ${i32.const(3)})\n`), 'f64', { buf: true })
 
     return op(str)
   },
@@ -333,7 +332,7 @@ Object.assign(expr, {
 
     // a[0] - static index read
     if (typeof b[1] === 'number') {
-      if (b[1] >= 0) return op(`(f64.load (i32.add (i32.trunc_f64_u ${expr(a)}) (i32.const ${b[1] << 3})))`, 'f64')
+      if (b[1] >= 0) return op(`(f64.load (i32.add (i32.trunc_f64_u ${expr(a)}) ${i32.const(b[1] << 3)}))`, 'f64')
       // FIXME: read negative number if array length is known
     }
 
@@ -419,7 +418,7 @@ Object.assign(expr, {
       // if fn is stateful - defer saving values
       // FIXME: possibly we may need to upgrade state vars to always read/write from memory, but now too complicated
       globals[name].state?.forEach(name => {
-        defer.push(`(f64.store (local.get $${name}.adr) (local.get $${name}))`)
+        defer.push(f64.store(get(name + '.adr'), get(name)))
       })
       locals = null
 
@@ -430,7 +429,7 @@ Object.assign(expr, {
         // state is just region of memory storing sequence of i32s - pointers to memory holding actual state values
         define(name + '.state', 'i32')
         include('malloc'), mem ||= 0
-        initState = op(`(global.set $${name}.state ${call('malloc', `(i32.const ${globals[name].state.length << 2})`)})`)
+        initState = op(`(global.set $${name}.state ${call('malloc', i32.const(globals[name].state.length << 2))})`)
       }
 
       // if has calls to internal stateful funcs (indirect state) - push state to stack, to recover on return
@@ -513,7 +512,7 @@ Object.assign(expr, {
         err('Sequence iteration is not implemented')
         for (let i = 0; i < aop.type.length; i++) {
           let t = aop.type[aop.type.length - i - 1]
-          str += `${t === 'i32' ? '(f64.convert_i32_s)' : ''}(f64.store (i32.add (global.get $__heap) (i32.const 8)))`
+          str += `${t === 'i32' ? '(f64.convert_i32_s)' : ''}(f64.store (i32.add (global.get $__heap) ${i32.const(8)}))`
         }
       }
       // (0..10 |> a ? ^b : c) |> ...
