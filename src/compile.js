@@ -5,7 +5,7 @@ import stdlib from './stdlib.js';
 import precompile from './precompile.js';
 import { ids, stringify, err, u82s } from './util.js';
 import { print, compile as watr } from 'watr';
-import { op, float, int, set, get, tee, call, define, include, pick, fun } from './build.js'
+import { op, float, int, set, get, tee, call, define, include, pick, fun, i32, f64 } from './build.js'
 
 export let imports, globals, locals, slocals, funcs, func, exports, datas, mem, returns, depth;
 
@@ -140,10 +140,10 @@ function expr(statement, out = true) {
 Object.assign(expr, {
   // number primitives: 1.0, 2 etc.
   [FLOAT]([, a], out) {
-    return out && op(`(f64.const ${a})`, 'f64')
+    return out && f64.const(a)
   },
   [INT]([, a], out) {
-    return out && op(`(i32.const ${a})`, 'i32')
+    return out && i32.const(a)
   },
 
   '"'([, str], out) {
@@ -477,15 +477,16 @@ Object.assign(expr, {
         bop = expr(b, out)
 
       const str = `;; |>:${depth}\n` +
-        set(idx, float(expr(min))) + '\n' +
-        `(local.set $${end} ${float(expr(max))})\n` +
+        set(idx, float(expr(min))) +
+        set(end, float(expr(max))) +
+        // FIXME: we don't need this
         bop.type.map(t => `(${t}.const 0)`).join('') + '\n' + // init result values
         `(loop\n` +
-        `(if (f64.lt ${get(idx)} (local.get $${end}))\n` + // if (_ < end)
+        `(if (f64.lt ${get(idx)} ${get(end)})\n` + // if (_ < end)
         `(then\n` +
-        `${set(cur, get(idx))}\n` +
-        `${bop}\n` + // FIXME: if bop returns result - gotta save it to heap
-        `${set(idx, op(`(f64.add ${get(idx)} (f64.const 1))`, 'f64'))}\n` +
+        set(cur, get(idx)) +
+        bop + // FIXME: if bop returns result - gotta save it to heap
+        set(idx, f64.add(get(idx), f64.const(1))) +
         // FIXME: step can be adjustable
         // `(call $f64.log (global.get $${idx}))` +
         `(br 1)\n` +
@@ -600,18 +601,21 @@ Object.assign(expr, {
           stateName = func + `.state`,
           res =
             // first calculate state cell
-            `(local.set $${adr} ${state.length ? `(i32.add (global.get $${stateName}) (i32.const ${state.length << 2}))` : `(global.get $${stateName})`})\n` +
+            set(adr,
+              state.length ? i32.add(`(global.get $${stateName})`, i32.const(state.length << 2)) :
+                `(global.get $${stateName})`
+            ) +
             // if pointer is zero - init state
-            `(if ${out ? `(result f64)` : ``} (i32.eqz (i32.load (local.get $${adr})))\n` +
+            `(if ${out ? `(result f64)` : ``} ${i32.eqz(i32.load(get(adr)))}\n` +
             `(then\n` +
             // allocate memory for a single variable
-            `(i32.store (local.get $${adr}) (local.tee $${adr} ${call('malloc', `(i32.const 8)`)}))\n` +
+            i32.store(get(adr), tee(adr, call('malloc', i32.const(8)))) +
             // initialize value in that location (saved to memory by fn defer)
-            `(local.${out ? 'tee' : 'set'} $${name} ${float(expr(init))})\n` +
+            (out ? tee : set)(name, float(expr(init))) +
             `)\n` +
             `(else \n` +
             // local variable from state ptr
-            `(local.${out ? 'tee' : 'set'} $${name} (f64.load (local.tee $${adr} (i32.load (local.get $${adr})))))\n` +
+            (out ? tee : set)(name, f64.load(tee(adr, i32.load(get(adr))))) +
             `)` +
             `)\n`
 
