@@ -7,7 +7,7 @@ import { ids, stringify, err, u82s } from './util.js';
 import { print, compile as watr } from 'watr';
 import { op, float, int, set, get, tee, call, define, include, pick } from './build.js'
 
-export let prevCtx, includes, imports, globals, locals, slocals, funcs, func, exports, datas, mem, returns, depth;
+export let includes, imports, globals, locals, slocals, funcs, func, exports, datas, mem, returns, depth;
 
 // limit of memory is defined as: (max array length i24) / (number of f64 per memory page i13)
 const MAX_MEMORY = 2048, HEAP_SIZE = 1024
@@ -28,7 +28,7 @@ export default function compile(node, config = {}) {
   console.log('compile', node)
 
   // save previous compiling context
-  prevCtx = { prevCtx, includes, imports, globals, locals, slocals, funcs, func, exports, datas, mem, returns, depth };
+  let prevCtx = { includes, imports, globals, locals, slocals, funcs, func, exports, datas, mem, returns, depth };
 
   // init compiling context
   globals = {} // global scope (as name props), {var: #isNotConstant, init: #initValue, type: 'f64'}
@@ -115,7 +115,7 @@ export default function compile(node, config = {}) {
   console.log(code);
   console.groupEnd();
   // restore previous compiling context
-  ({ prevCtx, includes, imports, globals, funcs, func, locals, slocals, exports, datas, mem, returns, depth } = prevCtx);
+  ({ includes, imports, globals, funcs, func, locals, slocals, exports, datas, mem, returns, depth } = prevCtx);
 
   if (config?.target === 'wasm')
     code = watr(code)
