@@ -648,10 +648,10 @@ t.todo('compile: break/continue', t => {
 })
 
 t('compile: loops range global', t => {
-  let wat, mod, memory, x, arr
+  let wat, mod, arr
   wat = compileMel(`x=[1..3]; 0..x[] |> x[_]=_+1; x`)
-  mod = compileWat(wat)
-    ; ({ memory, x }) = mod.instance.exports
+  mod = compileWat(wat);
+  let { memory, x } = mod.instance.exports
   arr = new Float64Array(memory.buffer, x.value, 3)
   is(arr[0], 1)
   is(arr[1], 2)
@@ -678,10 +678,10 @@ t('compile: loops range local', t => {
 })
 
 t.todo('compile: loop current item write', t => {
-  let wat, mod, memory, x
+  let wat, mod
   wat = compileMel(`x=[1..3]; x[..] |> _+=1; x`)
   mod = compileWat(wat)
-    ; ({ memory, x }) = mod.instance.exports
+  let { memory, x } = mod.instance.exports
   arr = new Float64Array(memory.buffer, x.value, 3)
   is(arr[0], 1)
   is(arr[1], 2)
