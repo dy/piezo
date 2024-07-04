@@ -1,5 +1,6 @@
 // builder actually generates wast code from params / current context
 import { globals, locals, slocals, funcs } from "./compile.js"
+import { err } from "./util.js"
 import stdlib from "./stdlib.js"
 
 // create op result, a string with extra info like types
@@ -12,7 +13,6 @@ export function op(str = '', type, info = {}) {
   else if (typeof type === 'string') type = [type]
   return Object.assign(str, { type, ...info })
 }
-
 
 // (local.set) or (global.set) (if no init - takes from stack)
 export function set(name, init = '') {
@@ -57,7 +57,7 @@ export function int(opStr) {
 }
 
 // add include from stdlib and return call
-// FIXME: not needed once we make use of call everywhere
+// NOTE: we cannot remove it due to circular deps
 export function include(name) {
   if (!stdlib[name]) err('Unknown include `' + name + '`')
   // parse type from first (result) token

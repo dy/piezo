@@ -246,21 +246,22 @@ Object.assign(expr, {
       if (func) {
         let tmp = define(`arr:${depth}`, 'i32')
         return include('malloc'), include('arr.ref'), op(
-          // set(tmp, `(call $malloc (i32.const ${f64s.length << 3}))`) +
           set(tmp, call('malloc', `(i32.const ${f64s.length << 3})`)) +
           // `(local.set $${tmp} ${call('malloc', `(i32.const ${f64s.length << 3})`)})` +
           `(memory.copy (local.get $${tmp}) (i32.const ${offset}) (i32.const ${f64s.length << 3}))` +
-          `(call $arr.ref (local.get $${tmp}) (i32.const ${f64s.length}))`
+          call('arr.ref', get(tmp), `(i32.const ${f64s.length})`)
           , 'f64')
       }
       else {
-        return include('arr.ref'), out && op(`(call $arr.ref (i32.const ${offset}) (i32.const ${f64s.length}))`, 'f64')
+        return include('arr.ref'), out && call('arr.ref', `(i32.const ${offset})`, `(i32.const ${f64s.length})`)
       }
     }
 
     // [a, b..c, d |> e]
     let start = define(`arr.start:${depth}`, 'i32'), ptr = define(`arr.ptr:${depth}`, 'i32')
-    let str = `(local.set $${ptr} (local.tee $${start} (call $malloc (i32.const ${HEAP_SIZE}))))\n` // allocate array of HEAP_SIZE (trimmed after)
+    include('malloc')
+    // allocate array of HEAP_SIZE (trimmed after)
+    let str = set(ptr, tee(start, call('malloc', `(i32.const ${HEAP_SIZE})`)))
 
     // each element saves value to memory and increases heap pointer in stack
     for (let init of inits) {
@@ -315,7 +316,7 @@ Object.assign(expr, {
     depth--
 
     // create array reference
-    if (out) return op(str + `\n(call $arr.ref (local.get $${start}) (i32.shr_u (i32.sub (local.get $${ptr}) (local.get $${start})) (i32.const 3)))\n`, 'f64', { buf: true })
+    if (out) return op(str + call('arr.ref', `(local.get $${start}) (i32.shr_u (i32.sub (local.get $${ptr}) (local.get $${start})) (i32.const 3))\n`), 'f64', { buf: true })
 
     return op(str)
   },
@@ -328,7 +329,7 @@ Object.assign(expr, {
     if (!out) return op(expr(a, false) + expr(b, false))
 
     // a[] - length
-    if (!b) return op(`(call $arr.len ${expr(a)})`, 'i32')
+    if (!b) return call('arr.len', expr(a))
 
     // a[0] - static index read
     if (typeof b[1] === 'number') {
@@ -337,7 +338,7 @@ Object.assign(expr, {
     }
 
     // a[b] - regular access
-    return include('arr.get'), op(`(call $arr.get ${expr(a)} ${int(expr(b))})`, 'f64')
+    return include('arr.get'), call('arr.get', expr(a), int(expr(b)))
   },
 
   '='([, a, b], out) {
@@ -349,7 +350,8 @@ Object.assign(expr, {
       // FIXME: static optimization property - to avoid calling i32.modwrap if idx/len is known
       // FIXME: another static optimization: if length is known in advance (likely yes) - make static modwrap
 
-      return include('arr.len'), include('arr.set'), include('i32.modwrap'), op(`(call $arr.${out ? 'tee' : 'set'} ${expr(name)} ${int(expr(idx))} ${float(expr(b))})`, 'f64')
+      include('arr.len'), include('arr.set'), include('arr.tee'), include('i32.modwrap')
+      return call('arr.' + (out ? 'tee' : 'set'), expr(name), int(expr(idx)), float(expr(b)))
     }
 
     // a = b,  a = (b,c),   a = (b;c,d)
@@ -428,7 +430,7 @@ Object.assign(expr, {
         // state is just region of memory storing sequence of i32s - pointers to memory holding actual state values
         define(name + '.state', 'i32')
         include('malloc'), mem ||= 0
-        initState = op(`(global.set $${name}.state (call $malloc (i32.const ${globals[name].state.length << 2})))`)
+        initState = op(`(global.set $${name}.state ${call('malloc', `(i32.const ${globals[name].state.length << 2})`)})`)
       }
 
       // if has calls to internal stateful funcs (indirect state) - push state to stack, to recover on return
@@ -531,9 +533,9 @@ Object.assign(expr, {
         str +=
           `(local.set $${src} ${aop})\n` +
           `(local.set $${idx} (i32.const 0))\n` +
-          `(local.set $${len} (call $arr.len (local.get $${src})))\n` +
+          `(local.set $${len} ${call('arr.len', `(local.get $${src})`)})\n` +
           `(loop (result f64) \n` +
-          `(locals.tee $${item} (call $arr.get (local.get $${src}) (local.get $${idx})))\n` +
+          `(locals.tee $${item} ${call('arr.get', `(local.get $${src})`, `(local.get $${idx})`)})\n` +
           `(if (param f64) (result f64) (i32.le_u (local.get $${idx}) (local.get $${len}))\n` +
           `(then\n` +
           `${expr(b)}\n` +
@@ -603,7 +605,7 @@ Object.assign(expr, {
             `(if ${out ? `(result f64)` : ``} (i32.eqz (i32.load (local.get $${adr})))\n` +
             `(then\n` +
             // allocate memory for a single variable
-            `(i32.store (local.get $${adr}) (local.tee $${adr} (call $malloc (i32.const 8))))\n` +
+            `(i32.store (local.get $${adr}) (local.tee $${adr} ${call('malloc', `(i32.const 8)`)}))\n` +
             // initialize value in that location (saved to memory by fn defer)
             `(local.${out ? 'tee' : 'set'} $${name} ${float(expr(init))})\n` +
             `)\n` +
@@ -644,7 +646,7 @@ Object.assign(expr, {
     let aop = expr(a, out), bop = expr(b, out)
     if (!out) return op(aop + bop);
     if (b[1] === 0.5) return op(`(f64.sqrt ${float(aop)})`, 'f64');
-    return include('f64.pow'), op(`(call $f64.pow ${float(aop)} ${float(bop)})`, 'f64')
+    return include('f64.pow'), call('f64.pow', float(aop), float(bop))
   },
   '%'([, a, b], out) {
     let aop = expr(a, out), bop = expr(b, out);
@@ -652,14 +654,14 @@ Object.assign(expr, {
     // x % inf
     if (b[1] === Infinity) return aop;
     if (aop.type[0] === 'i32' && bop.type[0] === 'i32') op(`(i32.rem_s ${aop} ${bop})`, 'i32')
-    return include('f64.rem'), op(`(call $f64.rem ${float(aop)} ${float(bop)})`, `f64`)
+    return include('f64.rem'), call('f64.rem', float(aop), float(bop))
   },
   '%%'([, a, b], out) {
     // common case of int is array index access
     let aop = expr(a, out), bop = expr(b, out);
     if (!out) return op(aop + bop);
-    if (aop.type[0] === 'i32' && bop.type[0] === 'i32') return include('i32.modwrap'), op(`(call $i32.modwrap ${a} ${b})`, 'i32')
-    return include('f64.modwrap'), include('f64.rem'), op(`(call $f64.modwrap ${float(aop)} ${float(bop)})`, `f64`)
+    if (aop.type[0] === 'i32' && bop.type[0] === 'i32') return include('i32.modwrap'), call('i32.modwrap', aop, bop)
+    return include('f64.modwrap'), include('f64.rem'), call('f64.modwrap', float(aop), float(bop))
   },
 
   '++'([, a], out) {
@@ -836,17 +838,17 @@ Object.assign(expr, {
 
     // a ~ min..
     if (!max) {
-      if (aop.type[0] === 'i32' && minop.type[0] === 'i32') return include('i32.smax'), op(`(call $i32.max ${aop} ${minop})`, 'i32')
+      if (aop.type[0] === 'i32' && minop.type[0] === 'i32') return include('i32.smax'), call('i32.max', aop, minop)
       return op(`(f64.max ${float(aop)} ${float(minop)})`, 'f64')
     }
     // a ~ ..max
     if (!min) {
-      if (aop.type[0] === 'i32' && maxop.type[0] === 'i32') return include('i32.smin'), op(`(call $i32.min ${aop} ${maxop})`, 'i32')
+      if (aop.type[0] === 'i32' && maxop.type[0] === 'i32') return include('i32.smin'), call('i32.min', aop, maxop)
       return op(`(f64.min ${float(aop)} ${float(maxop)})`, 'f64')
     }
     // a ~ min..max
     if (aop.type == 'i32' && minop.type == 'i32' && maxop.type == 'i32') {
-      return include('i32.smax'), include('i32.smin'), op(`(call $i32.smax (call $i32.smin ${aop} ${maxop}) ${minop})`, 'i32')
+      return include('i32.smax'), include('i32.smin'), call('i32.smax', call('i32.smin', aop, maxop), minop)
     }
 
     // FIXME: a ~ .., maybe not-nan?

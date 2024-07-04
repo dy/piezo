@@ -85,10 +85,10 @@ export const std = {
     `(if (i32.lt_s (local.get 1) (i32.const 0)) (then (local.set 1 (call $i32.modwrap (local.get 1) (call $arr.len (local.get 0))))))\n` +
     `(f64.store (i32.add (i32.trunc_f64_u (local.get 0)) (i32.shl (local.get 1) (i32.const 3))) (local.get 2))\n` +
     `(local.get 0)\n` +
-    `(return))\n` +
+    `(return))\n`,
 
-    // same as arr.set, but returns assigned value
-    `(func $arr.tee (param f64 i32 f64) (result f64) (call $arr.set (local.get 0)(local.get 1)(local.get 2))(drop) (return (local.get 2)))`,
+  // same as arr.set, but returns assigned value
+  "arr.tee": `(func $arr.tee (param f64 i32 f64) (result f64) (call $arr.set (local.get 0)(local.get 1)(local.get 2))(drop) (return (local.get 2)))`,
 
   // arr.get(ref, pos): reads value at position from array
   "arr.get": `(func $arr.get (param f64 i32) (result f64)\n` +
