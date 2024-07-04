@@ -99,14 +99,14 @@ export default function compile(node, config = {}) {
 
   // provide exports
   for (let name in exports) { code += `;;;;;;;;;;;;;;;;;;;;;;;;;;;; Exports\n`; break }
-  for (let name in exports)
+  for (let name in exports) {
     code += `(export "${name}" (${exports[name].func ? 'func' : 'global'} $${name}))\n`;
+  }
 
-
-  // console.log(...parseWat(code))
+  console.log(code);
 
   // restore previous compiling context
-  ; ({ prevCtx, includes, imports, globals, funcs, func, locals, slocals, exports, datas, mem, returns, depth } = prevCtx);
+  ({ prevCtx, includes, imports, globals, funcs, func, locals, slocals, exports, datas, mem, returns, depth } = prevCtx);
 
   if (config?.target === 'wasm')
     code = watr(code)
@@ -292,7 +292,8 @@ Object.assign(expr, {
       }
       // [a..b |> ...] - comprehension
       else if (init[0] === '|>') {
-        err('Unimplemented')
+        // we render expression into heap and save it as array
+        str += expr(init)
         // let lop = loop(init, true)
         // str += `(i32.add ${lop})`;
         // TODO: comprehension - expects heap address in stack, puts loop results into heap
@@ -334,7 +335,7 @@ Object.assign(expr, {
     }
 
     // a[b] - regular access
-    return inc('arr.get'), op(`(call $arr.get ${expr(a)} ${expr(b)})`, 'f64')
+    return inc('arr.get'), op(`(call $arr.get ${expr(a)} ${asInt(expr(b))})`, 'f64')
   },
 
   '='([, a, b], out) {
@@ -463,21 +464,22 @@ Object.assign(expr, {
       depth++
       // i = from; to; while (i < to) {% = i; ...; i++}
       const [, min, max] = a
+      // FIXME: iterate with int if minop/maxop is int
+      const minop = expr(min), maxop = expr(max)
       const cur = define('_', 'f64'),
         idx = define(`idx:${depth}`, 'f64'),
         end = define(`end:${depth}`, 'f64'),
-        body = expr(b), type = body.type.join(' ')
+        bop = expr(b, out)
 
-      const out = `;; |>:${depth}\n` +
+      const str = `;; |>:${depth}\n` +
         set(idx, asFloat(expr(min))) + '\n' +
         `(local.set $${end} ${asFloat(expr(max))})\n` +
-        body.type.map(t => `(${t}.const 0)`).join('') + '\n' + // init result values
-        `(loop (param ${type}) (result ${type})\n` +
-        `(if (param ${type}) (result ${type}) (f64.le ${get(idx)} (local.get $${end}))\n` + // if (% < end)
+        bop.type.map(t => `(${t}.const 0)`).join('') + '\n' + // init result values
+        `(loop\n` +
+        `(if (f64.lt ${get(idx)} (local.get $${end}))\n` + // if (_ < end)
         `(then\n` +
-        `${`(drop)`.repeat(body.type.length)}\n` +
-        `${set(cur, get(idx))} \n` +
-        `${body}\n` +
+        `${set(cur, get(idx))}\n` +
+        `${bop}\n` + // FIXME: if bop returns result - gotta save it to heap
         `${set(idx, op(`(f64.add ${get(idx)} (f64.const 1))`, 'f64'))}\n` +
         // FIXME: step can be adjustable
         // `(call $f64.log (global.get $${idx}))` +
@@ -487,7 +489,7 @@ Object.assign(expr, {
         `)`
 
       depth--
-      return op(out, body.type)
+      return op(str, bop.type)
     }
 
     // list |> ...
@@ -505,7 +507,7 @@ Object.assign(expr, {
         err('Sequence iteration is not implemented')
         for (let i = 0; i < aop.type.length; i++) {
           let t = aop.type[aop.type.length - i - 1]
-          out += `${t === 'i32' ? '(f64.convert_i32_s)' : ''}(f64.store (i32.add (global.get $__heap) (i32.const 8)))`
+          str += `${t === 'i32' ? '(f64.convert_i32_s)' : ''}(f64.store (i32.add (global.get $__heap) (i32.const 8)))`
         }
       }
       // (0..10 |> a ? ./b : c) |> ...
@@ -523,7 +525,7 @@ Object.assign(expr, {
         inc('arr.len'), inc('arr.get')
 
         const src = tmp('src'), len = tmp('len', 'i32')
-        out +=
+        str +=
           `(local.set $${src} ${aop})\n` +
           `(local.set $${idx} (i32.const 0))\n` +
           `(local.set $${len} (call $arr.len (local.get $${src})))\n` +
@@ -541,7 +543,7 @@ Object.assign(expr, {
     }
 
     depth--
-    return op(out, 'f64', { dynamic: true })
+    return op(str, 'f64', { dynamic: true })
   },
 
   '-'([, a, b], out) {

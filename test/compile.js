@@ -2,7 +2,7 @@
 
 import t, { almost, is, not, ok, same, throws } from 'tst'
 import parse from '../src/parse.js'
-import compileMelo from '../src/compile.js'
+import compileMel from '../src/compile.js'
 import Wabt from '../lib/wabt.js'
 import watr from 'watr';
 
@@ -62,7 +62,7 @@ function len(n) {
 }
 
 t('compile: comments', t => {
-  let wat = compileMelo(`x(a,w,h)=(
+  let wat = compileMel(`x(a,w,h)=(
     a=1
     // a=2
   ), y()=(
@@ -79,9 +79,9 @@ t('compile: globals basic', t => {
   // TODO: define globals via group (a,b,c).
 
   // FIXME: undefined variable throws error
-  // throws(() => compileMelo(analyse(parse(`pi2 = pi*2.0;`))), /pi is not defined/)
+  // throws(() => compileMel(analyse(parse(`pi2 = pi*2.0;`))), /pi is not defined/)
 
-  let wat = compileMelo(`
+  let wat = compileMel(`
     pi = 3.14;
     pi2 = pi*2.0;
     sampleRate = 44100;
@@ -95,61 +95,61 @@ t('compile: globals basic', t => {
 
 t('compile: globals multiple', () => {
   // FIXME: must throw
-  // let wat = compileMelo(`pi, pi2, sampleRate = 3.14, 3.14*2, 44100`)
-  let wat = compileMelo(`(pi, pi2, sampleRate) = (3.14, 3.14*2, 44100)`)
+  // let wat = compileMel(`pi, pi2, sampleRate = 3.14, 3.14*2, 44100`)
+  let wat = compileMel(`(pi, pi2, sampleRate) = (3.14, 3.14*2, 44100)`)
   let mod = compileWat(wat)
   is(mod.instance.exports.pi.value, 3.14)
   is(mod.instance.exports.pi2.value, 3.14 * 2)
   is(mod.instance.exports.sampleRate.value, 44100)
 
-  wat = compileMelo(`(a,b) = (-1, -1.0)`)
+  wat = compileMel(`(a,b) = (-1, -1.0)`)
   mod = compileWat(wat)
   is(mod.instance.exports.a.value, -1)
   is(mod.instance.exports.b.value, -1)
 
-  wat = compileMelo(`(a,b) = (-1, -1.0)`)
+  wat = compileMel(`(a,b) = (-1, -1.0)`)
   mod = compileWat(wat)
   is(mod.instance.exports.a.value, -1)
   is(mod.instance.exports.b.value, -1)
 })
 
 t.skip('compile: export - no junk exports', () => {
-  let wat = compileMelo(`w()=(); y=[1]; x()=(*i=0), z=[y[0], v=[1]]`)
+  let wat = compileMel(`w()=(); y=[1]; x()=(*i=0), z=[y[0], v=[1]]`)
   let mod = compileWat(wat)
   same(Object.keys(mod.instance.exports), ['memory', 'x', 'z'])
 })
 
 t('compile: numbers negatives', t => {
-  let wat = compileMelo(`x=-1`)
+  let wat = compileMel(`x=-1`)
   let mod = compileWat(wat)
   is(mod.instance.exports.x.value, -1)
 
-  wat = compileMelo(`x=-1.0`)
+  wat = compileMel(`x=-1.0`)
   mod = compileWat(wat)
   is(mod.instance.exports.x.value, -1)
 })
 
 t('compile: numbers inc/dec', t => {
-  let wat = compileMelo(`x=1; y=x++; x,y`)
+  let wat = compileMel(`x=1; y=x++; x,y`)
   let mod = compileWat(wat)
   is(mod.instance.exports.x.value, 2)
   is(mod.instance.exports.y.value, 1)
 
-  wat = compileMelo(`x=1; y=++x; x,y`)
+  wat = compileMel(`x=1; y=++x; x,y`)
   mod = compileWat(wat)
   is(mod.instance.exports.x.value, 2)
   is(mod.instance.exports.y.value, 2)
 
-  wat = compileMelo(`x=0; y=x--; x,y`)
+  wat = compileMel(`x=0; y=x--; x,y`)
   mod = compileWat(wat)
   is(mod.instance.exports.x.value, -1)
 
-  wat = compileMelo(`x=1; y=x+=2; x,y`)
+  wat = compileMel(`x=1; y=x+=2; x,y`)
   mod = compileWat(wat)
   is(mod.instance.exports.x.value, 3)
   is(mod.instance.exports.y.value, 3)
 
-  wat = compileMelo(`x=1; y=x-=2; x,y`)
+  wat = compileMel(`x=1; y=x-=2; x,y`)
   mod = compileWat(wat)
   is(mod.instance.exports.x.value, -1)
   is(mod.instance.exports.y.value, -1)
@@ -157,14 +157,14 @@ t('compile: numbers inc/dec', t => {
 
 t('compile: operators - pow', t => {
   // static
-  let wat = compileMelo(`x=2**(1/2),y=x**3,z=x**-2`)
+  let wat = compileMel(`x=2**(1/2),y=x**3,z=x**-2`)
   let mod = compileWat(wat)
   is(mod.instance.exports.x.value, Math.sqrt(2))
   is(mod.instance.exports.y.value, mod.instance.exports.x.value ** 3)
   almost(mod.instance.exports.z.value, mod.instance.exports.x.value ** -2)
 
   // complex
-  wat = compileMelo(`pow(x,y)=(x**y)`)
+  wat = compileMel(`pow(x,y)=(x**y)`)
   mod = compileWat(wat)
   is(mod.instance.exports.pow(1, 0), 1, '1**0')
   is(mod.instance.exports.pow(-1, 0), 1, `-1**0`)
@@ -193,7 +193,7 @@ t('compile: operators - pow', t => {
 })
 
 t('compile: units', t => {
-  let wat = compileMelo(`
+  let wat = compileMel(`
     pi = 3.1415;
     1k = 1000; 1pi = pi;
     1s = 44100; 1m=60s; 1h=60m; 1ms = 0.001s;
@@ -209,42 +209,42 @@ t('compile: units', t => {
 t.todo('compile: units - errors', t => {
   // bad expressions
   //
-  compileMelo(`1h=1s;1s=44800;`)
-  compileMelo(`1k=x();`)
+  compileMel(`1h=1s;1s=44800;`)
+  compileMel(`1k=x();`)
 })
 
 t('compile: conditions', t => {
   let wat, mod
-  wat = compileMelo(`a=1;b=2;c=a?1:2`)
+  wat = compileMel(`a=1;b=2;c=a?1:2`)
   mod = compileWat(wat)
   is(mod.instance.exports.c.value, 1)
 
-  wat = compileMelo(`a=1;b=2;a?c=b;c`)
+  wat = compileMel(`a=1;b=2;a?c=b;c`)
   mod = compileWat(wat)
   is(mod.instance.exports.c.value, 2)
 
-  wat = compileMelo(`a=0;b=2;a?c=b;c`)
+  wat = compileMel(`a=0;b=2;a?c=b;c`)
   mod = compileWat(wat)
   is(mod.instance.exports.c.value, 0)
 
-  wat = compileMelo(`a=0.0;b=2.1;a?c=b;c`)
+  wat = compileMel(`a=0.0;b=2.1;a?c=b;c`)
   mod = compileWat(wat)
   is(mod.instance.exports.c.value, 0)
 
-  wat = compileMelo(`a=0.1;b=2.1;a?c=b;c`)
+  wat = compileMel(`a=0.1;b=2.1;a?c=b;c`)
   mod = compileWat(wat)
   is(mod.instance.exports.c.value, 2.1)
 
-  wat = compileMelo(`a=0.0;b=2.1;c=a?b`)
+  wat = compileMel(`a=0.0;b=2.1;c=a?b`)
   mod = compileWat(wat)
   is(mod.instance.exports.c.value, 0)
 
-  wat = compileMelo(`a=0.1;b=2.1;c=a?b`)
+  wat = compileMel(`a=0.1;b=2.1;c=a?b`)
   mod = compileWat(wat)
   is(mod.instance.exports.c.value, 2.1)
 
   console.log('--------------')
-  wat = compileMelo(`x(px) = (px < 0 ? px = 0; px)`)
+  wat = compileMel(`x(px) = (px < 0 ? px = 0; px)`)
   mod = compileWat(wat)
   is(mod.instance.exports.x(-10), 0)
   is(mod.instance.exports.x(10), 10)
@@ -252,22 +252,22 @@ t('compile: conditions', t => {
 
 t('compile: conditions - or/and', t => {
   let wat, mod
-  wat = compileMelo(`z=1||0`)
+  wat = compileMel(`z=1||0`)
   mod = compileWat(wat)
   is(mod.instance.exports.z.value, 1)
-  wat = compileMelo(`z=1.2||0.0`)
+  wat = compileMel(`z=1.2||0.0`)
   mod = compileWat(wat)
   is(mod.instance.exports.z.value, 1.2)
-  wat = compileMelo(`z=1.2||0`)
+  wat = compileMel(`z=1.2||0`)
   mod = compileWat(wat)
   is(mod.instance.exports.z.value, 1.2)
-  wat = compileMelo(`z=1||0.0`)
+  wat = compileMel(`z=1||0.0`)
   mod = compileWat(wat)
   is(mod.instance.exports.z.value, 1)
-  wat = compileMelo(`z=1.2&&0.2`)
+  wat = compileMel(`z=1.2&&0.2`)
   mod = compileWat(wat)
   is(mod.instance.exports.z.value, 0.2)
-  wat = compileMelo(`z=1&&2`)
+  wat = compileMel(`z=1&&2`)
   mod = compileWat(wat)
   is(mod.instance.exports.z.value, 2)
 })
@@ -275,25 +275,25 @@ t('compile: conditions - or/and', t => {
 t('compile: function oneliners', t => {
   let wat, mod
   // no semi
-  wat = compileMelo(`mult(a, b=2) = a * b`)
+  wat = compileMel(`mult(a, b=2) = a * b`)
   mod = compileWat(wat)
   is(mod.instance.exports.mult(2, 4), 8)
   is(mod.instance.exports.mult(2), 4)
 
   // no result
-  mod = compileWat(compileMelo(` mult(a, b) = (a * b)`))
+  mod = compileWat(compileMel(` mult(a, b) = (a * b)`))
   is(mod.instance.exports.mult(2, 4), 8)
 
   console.log('------')
-  mod = compileWat(compileMelo(` mult(a, b) = (b; a * b)`))
+  mod = compileWat(compileMel(` mult(a, b) = (b; a * b)`))
   is(mod.instance.exports.mult(2, 4), 8)
 
-  mod = compileWat(compileMelo(` mult(a, b) = (b; a * b;)`))
+  mod = compileWat(compileMel(` mult(a, b) = (b; a * b;)`))
   is(mod.instance.exports.mult(2, 4), 8)
 })
 
 t('compile: function shadows global args', t => {
-  let mod = compileWat(compileMelo(`a=1, mult(a) = (a=2)`))
+  let mod = compileWat(compileMel(`a=1, mult(a) = (a=2)`))
   is(mod.instance.exports.a.value, 1)
   is(mod.instance.exports.mult(), 2)
   is(mod.instance.exports.a.value, 1)
@@ -313,27 +313,27 @@ t.skip('debugs', t => {
 
 t('compile: vars misc', t => {
   let wat, x;
-  x = compileWat(compileMelo(`x;x`)).instance.exports.x // unknown type falls to f64
-  x = compileWat(compileMelo(`x=1;x`)).instance.exports.x // int type
-  x = compileWat(compileMelo(`x=1.0;x`)).instance.exports.x // float type
-  x = compileWat(compileMelo(`x()=1;x`)).instance.exports.x // func type
-  x = compileWat(compileMelo(`x=[];x`)).instance.exports.x // arr type
-  x = compileWat(compileMelo(`x;x=1;x`)).instance.exports.x // late-int type
-  x = compileWat(compileMelo(`x;x=1.0;x`)).instance.exports.x // late-float type
-  // x = compileWat(compileMelo(`x;x()=1;x`)).instance.exports.x // late-func type
-  x = compileWat(compileMelo(`x;x=[];x`)).instance.exports.x // late-arr type
+  x = compileWat(compileMel(`x;x`)).instance.exports.x // unknown type falls to f64
+  x = compileWat(compileMel(`x=1;x`)).instance.exports.x // int type
+  x = compileWat(compileMel(`x=1.0;x`)).instance.exports.x // float type
+  x = compileWat(compileMel(`x()=1;x`)).instance.exports.x // func type
+  x = compileWat(compileMel(`x=[];x`)).instance.exports.x // arr type
+  x = compileWat(compileMel(`x;x=1;x`)).instance.exports.x // late-int type
+  x = compileWat(compileMel(`x;x=1.0;x`)).instance.exports.x // late-float type
+  // x = compileWat(compileMel(`x;x()=1;x`)).instance.exports.x // late-func type
+  x = compileWat(compileMel(`x;x=[];x`)).instance.exports.x // late-arr type
 })
 
 t('compile: ranges basic', t => {
-  let wat = compileMelo(`x = 11 ~ 0..10`)
+  let wat = compileMel(`x = 11 ~ 0..10`)
   let mod = compileWat(wat)
   is(mod.instance.exports.x.value, 10)
 
-  wat = compileMelo(`x = 0 ~ 1..10`)
+  wat = compileMel(`x = 0 ~ 1..10`)
   mod = compileWat(wat)
   is(mod.instance.exports.x.value, 1)
 
-  wat = compileMelo(`clamp(x) = (x ~ 0..10)`)
+  wat = compileMel(`clamp(x) = (x ~ 0..10)`)
   mod = compileWat(wat)
   is(mod.instance.exports.clamp(11), 10)
   is(mod.instance.exports.clamp(-1), 0)
@@ -341,45 +341,45 @@ t('compile: ranges basic', t => {
 
 t('compile: group assign cases', t => {
   let wat, mod
-  wat = compileMelo(`a=1;b=2;c=(a,b)`)
+  wat = compileMel(`a=1;b=2;c=(a,b)`)
   mod = compileWat(wat)
   is(mod.instance.exports.c.value, 2, 'c=(a,b)')
 
-  wat = compileMelo(`a=1;b=2,c=3;(b,a)=(c,b)`)
+  wat = compileMel(`a=1;b=2,c=3;(b,a)=(c,b)`)
   mod = compileWat(wat)
   is(mod.instance.exports.b.value, 3, '(b,a)=(c,b)')
   is(mod.instance.exports.a.value, 2)
 
-  wat = compileMelo(`a=1;b=2;(c,b)=(a,b);a,b,c`)
+  wat = compileMel(`a=1;b=2;(c,b)=(a,b);a,b,c`)
   mod = compileWat(wat)
   is(mod.instance.exports.c.value, 1, '(c,b)=(a,b)')
   is(mod.instance.exports.b.value, 2)
   is(mod.instance.exports.a.value, 1)
 
   throws(() => {
-    wat = compileMelo(`a=1;b=2;(c,a,b)=(a,b)`)
+    wat = compileMel(`a=1;b=2;(c,a,b)=(a,b)`)
     mod = compileWat(wat)
     is(mod.instance.exports.c.value, 1, '(c,a,b)=(a,b)')
     is(mod.instance.exports.a.value, 2)
     is(mod.instance.exports.b.value, 2)
   }, /Mismatch/)
 
-  wat = compileMelo(`a=1;b=2;(c,d)=(a,b)`)
+  wat = compileMel(`a=1;b=2;(c,d)=(a,b)`)
   mod = compileWat(wat)
   is(mod.instance.exports.c.value, 1, '(c,d)=(a,b)')
   is(mod.instance.exports.d.value, 2)
 
-  wat = compileMelo(`a=1;b=2;a,(b,b)=a`)
+  wat = compileMel(`a=1;b=2;a,(b,b)=a`)
   mod = compileWat(wat)
   is(mod.instance.exports.b.value, 1, '(b,b)=a')
   is(mod.instance.exports.a.value, 1)
 
-  wat = compileMelo(`a=1;b=2,c;a,(b,c)=a`)
+  wat = compileMel(`a=1;b=2,c;a,(b,c)=a`)
   mod = compileWat(wat)
   is(mod.instance.exports.b.value, 1, '(b,c)=a')
   is(mod.instance.exports.c.value, 1)
 
-  wat = compileMelo(`a=1;b=2,c=3;(a,,c)=(b,b,b)`)
+  wat = compileMel(`a=1;b=2,c=3;(a,,c)=(b,b,b)`)
   mod = compileWat(wat)
   is(mod.instance.exports.a.value, 2, '(a,,c)=(b,b,b)')
   is(mod.instance.exports.b.value, 2, '(a,,c)=(b,b,b)')
@@ -389,53 +389,53 @@ t('compile: group assign cases', t => {
 t('compile: group ops cases', t => {
   let wat, mod
 
-  wat = compileMelo(`f(a) = ((x, y) = (a+2,a-2); x,y)`)
+  wat = compileMel(`f(a) = ((x, y) = (a+2,a-2); x,y)`)
   mod = compileWat(wat);
   is(mod.instance.exports.f(4), [6, 2], `(a,b)=(c+1,c-1)`);
 
-  wat = compileMelo(`f(a,b,h) = (a, b) * h`)
+  wat = compileMel(`f(a,b,h) = (a, b) * h`)
   mod = compileWat(wat)
   is(mod.instance.exports.f(2, 3, 3), [6, 9], `(a, b) * h`);
 
-  wat = compileMelo(`f(a,b,h) = h * (a, b)`)
+  wat = compileMel(`f(a,b,h) = h * (a, b)`)
   mod = compileWat(wat)
   is(mod.instance.exports.f(2, 3, 3), [6, 9], `h * (a, b)`);
 
-  wat = compileMelo(`f(a,b,c,d) = (a, b) * (c, d)`)
+  wat = compileMel(`f(a,b,c,d) = (a, b) * (c, d)`)
   mod = compileWat(wat)
   is(mod.instance.exports.f(2, 3, 4, 5), [8, 15], `(a,b)*(c,d)`);
 
-  wat = compileMelo(`f(a,b) = 2 * (a, b) * 3`)
+  wat = compileMel(`f(a,b) = 2 * (a, b) * 3`)
   mod = compileWat(wat)
   is(mod.instance.exports.f(2, 3), [12, 18], `2 * (a, b) * 3`);
 
-  wat = compileMelo(`f(a,b,c,d) = (2 * (a, b)) * (c, d)`)
+  wat = compileMel(`f(a,b,c,d) = (2 * (a, b)) * (c, d)`)
   mod = compileWat(wat)
   is(mod.instance.exports.f(2, 3, 4, 5), [16, 30], `(2 * (a, b)) * (c, d)`);
 
-  wat = compileMelo(`f(a,b,c,d) = ((2 * (a, b) * 3) * (c,d))`)
+  wat = compileMel(`f(a,b,c,d) = ((2 * (a, b) * 3) * (c,d))`)
   mod = compileWat(wat)
   is(mod.instance.exports.f(2, 3, 3, 2), [36, 36], `(2 * (a, b) * 3) * (c, d)`);
 
-  wat = compileMelo(`f(a,b,h) = ((a>=h, b>=h) ? (a--, b--); a,b)`)
+  wat = compileMel(`f(a,b,h) = ((a>=h, b>=h) ? (a--, b--); a,b)`)
   mod = compileWat(wat)
   is(mod.instance.exports.f(2, 3, 3), [2, 2], `(a>=h, b>=h) ? (a--, b--)`);
 
-  wat = compileMelo(`f(a,b,h) = ((a,b) * (h + 1))`)
+  wat = compileMel(`f(a,b,h) = ((a,b) * (h + 1))`)
   mod = compileWat(wat)
   is(mod.instance.exports.f(2, 3, 1), [4, 6], `((a,b) * (h + 1))`);
 
-  wat = compileMelo(`f(a,b,h) = ((a,b) >= h ? (a,b) = h-1; (a,b))`)
+  wat = compileMel(`f(a,b,h) = ((a,b) >= h ? (a,b) = h-1; (a,b))`)
   mod = compileWat(wat)
   is(mod.instance.exports.f(1, 3, 3), [1, 2], `(a,b) >= h ? (a,b) = h-1`);
 
-  wat = compileMelo(`x=[1,2,3]; (a, b, c) = x[0,1,2]`)
+  wat = compileMel(`x=[1,2,3]; (a, b, c) = x[0,1,2]`)
   mod = compileWat(wat)
   is([mod.instance.exports.a.value, mod.instance.exports.b.value, mod.instance.exports.c.value], [1, 2, 3], `(a,b,c)=x[0,1,2]`);
 })
 
 t.todo('compile: strings', t => {
-  let wat = compileMelo(`x = "abc"`)
+  let wat = compileMel(`x = "abc"`)
   // console.log(wat)
   let mod = compileWat(wat)
   let { memory, x } = mod.instance.exports
@@ -447,7 +447,7 @@ t.todo('compile: strings', t => {
 })
 
 t('compile: list basic', t => {
-  let wat = compileMelo(`x = [1.1, 2.22, 3.333], y = [4.1234,5.54321,654321.123456,7.7777777]; x,y,xl=x[],yl=y[]`)
+  let wat = compileMel(`x = [1.1, 2.22, 3.333], y = [4.1234,5.54321,654321.123456,7.7777777]; x,y,xl=x[],yl=y[]`)
   let mod = compileWat(wat)
   let { memory, x, y, xl, yl } = mod.instance.exports
   let xarr = new Float64Array(memory.buffer, x.value, 3)
@@ -464,7 +464,7 @@ t('compile: list basic', t => {
 })
 
 t('compile: list basic local', t => {
-  let wat = compileMelo(`x() = [1, 2]`)
+  let wat = compileMel(`x() = [1, 2]`)
   let mod = compileWat(wat)
   let { memory, x } = mod.instance.exports
   let x0 = new Float64Array(memory.buffer, x(), 2)
@@ -475,7 +475,7 @@ t('compile: list basic local', t => {
 })
 
 t('compile: list from static range', t => {
-  let wat = compileMelo(`x=[..3], y=[0..4]; z=[4..0], x,y,xl=x[],yl=y[]`)
+  let wat = compileMel(`x=[..3], y=[0..4]; z=[4..0], x,y,xl=x[],yl=y[]`)
   // console.log(wat)
   let mod = compileWat(wat)
   let { memory, x, y, xl, yl, z } = mod.instance.exports
@@ -498,7 +498,7 @@ t('compile: list from static range', t => {
 })
 
 t('compile: list from dynamic range', t => {
-  let wat = compileMelo(`a=3, x=[0..a], xl=x[]`)
+  let wat = compileMel(`a=3, x=[0..a], xl=x[]`)
   // , y=[1, x[0]..x[2], 2..-2]; x,y, xl=x[],yl=y[]`)
   // console.log(wat)
   let mod = compileWat(wat)
@@ -512,14 +512,14 @@ t('compile: list from dynamic range', t => {
 
 t('compile: lists from invalid ranges', t => {
   let wat
-  throws(() => { wat = compileMelo(`x=[2..]`) }, /range/)
-  throws(() => { wat = compileMelo(`x=[..]`) }, /range/)
-  throws(() => { wat = compileMelo(`x=[..-2]`) }, /range/)
+  throws(() => { wat = compileMel(`x=[2..]`) }, /range/)
+  throws(() => { wat = compileMel(`x=[..]`) }, /range/)
+  throws(() => { wat = compileMel(`x=[..-2]`) }, /range/)
 })
 
 t('compile: lists nested static', t => {
-  let wat = compileMelo(`x=[1, y=[2, [3,3.14]]], w=[4,5]`)
-  // let wat = compileMelo(`y=[2], x=[1, y], w=[4,5]`)
+  let wat = compileMel(`x=[1, y=[2, [3,3.14]]], w=[4,5]`)
+  // let wat = compileMel(`y=[2], x=[1, y], w=[4,5]`)
   // console.log(wat)
   let mod = compileWat(wat)
   let { memory, x, y, w } = mod.instance.exports
@@ -542,15 +542,19 @@ t('compile: lists nested static', t => {
 })
 
 t.todo('compile: list comprehension', t => {
-  let wat = compileMelo(`x = [1..3 |> _ * 2]`)
+  let wat = compileMel(`x = [1..3 |> _ * 2]`)
+  let mod = compileWat(wat)
+  let { memory, x } = mod.instance.exports
+  let xarr = new Float64Array(memory.buffer, x, 2)
+  is(xarr, [1, 2])
 })
 
 t.todo('compile: list nested comprehension', t => {
-  let wat = compileMelo(`x = [1..3 <| [0..^ <| ^ * 2]]`)
+  let wat = compileMel(`x = [1..3 <| [0..^ <| ^ * 2]]`)
 })
 
 t('compile: list simple write', t => {
-  let wat = compileMelo(`x=[..3]; x[0]=1; x[1]=2; x[-1]=x[]; x`)
+  let wat = compileMel(`x=[..3]; x[0]=1; x[1]=2; x[-1]=x[]; x`)
   // console.log(wat)
   let mod = compileWat(wat)
   let { memory, x } = mod.instance.exports
@@ -561,7 +565,7 @@ t('compile: list simple write', t => {
 })
 
 t('compile: list simple read', t => {
-  let wat = compileMelo(`x = [1, 2, 3]; a=x[0],b=x[1],c=x[2],d=x[-1]`)
+  let wat = compileMel(`x = [1, 2, 3]; a=x[0],b=x[1],c=x[2],d=x[-1]`)
   // console.log(wat)
   let mod = compileWat(wat)
   let { a, b, c, d } = mod.instance.exports
@@ -572,7 +576,7 @@ t('compile: list simple read', t => {
 })
 
 t('compile: list group read', t => {
-  let wat = compileMelo(`x = [1, 2, 3]; (a,b,c)=x[0,1,2]`)
+  let wat = compileMel(`x = [1, 2, 3]; (a,b,c)=x[0,1,2]`)
   // console.log(wat)
   let mod = compileWat(wat)
   let { a, b, c } = mod.instance.exports
@@ -582,7 +586,7 @@ t('compile: list group read', t => {
 })
 
 t('compile: list group write', t => {
-  let wat = compileMelo(`x = [..3]; x[0,1,2]=(1,2,3)`)
+  let wat = compileMel(`x = [..3]; x[0,1,2]=(1,2,3)`)
   // console.log(wat)
   let mod = compileWat(wat)
   let { x, memory } = mod.instance.exports
@@ -593,7 +597,7 @@ t('compile: list group write', t => {
 })
 
 t('compile: sublist', t => {
-  let wat = compileMelo(`x = [1,2,3], y = [x]`)
+  let wat = compileMel(`x = [1,2,3], y = [x]`)
   let mod = compileWat(wat)
   let { memory, x, y } = mod.instance.exports
   let xarr = new Float64Array(memory.buffer, x, 3), yarr = new Float64Array(memory.buffer, y, 1)
@@ -605,7 +609,7 @@ t('compile: sublist', t => {
 
 t.skip('compile: memory grow', t => {
   // FIXME: possibly add option to export internals
-  let wat = compileMelo(`grow()=[..8192]`)
+  let wat = compileMel(`grow()=[..8192]`)
   let mod = compileWat(wat)
   let { memory, __mem, grow } = mod.instance.exports
   for (let i = 1; i < 100; i++) {
@@ -615,7 +619,7 @@ t.skip('compile: memory grow', t => {
 })
 
 t('compile: early returns', t => {
-  let wat = compileMelo(`x(a)=(a ? ^-a; 123), y(a)=(a?^12;13.4)`)
+  let wat = compileMel(`x(a)=(a ? ^-a; 123), y(a)=(a?^12;13.4)`)
   let mod = compileWat(wat)
   let { memory, x, y, z } = mod.instance.exports
   is(x(0), 123);
@@ -625,14 +629,14 @@ t('compile: early returns', t => {
   is(y(1), 12);
 
   console.log('---------compile z')
-  wat = compileMelo(`z(a)=(a ? ^11 : ^12.1; ^13)`)
+  wat = compileMel(`z(a)=(a ? ^11 : ^12.1; ^13)`)
   mod = compileWat(wat);
   z = mod.instance.exports.z
   is(z(0), 12.1);
   is(z(1), 11);
 
   throws(() => {
-    compileMelo(`y(a,b)=(a ? ^b; a,b)`)
+    compileMel(`y(a,b)=(a ? ^b; a,b)`)
   }, 'Inconsistent')
 })
 
@@ -644,34 +648,48 @@ t.todo('compile: break/continue', t => {
 })
 
 t('compile: loops range global', t => {
-  let wat, mod
-  wat = compileMelo(`x=[1..3]; 0..2 |> x[_]=_+1; x`)
+  let wat, mod, memory, x, arr
+  wat = compileMel(`x=[1..3]; 0..x[] |> x[_]=_+1; x`)
   mod = compileWat(wat)
-  let { memory, x } = mod.instance.exports
-
-  let arr = new Float64Array(memory.buffer, x.value, 3)
-
+    ; ({ memory, x }) = mod.instance.exports
+  arr = new Float64Array(memory.buffer, x.value, 3)
   is(arr[0], 1)
   is(arr[1], 2)
-  is(arr[2], 3)
+  is(arr[2], 0, 'unitialized')
 })
 
 t('compile: loops range local', t => {
   let wat, mod
-  wat = compileMelo(`x=[1..3]; fill() = (0..x[] |> x[_]=_+1); fill, x`)
+  wat = compileMel(`x=[1..3], c = 0, fill() = (0..x[] |> (x[_]+=1,c++))`)
   mod = compileWat(wat)
-  let { memory, x, fill } = mod.instance.exports
+  let { memory, x, fill, c } = mod.instance.exports
 
   let arr = new Float64Array(memory.buffer, x.value, 3)
-  is(fill(), 3);
-
   is(arr[0], 1)
   is(arr[1], 2)
-  is(arr[2], 3)
+
+  // is(fill(), 3);
+  fill()
+
+  is(c.value, 2, 'length is ok')
+  is(arr[0], 2)
+  is(arr[1], 3)
+  is(arr[2], 0, 'unitialized members')
+})
+
+t.todo('compile: loop current item write', t => {
+  let wat, mod, memory, x
+  wat = compileMel(`x=[1..3]; x[..] |> _+=1; x`)
+  mod = compileWat(wat)
+    ; ({ memory, x }) = mod.instance.exports
+  arr = new Float64Array(memory.buffer, x.value, 3)
+  is(arr[0], 1)
+  is(arr[1], 2)
+  is(arr[2], 0, 'unitialized')
 })
 
 t('compile: loop range in range', t => {
-  let wat = compileMelo(`a=[..9], f(a,w,h)=(
+  let wat = compileMel(`a=[..9], f(a,w,h)=(
     0..w |> (x=_;
       0..h |> (y=_;
         a[y*w + x] = x+y*w
@@ -687,8 +705,12 @@ t('compile: loop range in range', t => {
   is(arr, [0, 1, 2, 3, 4, 5, 6, 7, 8])
 })
 
+t.todo('compile: loop as fn return', () => {
+  let wat = compileMel(`x=[1..3]; fill() = (0..x[] |> x[_]=_+1); fill, x`)
+})
+
 t.todo('compile: loop in loop', t => {
-  let wat = compileMelo(`
+  let wat = compileMel(`
     x=[..4];
     i=0;
     i<2 |> (
@@ -712,7 +734,7 @@ t.todo('compile: loop in loop', t => {
 })
 
 t.todo('compile: loop over list', t => {
-  let wat = compileMelo(`x = [1,2,3]; y = x <| x -> x * 2`)
+  let wat = compileMel(`x = [1,2,3]; y = x <| x -> x * 2`)
   let mod = compileWat(wat)
   let { memory, y } = mod.instance.exports
   let arr = new Float64Array(memory.buffer, 0, 3), ptr = y.value
@@ -722,7 +744,7 @@ t.todo('compile: loop over list', t => {
 })
 
 t('compile: state variable - basic', t => {
-  let wat = compileMelo(`x()=(*i=0;i++)`)
+  let wat = compileMel(`x()=(*i=0;i++)`)
   let mod = compileWat(wat)
   let { x } = mod.instance.exports
   is(x(), 0)
@@ -731,7 +753,7 @@ t('compile: state variable - basic', t => {
 })
 
 t('compile: state variable - scope', t => {
-  let wat = compileMelo(`x()=(*i=0;i++), y()=x()`)
+  let wat = compileMel(`x()=(*i=0;i++), y()=x()`)
   let mod = compileWat(wat)
   let { x, y } = mod.instance.exports
   is(x(), 0)
@@ -743,7 +765,7 @@ t('compile: state variable - scope', t => {
 })
 
 t('compile: state variable - array init', t => {
-  let wat = compileMelo(`x()=(*i=[..2]; i[0]++ + i[1]++), y()=x()`)
+  let wat = compileMel(`x()=(*i=[..2]; i[0]++ + i[1]++), y()=x()`)
   let mod = compileWat(wat)
   let { x, y, memory } = mod.instance.exports
   is(x(), 0)
@@ -759,13 +781,13 @@ t('compile: state variable - array init', t => {
 })
 
 t.todo('compile: state variable - group init', t => {
-  let wat = compileMelo(`x()=(*(i=0,j=1,k=2);i+j+k), y()=x()`)
+  let wat = compileMel(`x()=(*(i=0,j=1,k=2);i+j+k), y()=x()`)
   let mod = compileWat(wat)
   let { x, y } = mod.instance.exports
 })
 
 t.todo('compile: state variable - multiple states', t => {
-  let wat = compileMelo(`x()=(*i=0,*j=1,*a=[..2]; i++ + j++ + a[0]++ + a[1]++); y()=(x()+x());`)
+  let wat = compileMel(`x()=(*i=0,*j=1,*a=[..2]; i++ + j++ + a[0]++ + a[1]++); y()=(x()+x());`)
   let mod = compileWat(wat)
   let { x, y } = mod.instance.exports
   is(x(), 1)
@@ -777,7 +799,7 @@ t.todo('compile: state variable - multiple states', t => {
 })
 
 t.todo('compile: state variable - mixed deps', t => {
-  let wat = compileMelo(`x()=(*i=0,i++); y()=(*a=[0,1];x()+a[0]+a[1]++); z()=(x()+y());`)
+  let wat = compileMel(`x()=(*i=0,i++); y()=(*a=[0,1];x()+a[0]+a[1]++); z()=(x()+y());`)
   let mod = compileWat(wat)
   let { x, y, z } = mod.instance.exports
 })
@@ -785,7 +807,7 @@ t.todo('compile: state variable - mixed deps', t => {
 t.todo('compile: import simple', t => {
   // FIXME: need to use external imports, not internal
   const imports = { math: { sin: Math.sin, pi: Math.PI } };
-  let wat = compileMelo(`<math#pi,sin>; pi, sinpi(n=1)=sin(pi*n)`, { imports })
+  let wat = compileMel(`<math#pi,sin>; pi, sinpi(n=1)=sin(pi*n)`, { imports })
   let mod = compileWat(wat, imports)
   let { pi, sinpi } = mod.instance.exports
   is(pi.value, Math.PI)
@@ -797,7 +819,7 @@ t.todo('compile: import non-existent', t => {
 })
 
 t.todo('compile: audio-gain', t => {
-  let wat = compileMelo(`
+  let wat = compileMel(`
   blockSize = 1024;
   gain = ([blockSize]data, volume ~ 0..1000) -> [data | x -> x * volume];
   `)
@@ -805,14 +827,14 @@ t.todo('compile: audio-gain', t => {
   let { gain } = mod.instance.exports
   is(gain([1, 2, 3], 2), [2, 4, 6])
 
-  // let wat = compileMelo(`
+  // let wat = compileMel(`
   //   blockSize = 1024;
   //   gain = ([2, blockSize]data, volume ~ 0..1000) -> [data | ch -> (ch | x -> x * volume)];
   // `)
 })
 
 t.todo('compile: sine gen', t => {
-  let wat = compileMelo(analyse(parse(`
+  let wat = compileMel(analyse(parse(`
     pi = 3.14;
     pi2 = pi*2;
     sampleRate = 44100;
@@ -829,7 +851,7 @@ t.todo('compile: sine gen', t => {
 })
 
 t('compile: readme numbers', t => {
-  let numbers = compileMelo(`
+  let numbers = compileMel(`
     a=16, b=0x10, c=0b0;                 // int, hex or binary
     d=16.0, e=.1, f=1e3, g=2e-3;           // float
     a,b,c,d,e,f,g
@@ -839,7 +861,7 @@ t('compile: readme numbers', t => {
 })
 
 t('compile: readme standard operators', t => {
-  let ops = compileMelo(`
+  let ops = compileMel(`
     a=3,b=2,c=1;
     (
       o0, o1, o2, o3, o4, o5, o5a, o6, o6a,
