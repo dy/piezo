@@ -1,6 +1,6 @@
 # mel ![stability](https://img.shields.io/badge/stability-experimental-black) [![test](https://github.com/dy/mel/actions/workflows/test.yml/badge.svg)](https://github.com/dy/mel/actions/workflows/test.yml)
 
-Minimal language for audio processing purposes and floatbeats.<br/>
+Minimal language for audio processing and floatbeats.<br/>
 Compiles to compact 0-runtime WASM with linear memory.<br/>
 It has implicit types, organic sugar and smooth operator.
 
@@ -442,6 +442,15 @@ mult(108) // 216
 const arrValues = new Float64Array(memory, arr.value, 3)
 ```
 
+### Compiler
+
+Basic algorithm of compilation:
+
+1. String is [parsed](./src/parse.js) by subscript with set of instructions/precedences into lispy tree.
+2. Tree is [precompiled](./src/precompile.js) - cleaned up, normalized, validated, prepared for compiler.
+3. Clean tree is [compiled](./src/compile.js) - into wasm via code builder methods.
+4. Stdlib parts are included on demand.
+
 ## Motivation
 
 _Web Audio_ is unreliable - it has unpredictable pauses, glitches and so on, so <q>audio is better handled in WASM worklet</q> ([@stagas](https://github.com/stagas)). Besides, audio processing in general has no cross-platform solution, various environments deal with audio differently, some don't have audio processing at all.
@@ -474,6 +483,7 @@ _Mel_ attempts to fill that gap, providing a common layer for audio processing. 
 * [audiojs](https://github.com/audiojs/)
 * [mel](https://github.com/mel/)
 -->
+
 
 ### Inspiration
 

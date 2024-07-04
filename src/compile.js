@@ -11,6 +11,14 @@ let prevCtx, includes, imports, globals, locals, slocals, funcs, func, exports, 
 // limit of memory is defined as: (max array length i24) / (number of f64 per memory page i13)
 const MAX_MEMORY = 2048, HEAP_SIZE = 1024
 
+// reserved types
+// f64 - for generic numbers
+// i32 - for integers
+// i64 -
+// f32 -
+// v128 -
+//
+
 export default function compile(node, config = {}) {
   if (typeof node === 'string') node = parse(node)
 
@@ -267,8 +275,8 @@ Object.assign(expr, {
     }
 
     // [a, b..c, d |> e]
-    let start = define(`start:${depth}`, 'i32'), cur = define(`cur:${depth}`, 'i32')
-    let str = `(local.set $${cur} (local.tee $${start} (call $malloc (i32.const ${HEAP_SIZE}))))\n` // allocate array of HEAP_SIZE (trimmed after)
+    let start = define(`arr.start:${depth}`, 'i32'), ptr = define(`arr.ptr:${depth}`, 'i32')
+    let str = `(local.set $${ptr} (local.tee $${start} (call $malloc (i32.const ${HEAP_SIZE}))))\n` // allocate array of HEAP_SIZE (trimmed after)
 
     // each element saves value to memory and increases heap pointer in stack
     for (let init of inits) {
@@ -281,13 +289,23 @@ Object.assign(expr, {
         if (min[1] === -Infinity && typeof max[1] === 'number') {
           // [..-1]
           if (max[1] < 0) err(`Bad array range`)
-          str += `(local.set $${cur} (i32.add (local.get $${cur})(i32.const ${max[1] << 3})))\n`
+          str += `(local.set $${ptr} (i32.add (local.get $${ptr})(i32.const ${max[1] << 3})))\n`
         }
         // [x..y] - generic computed range
         else {
-          inc('range')
           // create range in memory from ptr in stack
-          str += `(local.set $${cur} (call $range (local.get $${cur}) ${asFloat(expr(min))} ${asFloat(expr(max))} (f64.const 1)))\n`
+          let i = define(`range.i:${depth}`, 'f64'), to = define(`range.end:${depth}`, 'f64')
+          str += set(i, asFloat(expr(min))) + set(to, asFloat(expr(max)))
+          str += `(loop
+            (if (f64.lt ${get(i)}${get(to)})
+              (then
+                (f64.store ${get(ptr)} ${get(i)})
+                ${set(ptr, `(i32.add ${get(ptr)} (i32.const 8))`)}
+                ${set(i, `(f64.add ${get(i)} (f64.const 1))`)}
+                (br 1)
+              )
+            )
+          )`
         }
       }
       // [a..b |> ...] - comprehension
@@ -299,21 +317,21 @@ Object.assign(expr, {
         // TODO: comprehension - expects heap address in stack, puts loop results into heap
       }
       // [x*2, y] - single value
-      // FIXME: can be unwrapped in precompiler as @memory[cur++] = init;
-      else str += `(f64.store (i32.sub (local.tee $${cur} (i32.add (local.get $${cur}) (i32.const 8))) (i32.const 8)) ${asFloat(expr(init))})\n`
+      // FIXME: can be unwrapped in precompiler as @memory[ptr++] = init;
+      else str += `(f64.store (i32.sub (local.tee $${ptr} (i32.add (local.get $${ptr}) (i32.const 8))) (i32.const 8)) ${asFloat(expr(init))})\n`
     }
 
     // move buffer to static memory: references static address, deallocates heap tail
     inc('malloc'), inc('arr.ref')
 
     // deallocate memory (set beginning of free memory to pointer after array)
-    str += `(global.set $__mem (local.get $${cur}))`
+    str += `(global.set $__mem (local.get $${ptr}))`
 
     // FIXME: defragment (move) internal arrays, now each array has heap size
     depth--
 
     // create array reference
-    if (out) return op(str + `\n(call $arr.ref (local.get $${start}) (i32.shr_u (i32.sub (local.get $${cur}) (local.get $${start})) (i32.const 3)))\n`, 'f64', { buf: true })
+    if (out) return op(str + `\n(call $arr.ref (local.get $${start}) (i32.shr_u (i32.sub (local.get $${ptr}) (local.get $${start})) (i32.const 3)))\n`, 'f64', { buf: true })
 
     return op(str)
   },
@@ -459,7 +477,8 @@ Object.assign(expr, {
   // a |> b
   '|>'([, a, b], out) {
     // FIXME: account for out flag
-    // a..b |> ...
+
+    // a..b |> ... - simple range
     if (a[0] === '..') {
       depth++
       // i = from; to; while (i < to) {% = i; ...; i++}
@@ -492,7 +511,7 @@ Object.assign(expr, {
       return op(str, bop.type)
     }
 
-    // list |> ...
+    // (x = (a, b..c, d[e..])) |> ... - generic iterator
     else {
       err('loop over list: unimplemented')
       let aop = expr(a)
@@ -510,7 +529,7 @@ Object.assign(expr, {
           str += `${t === 'i32' ? '(f64.convert_i32_s)' : ''}(f64.store (i32.add (global.get $__heap) (i32.const 8)))`
         }
       }
-      // (0..10 |> a ? ./b : c) |> ...
+      // (0..10 |> a ? ^b : c) |> ...
       else if (aop.dynamic) {
         err('Unimplemented: dynamic loop arguments')
         // dynamic args are already in heap

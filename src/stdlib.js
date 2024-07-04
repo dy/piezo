@@ -46,25 +46,6 @@ export const std = {
 
   // fill mem area at $offset with range values $from, $to via $step param; returns ptr to address after range
   "range": `
-    (func $range (param $offset i32) (param $from f64) (param $to f64) (param $step f64) (result i32)
-      (local.get 0)(local.get 1)(local.get 2)(local.get 3)
-      (if (param i32 f64 f64 f64) (result i32) (f64.gt (local.get 2)(local.get 1))
-        (then (call $range.asc))(else (call $range.dsc))
-      )
-    )
-    (func $range.asc (param i32 f64 f64 f64) (result i32)
-      (loop
-        (if (f64.lt (local.get 1)(local.get 2))
-          (then
-            (f64.store (local.get 0) (local.get 1))
-            (local.set 0 (i32.add (local.get 0) (i32.const 8)))
-            (local.set 1 (f64.add (local.get 1) (local.get 3)))
-            (br 1)
-          )
-        )
-      )
-      (local.get 0)
-    )
     (func $range.dsc (param i32 f64 f64 f64) (result i32)
       (loop
         (if (f64.gt (local.get 1)(local.get 2))

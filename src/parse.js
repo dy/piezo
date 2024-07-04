@@ -1,6 +1,6 @@
 // parser converts syntax into AST/calltree
 // NOTE: we don't import subscript features because we don't need its compiler
-// also we don't need certain default operators like . or comments
+// also we may not need certain default operators like . or comments
 // also we need adjusted precedences and parsing order
 import parse, { lookup, skip, next, cur, idx, err, expr, token, unary, binary, access, group, nary, id } from 'subscript/parse'
 
