@@ -23,7 +23,7 @@ export const std = {
     (local.set $rem (call $f64.rem (local.get 0) (local.get 1)))
     (if (result f64) (f64.lt (local.get $rem) (f64.const 0))
       (then (f64.add (local.get 1) (local.get $rem)))
-      (else (local.get $rem)
+      (else (local.get $rem))
     )
   )`,
   // divident % divisor => dividend - divisor * floor(dividend / divisor)

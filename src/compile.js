@@ -5,9 +5,9 @@ import stdlib from './stdlib.js';
 import precompile from './precompile.js';
 import { ids, stringify, err, u82s } from './util.js';
 import { print, compile as watr } from 'watr';
-import { op, float, int, set, get, tee, call, define, include, pick } from './build.js'
+import { op, float, int, set, get, tee, call, define, include, pick, fun } from './build.js'
 
-export let includes, imports, globals, locals, slocals, funcs, func, exports, datas, mem, returns, depth;
+export let imports, globals, locals, slocals, funcs, func, exports, datas, mem, returns, depth;
 
 // limit of memory is defined as: (max array length i24) / (number of f64 per memory page i13)
 const MAX_MEMORY = 2048, HEAP_SIZE = 1024
@@ -28,13 +28,12 @@ export default function compile(node, config = {}) {
   console.log('compile', node)
 
   // save previous compiling context
-  let prevCtx = { includes, imports, globals, locals, slocals, funcs, func, exports, datas, mem, returns, depth };
+  let prevCtx = { imports, globals, locals, slocals, funcs, func, exports, datas, mem, returns, depth };
 
   // init compiling context
   globals = {} // global scope (as name props), {var: #isNotConstant, init: #initValue, type: 'f64'}
   slocals = {} // start fn local scope
   locals = null // current fn local scope
-  includes = [] // pieces of wasm to inject
   imports = [] // imported statements (regardless of libs) - funcs/globals/memory
   funcs = {} // defined user and util functions
   exports = {} // items to export
@@ -76,12 +75,6 @@ export default function compile(node, config = {}) {
   }
   for (let data in datas) { code += `\n`; break }
 
-  // declare includes
-  if (includes.length) code += `;;;;;;;;;;;;;;;;;;;;;;;;;;;; Includes\n`;
-  for (let include of includes)
-    if (stdlib[include]) code += print(stdlib[include], { indent: '  ', newline: '\n' }) + '\n\n';
-    else err('Unknown include `' + include + '`')
-
   // declare variables
   // NOTE: it sets functions as global variables
   if (Object.keys(globals).length) {
@@ -115,7 +108,7 @@ export default function compile(node, config = {}) {
   console.log(code);
   console.groupEnd();
   // restore previous compiling context
-  ({ includes, imports, globals, funcs, func, locals, slocals, exports, datas, mem, returns, depth } = prevCtx);
+  ({ imports, globals, funcs, func, locals, slocals, exports, datas, mem, returns, depth } = prevCtx);
 
   if (config?.target === 'wasm')
     code = watr(code)
@@ -253,8 +246,8 @@ Object.assign(expr, {
       if (func) {
         let tmp = define(`arr:${depth}`, 'i32')
         return include('malloc'), include('arr.ref'), op(
-          `(local.set $${tmp} (call $malloc (i32.const ${f64s.length << 3})))` +
-          // set(tmp, `(call $malloc (i32.const ${f64s.length << 3})))`) +
+          // set(tmp, `(call $malloc (i32.const ${f64s.length << 3}))`) +
+          set(tmp, call('malloc', `(i32.const ${f64s.length << 3})`)) +
           // `(local.set $${tmp} ${call('malloc', `(i32.const ${f64s.length << 3})`)})` +
           `(memory.copy (local.get $${tmp}) (i32.const ${offset}) (i32.const ${f64s.length << 3}))` +
           `(call $arr.ref (local.get $${tmp}) (i32.const ${f64s.length}))`
@@ -449,13 +442,13 @@ Object.assign(expr, {
       }
 
       // init body - expressions write themselves to body
-      funcs[name] = new String(`(func $${name} ${dfn.join(' ')}` +
+      // FIXME: save func args as types as well
+      fun(name, `(func $${name} ${dfn.join(' ')}` +
         (prepare.length ? `\n${prepare.join('\n')}` : ``) +
         (result ? `\n${result}` : ``) +
         (defer.length ? `\n${defer.join(' ')}` : ``) + // defers have 0 stack outcome, so result is still there
         // FIXME: if preliminary return - defers won't work
-        `)`)
-      funcs[name].type = result.type
+        `)`, result.type)
 
       func = prevFunc
 

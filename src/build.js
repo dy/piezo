@@ -1,5 +1,6 @@
 // builder actually generates wast code from params / current context
-import { globals, locals, slocals, funcs, includes } from "./compile.js"
+import { globals, locals, slocals, funcs } from "./compile.js"
+import stdlib from "./stdlib.js"
 
 // create op result, a string with extra info like types
 // holds number of returns (ops)
@@ -56,8 +57,21 @@ export function int(opStr) {
 }
 
 // add include from stdlib and return call
+// FIXME: not needed once we make use of call everywhere
 export function include(name) {
-  if (!includes.includes(name)) includes.push(name)
+  if (!stdlib[name]) err('Unknown include `' + name + '`')
+  // parse type from first (result) token
+  // FIXME: must be done better
+  let code = stdlib[name]
+  let type = code.match(/\(result\s+([^\)]+)\)/i)?.[1].trim().split(/\s+/)
+  if (!funcs[name]) fun(name, code, type)
+}
+
+// define (global) function
+export function fun(name, code, type) {
+  funcs[name] = new String(code)
+  funcs[name].type = type
+  console.log(name, funcs[name])
 }
 
 /**
