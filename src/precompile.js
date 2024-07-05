@@ -48,7 +48,10 @@ Object.assign(expr, {
 
   ';'(node) {
     let list = []
+    // remove blank lines
     for (let i = 1, out; i < node.length; i++) if (out = expr(node[i])) list.push(out)
+    // make sure last element is kept undefined
+    if (!node[node.length - 1]) list.push(undefined)
     return list.length > 1 ? [';', ...list] : list[0]
   },
   ','(node) {
@@ -98,7 +101,6 @@ Object.assign(expr, {
 
   // f(a,b,c)
   '('([, name, args]) {
-    console.log(123, args)
     args = !args ? [,] : args[0] === ',' ? args : [',', args]
     return ['(', name, args]
   },

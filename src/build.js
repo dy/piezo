@@ -2,6 +2,7 @@
 import { globals, locals, slocals, funcs } from "./compile.js"
 import { err } from "./util.js"
 import stdlib from "./stdlib.js"
+import { print } from "watr"
 
 export const i32 = {
   const: a => op(`(i32.const ${a})`, 'i32'),
@@ -91,7 +92,7 @@ export function include(name) {
 
 // define (global) function
 export function fun(name, code, type) {
-  funcs[name] = new String(code)
+  funcs[name] = new String(print(code))
   funcs[name].type = type
 }
 

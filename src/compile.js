@@ -478,8 +478,6 @@ Object.assign(expr, {
       const str = `;; |>:${depth}\n` +
         set(idx, float(expr(min))) +
         set(end, float(expr(max))) +
-        // FIXME: we don't need this
-        bop.type.map(t => `(${t}.const 0)`).join('') + '\n' + // init result values
         `(loop\n` +
         `(if ${f64.lt(get(idx), get(end))}\n` + // if (_ < end)
         `(then\n` +
