@@ -227,7 +227,7 @@ Object.assign(expr, {
     mem ||= 0
 
     // [] - skip
-    if (!inits.length) return out && op('(f64.const 0)', 'f64')
+    if (!inits.length) return out && op(f64.const(0), 'f64')
 
     depth++
 
@@ -247,7 +247,7 @@ Object.assign(expr, {
         let tmp = define(`arr:${depth}`, 'i32')
         return include('malloc'), include('arr.ref'), op(
           set(tmp, call('malloc', i32.const(f64s.length << 3))) +
-          `(memory.copy (local.get $${tmp}) (i32.const ${offset}) (i32.const ${f64s.length << 3}))` +
+          `(memory.copy ${get(tmp)} ${i32.const(offset)} ${i32.const(f64s.length << 3)})` +
           call('arr.ref', get(tmp), i32.const(f64s.length))
           , 'f64')
       }
@@ -281,9 +281,9 @@ Object.assign(expr, {
           let i = define(`range.i:${depth}`, 'f64'), to = define(`range.end:${depth}`, 'f64')
           str += set(i, float(expr(min))) + set(to, float(expr(max)))
           str += `(loop
-            (if (f64.lt ${get(i)}${get(to)})
+            (if ${f64.lt(get(i), get(to))}
               (then
-                (f64.store ${get(ptr)} ${get(i)})
+                ${f64.store(get(ptr), get(i))}
                 ${set(ptr, i32.add(get(ptr), i32.const(8)))}
                 ${set(i, f64.add(get(i), f64.const(1)))}
                 (br 1)
@@ -302,7 +302,7 @@ Object.assign(expr, {
       }
       // [x*2, y] - single value
       // FIXME: can be unwrapped in precompiler as @memory[ptr++] = init;
-      else str += `(f64.store (i32.sub (local.tee $${ptr} ${i32.add(get(ptr), i32.const(8))}) ${i32.const(8)}) ${float(expr(init))})\n`
+      else str += f64.store(i32.sub(tee(ptr, i32.add(get(ptr), i32.const(8))), i32.const(8)), float(expr(init)))
     }
 
     // move buffer to static memory: references static address, deallocates heap tail
@@ -332,7 +332,7 @@ Object.assign(expr, {
 
     // a[0] - static index read
     if (typeof b[1] === 'number') {
-      if (b[1] >= 0) return op(`(f64.load (i32.add (i32.trunc_f64_u ${expr(a)}) ${i32.const(b[1] << 3)}))`, 'f64')
+      if (b[1] >= 0) return f64.load(i32.add(`(i32.trunc_f64_u ${expr(a)})`, i32.const(b[1] << 3)))
       // FIXME: read negative number if array length is known
     }
 
@@ -438,7 +438,7 @@ Object.assign(expr, {
         // NOTE: we can't push/pop state from stack because fn body produces result (output) that will cover stack
         prepare.push(`(local.set $${fn}.prev (global.get $${fn}.state))`) // save prev state
         // put local state fragment to the stack
-        prepare.push(`(global.set $${fn}.state (i32.add (global.get $${name}.state) (i32.const ${globals[name].substate[fn] << 2})))`)
+        prepare.push(`(global.set $${fn}.state (i32.add (global.get $${name}.state) ${i32.const(globals[name].substate[fn] << 2)} ))`)
         defer.push(`(global.set $${fn}.state (local.get $${fn}.prev))`) // load prev state
       }
 
@@ -481,7 +481,7 @@ Object.assign(expr, {
         // FIXME: we don't need this
         bop.type.map(t => `(${t}.const 0)`).join('') + '\n' + // init result values
         `(loop\n` +
-        `(if (f64.lt ${get(idx)} ${get(end)})\n` + // if (_ < end)
+        `(if ${f64.lt(get(idx), get(end))}\n` + // if (_ < end)
         `(then\n` +
         set(cur, get(idx)) +
         bop + // FIXME: if bop returns result - gotta save it to heap
@@ -505,8 +505,8 @@ Object.assign(expr, {
       if (aop.type.length > 1) {
         // we create tmp list for this group and iterate over it, then after loop we dump it into stack and free memory
         // i=0; to=types.length; while (i < to) {^ = stack.pop(); ...; i++}
-        from = `(f64.const 0)`, to = `(f64.const ${aop.type.length})`
-        next = `(f64.load (i32.add (global.get $__heap) (local.get $${idx})))`
+        from = f64.const(0), to = f64.const(aop.type.length)
+        next = `(f64.load (i32.add (global.get $__heap) ${get(idx)}))`
         // push args into heap
         // FIXME: there must be more generic copy-to-heap thing, eg. `(a, b..c, d|>e)`
         err('Sequence iteration is not implemented')

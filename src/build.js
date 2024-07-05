@@ -17,7 +17,8 @@ export const f64 = {
   load: a => op(`(f64.load ${a})`, 'f64'),
   store: (a, v) => op(`(f64.store ${a} ${v})`),
   add: (a, b) => op(`(f64.add ${a} ${b})`, 'f64'),
-  sub: (a, b) => op(`(f64.sub ${a} ${b})`, 'f64')
+  sub: (a, b) => op(`(f64.sub ${a} ${b})`, 'f64'),
+  lt: (a, b) => op(`(f64.lt ${a} ${b})`, 'i32')
 }
 
 export function cond(i, t, e) {
