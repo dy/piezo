@@ -1,11 +1,10 @@
 // compile source/ast to WAST
 import { FLOAT, INT } from './const.js';
 import parse from './parse.js';
-import stdlib from './stdlib.js';
 import precompile from './precompile.js';
 import { ids, stringify, err, u82s } from './util.js';
 import { print, compile as watr } from 'watr';
-import { op, float, int, set, get, tee, call, define, include, pick, fun, i32, f64 } from './build.js'
+import { op, float, int, set, get, tee, call, define, include, pick, fun, i32, f64, cond, loop } from './build.js'
 
 export let imports, globals, locals, slocals, funcs, func, exports, datas, mem, returns, depth;
 
@@ -280,16 +279,15 @@ Object.assign(expr, {
           // create range in memory from ptr in stack
           let i = define(`range.i:${depth}`, 'f64'), to = define(`range.end:${depth}`, 'f64')
           str += set(i, float(expr(min))) + set(to, float(expr(max)))
-          str += `(loop
-            (if ${f64.lt(get(i), get(to))}
-              (then
-                ${f64.store(get(ptr), get(i))}
-                ${set(ptr, i32.add(get(ptr), i32.const(8)))}
-                ${set(i, f64.add(get(i), f64.const(1)))}
-                (br 1)
-              )
+          str += loop(
+            cond(
+              f64.lt(get(i), get(to)),
+              f64.store(get(ptr), get(i)) +
+              set(ptr, i32.add(get(ptr), i32.const(8))) +
+              set(i, f64.add(get(i), f64.const(1))) +
+              `(br 1)`
             )
-          )`
+          )
         }
       }
       // [a..b |> ...] - comprehension
@@ -478,18 +476,14 @@ Object.assign(expr, {
       const str = `;; |>:${depth}\n` +
         set(idx, float(expr(min))) +
         set(end, float(expr(max))) +
-        `(loop\n` +
-        `(if ${f64.lt(get(idx), get(end))}\n` + // if (_ < end)
-        `(then\n` +
-        set(cur, get(idx)) +
-        bop + // FIXME: if bop returns result - gotta save it to heap
-        set(idx, f64.add(get(idx), f64.const(1))) +
-        // FIXME: step can be adjustable
-        // `(call $f64.log (global.get $${idx}))` +
-        `(br 1)\n` +
-        `)` +
-        `)` +
-        `)`
+        loop(
+          cond(f64.lt(get(idx), get(end)),
+            set(cur, get(idx)) +
+            bop + // FIXME: if bop returns result - gotta save it to heap
+            set(idx, f64.add(get(idx), f64.const(1))) +
+            `(br 1)`
+          )
+        )
 
       depth--
       return op(str, bop.type)
@@ -498,6 +492,7 @@ Object.assign(expr, {
     // (x = (a, b..c, d[e..])) |> ... - generic iterator
     else {
       err('loop over list: unimplemented')
+
       let aop = expr(a)
       // (a,b,c) |> ...
       if (aop.type.length > 1) {
@@ -520,28 +515,6 @@ Object.assign(expr, {
         from = `(i32.const 0)`, to = `(global.get $__heap)`
         next = `(f64.load (i32.add (global.get $__heap) (local.get $${idx})))`
         // FIXME: must be reading from heap: heap can just be a list also
-      }
-      // list |> ...
-      // FIXME: this should be prohibited in favor of range
-      else {
-        // i = 0; to=buf[]; while (i < to) {_ = buf[i]; ...; i++}
-        include('arr.len'), include('arr.get')
-
-        const src = tmp('src'), len = tmp('len', 'i32')
-        str +=
-          `(local.set $${src} ${aop})\n` +
-          `(local.set $${idx} (i32.const 0))\n` +
-          `(local.set $${len} ${call('arr.len', `(local.get $${src})`)})\n` +
-          `(loop (result f64) \n` +
-          `(locals.tee $${item} ${call('arr.get', `(local.get $${src})`, `(local.get $${idx})`)})\n` +
-          `(if (param f64) (result f64) (i32.le_u (local.get $${idx}) (local.get $${len}))\n` +
-          `(then\n` +
-          `${expr(b)}\n` +
-          `(local.set $${idx} (i32.add (local.get $${idx}) (i32.const 1)))\n` +
-          // `(call $f64.log (global.get $${item}))` +
-          `(br 1)\n` +
-          `)\n` +
-          `))\n`
       }
     }
 

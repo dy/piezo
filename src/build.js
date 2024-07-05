@@ -22,8 +22,15 @@ export const f64 = {
   lt: (a, b) => op(`(f64.lt ${a} ${b})`, 'i32')
 }
 
-export function cond(i, t, e) {
+// if then else?
+export function cond(i, a, b) {
+  let result = a.type ? `(result ${a.type.join(' ')})` : ``
+  return op(`(if ${result} ${i} (then ${a}) ${b ? `(else ${b})` : ``})`, a.type)
+}
 
+// (loop)
+export function loop(body) {
+  return op(`(loop ${body})`)
 }
 
 // create op result, a string with extra info like types
