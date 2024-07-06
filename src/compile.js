@@ -14,7 +14,7 @@ const MAX_MEMORY = 2048, HEAP_SIZE = 1024
 // reserved types
 // f64 - float numbers / arrays
 // i32 - integers
-// i64 - int arrays?
+// i64 - int arrays? ranges?
 // f32 - heap ref?
 // v128 -
 //
@@ -491,35 +491,45 @@ Object.assign(expr, {
 
     // (x = (a, b..c, d[e..])) |> ... - generic iterator
     else {
+      console.log(a, b)
       err('loop over list: unimplemented')
 
-      let aop = expr(a)
-      // (a,b,c) |> ...
-      if (aop.type.length > 1) {
-        // we create tmp list for this group and iterate over it, then after loop we dump it into stack and free memory
-        // i=0; to=types.length; while (i < to) {^ = stack.pop(); ...; i++}
-        from = f64.const(0), to = f64.const(aop.type.length)
-        next = `(f64.load (i32.add (global.get $__heap) ${get(idx)}))`
-        // push args into heap
-        // FIXME: there must be more generic copy-to-heap thing, eg. `(a, b..c, d|>e)`
-        err('Sequence iteration is not implemented')
-        for (let i = 0; i < aop.type.length; i++) {
-          let t = aop.type[aop.type.length - i - 1]
-          str += `${t === 'i32' ? '(f64.convert_i32_s)' : ''}(f64.store (i32.add (global.get $__heap) ${i32.const(8)}))`
-        }
-      }
-      // (0..10 |> a ? ^b : c) |> ...
-      else if (aop.dynamic) {
-        err('Unimplemented: dynamic loop arguments')
-        // dynamic args are already in heap
-        from = `(i32.const 0)`, to = `(global.get $__heap)`
-        next = `(f64.load (i32.add (global.get $__heap) (local.get $${idx})))`
-        // FIXME: must be reading from heap: heap can just be a list also
-      }
+
+      // let aop = expr(a)
+      // // (a,b,c) |> ...
+      // if (aop.type.length > 1) {
+      //   // we create tmp list for this group and iterate over it, then after loop we dump it into stack and free memory
+      //   // i=0; to=types.length; while (i < to) {./ = stack.pop(); ...; i++}
+      //   from = f64.const(0), to = f64.const(aop.type.length)
+      //   next = `(f64.load (i32.add (global.get $__heap) ${get(idx)}))`
+      //   // push args into heap
+      //   // FIXME: there must be more generic copy-to-heap thing, eg. `(a, b..c, d|>e)`
+      //   err('Sequence iteration is not implemented')
+      //   for (let i = 0; i < aop.type.length; i++) {
+      //     let t = aop.type[aop.type.length - i - 1]
+      //     str += `${t === 'i32' ? '(f64.convert_i32_s)' : ''}(f64.store (i32.add (global.get $__heap) ${i32.const(8)}))`
+      //   }
+      // }
+      // // (0..10 |> a ? ./b : c) |> ...
+      // else if (aop.dynamic) {
+      //   err('Unimplemented: dynamic loop arguments')
+      //   // dynamic args are already in heap
+      //   from = `(i32.const 0)`, to = `(global.get $__heap)`
+      //   next = `(f64.load (i32.add (global.get $__heap) (local.get $${idx})))`
+      //   // FIXME: must be reading from heap: heap can just be a list also
+      // }
     }
 
     depth--
     return op(str, 'f64', { dynamic: true })
+  },
+  './'([, a]) {
+    // ./a
+    let aop = expr(a)
+    returns.push(aop)
+    // we enforce early returns to be f64
+    // FIXME: consolidate it across all fn returns
+    return op(`(return ${float(aop)})`, 'f64')
   },
 
   '-'([, a, b], out) {
@@ -606,7 +616,7 @@ Object.assign(expr, {
       // FIXME: complex multiple members, eg.
       // (x ? a,b : c,d) * (y ? e,f : g,h);
       // (... (x ? ../a,b); ...; c,d) * y(); ;; where y returns multiple values also
-      // (a |> ^) * (b |> ^);
+      // (a |> ./) * (b |> ./);
     }
 
     return op(`(f64.mul ${float(aop)} ${float(bop)})`, 'f64')
@@ -680,15 +690,6 @@ Object.assign(expr, {
     return op(`(i32.and ${int(aop)} ${int(bop)})`, `i32`)
   },
   '^'([, a, b], out) {
-    if (!b) {
-      // ^a
-      let aop = expr(a)
-      returns.push(aop)
-      // we enforce early returns to be f64
-      // FIXME: consolidate it across all fn returns
-      return op(`(return ${float(aop)})`, 'f64')
-    }
-
     // a ^ b
     let aop = expr(a, out), bop = expr(b, out);
     if (!out) return op(aop + bop);

@@ -22,10 +22,10 @@ It has implicit types, organic sugar and smooth operator.
 > >= < <= == !=               // comparisons (boolean)
 ?: ?                          // conditions
 x[i] x[]                      // member access, length
-a..b                          // ranges
+a..b a.. ..b ..               // ranges
+./ ../ .../                   // skip, break, return
+|> _                          // pipe / loop
 ~ ~= ~/ ~* ~~/ ~~*            // clamp, normalize, lerp
-^ ^^ ^^^                      // continue, break, return
-|> _                          // pipe, loop
 
 //////////////////////////////// variables
 foo=1, bar=2.0;               // declare vars
@@ -46,9 +46,9 @@ a, b=1, c=2;                  // declare vars in C style
 foo();                        // semi-colons are mandatory
 (c = a + b; c);               // group returns last statement
 (a = b+1; a,b,c);             // return multiple values
-(a ? ^b; c);                  // break current scope, return b
-((a ? ^^; c); d);             // break 2 scopes
-(((a ? ^^^; c); d); e);       // break to the root scope
+(a ? ./b; c);                 // break current scope, return b
+((a ? ../; c); d);            // break 2 scopes
+(((a ? .../; c); d); e);      // break to the root scope
 
 //////////////////////////////// conditions
 a ? b;                        // if a then b else 0 (question operator)
@@ -102,8 +102,8 @@ min~= ..m[..], max~= m[..]..; // find min/max in array
 //////////////////////////////// loops
 (a, b, c) |> f(_);            // for each item in a, b, c do f(item)
 (i = 10..) |> (               // descend over range
-  i < 5 ? ^;                  // if item < 5 continue
-  i < 0 ? ^^;                 // if item < 0 break
+  i < 5 ? ./;                 // if item < 5 skip (continue)
+  i < 0 ? ../;                // if item < 0 break
 );                            //
 x[..] |> f(_) |> g(_);        // sequence of ops
 x[..] |>= _ * 2;              // overwrite source
@@ -111,13 +111,13 @@ x[..] |>= _ * 2;              // overwrite source
   (j = 0..h) |> f(i, j);      // f(x,y)
 );                            //
 (x,,y) = (a,b,c) |> _ * 2;    // x = a * 2, y = c * 2;
-.. |> i < 10 ? i++ : ^;       // while i < 10 i++
+.. |> i < 10 ? i++ : ./;      // while i < 10 i++
 ..(i < 10) / 0 |> i++;        // alternative while
 
 //////////////////////////////// functions
 double(n) = n*2;              // define a function
 times(m = 1, n ~ 1..) = (     // optional, clamped arg
-  n == 0 ? ^n;                // early return
+  n == 0 ? ./n;               // early return
   m * n                       // default return
 );                            //
 times(3,2);                   // 6
@@ -156,7 +156,7 @@ string[2..10];                // substring
 string[1, 2..10, -1];         // slice/pick multiple elements
 string[-1..0];                // reversed
 string[];                     // length
-(..a[] |> a[_] == b[_] ?: ^)[-1];   // compare (==,!=,>,<)
+(..a[] |> a[_] == b[_] ?: ../)[-1];   // compare (==,!=,>,<)
 a = "$<b>$<c>";           // concat: "hello worldhello world"
 a[..] |> _==" " ? (a[from..to],from=to) : to++              // split: "a b" / " " = ["a", "b"]
 (list[..]|>(_[..]," "))[..-1];// join: " " * ["a", "b"] = "a b"
@@ -446,10 +446,9 @@ const arrValues = new Float64Array(memory, arr.value, 3)
 
 Basic algorithm of compilation:
 
-1. String is [parsed](./src/parse.js) by subscript with set of instructions/precedences into lispy tree.
-2. Tree is [precompiled](./src/precompile.js) - cleaned up, normalized, validated, prepared for compiler.
-3. Clean tree is [compiled](./src/compile.js) - into wasm via code builder methods.
-4. Stdlib parts are included on demand.
+1. [Parse](./src/parse.js) with set of instructions/precedences into lispy tree.
+2. [Precompile](./src/precompile.js) - clean up, normalize, validate, unroll groups, prepare for compiler.
+3. [Compile](./src/compile.js) into wasm via code builder methods with stdlib includes.
 
 ## Motivation
 

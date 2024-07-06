@@ -890,7 +890,7 @@
   - less is more
   - no-period allows easier concat of modules.
 
-## [ ] Early return operator? → keep `a ? ^;` for now, no need for separate operator -> ~~use `./`, `../`, `.../`~~
+## [ ] Early return operator? → ~~keep `a ? ^;` for now~~ `./`, `../`, `.../` is most logical
 
   * can often see `if (a) return;` - useful construct. How's that in lino?
   1. `a ? value.`
@@ -963,16 +963,17 @@
       - confusable pattern in mind
         + memorable due to that
       - can get mixed up with imports
+        ~+ we aren't going to provide path facility (for imports), use `imports.json` file
     + has "close" hint `/` with end hint `.`
-    + gets rid of "end" operator
-    - not early return
-    - single-branch if
+    + associates with "end" meaning of `.`, `/a,b,c` for whatever comes after period.
     + allows having return in alternative branch: `cond ? x : ../y;`
     + frees `^` (for topic holder)
       + no conflict with XOR really
       + conventional pipe `|> ^`
     + resolves conflict of `#` as topic placeholder vs variable
     - some interference with ranges `..; ../; ./; .../; ..a/b;`
+      ~ actually that associates with ranges better, since ranges are indicators of loops
+    + associates with ranges in a sense `../x` for finish current range with x value
   * `cond ?./; cond ?./ x; cond ?../x; cond ?.../x;`
   * `cond && ./; cond && ./x; cond && ../x; cond && .../x;`
     - mind-bending to see `(a && return b)`
@@ -1946,7 +1947,7 @@
         ? how do we map arrays then
           * list comprehension: i <- arr <| i * 10
 
-## [ ] Group assignment: a,b=c,d -> let's use more familiar flowy JS style a=1, b=2 and force groups be scoped
+## [ ] Group assignment: a,b=c,d -> let's use more familiar flowy JS style for now a=1, b=2 and force groups be scoped
 
   * lhs can only be ids, props or fn
   * lhs member on its own without assignment doesn't make sense other than in definition `a,b,c`
@@ -2012,7 +2013,6 @@
   5.1 stack-balancing `a,b,c=1` is `a, b, c=1`, `a,b,c=1,2,3` is `a=1, b=2, c=3`
     ? mb based on number of lhs-idables
     + to make single-assign do `(a,b,c)=1`
-
 
 ## [x] Raise `,` precedence for groups? -> nah, let's keep groups scoped
 
@@ -4947,7 +4947,7 @@
     * that's just math trick, not actual operator.
     * that's why we can wrap it into `@latr.subarray(x, start, end)`
 
-## [ ] Range step
+## [ ] Range step -> likely 0..10:0.5
 
   * `[-10..10..0.5]`
   * `[-10..0.5..10]`
@@ -5546,3 +5546,60 @@
   - must be `:` < `=` in `a ? b=c : d=e`
 * `a = b ? c`
   *  `=` <= `?`
+
+## [ ] `(x = (a, b..c[], d[e..] |> _*2) + f..g) |> x ? ^ : x+1` - how?
+
+1. rhs is dynamic function, generated code for the first sequence
+  ```js
+  const r = (v) => x ? break : x+1;
+  let fgi = 0
+  r(x=a+(f+fgi++));
+  for (i = b; i < c; i++) r(i + fgi++);
+  for (i = e; i < d[]; i++) r(double(d[i]) + fgi++);
+  ```
+  - creating unnecessary scope & exec context
+  - each pipe operation creates a (macro) function in memory
+  - no obvious way to break iteration
+
+2. rhs is loop, lhs is switch condition (or flattened gen function)
+  - switch condition creates unnecessary check
+    ~ that's minimal evil, and only for sequences
+  + makes everything flat
+  + supports break, skip
+  ```js
+  let g0i = 0, g01i, g02i, g1i = 0, g0, g1 // left group members & results
+  while () {
+    // 1. produce group results
+    // FIXME: in subscript we optimized that by having an array of function checkers
+    // (a, b..c[], d[e..] |> _*2) group
+    // a
+    if (g0i === 0) { g0 = a; g0i++; g01i = b; }
+    // b..c[]
+    else if (g0i === 1) { if (g01i < c[]) {g0 = g01i; g01i+=step} else g0i++, g02i = e; }
+    // d[e..] |> _*2
+    else if (g0i === 2) {
+      g02 = d[g02i++]
+      g1 = _ = g02*2
+    }
+
+    // f..g group
+    if (g1i === 0) {  }
+
+    // 1.1 calculate groups result
+    _ = (x = g0 + g1)
+
+    // 2. body
+    x = x ? break : x+1
+
+    // 3. write to stack, if needed
+    stack.push(x)
+  }
+  ```
+
+## [ ] Should we make `a,b` saved to stack, `a..b` saved to heap?
+
++ meets limitation of 1000 members for stack
++ can possibly optimize sequences calc
++ v128 can store a..b
++ allows returning plain arrays in JS side
+- cannot export such function

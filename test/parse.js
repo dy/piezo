@@ -132,13 +132,13 @@ t('parse: statements', t => {
   is(parse('(c = a + b; c)'), ['()', [';', ['=', 'c', ['+', 'a', 'b']], 'c']], 'parens define block, return last element')
   is(parse('(a=b+1; a,b,c)'), ['()', [';', ['=', 'a', ['+', 'b', [INT, 1]]], [',', 'a', 'b', 'c']]], 'block can return group')
   // is(parse('(a ? b,c;)'), ['(',[';',['?','a',[',','b','c']]]], 'if-seq')
-  is(parse('(a ? ^b; c)'), ['()', [';', ['?', 'a', ['^', 'b']], 'c']], 'return/break operator can early return value')
-  is(parse('(a ? ^-b; c)'), ['()', [';', ['?', 'a', ['^', ['-', 'b']]], 'c']], 'return/break')
-  is(parse('(a ? ^; c)'), ['()', [';', ['?', 'a', ['^']], 'c']], 'return/break token')
-  // is(parse('(a ? ^a,b; c)'), ['(',[';',['?','a',['^',[',','a','b']]],'c']], 'return/break token')
-  is(parse('(a ? ^(a,b); c)'), ['()', [';', ['?', 'a', ['^', ['()', [',', 'a', 'b']]]], 'c']], 'return/break token')
+  is(parse('(a ? ./b; c)'), ['()', [';', ['?', 'a', ['./', 'b']], 'c']], 'return/break operator can early return value')
+  is(parse('(a ? ./-b; c)'), ['()', [';', ['?', 'a', ['./', ['-', 'b']]], 'c']], 'return/break')
+  is(parse('(a ? ./; c)'), ['()', [';', ['?', 'a', ['./']], 'c']], 'return/break token')
+  // is(parse('(a ? ./a,b; c)'), ['(',[';',['?','a',['./',[',','a','b']]],'c']], 'return/break token')
+  is(parse('(a ? ./(a,b); c)'), ['()', [';', ['?', 'a', ['./', ['()', [',', 'a', 'b']]]], 'c']], 'return/break token')
   is(parse('(foo(); bar();)'), ['()', [';', ['(', 'foo', ,], ['(', 'bar', ,], ,]], 'semi-colon after last statement returns void')
-  is(parse('a ? ^a : ^b'), ['?:', 'a', ['^', 'a'], ['^', 'b']], 'order of labels')
+  is(parse('a ? ./a : ./b'), ['?:', 'a', ['./', 'a'], ['./', 'b']], 'order of labels')
 })
 
 t('parse: conditions', t => {
@@ -190,15 +190,15 @@ t('parse: loops', t => {
   is(parse('s[] < 50 |> (s += hi)'), ['|>', ['<', ['[', 's', undefined], [INT, 50]], ['()', ['+=', 's', 'hi']]], 'inline loop')
   is(parse(`
   (i=0; ++i < 10 |> (             // multiline loop
-    i < 3 && ^^;                 // to break loop (can return value as ^^x)
-    i < 5 && ^;                  // to continue loop (can return value as ^x)
+    i < 3 && ../;                 // to break loop (can return value as ../x)
+    i < 5 && ./;                  // to continue loop (can return value as ./x)
   ))`), ['()', [';',
     ['=', 'i', [INT, 0]],
     ['|>',
       ['<', ['+=', 'i', [INT, 1]], [INT, 10]],
       ['()', [';',
-        ['&&', ['<', 'i', [INT, 3]], ['^^']],
-        ['&&', ['<', 'i', [INT, 5]], ['^']],
+        ['&&', ['<', 'i', [INT, 3]], ['../']],
+        ['&&', ['<', 'i', [INT, 5]], ['./']],
         []
       ]]
     ]
@@ -217,9 +217,9 @@ t('parse: functions', () => {
   console.log(parse(`a,,b`))
   is(parse('double(n) = n*2'), ['=', ['(', 'double', 'n'], ['*', 'n', [INT, 2]]], 'inline function')
   is(parse(`triple(n=1) = (
-    n == 0 && ^n;                // preliminarily return n
+    n == 0 && ./n;                // preliminarily return n
     n*3                         // returns last value
-  )`), ['=', ['(', 'triple', ['=', 'n', [INT, 1]]], ['()', [';', ['&&', ['==', 'n', [INT, 0]], ['^', 'n']], ['*', 'n', [INT, 3]]]]], 'multiline')
+  )`), ['=', ['(', 'triple', ['=', 'n', [INT, 1]]], ['()', [';', ['&&', ['==', 'n', [INT, 0]], ['./', 'n']], ['*', 'n', [INT, 3]]]]], 'multiline')
   is(parse('triple()'), ['(', 'triple', ,], '3')
   is(parse('triple(5)'), ['(', 'triple', [INT, 5]], '15')
   is(parse('triple(,10)'), ['(', 'triple', [',', , [INT, 10]]], '30. skipped argument.')
@@ -268,7 +268,7 @@ t.skip('parse: defer', t => {
 })
 
 t.skip('parse: import', () => {
-  is(parse('<^path/to/module>'), ['<>', '^path/to/module'], '<path-to-file>')
+  // is(parse('<./path/to/module>'), ['<>', './path/to/module'], '<path-to-file>')
   is(parse('<math>'), ['<>', 'math'], '<math>')
   is(parse('<my-module#x,y,z>'), ['<>', 'my-module#x,y,z'], 'import selected members')
 })
@@ -308,8 +308,8 @@ t('parse: endings', t => {
   `), [';', ['=', ['(', 'x', ,], ['()', [';', ['+', [INT, 1], [INT, 2]], ,]]], ,], 'e')
 
   is(parse(`
-    x() = (a&&^b;c)
-  `), ['=', ['(', 'x', ,], ['()', [';', ['&&', 'a', ['^', 'b']], 'c']]], 'f')
+    x() = (a&&./b;c)
+  `), ['=', ['(', 'x', ,], ['()', [';', ['&&', 'a', ['./', 'b']], 'c']]], 'f')
 
   is(parse(`
     x() = (a&&b[c])
@@ -357,9 +357,9 @@ t('parse: sine gen', t => {
 })
 
 t('parse: sequence precedence', t => {
-  is(parse(`^b,c`), ['^', [',', 'b', 'c']]);
-  is(parse(`^^b,c`), ['^^', [',', 'b', 'c']]);
-  is(parse(`^^^b,c`), ['^^^', [',', 'b', 'c']]);
+  is(parse(`./b,c`), ['./', [',', 'b', 'c']]);
+  is(parse(`../b,c`), ['../', [',', 'b', 'c']]);
+  is(parse(`.../b,c`), ['.../', [',', 'b', 'c']]);
   // is(parse(`a,b?c,d:e,f`), [',', 'a', ['?', 'b', [',', 'c', 'd'], [',', 'e', 'f']]]);
   // is(parse(`a?b,c`), ['?', 'a', [',', 'b', 'c']]);
   is(parse(`a?b,c`), [',', ['?', 'a', 'b'], 'c']);

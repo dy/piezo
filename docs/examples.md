@@ -252,7 +252,7 @@ reverb((..input), room=0.5, damp=0.5) = (
 
   a ~ combs_a -< comb(a, input, room, damp) | sum + b ~ combs_b -< comb(b, input, room, damp) | sum;
 
-  ^, ..aps >- waterfall;
+  _, ..aps >- waterfall;
 ).
 ```
 

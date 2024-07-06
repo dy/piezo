@@ -16,8 +16,8 @@ t.todo('perf: sobel', t => {
     ),
 
     process(data, width, height) = (
-      0..height |> ( y=^;
-        0..width |> ( x=^;
+      0..height |> ( y=_;
+        0..width |> ( x=_;
           ;; Extract values from image
           (val0, val1, val2, val3, val5, val6, val7, val8) = (
             get_pixel(data, x, y, width, height),
