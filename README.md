@@ -380,7 +380,7 @@ Features:
 
 See [all examples](/examples)
 
-
+<!--
 ## Usage
 
 _Y_ is available as CLI or JS package.
@@ -441,6 +441,7 @@ mult(108) // 216
 // array is a number pointer to memory
 const arrValues = new Float64Array(memory, arr.value, 3)
 ```
+-->
 
 ### Compiler
 

@@ -337,7 +337,7 @@
     + yvanov lang
     - two ylangs in history
     - npm is taken (by chinese)
-    + yfx
+    + yyfx
     + kirtan.y, mono.y, sobel.y, viznut.y, predestined-fate.y
   * ilang
     + alternative prononciation of ylang-ylang
