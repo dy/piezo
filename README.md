@@ -1,6 +1,6 @@
 # 🌿 ylang ![stability](https://img.shields.io/badge/stability-experimental-black) [![test](https://github.com/dy/ylang/actions/workflows/test.yml/badge.svg)](https://github.com/dy/ylang/actions/workflows/test.yml)
 
-Minimal language for audio and floatbeats.<br/>
+Minimal language for audio processing and floatbeats.<br/>
 Compiles to compact 0-runtime WASM with linear memory.<br/>
 It has implicit types, organic sugar and smooth operator.
 
