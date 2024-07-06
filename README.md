@@ -1,4 +1,4 @@
-# 🌿 ylang ![stability](https://img.shields.io/badge/stability-experimental-black) [![test](https://github.com/dy/ylang/actions/workflows/test.yml/badge.svg)](https://github.com/dy/ylang/actions/workflows/test.yml)
+# melo ![stability](https://img.shields.io/badge/stability-experimental-black) [![test](https://github.com/dy/melo/actions/workflows/test.yml/badge.svg)](https://github.com/dy/melo/actions/workflows/test.yml)
 
 Essential language for audio processing and floatbeats exports.<br/>
 Compiles to compact 0-runtime WASM with linear memory.<br/>
@@ -398,7 +398,7 @@ This produces compiled WASM binary.
 ### JS
 
 ```js
-import y from 'ylang'
+import y from 'melo'
 
 // create wasm arrayBuffer
 const buffer = y.compile(`
@@ -477,11 +477,11 @@ _Ylang_ attempts to fill that gap, providing a common layer for audio processing
 -->
 
 <!--
-## Projects using ylang
+## Projects using melo
 
 * [web-audio-api](https://github.com/audiojs/web-audio-api)
 * [audiojs](https://github.com/audiojs/)
-* [ylang](https://github.com/ylang/)
+* [melo](https://github.com/melo/)
 -->
 
 
