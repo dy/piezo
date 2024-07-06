@@ -332,6 +332,22 @@
     + рёв
   * waev
 
+  * ylang
+    + ylang-ylang
+    + yvanov lang
+    - two ylangs in history
+    - npm is taken (by chinese)
+    + yfx
+    + kirtan.y, mono.y, sobel.y, viznut.y, predestined-fate.y
+  * ilang
+    + alternative prononciation of ylang-ylang
+    + iPhone, iLang
+      - cheesy
+    + ivanov lang
+    + npm is free
+    + kirtan.i, mono.i, sobel.i, viznut.i, predestined-fate.i
+
+
 ## [ ] Free operators
 
   * `<>`, `><`

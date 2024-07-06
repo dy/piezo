@@ -1,4 +1,4 @@
-# mel ![stability](https://img.shields.io/badge/stability-experimental-black) [![test](https://github.com/dy/mel/actions/workflows/test.yml/badge.svg)](https://github.com/dy/mel/actions/workflows/test.yml)
+# ylang ![stability](https://img.shields.io/badge/stability-experimental-black) [![test](https://github.com/dy/ylang/actions/workflows/test.yml/badge.svg)](https://github.com/dy/ylang/actions/workflows/test.yml)
 
 Minimal language for audio processing and floatbeats.<br/>
 Compiles to compact 0-runtime WASM with linear memory.<br/>
@@ -383,14 +383,14 @@ See [all examples](/examples)
 
 ## Usage
 
-_mel_ is available as CLI or JS package.
+_Y_ is available as CLI or JS package.
 
-`npm i mel`
+`npm i y`
 
 ### CLI
 
 ```sh
-mel source.mel -o dest.mel
+y source.y -o dest.y
 ```
 
 This produces compiled WASM binary.
@@ -398,10 +398,10 @@ This produces compiled WASM binary.
 ### JS
 
 ```js
-import mel from 'mel'
+import y from 'ylang'
 
 // create wasm arrayBuffer
-const buffer = mel.compile(`
+const buffer = y.compile(`
   n=1;
   mult(x) = x*PI;
   arr=[1, 2, sin(1.08)];
@@ -410,7 +410,7 @@ const buffer = mel.compile(`
   // js objects or paths to files
   imports: {
     math: Math,
-    mylib: './path/to/my/lib.mel'
+    mylib: './path/to/my/lib.y'
   },
   // optional: import memory
   memory: true
@@ -454,7 +454,7 @@ Basic algorithm of compilation:
 
 _Web Audio_ is unreliable - it has unpredictable pauses, glitches and so on, so <q>audio is better handled in WASM worklet</q> ([@stagas](https://github.com/stagas)). Besides, audio processing in general has no cross-platform solution, various environments deal with audio differently, some don't have audio processing at all.
 
-_Mel_ attempts to fill that gap, providing a common layer for audio processing. It is personal attempt in language design - with foundation from C, JS, Python, Scala and bits of inspiration from everywhere. It's easy tap into WASM, which enables code for browsers, [audio/worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) and any other envs.
+_Ylang_ attempts to fill that gap, providing a common layer for audio processing. It is personal attempt of language design - what if JS had groups, ranges and had no clutter? WASM target gives max performance and compatibility - browsers, [audio/worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) etc.
 
 <!--
 ### Principles
@@ -476,11 +476,11 @@ _Mel_ attempts to fill that gap, providing a common layer for audio processing. 
 -->
 
 <!--
-## Projects using mel
+## Projects using ylang
 
 * [web-audio-api](https://github.com/audiojs/web-audio-api)
 * [audiojs](https://github.com/audiojs/)
-* [mel](https://github.com/mel/)
+* [ylang](https://github.com/ylang/)
 -->
 
 
