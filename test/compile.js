@@ -280,7 +280,6 @@ t('compile: function oneliners', t => {
   is(mod.instance.exports.mult(2, 4), 8)
   is(mod.instance.exports.mult(2), 4)
 
-  // no result
   mod = compileWat(compileMel(` mult(a, b) = (a * b)`))
   is(mod.instance.exports.mult(2, 4), 8)
 
@@ -289,7 +288,7 @@ t('compile: function oneliners', t => {
   is(mod.instance.exports.mult(2, 4), 8)
 
   mod = compileWat(compileMel(` mult(a, b) = (b; a * b;)`))
-  is(mod.instance.exports.mult(2, 4), 8)
+  is(mod.instance.exports.mult(2, 4), undefined)
 })
 
 t('compile: function shadows global args', t => {
@@ -302,12 +301,8 @@ t('compile: function shadows global args', t => {
 t.skip('debugs', t => {
   const memory = new WebAssembly.Memory({ initial: 1 });
   const importObject = { x: { y: () => 123, z: 123 } };
-  let { instance } = compileWat(`
-    (memory (export "memory") 1 2048)
-
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;; Data
-    (data (i32.const 0) "//")`, importObject)
-  console.log(new Uint8Array(instance.exports.memory.buffer))
+  let { instance } = compileWat(``, importObject)
+  // console.log(new Uint8Array(instance.exports.memory.buffer))
   // instance.exports.x(instance.exports.x(instance.exports.cb))
 })
 
@@ -550,7 +545,7 @@ t.todo('compile: list comprehension', t => {
 })
 
 t.todo('compile: list nested comprehension', t => {
-  let wat = compileMel(`x = [1..3 <| [0..^ <| ^ * 2]]`)
+  let wat = compileMel(`x = [1..3 <| [0.._ <| _ * 2]]`)
 })
 
 t('compile: list simple write', t => {
@@ -619,7 +614,7 @@ t.skip('compile: memory grow', t => {
 })
 
 t('compile: early returns', t => {
-  let wat = compileMel(`x(a)=(a ? ^-a; 123), y(a)=(a?^12;13.4)`)
+  let wat = compileMel(`x(a)=(a ? ./-a; 123), y(a)=(a?./12;13.4)`)
   let mod = compileWat(wat)
   let { memory, x, y, z } = mod.instance.exports
   is(x(0), 123);
@@ -629,14 +624,14 @@ t('compile: early returns', t => {
   is(y(1), 12);
 
   console.log('---------compile z')
-  wat = compileMel(`z(a)=(a ? ^11 : ^12.1; ^13)`)
+  wat = compileMel(`z(a)=(a ? ./11 : ./12.1; ./13)`)
   mod = compileWat(wat);
   z = mod.instance.exports.z
   is(z(0), 12.1);
   is(z(1), 11);
 
   throws(() => {
-    compileMel(`y(a,b)=(a ? ^b; a,b)`)
+    compileMel(`y(a,b)=(a ? ./b; a,b)`)
   }, 'Inconsistent')
 })
 
@@ -660,7 +655,7 @@ t('compile: loops range global', t => {
 
 t('compile: loops range local', t => {
   let wat, mod
-  wat = compileMel(`x=[1..3], c = 0, fill() = (0..x[] |> (x[_]+=1,c++))`)
+  wat = compileMel(`x=[1..3], c = 0, fill() = (0..x[] |> (x[_]+=1,c++); )`)
   mod = compileWat(wat)
   let { memory, x, fill, c } = mod.instance.exports
 
@@ -692,7 +687,7 @@ t('compile: loop range in range', t => {
   let wat = compileMel(`a=[..9], f(a,w,h)=(
     0..w |> (x=_;
       0..h |> (y=_;
-        a[y*w + x] = x+y*w
+        a[y*w + x] = x+y*w;
       )
     )
   )`)
@@ -709,19 +704,32 @@ t.todo('compile: loop as fn return', () => {
   let wat = compileMel(`x=[1..3]; fill() = (0..x[] |> x[_]=_+1); fill, x`)
 })
 
+t.todo('compile: current item assignment', t => {
+  let wat = compileMel(`
+    x=[..4];
+    (i=..3) |> x[i]=i*2`)
+  let mod = compileWat(wat)
+  let { memory, x } = mod.instance.exports
+
+  let arr = new Float64Array(memory.buffer, x.value, 4)
+
+  is(arr[0], 0)
+  is(arr[1], 2)
+  is(arr[2], 4)
+  is(arr[3], 0, 'undefined')
+})
+
 t.todo('compile: loop in loop', t => {
   let wat = compileMel(`
     x=[..4];
-    i=0;
-    i<2 |> (
-      j=0;
-      j<2 |> (
+    (i=..2) |> (
+      (j=..2) |> (
         x[i*2+j]=i*2+j;
         j++
       );
       i++;
     );
-  x`)
+    x`)
   let mod = compileWat(wat)
   let { memory, x } = mod.instance.exports
 
@@ -858,6 +866,16 @@ t('compile: readme numbers', t => {
   `, { imports: {} })
   let { a, b, c, d, e, f, g } = compileWat(numbers, {}).instance.exports
   is(a.value, 16), is(b.value, 0x10), is(c.value, 0b0), is(d.value, 16), is(e.value, 0.1), is(f.value, 1e3), is(g.value, 2e-3)
+})
+
+t('compile: % and %%', t => {
+  let wat = compileMel(`
+    x(a,b)=(
+      a%b,
+      a%%b
+    );
+  `, {})
+  compileWat(wat)
 })
 
 t('compile: readme standard operators', t => {
