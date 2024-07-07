@@ -1,6 +1,6 @@
 import t, { is, ok, same, throws } from 'tst'
-import { FLOAT, INT } from '../src/const.js'
-import parse from '../src/parse.js'
+import { FLOAT, INT } from '../../src/const.js'
+import parse from '../../src/parse.js'
 
 
 t('parse: common', t => {

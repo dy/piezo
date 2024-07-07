@@ -1,7 +1,7 @@
 
 import t, { is, not, ok, same, throws } from 'tst'
-import compile from '../src/compile.js'
-import { compileWat } from './compile.js'
+import compile from '../../src/compile.js'
+import { compileWat } from '../util.js'
 
 t.todo('perf: sobel', t => {
   // Reference:
