@@ -619,7 +619,7 @@
 ## [x] Numbers: float64 by default, unless it's statically inferrable as int32, like ++, +-1 etc ops only
   * Boolean operators turn float64 into int64
 
-## [x] ~~Pipes: → | with anon functions~~ ~~transform ternary `list | x -> a(x) | x -> b(x)`~~ pipes are loops `x |> % * 0.6 + reverb(%) * 0.4 |> `
+## [x] ~~Pipes: → | with anon functions~~ ~~transform ternary `list | x -> a(x) | x -> b(x)`~~ pipes are loops `x |> _ * 0.6 + reverb(_) * 0.4 |> `
 
   1. Placeholder as `x | #*0.6 + reverb() * 0.4`, `source | lp($, frq, Q)`?
     ? can there be multiple args to pipe operator? `a,b |` runs 2 pipes, not multiarg.
@@ -864,7 +864,7 @@
 
   + improves precision
 
-## [x] End operator → indicator of return statement. ~~Try using ^a as return.~~ last statement automatically returns
+## [x] End operator → indicator of no-return statement, last statement automatically returns
 
   * `.` operator can finish function body and save state. `delay(x,y) = (*d=[1s], z=0; d[z++]=x; d[z-y].)`
   * ? is it optional?
@@ -906,7 +906,14 @@
   - less is more
   - no-period allows easier concat of modules.
 
-## [ ] Early return operator? → ~~keep `a ? ^;` for now~~ `./`, `../`, `.../` is most logical
+### [x] `a,b,c.` - return nothing
+
+  + end = no return, which is logical
+  + matches `./` intuition: it would be `(a;./b)` to return something, but we just do `(a;b.)`to force returning none
+  + resolves last semicolon confusion - now `;` can always return last statement even with semicolon, unless `.` indicates nothing.
+  + typographical, erlangy
+
+## [x] Early return operator? → ~~keep `a ? ^;` for now~~ `./`, `../`, `.../` is most logical
 
   * can often see `if (a) return;` - useful construct. How's that in lino?
   1. `a ? value.`
@@ -990,6 +997,7 @@
     - some interference with ranges `..; ../; ./; .../; ..a/b;`
       ~ actually that associates with ranges better, since ranges are indicators of loops
     + associates with ranges in a sense `../x` for finish current range with x value
+    + reinforces end operator
   * `cond ?./; cond ?./ x; cond ?../x; cond ?.../x;`
   * `cond && ./; cond && ./x; cond && ../x; cond && .../x;`
     - mind-bending to see `(a && return b)`
@@ -1042,7 +1050,7 @@
 
   4. `a..b |> (x < 10 ?>; x > 100 ?.)`
 
-## [x] Return operator: alternatives → try using `^` for returning value from block.
+## [x] Return operator: alternatives → try using `./` for returning value from block.
 
   1. `.`
     + erlang-y
@@ -1706,7 +1714,7 @@
   + `x -<= 0..10` is just a nice construct
   -  `x <- y` vs `x < -y`
 
-## [ ] Comments: `//`, `/*` vs `;;` and `(; ;)` → `//` is most based choice. ~~`\\` gives too many benefits~~
+## [ ] Comments: `//`, `/*` vs `;;` and `(; ;)` → `//` is most based choice. `\\` gives many benefits `;;` either, but less intrusive
 
   1. `;;`
   * Message: mel is like assembly, expect low-level stuff & reading docs
@@ -1725,9 +1733,10 @@
   - single-comment breaks inline structures like a(x)=b;c;d.
     + that's why `;;`
   - not as "cool" as `\\`
-  - `a + b;  ;; some comment` - not nice noise
+  - `a + b;  ;; some comment` - not nice noise, compared to `// some comment`
   + more lightweight than `\\`
   + not confusable with `//`
+  + no conflict with ANYTHING, very organic part of code
   + reminds `:` which is kind of cool for comments in typographics
   + more conventional than `\\`
   + Sercy sneezed
@@ -1749,7 +1758,6 @@
   - the support of such comments is not widespread
   + hints to asm/wasm languages
   + if all programs use that comment style it seems fine: it's a good balance between neutrality, familiarity/intuitivity, innovation
-  - it's noisy, compared to `//`
   - it gives hand-made impression
 
   1.1 should we make comment an alternative to semi token `fn() ;;do something`
@@ -1793,6 +1801,8 @@
       - code is case-sensitive now
     + gives fresh feeling of old standard, since syntax is updated to be cool
     + and still it's like scala also
+  - chances are // was unlucky choice in C, since for all basic arithmetics there's double + ++, - --, * **, % %%, & &&, | ||, but / // remains, as well as ^ ^^.
+  - there's integer div in wasm, but no integer div in mel
 
   3. `\` or `\\`
   * Message: mel is breaking new, but also weirdish like Julia, you gotta expect fancy stuff
@@ -1848,6 +1858,7 @@
   - complicates copy-paste of floatbeats
     ~ not so much
   - we're not creating language from scratch, we extend existing common syntax, and comments are standard part...
+    + yes, but we are rethinking parts
 
   4. `/* */`
   + popular (CSS, C-family, PHP, Swift, Kotlin, Java, JS)

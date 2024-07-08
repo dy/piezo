@@ -20,11 +20,12 @@
 * [x] a++, a--, a+=1, a-=n
 * [x] fix compiling
 * [x] account ops for expected number of returns instead of forcing drops
-* [x] get rid of `.` (less = more)
+* [ ] make `;;` for comments
+* [ ] make `.` for 'return nothing'
 * [ ] generic range (loop) solver
 * [ ] convert all string instructions to builder calls
 * [ ] list comprehension
-* [ ] make use of `^`, `^^`, `^^^`
+* [ ] make use of `./`, `../`, `.../`
 * [ ] all readmes test
 * [ ] first bytebeat
 * [ ] `~, ~=`
