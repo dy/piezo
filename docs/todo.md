@@ -21,7 +21,7 @@
 * [x] fix compiling
 * [x] account ops for expected number of returns instead of forcing drops
 * [x] make `;;` for comments
-* [ ] make `.` for 'return nothing'
+* [x] make `.` for 'return nothing'
 * [ ] generic range (loop) solver
 * [ ] convert all string instructions to builder calls
 * [ ] list comprehension

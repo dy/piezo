@@ -1645,6 +1645,18 @@
       + doesn't reinvent the meaning of `:` & create clutter
       + easier to find-all loops, opposed to mixup of `?:` and `:`
 
+## [ ] Overwrite method
+
+  1. `a[..] |>= _+1`
+    - new operator
+    - doesn't allow conditional overwrite
+
+  2. `a[..] |> _+=1`
+    + no new operator
+    + allows conditional overwrite `a[..] |> _ > 10 ? _ += 10;`
+    - not obvious on long pipes  `a[..] |> _ + 1 |> _ += 2` - should it prohibit or ovewrite something?
+      ? maybe it would be cleaner to have special character then `a[..] |> $ + 1 |> $ += 1`
+
 ## [x] ? Is there a way to multi-export without apparent `export` keyword for every function? -> `x,y,z.`
 
   * ? maybe it's good there's apparent `export` indicator - easy to scan and in-place, compared to accumulated export at the end.
@@ -1714,7 +1726,7 @@
   + `x -<= 0..10` is just a nice construct
   -  `x <- y` vs `x < -y`
 
-## [ ] Comments: `//`, `/*` vs `;;` and `(; ;)` → `//` is most based choice. `\\` gives many benefits `;;` either, but less intrusive
+## [ ] Comments: `//`, `/*` vs `;;` and `(; ;)` → ~~`//` is most based choice. `\\` gives many benefits~~ `;;` either, but least toxic
 
   1. `;;`
   * Message: mel is like assembly, expect low-level stuff & reading docs
@@ -5628,5 +5640,6 @@
 + meets limitation of 1000 members for stack
 + can possibly optimize sequences calc
 + v128 can store a..b
+  - we can's store generic ranges `a..b[]`
 + allows returning plain arrays in JS side
 - cannot export such function

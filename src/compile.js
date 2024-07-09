@@ -160,12 +160,16 @@ Object.assign(expr, {
   // a; b; c;
   // NOTE: [;, a] returns a, [;, a,,] returns nop
   ';'([, ...statements], out) {
-    if (!statements[statements.length - 1]) out = false;
-    let list = statements.map((s, i) => i === statements.length - 1 ? expr(s, out) : expr(s, false));
+    let list = statements
+      .filter(Boolean)
+      .map((s, i, items) => i === items.length - 1 ? expr(s, out) : expr(s, false));
 
     if (!list.length) return
-
     return op(list.join('\n'), list[list.length - 1].type)
+  },
+  // a,b,c. - voids result
+  '.'([, a]) {
+    return expr(a, false)
   },
 
   ','([, ...statements], out) {
@@ -468,7 +472,7 @@ Object.assign(expr, {
       const [, min, max] = a
       // FIXME: iterate with int if minop/maxop is int
       const minop = expr(min), maxop = expr(max)
-      const cur = define('_', 'f64'),
+      const cur = define('_', 'f64'), // FIXME: we may need to replace _ with reading / writing element instead
         idx = define(`idx:${depth}`, 'f64'),
         end = define(`end:${depth}`, 'f64'),
         bop = expr(b, out)
@@ -486,7 +490,7 @@ Object.assign(expr, {
         )
 
       depth--
-      return op(str, bop.type)
+      return op(str)
     }
 
     // (x = (a, b..c, d[e..])) |> ... - generic iterator

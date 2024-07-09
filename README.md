@@ -108,7 +108,7 @@ min~= ..m[..], max~= m[..]..; ;; find min/max in array
   i < 0 ? ../;                ;; if item < 0 break
 );                            ;;
 x[..] |> f(_) |> g(_);        ;; sequence of ops
-x[..] |>= _ * 2;              ;; overwrite source
+x[..] |> _ *= 2;              ;; overwrite source
 (i = 0..w) |> (               ;; nest iterations
   (j = 0..h) |> f(i, j);      ;; f(x,y)
 );                            ;;

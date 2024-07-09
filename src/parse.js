@@ -13,7 +13,7 @@ const OPAREN = 40, CPAREN = 41, OBRACK = 91, CBRACK = 93, SPACE = 32, QUOTE = 39
 
 // precedences
 const PREC_SEMI = 1, // a; b;
-  PREC_EXPORT = 2,
+  PREC_END = 2,
   PREC_RETURN = 4, // x ? ./a,b : y
   PREC_STATE = 4, // FIXME: *a,b,c, d=4 is confusing group
   PREC_PIPE = 5, // |> FIXME: should we raise that to ASSIGN to match js?
@@ -171,12 +171,18 @@ binary('%%', PREC_MULT, true)
 
 // clamps
 binary('~', PREC_CLAMP)
+binary('~<', PREC_CLAMP)
 binary('~/', PREC_CLAMP)
 binary('~*', PREC_CLAMP)
+binary('~//', PREC_CLAMP)
+binary('~**', PREC_CLAMP)
 
 // loop a[..] |> #
 nary('|>', PREC_PIPE)
-binary('|>=', PREC_PIPE, true)
+// binary('|>=', PREC_PIPE, true)
+
+// end a.; ;.;
+token('.', PREC_END, a => ['.', a])
 
 // range a..b, ..b, a..
 token('..', PREC_RANGE, a => (['..', a, expr(PREC_RANGE)]))
