@@ -5588,7 +5588,7 @@
   - each pipe operation creates a (macro) function in memory
   - no obvious way to break iteration
 
-2. rhs is loop, lhs is switch condition (or flattened gen function)
+2. rhs is loop, lhs is switch condition (or flattened generator function)
   - switch condition creates unnecessary check
     ~ that's minimal evil, and only for sequences
   + makes everything flat

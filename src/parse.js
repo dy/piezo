@@ -9,7 +9,7 @@ import { FLOAT, INT } from './const.js'
 export default parse
 
 // char codes
-const OPAREN = 40, CPAREN = 41, OBRACK = 91, CBRACK = 93, SPACE = 32, QUOTE = 39, DQUOTE = 34, PERIOD = 46, BSLASH = 92, SLASH = 47, _0 = 48, _9 = 57, COLON = 58, HASH = 35, AT = 64, PLUS = 43, MINUS = 45, GT = 62
+const OPAREN = 40, CPAREN = 41, OBRACK = 91, CBRACK = 93, SPACE = 32, QUOTE = 39, DQUOTE = 34, PERIOD = 46, BSLASH = 92, SLASH = 47, _0 = 48, _9 = 57, COLON = 58, SEMICOLON = 59, HASH = 35, AT = 64, PAREN_OPEN = 40, PAREN_CLOSE = 41, PLUS = 43, MINUS = 45, GT = 62
 
 // precedences
 const PREC_SEMI = 1, // a; b;
@@ -204,6 +204,10 @@ binary('?:', PREC_IF, true)
 token('?', PREC_IF, (a, b, c) => a && (b = expr(PREC_IF - 0.5)) && next(c => c === COLON) && (c = expr(PREC_IF - 0.5), ['?:', a, b, c]))
 
 // /**/ // comments
-token('/*', PREC_TOKEN, (a, prec) => (next(c => c !== STAR && cur.charCodeAt(idx + 1) !== SLASH), skip(2), a || expr(prec) || []))
-token('//', PREC_TOKEN, (a, prec) => (next(c => c >= SPACE), a || expr(prec) || []))
+// token('/*', PREC_TOKEN, (a, prec) => (next(c => c !== STAR && cur.charCodeAt(idx + 1) !== SLASH), skip(2), a || expr(prec) || []))
+// token('//', PREC_TOKEN, (a, prec) => (next(c => c >= SPACE), a || expr(prec) || []))
+
 // token('\\', PREC_TOKEN, (a, prec) => (next(c => c >= SPACE), a || expr(prec) || []))
+
+token('(;', PREC_TOKEN, (a, prec) => (next(c => c !== SEMICOLON && cur.charCodeAt(idx + 1) !== PAREN_CLOSE), skip(2), a || expr(prec) || []))
+token(';;', PREC_TOKEN, (a, prec) => (next(c => c >= SPACE), a || expr(prec) || []))
