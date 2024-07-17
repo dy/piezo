@@ -24,7 +24,7 @@ It has implicit types, organic sugar and smooth operator.
 x[i] x[]                      ;; member access, length
 a..b a.. ..b ..               ;; ranges
 ./ ../ .../ .                 ;; skip, break, return, end
-|> _                          ;; pipe / loop
+|> _                          ;; pipe & loop
 ~ ~= ~< ~/ ~* ~// ~**         ;; clamp, normalize, lerp
 
 ;; Variables
@@ -45,15 +45,14 @@ inf = 1/0, nan = 0/0;         ;; alias infinity, NaN
 a, b=1, c=2;                  ;; declare vars in C style
 foo();                        ;; semi-colons are mandatory
 (c = a + b; c);               ;; group returns last statement
-(a; b.);                      ;; period returns nothing
-(a = b+1; a,b,c);             ;; can return multiple values
+(a; b.);                      ;; void return
+(a = b+1; a,b,c);             ;; return multiple values
 (a ? ./b; c);                 ;; break current scope, return b
-((a ? ../; c); d);            ;; break 2 scopes
-(((a ? .../; c); d); e);      ;; break to the root scope, func return
+((a ? ../; c); d.);           ;; break 2 scopes, void return
+(((a ? .../b; c); d); e);     ;; break to the root scope, func return
 
 ;; Conditions
-a ? b;                        ;; if a then b (else 0)
-a ?: b;                       ;; if not a then b, elvis operator
+a ? b;                        ;; if a then b (void)
 sign = a < 0 ? -1 : +1;       ;; ternary conditional
 (2+2 >= 4) ? log(1) :         ;; multiline/switch
   3 <= 1..2 ? log(2) :        ;; else if
@@ -63,12 +62,14 @@ a && b || c;                  ;; (a and b) or c
 ;; Groups
 (a,b,c) = (d,e,f);            ;; assign (a=d, b=e, c=f)
 (a,b) = (b,a);                ;; swap
-(a,b,c) = d;                  ;; duplicate: (a, b, c) = (d, d, d);
+(a,b,c) = d;                  ;; duplicate: (a=d, b=d, c=d);
 (a,,b) = (c,d,e);             ;; skip: (a=c, d, b=e);
-(a,b) + (c,d);                ;; any operator: (a+c, b+d)
-(a, b, c)++;                  ;; (a++, b++, c++)
+(a,b) + (c,d);                ;; group binary: (a+c, b+d)
+(a, b, c)++;                  ;; group unary: (a++, b++, c++)
 (a,b)[1] = c[2,3];            ;; props: (a[1]=c[2], b[1]=c[3])
-a = (b,c,d);                  ;; a=b; a=c; a=d; (see loops)
+(a,b,..) = (c,d,e,f);         ;; pick: a=c,b=d;
+a = (b,c,d);                  ;; loop single: a=b; a=c; a=d;
+(a,b) = (c,d,e,f);            ;; loop pairs: a=c,b=d; a=e,b=f;
 
 ;; Ranges
 0..10;                        ;; from 1 to 9 (10 exclusive)
@@ -102,10 +103,10 @@ m[0..] = m[1..,0];            ;; rotate
 min~= ..m[..], max~= m[..]..; ;; find min/max in array
 
 ;; Loops
-(a, b, c) |> f(_);            ;; for each item in a, b, c do f(item)
+(a, b, c) |> f(_)             ;; for each item in a, b, c do f(item)
 (i = 10..) |> (               ;; descend over range
-  i < 5 ? ./;                 ;; if item < 5 skip (continue)
-  i < 0 ? ../;                ;; if item < 0 break
+  i < 5 ? ./                  ;; if item < 5 skip (continue)
+  i < 0 ? ../                 ;; if item < 0 break
 );                            ;;
 x[..] |> f(_) |> g(_);        ;; sequence of ops
 x[..] |> _ *= 2;              ;; overwrite source
@@ -114,7 +115,8 @@ x[..] |> _ *= 2;              ;; overwrite source
 );                            ;;
 (x,,y) = (a,b,c) |> _ * 2;    ;; x = a * 2, y = c * 2;
 .. |> i < 10 ? i++ : ./;      ;; while i < 10 i++
-..(i < 10) / 0 |> i++;        ;; alternative while
+..(i < 10) / 0 |> i++;        ;; hack: while
+((a,b) = 0..10 |> (a+b));     ;; loop pairs
 
 ;; Functions
 double(n) = n*2;              ;; define a function

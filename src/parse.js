@@ -203,8 +203,7 @@ unary('*', PREC_STATE)
 // conditions & ternary
 // a?b - returns b if a is true, else returns a
 binary('?', PREC_IF, true)
-binary('?:', PREC_IF, true)
-// binary(':', PREC_COLON)
+// binary('?:', PREC_IF, true)
 
 // ?: - we use modified ternary for our cases
 token('?', PREC_IF, (a, b, c) => a && (b = expr(PREC_IF - 0.5)) && next(c => c === COLON) && (c = expr(PREC_IF - 0.5), ['?:', a, b, c]))

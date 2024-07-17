@@ -1650,12 +1650,17 @@
   1. `a[..] |>= _+1`
     - new operator
     - doesn't allow conditional overwrite
+    -? `=` operator likely puts elements to stack, at least sequences `(a,b,c) = (d,e,f)`
+      - that means we're limited in cycling through
+      ~ not for ranges though, ranges still work via heap
+      ~+ nah, we should be able to do rewrite `a[..] = a[..] |> _` either way
 
   2. `a[..] |> _+=1`
     + no new operator
     + allows conditional overwrite `a[..] |> _ > 10 ? _ += 10;`
     - not obvious on long pipes  `a[..] |> _ + 1 |> _ += 2` - should it prohibit or ovewrite something?
       ? maybe it would be cleaner to have special character then `a[..] |> $ + 1 |> $ += 1`
+    - new unknown pattern, can be unexpected
 
 ## [x] ? Is there a way to multi-export without apparent `export` keyword for every function? -> `x,y,z.`
 
@@ -1761,9 +1766,9 @@
     + `;;` code is discouraged
   + `;;` is safer & softer, not as spiky / scratchy, more familiar
   + looks the most organic for non-too-nerdy code, the most design-ish
-  - creates conflict `a();;;some action` - comment is detected at `a();;...` which produces invalid code
+  - `a();;;some action` - comment is detected at `a();;...` which produces invalid code
     - in other words, such comments are not so easy to strip
-      ~ same problem is in C comments as `a///comment\nb`, less commonly met though
+      ~ same problem is in C comments as `a///comment\nb`, way less frequently met though
   - conflict with direct code, eg. `(;;;)` is valid code piece, but comment will strip it out
     ~ that's an edge case, code like `(;;)` is discouraged
     ~ paired with `(; comment ;)` that's not a threat
@@ -5529,7 +5534,7 @@
 * research was done somewhere here, but keyword "void" wasn't used, so to clarify
 - same as elvis `a ?: b` is not void, this is not void
 
-## [ ] Element of range: `a in b`?
+## [ ] Element of range: `a in b`? -> likely `a ~< (b,c,d)`
 
 * Range can be iterable, so comparison can cause evaluation
 
@@ -5586,7 +5591,7 @@
 * `a = b ? c`
   *  `=` <= `?`
 
-## [ ] `(x = (a, b..c[], d[e..] |> _*2) + f..g) |> x ? ^ : x+1` - how?
+## [x] `(x = (a, b..c[], d[e..] |> _*2) + f..g) |> x ? ^ : x+1` - how? -> see loop group iterations test
 
 1. rhs is dynamic function, generated code for the first sequence
   ```js
@@ -5635,7 +5640,7 @@
   }
   ```
 
-## [ ] Should we make `a,b` saved to stack, `a..b` saved to heap?
+## [x] Should we make `a,b` saved to stack, `a..b` saved to heap? -> no, storing range in stack is meaningless
 
 + meets limitation of 1000 members for stack
 + can possibly optimize sequences calc
@@ -5643,3 +5648,66 @@
   - we can's store generic ranges `a..b[]`
 + allows returning plain arrays in JS side
 - cannot export such function
+
+## [x] Assignment resolution `x = (1,2,3)` vs `x[1,2,3] = x[3,1,2]` - iterated (last item) vs saved/restored
+
+* first case is `(x=1; x=2; x=3)` - list is iterated in case of |> operator (else just last item)
+* second case needs resolution via stack or heap - list is saved (to heap/stack) and retreived
+
+## [ ] Groups with ranges - are ops iterations or group mappers? -> ~~`=` is iterating operator~~ `= |>` is only iterating operator
+
+1. `x = (a,b..c)`
+  * `x=a, x=b..c`
+2. `log(x = (a,b..c))`
+  a. ~~calls multiple times? `log(x=a); log(x=b..c)`~~
+  b. calls once with final argument `log(x=c)`
+    ? makes `=` a uniquely iterating operator
+      ~ it's already unique in assignment
+      ~ not really - it returns lhs as signle arg
+    - `(a,b..c) + 1` returns group
+3. `log((a,b..c))`
+  * ~~calls as `log(a), log(b), log(...), log(c)`~~
+    - that's inconsistent with `(a,b,c)` as items in stack
+    - `x()=(a,b..c);log(x())` - makes `log` be called multiple times
+    -? how to pass multiple args to a function as result of other function?
+      * must be as simple as `y(x())`
+        - but it contradicts calling as direct group `y((1,2,3))`
+    -? how to get first output from result of a function `x()`?
+      * ~~must be as simple as `x()[0]`~~
+        - which is confusable with getting 0 item of each element in a group
+      * ~~can be done as `x().0`~~
+        - group is pop/push, not any index
+      * ~~then `^x()`~~
+        - not clear how to pick multiple
+      * `(a,..)=x()`
+  * passes group as args to call
+    - it implies random-length args passed to fn
+      ~ we can limit that possibility as `fn((a,b,c)=x())`
+
+### [x] ~~Get element of group~~ - can get only head of stack, but see pick below
+
+* Suppose `x()` returns multiple elements, so we have groups as elements on stack
+
+1. `(a,b)[0]`
+  - `a[0],b[0]`
+2. `(a,b).1`
+  ~- can be confused with `a.1,b.2`
+    ~+ less so, since `.1` looks a bit more part of name
+  - mb a bit too heavy load on `.` - it already means a lot everywhere
+    ~+ `.` has to do with iterators/groups anyways
+  - introduces syntax layer, which is not good
+3. `(a,b)#1`
+
+* Since group deals with stack/heap, we cannot get arbitrary item, it is pop/push mechanics.
+
+### [x] How to pop/pick from group? -> `(a..) = x()`
+
+* See above: what if we need to get first element of returned group from `x()`?
+
+1. `(a,b)>>;(a,b)<<1`
+  - `(a<<1,b<<1)`
+2. `^(a,b,c) === a`
+  + regex does that
+  + that means arrow up operator
+  - not clear how to pick multiple
+3. `(a,b,c..) = d`

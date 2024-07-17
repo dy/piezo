@@ -22,7 +22,8 @@
 * [x] account ops for expected number of returns instead of forcing drops
 * [x] make `;;` for comments
 * [x] make `.` for 'return nothing'
-* [ ] generic range (loop) solver
+* [ ] range iterator via pipe
+* [ ] pair-wise iteration
 * [ ] convert all string instructions to builder calls
 * [ ] list comprehension
 * [ ] make use of `./`, `../`, `.../`

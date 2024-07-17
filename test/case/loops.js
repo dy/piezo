@@ -64,6 +64,8 @@ t.todo('loop: as fn return', () => {
   let wat = compileMel(`x=[1..3]; fill() = (0..x[] |> x[_]=_+1); fill, x`)
 })
 
+t
+
 t.todo('compile: current item assignment', t => {
   let wat = compileMel(`
     x=[..4];
@@ -109,4 +111,59 @@ t.todo('loop: over list', t => {
   is(arr[ptr], 2)
   is(arr[ptr + 1], 4)
   not(arr[ptr + 2], 6)
+})
+
+t.only('loop: iterate over range', () => {
+  let wat, mod, memory, a, b
+
+  wat = compileMel(`x = (1, 3..5, a[1..]) |> x`)
+  // supposed to compile to
+  // 0.out ;; output of 0 group
+  // 0.idx = 0 ;; 0 group element index
+  // 0.cur ;; 0 group range cursor (current item)
+  // 0.cur.null = 1 ;; if 0.cur is not active indicator
+  // while() {
+  //   if (0.idx == 0) 0.out = 1, 0.idx++
+  //   else if (0.idx == 1) {
+  //     if (0.cur.null) 0.cur = 3, 0.cur.null = 0
+  //     0.out = 0.cur++
+  //     if (0.cur >= 5) 0.idx++, 0.cur.null = 1
+  //   }
+  //   else if (0.idx == 2) {
+  //     if (0.cur.null) 0.cur = 1, 0.cur.null = 0
+  //     0.out = a[0.cur++]
+  //     if (0.cur >= a[]) 0.idx++, 0.cur.null = 1
+  //   }
+  //   else break
+  //   x = 0.out
+  //   x
+  // }
+  mod = compileWat(wat);
+  ; ({ memory, a, b } = mod.instance)
+
+  is(new Float64Array(memory.buffer, b.value, 1), [2], `[(a,b..c) |> _]`);
+
+  //
+
+  //   `a..b |> _`
+  //   `a.. |> _`
+  //   `..b |> _`
+  //   `.. |> _`
+  //   `(a,b..c) |> _`
+  //   `(a,b..) |> _`
+  //   `(a,..c) |> _`
+  //   `(a,..) |> _`
+  //   `(a,b[c..]) |> _`
+  //   `(a,b[c..],..d|>_*2) |> _`
+
+  //   `a[b..c] |> _`
+  //   `a[b..] |> _`
+  //   `a[..c] |> _`
+  //   `a[..] |> _`
+
+  //   `a[a..b,c] |> _`
+  //   `a[a..b,c..d] |> _`
+
+  //   `a..b + c.. |> _`
+  //   `(x = (a,b..c) + d..) |> _`
 })
