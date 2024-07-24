@@ -160,9 +160,8 @@ Object.assign(expr, {
   // a; b; c;
   // NOTE: [;, a] returns a, [;, a,,] returns nop
   ';'([, ...statements], out) {
-    let list = statements
-      .filter(Boolean)
-      .map((s, i, items) => i === items.length - 1 ? expr(s, out) : expr(s, false));
+    if (!statements[statements.length - 1]) out = false;
+    let list = statements.map((s, i) => i === statements.length - 1 ? expr(s, out) : expr(s, false));
 
     if (!list.length) return
     return op(list.join('\n'), list[list.length - 1].type)

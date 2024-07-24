@@ -48,8 +48,8 @@ Object.assign(expr, {
 
   ';'(node) {
     let list = []
-    // remove blank lines
-    for (let i = 1, statement; i < node.length; i++) if (statement = expr(node[i])) list.push(statement)
+    // remove blank lines making sure last el is kept undefined
+    for (let i = 1, statement; i < node.length; i++) if ((statement = expr(node[i])) || i === node.length - 1) list.push(statement)
     return list.length > 1 ? [';', ...list] : list[0]
   },
   ','(node) {
@@ -61,9 +61,6 @@ Object.assign(expr, {
       }
       return [a]
     })
-  },
-  '.'([, a]) {
-    return ['.', expr(a)]
   },
   './'([, a]) {
     return ['./', expr(a)]

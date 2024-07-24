@@ -1,9 +1,4 @@
-// test wast compiler
-
-import t, { almost, is, not, ok, same, throws } from 'tst'
-import parse from '../../src/parse.js'
-import compileMel from '../../src/compile.js'
-import Wabt from '../../lib/wabt.js'
+import Wabt from '../lib/wabt.js'
 import watr from 'watr';
 
 

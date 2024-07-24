@@ -17,13 +17,7 @@ t('functions: oneliners', t => {
   mod = compileWat(compileMel(` mult(a, b) = (b; a * b)`))
   is(mod.instance.exports.mult(2, 4), 8)
 
-  mod = compileWat(compileMel(` mult(a, b) = (b; a * b.)`))
-  is(mod.instance.exports.mult(2, 4), undefined)
-
-  mod = compileWat(compileMel(` mult(a, b) = (b; a * b.;)`))
-  is(mod.instance.exports.mult(2, 4), undefined)
-
-  mod = compileWat(compileMel(` mult(a, b) = (b; a * b;.)`))
+  mod = compileWat(compileMel(` mult(a, b) = (b; a * b;)`))
   is(mod.instance.exports.mult(2, 4), undefined)
 })
 

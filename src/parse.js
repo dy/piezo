@@ -182,7 +182,7 @@ nary('|>', PREC_PIPE)
 // binary('|>=', PREC_PIPE, true)
 
 // end a.; ;.;
-token('.', PREC_END, a => ['.', a])
+// token('.', PREC_END, a => ['.', a])
 
 // range a..b, ..b, a..
 token('..', PREC_RANGE, a => (['..', a, expr(PREC_RANGE)]))
