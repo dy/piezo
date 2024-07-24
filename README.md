@@ -23,8 +23,8 @@ It has implicit types, organic sugar and smooth operator.
 ?: ?                          ;; conditions
 x[i] x[]                      ;; member access, length
 a..b a.. ..b ..               ;; ranges
-./ ../ .../ .                 ;; skip, break, return, end
-|> _                          ;; pipe & loop
+./ ../ .../                   ;; skip, break, return
+|> _                          ;; pipe / loop
 ~ ~= ~< ~/ ~* ~// ~**         ;; clamp, normalize, lerp
 
 ;; Variables
@@ -35,41 +35,18 @@ default=1, eval=fn, else=0;   ;; no reserved words
 true = 0b1, false = 0b0;      ;; alias bools
 inf = 1/0, nan = 0/0;         ;; alias infinity, NaN
 
+;; Statements
+foo();                        ;; semi-colons are mandatory
+(c = a + b; c);               ;; returns last statement
+(c = a + b; c;);              ;; void return
+(a = b + 1; a,b,c);           ;; return multiple values
+(a ? ./b; c);                 ;; early return b
+
 ;; Units
 1k = 1000; 1pi = 3.1415926;   ;; define units
 1s = 44100; 1m = 60s;         ;; as sample indexes
 10.1k, 2pi;                   ;; 10100, 6.283...
 2m35s;                        ;; combinations
-
-;; Statements & scopes
-a, b=1, c=2;                  ;; declare vars in C style
-foo();                        ;; semi-colons are mandatory
-(c = a + b; c);               ;; group returns last statement
-(a; b.);                      ;; void return
-(a = b+1; a,b,c);             ;; return multiple values
-(a ? ./b; c);                 ;; break current scope, return b
-((a ? ../; c); d.);           ;; break 2 scopes, void return
-(((a ? .../b; c); d); e);     ;; break to the root scope, func return
-
-;; Conditions
-a ? b;                        ;; if a then b (void)
-sign = a < 0 ? -1 : +1;       ;; ternary conditional
-(2+2 >= 4) ? log(1) :         ;; multiline/switch
-  3 <= 1..2 ? log(2) :        ;; else if
-  log(3);                     ;; else
-a && b || c;                  ;; (a and b) or c
-
-;; Groups
-(a,b,c) = (d,e,f);            ;; assign (a=d, b=e, c=f)
-(a,b) = (b,a);                ;; swap
-(a,b,c) = d;                  ;; duplicate: (a=d, b=d, c=d);
-(a,,b) = (c,d,e);             ;; skip: (a=c, d, b=e);
-(a,b) + (c,d);                ;; group binary: (a+c, b+d)
-(a, b, c)++;                  ;; group unary: (a++, b++, c++)
-(a,b)[1] = c[2,3];            ;; props: (a[1]=c[2], b[1]=c[3])
-(a,b,..) = (c,d,e,f);         ;; pick: a=c,b=d;
-a = (b,c,d);                  ;; loop single: a=b; a=c; a=d;
-(a,b) = (c,d,e,f);            ;; loop pairs: a=c,b=d; a=e,b=f;
 
 ;; Ranges
 0..10;                        ;; from 1 to 9 (10 exclusive)
@@ -77,11 +54,33 @@ a = (b,c,d);                  ;; loop single: a=b; a=c; a=d;
 10..1;                        ;; reverse range
 1.08..108.0;                  ;; float range
 (a-1)..(a+1);                 ;; computed range
-(a,b,c) = 0..3 * 2;           ;; a=0, b=2, c=4
-a ~ 0..10; a ~= 0..10;        ;; clamp(a, 0, 10); a = clamp(a, 0, 10);
+0..3 * 2;                     ;; mapped range: 0*2, 1*2, 2*2
+(a,b,c) = 0..3 * 2;           ;; destructure: a=0, b=2, c=4
+a ~ 0..10;                    ;; clamp(a, 0, 10);
+a ~= 0..10;                   ;; a = clamp(a, 0, 10);
 a ~< 0..10;                   ;; a >= 0 && a < 10
 a ~/ 0..10; a ~* 0..10;       ;; normalize(a, 0, 10); lerp(a, 0, 10);
 a ~// 0..10; a ~** 0..10;     ;; smoothstep(a, 0, 10); ismoothstep(a, 0, 10);
+
+;; Groups
+(a,b,c) = (1,2,3);            ;; assign (a=1, b=2, c=3)
+(a,b) = (b,a);                ;; swap
+(a,b,c) = d;                  ;; duplicate: (a=d, b=d, c=d);
+(a,,b) = (c,d,e);             ;; skip: (a=c, b=e);
+(a,b) + (c,d);                ;; group binary: (a+c, b+d)
+(a, b, c)++;                  ;; group unary: (a++, b++, c++)
+(a,b)[1] = c[2,3];            ;; props: (a[1]=c[2], b[1]=c[3])
+(a,b,..,z) = (1,2,3,4);       ;; pick: (a=1, b=2, z=4)
+a = (b,c,d);                  ;; iterate: a=b; a=c; a=d;
+(a,b) = (1,2,3,4);            ;; pairwise: a=1,b=2; a=3,b=4;
+
+;; Conditions
+a ? b;                        ;; if a then b
+sign = a < 0 ? -1 : +1;       ;; ternary conditional
+(2+2 >= 4) ? log(1) :         ;; multiline/switch
+  3 <= 1..2 ? log(2) :        ;; else if
+  log(3);                     ;; else
+a && b || c;                  ;; (a and b) or c
 
 ;; Arrays
 m = [..10];                   ;; array of 10 elements
@@ -91,8 +90,8 @@ m = [n[..]];                  ;; copy n
 m = [1, 2..4, 5];             ;; mixed definition
 m = [1, [2, 3, [4]]];         ;; nested arrays (tree)
 m = [0..4 |> _ ** 2];         ;; list comprehension
-(first, last) = (m[0], m[-1]);;; get by index
-(second, ..last) = m[1, 2..]; ;; get multiple values
+(a, z) = (m[0], m[-1]);       ;; get by index
+(b, ..z) = m[1, 2..];         ;; get multiple values
 length = m[];                 ;; get length
 m[0] = 1;                     ;; set value
 m[2..] = (1, 2..4, n[1..3]);  ;; set multiple values from offset 2
@@ -105,7 +104,7 @@ min~= ..m[..], max~= m[..]..; ;; find min/max in array
 ;; Loops
 (a, b, c) |> f(_)             ;; for each item in a, b, c do f(item)
 (i = 10..) |> (               ;; descend over range
-  i < 5 ? ./                  ;; if item < 5 skip (continue)
+  i < 5 ? ./                  ;; if item < 5 continue
   i < 0 ? ../                 ;; if item < 0 break
 );                            ;;
 x[..] |> f(_) |> g(_);        ;; sequence of ops
@@ -113,10 +112,10 @@ x[..] |> _ *= 2;              ;; overwrite source
 (i = 0..w) |> (               ;; nest iterations
   (j = 0..h) |> f(i, j);      ;; f(x,y)
 );                            ;;
-(x,,y) = (a,b,c) |> _ * 2;    ;; x = a * 2, y = c * 2;
-.. |> i < 10 ? i++ : ./;      ;; while i < 10 i++
-..(i < 10) / 0 |> i++;        ;; hack: while
-((a,b) = 0..10 |> (a+b));     ;; loop pairs
+((a,b) = 0..10) |> a+b;       ;; loop pairs
+(x,,y) = (a,b,c) |> _ * 2;    ;; write result x = a*2, y = c*2;
+.. |> i < 10 ? i++ : ../;     ;; while i < 10 i++
+..(i < 10) / 0 |> i++;        ;; alternstive while
 
 ;; Functions
 double(n) = n*2;              ;; define a function
@@ -131,6 +130,8 @@ copy = triple;                ;; capture function
 copy(10);                     ;; also 30
 dup(x) = (x,x);               ;; return multiple values
 (a,b) = dup(b);               ;; multiple returns
+f() = (a+(b+(c)); a,b,c)      ;; vars are defined in fn scope
+a=1; f()=(^a; a=2);           ;; global variables
 
 ;; State vars
 a() = ( *i=0; ++i );          ;; i persists value between calls
@@ -147,7 +148,7 @@ d(fn) = (fib(), fn());        ;; to get external state, pass fn as argument
 d(c);                         ;; 1, 8;
 
 ;; Export
-x, y, z;                      ;; exports last statement
+x, y, z                       ;; exports last statement
 ```
 
 <!--

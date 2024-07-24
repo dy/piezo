@@ -1,10 +1,10 @@
 process(data, width, height) = (
-  y = 0..height |> (
+  (y = 0..height) |> (
     (y1, y2) = (y+1, y+2);
     (y1, y2) >= height ? (y1, y2) = height - 1;
     (ptr0, ptr1, ptr2) = (y, y1, y2) * width;
 
-    x = 0..width |> (
+    (x = 0..width) |> (
       (x1, x2) = (x+1, x+2);
       (x1, x2) >= width ? (x1, x2) = width - 1;
 

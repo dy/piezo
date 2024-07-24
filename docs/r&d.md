@@ -347,7 +347,6 @@
     + npm is free
     + kirtan.i, mono.i, sobel.i, viznut.i, predestined-fate.i
 
-
 ## [ ] Free operators
 
   * `<>`, `><`
@@ -608,8 +607,8 @@
 
 ## [ ] strings: interpolation -> likely `"a $<b> c"`
 
-1. `"a {b} c"`
-2. `"a $<b> c"`
+  1. `"a {b} c"`
+  2. `"a $<b> c"`
   + matches includes signature `<math#x,y>`
   + matches JS regex signature
   + `<>` means insert something here
@@ -896,22 +895,24 @@
 
 ### [x] End operator (discussion above is old): to have or not to have? -> no, less ops the better
 
-  + `a,b,c.` explicitly indicates exported members
-    - we can do export by last statement as `a,b,c`, thinking it be similar to fn return
-      + fn return is unnamed, module exports is named
-      + module exports cannot return numbers or just values
-    - confusing intuition: `./a,b,c` returns `a,b,c`, but `a,b,c.` exports `a,b,c`.
-  + tribute to Erlang's and natural langs PERIOD.
-  - `a,b,c` - less conflict with other `.`-including operators.
-  - less is more
-  - no-period allows easier concat of modules.
+  1. `a,b,c.` explicitly indicates exported members
+      - we can do export by last statement as `a,b,c`, thinking it be similar to fn return
+        + fn return is unnamed, module exports is named
+        + module exports cannot return numbers or just values
+      - confusing intuition: `./a,b,c` returns `a,b,c`, but `a,b,c.` exports `a,b,c`.
+    + tribute to Erlang's and natural langs PERIOD.
+    - `a,b,c` - less conflict with other `.`-including operators.
+    - less is more
+    - no-period allows easier concat of modules.
 
-### [x] `a,b,c.` - return nothing
-
-  + end = no return, which is logical
-  + matches `./` intuition: it would be `(a;./b)` to return something, but we just do `(a;b.)`to force returning none
-  + resolves last semicolon confusion - now `;` can always return last statement even with semicolon, unless `.` indicates nothing.
-  + typographical, erlangy
+  2. `a,b,c.` for void - return nothing
+    + end = no return, which is logical
+    + matches `./` intuition: it would be `(a;./b)` to return something, but we just do `(a;b.)`to force returning none
+      - what's the point if `(a;./)` === `(a;.)`?
+    + resolves last semicolon confusion - now `;` can always return last statement even with semicolon, unless `.` indicates nothing.
+      ~- not so elegant as just skipping semi
+    + typographical, erlangy
+    - `.` could've been used as part of name (like stateful instance) or static props in the future
 
 ## [x] Early return operator? → ~~keep `a ? ^;` for now~~ `./`, `../`, `.../` is most logical
 
@@ -1090,7 +1091,7 @@
       * or else `.` depends on `()`: `(a.)` is result, `a.` is export.
   + Since `(a;b;c)` naturally returns last element, so must function body.
 
-## [ ] Break, continue, return? -> `^` for continue, `^^` for return, `^^^` for root return.
+## [ ] Break, continue, return? -> `./` for continue, `../` for return, `.../` for root return.
 
   1. `^` for continue, `^^` for break;
     + nice pattern to skip callstack;
@@ -1125,7 +1126,7 @@
   ? If `?..` is early return current scope, then how to break loop?
     * we can avoid return generally and only bail out from current scope.
 
-### [x] ? Can we use something else but . for export? → ~~let's try `a.` as global export operator~~ -> last members are exported by default, `.` indicates end of program.
+### [ ] ? Can we use something else but . for export? → ~~let's try `a.` as global export operator~~ -> last members are exported by default
 
   - that seems to create confusion for `a(x,y) = x*y.` case
   - that doesn't seem to belong to natural languages - marking . with export.
@@ -1172,7 +1173,7 @@
     + that solves problem of instancing
     + identified by callstack
 
-## [ ] Stateful vars syntax → `*` seems to match "save value" pointers intuition
+## [x] State variables: syntax → `*` seems to match "save value" pointers intuition, star for save
 
   * There's disagreement on `...` is best candidate for loading prev state. Let's consider alternatives.
   1. `...x1,y1,x2,y2`
@@ -1210,6 +1211,7 @@
     - too many meanings to topical operator
   → 3. `*x1, *x2, *y1, *y2`
     + existing convention of `*` as save
+    + "star operator" for "save"
     . C / Rust / Go pointers are the same.
       > It (* - dereference operator) can be used to access or manipulate the data stored at the memory location, which is pointed by the pointer.
       > Any operation applied to the dereferenced pointer will directly affect the value of the variable that it points to.
@@ -1218,8 +1220,7 @@
         + * is more ambiguous than &: & gets address of a value, * indicates pointer declaration, as well as assigns (saves) value: it acts almost as part of variable name.
       + C intuition for "save" value by pointer is `*value = 123`
     + Go pointers don't have pointers arithmetic, so we're not going to need pointer assignment
-    - no group
-      ~+ group can be defined as `*(a=0,b=1)`
+    ~+ group can be defined as `*(a=0,b=1)`
     ~ `song()=(*t=0;)`
     + used in JS for generators and other "additional" stuff
     - a bit hard to "find all" since * is not part of id
@@ -1244,9 +1245,9 @@
       y0
     )
     ```
-    ~ `song()=(*t=0;)`
     +! can use postfix `x1*;` to save state, that's just hidden hack
     - looks like Python's splat operator `*(a,b,c)`
+
   3.1 ~~`x1*, x2*, y1*, y2*`~~
     + typographic meaning as footnote
     - `x1*=2`
@@ -1661,21 +1662,6 @@
     - not obvious on long pipes  `a[..] |> _ + 1 |> _ += 2` - should it prohibit or ovewrite something?
       ? maybe it would be cleaner to have special character then `a[..] |> $ + 1 |> $ += 1`
     - new unknown pattern, can be unexpected
-
-## [x] ? Is there a way to multi-export without apparent `export` keyword for every function? -> `x,y,z.`
-
-  * ? maybe it's good there's apparent `export` indicator - easy to scan and in-place, compared to accumulated export at the end.
-  → C++ exports implicitly function clauses.
-  * ? Should we export at all? Maybe we can just export all by default and assign main function, as it is done in C?
-    - not having export keyword is asymmetric with import
-      ? should we rename it to include?
-    - import signature isn't infix. Prefix?
-  * Exporting overloaded function that imposes tax of implementing clause selector for JS; in wasm that's not necessary.
-    * We could export for JS exactly the indicated clause?
-      ? how would we export multiple clauses?
-        → easiest would be to provide JS wrapper. The variety of WASM export forms is huge.
-  * Export area solves the issue: `gain()=...; export gain`
-  -> Same as `(a;b,c)` returns b and c - return last items as `gain=()->{}; gain, gain1, gain2`.
 
 ## [x] Arrays: to be or not to be? → persistent fixed-size flat structures
   * ? what if we don't deal with arbitrary-length arrays?
@@ -2107,18 +2093,36 @@
   + allows notes constants
   ~ mb non-standardish
 
-## [x] Scope or not to scope? → make () a block if new variables are defined there
+## [x] Variables: Scope or not to scope? → make () a block if new variables are defined there
 
   + maybe we need `{}` as indicator of scope: outside of it variables are not visible.
   - (a,b)=>a+b also creates scope: a and b are unavailable outside of fn body - why not stretching that to language?
   - look at [erlang functions](https://www.erlang.org/doc/reference_manual/functions.html): they use only `;` and `.`
 
-  * ? blocks: {} vs ()
-    . {} feels somewhat movetone.
-    . block basically needs limiting variable scope, it doesn't have sense on its own.
-    → we can make () a block if that includes variables definition, otherwise not.
-    + we may require block if new variables are defined, else args must be used.
-    + () makes warmer inside, sort of nest in literal sense.
+### [x] Variables: blocks: {} vs () -> `()`
+
+  . {} feels somewhat movetone.
+  . block basically needs limiting variable scope, it doesn't have sense on its own.
+  → we can make () a block if that includes variables definition, otherwise not.
+  + we may require block if new variables are defined, else args must be used.
+  + () makes warmer inside, sort of nest in literal sense.
+
+### [x] Variables: declaration within scope `(a;(a=0))` vs `((a=0);)` -> defined per fn body like python
+
+  1. left defines first-level variable and modifies it within second scope, right - creates second-level variable
+    - makes parens affect vars visibility, eg `((a);(a=0))` loses variable
+    - makes code logic sensitive to presence of parens, ie parens are not transparent anymore (same defect as state vars defining fn scope)
+  2. all variables are declared per fn body scope
+    + in-sync with state variables
+    + in JS that's common practice how it's done - one declaration block, rest is just reuse of vars
+    - cannot shadow globals, so the code is still sensitive to presence of global variables, some global names can affect logic
+
+### [x] Variables: coming together -> global indicator
+
+  * we need special assignment precedence only for declarations, everywhere else that's group `a,b,c = d,e,f`
+  * declaration would allow us to secure scope - make it independent of global
+  * there are variable kinds: const, ui, var, state
+  * v128 cannot be used as global or as fn return
 
 ## [x] Inlining / Mangling / compressing
 
@@ -3244,27 +3248,81 @@
     + matches array layout
     + it already indexes like that in biquad filter code `x1,x2 = x0,x1`
 
-## [x] Should we make mandatory var initializing area `~i=0;`? -> nah
+## [ ] Variables: how do we make var/let/const? -> we must indicate global vars, like python
 
-  (indicated above in 1.1):
-  + brings arrays to the same level as `~arr[10]`, `*state[10]`, `(in[2,1024])`
-  + literally means "variable"
-  + indicates all used variables explicitly
-    - forces redundant notation: can easily init directly
-      ~ isn't that heavy burden: can be as useful as direct init, but easier to parse
-  + introduces "variable type": can be `.param=10 <- 0..100` for external param via UI (unlike argument).
-  - conflicts with global "no-prefix" inits.
-    ~ we can make it an indicator of actual variable, opposed to const `-arr[10]`
-      - still, pollutes global...
-        ~ can be quite useful, as indicator that we don't change globals. So only globals can be defined directly.
-  - a concept user doesn't have to know necessarily
+  * `~x;`
+    + `~` means "variable"
+      - conflicts with `~` for clamp
+    + introduces "variable type": can be `.param=10 <- 0..100` for external param via UI (unlike argument).
+      + state variable `*`, ui variabl `.`, regular variable `~`, const `-`
+    - conflicts with global "no-prefix" inits.
+      ~ we can make it an indicator of actual variable, opposed to const `-arr[10]`
+        - still, pollutes global...
+          ~ can be quite useful, as indicator that we don't change globals. So only globals can be defined directly.
+    - a concept user doesn't have to know necessarily
+    + is not new syntax, just an extra meaning for regular syntax - doesn't break anything
 
-## [x] UI variables -> move to latr
+  * `:x,y,z;`
+    + nice use of `:`
+    - not standard syntax
+
+  * `x(a,b;c,d) = (...)` for local variables
+    + no new syntax
+    - unusual use
+
+  * `x(a,b,c=c,d=d)` - list globals
+    - no clarity about reassigning global
+
+  * `x(...) = (_a, _b)` - lowdash to enforce local
+    + global never starts with lowdash
+    - forces all internal vars be prefixed
+
+  * `x(...) = (a + A)` - capcase for global
+    - enforces cap-sensitivity
+
+  * `x(...) = (a,b,c;)` - effectless group/vars make them init
+    + organic
+    - init or global assign `a=1, b=2, c=3;`
+
+  * `x(...) = (&(a,b,c); )`
+    + args AND locals
+
+  * `x(...) = (@(a,b,c); )`
+
+  * force globals to be constants/modifyable from outside
+    + globals are unlikely to change
+      ~ one example is subscript
+    + can be worked as array `cur = [0]; x() = (cur[0]; cur[0] = 1)`
+    - throws compile-time error, but the problem remains: we may not have control over 3rd party code to isolate locals
+
+  * prefix global anyhow
+    + `window.x` is good JS practice, vs unclear `x`
+    + python, PHP has that practice
+    + we don't need to initialize global variables
+    ? how
+
+### [ ] Variables: how to indicate global vars? -> `^x;`
+
+  1. Python `global x;` + prevent modification
+  2. Ruby `$x;`
+  3. `^x;`
+    + reference to "global" scope
+    + nice use of `^` operator
+    -~ new operator, not full reuse of existing one
+  4. `<x>;`
+    + indicates place of "insertion" like imports
+    + doesn't require a separate declaration of global
+    + immediately seen as global anywhere in expression
+    + doesn't meld with name, obviously separate `<a> = 123;`
+    - can block imports
+    - not as compact as `^`
+
+## [x] Variables: UI variables -> move to latr
 
   1. Special syntax?
   ```
-  gain = in -> (
-    .amp=1 <- 0.1..100;       // create UI knob for amp
+  gain(in) = (
+    .amp = 1 ~ 0.1..100;       // create UI knob for amp
     in*amp
   );
   ```
@@ -3272,7 +3330,7 @@
   2. Can be just external fn
   ```
   'latr#knob'
-  gain = in -> (
+  gain(in) = (
     amp=knob(1, 0.1..100);       // create UI knob for amp
     in*amp
   );
@@ -3617,7 +3675,7 @@
   + more cross-platform compatible
   - not really
 
-## [x] Should var scope be defined by parens `(x=1;(y=2;);y)` or by function? -> use per-function scope
+## [x] Variables: Should var scope be defined by parens `(x=1;(y=2;);y)` or by function? -> use per-function scope
 
   1. By parens: `y==undefined`
 
@@ -3642,34 +3700,16 @@
   + simpler var naming implementation logic
   + less variables-per-function in result
   + solves issue of loops `a <| x -> (y=x)` - `y` becomes function-wise variable
-  - no scope isolation like `let` in JS, not sure what's usefulness of that
+  - no scope isolation like `let` in JS
+  - global variable can affect workable local code: not nice
 
-## [x] How to solve problem of array `length` in scope definition - it can't be used as variable name? -> use .scope
+## [x] Variables: Overdeclaring local variables -> shadowing is not nice anyways
 
-  * it's not just .length - it's any array methods
-
-  1. Catch any set of variable with that name and map to some other name
-  - too many modifications in code
-  + fastest
-
-  2. Extend array class with own class and redefine that property
-
-  3. Use proxy to intercept access to .length
-
-  4. Inherit from array as `Object.create(arr)`
-  + we inherit anyways
-
-  5. Inherit from array as `Object.create(Array.prototype)`
-  - 10 times slower than direct array
-
-  6. Just store in `scope.var`
-  + fastest
-  + no pollution
-  + allows other subscopes, like import, export, args etc
-  - doesn't do direct inheritance
-    + enhances inheritance by maintaining pure object
-
-  7. Store `node.scope` as vars.
+  * `(x=1; (x=2;))` - `x` in both scopes is the same variable, so that we can't declare `x` within nested scope this way.
+    - ie outer scope affects code within inner scope
+  * that means there's one global namespace
+  ~+ shadowing variables in JS is not nice practice anyways `let x = 0; if () { let x = 1; } `
+    - but at least it secures/incapsulates code block, makes independent of globals
 
 ## [x] Remove desugaring or keep? -> remove, make desugaring in analyser
 
@@ -3956,7 +3996,7 @@
   + we kind-of need idx checker function if we're going to implement ring buffer
   + modwrap operator is for that purpose...
 
-## [x] Scope resolution (fns within fns) -> functions have no nested scopes and declared at the top level
+## [x] Scope resolution (fns within fns) -> functions have no nested functions and declared at the top level
 
   * Would be nice to make all variables local
     + less noise in code, + local.tee available
@@ -4710,12 +4750,6 @@
   - likely no, since we use it in `@math.pi`
   - we don't really need member access generally
 
-## [x] Overdeclaring local variables -> shadowing is not nice anyways
-
-  * `(x=1; (x=2;))` - `x` in both scopes is the same variable, so that we can't declare `x` within nested scope this way.
-  * that means there's one global namespace
-  * shadowing variables in JS is not nice practice anyways `let x = 0; if () { let x = 1; } `
-
 ## [x] Changing variables type `x=1;x=1.0;` -> vars are always f64, operators can cast to int
 
   * that's problematic via wasm, since it enforces variable type: would be wrong to cast float to int
@@ -5040,7 +5074,7 @@
       ~+ prelim returns belong to userland anyways, it's not demanded internally
     - we can't
 
-## [x] State variables: How can we call same fn twice with same context? -> context is the same per-scope; to call with other context - wrap into a function; you can pass funcs by reference.
+## [x] State variables: How can we call same fn twice with same context? -> context is the same per-fn-scope; to call with other context - wrap into a function; you can pass funcs by reference.
 
   * It seems for now to be able only externally
   ? but what if we need to say fill an array with signal from synth?
@@ -5125,7 +5159,7 @@
       -> these sounds use same osc instance.
       ? should osc instance depend on current scope?
 
-  8.1 Per-scope-instance: `osc(); sound1(f)=(osc(f)+...); sound2(f)=(osc(f)+...)`
+  8.1 Per-scope (fn body) instance: `osc(); sound1(f)=(osc(f)+...); sound2(f)=(osc(f)+...)`
     + no osc id conflict
     ~ separate instances can be only-static as `osc.1(f) + osc.2(f) + osc.3(f)`
       + doesn't reserve `#` syntax
@@ -5148,11 +5182,11 @@
           ? same time how to create new instance then?
             !? `x()=(sin(x))` calls root instance, `*y()=(sin(x))` creates new instance?
               ? how to make mixed new and old instances then, eg. `y()=(*sin(a)+sin(b))`?
-                !? pass fn as arg: `x(sin1)=(sin()+sin1())` - keeps state of parent fn
-                  + we can pass fn refs as floats as well - it seems trivial to store all funcs in a table
-                    + that allows calling directly or indirectly
+            !? pass fn as arg: `x(sin1)=(sin()+sin1())` - keeps state of parent fn
+              + we can pass fn refs as floats as well - it seems trivial to store all funcs in a table
+                + that allows calling directly or indirectly
 
-## [ ] State variables logic - how to map callsite to memory address? -> see implementation
+## [ ] State variables:logic - how to map callsite to memory address? -> see implementation
 
   ```
   sin(f, (; scope-id ;)) = (*phase=0;>phase+=f;...);
@@ -5483,231 +5517,258 @@
 
 ## [x] Replace `|>` with `|:` for loops? -> nah, let's keep `|>`
 
-1. `|:`
-  + matches musical repeat block, which is very intuitive
-  + reminds label a: ...
-  + keeps body visually clean after bar, as if returning result, condition clarifies body: `[x*2]` → `[x*2 |: x in 1..10]`
-  + `|:` sounds like `|` such `:` that, swoooch th th
-    + matches set builder `x++ |: x < 5` as `x++ such that x < 5`
-  - it subtly conflicts with elvis operator `x in 1..10 ?: body`, but `x in 1..10 |: body`
-    ~ we don't have elvis
-  + `x * 2 |` is close intuition to standard list comprehension syntax
-  + musically loop may have multiple ends and end mark `:|` place is uncertain, but `|:` is unambiguously at the beginning of loop.
-  + refer to looping body, not condition, which is better by musical intuition
-    - it disjoints condition from repeating part. In music |: denotes the beginning of loop, whereas here it stands in the middle.
-  - does not stand as nice with parens `range |: (# + 1);`
+  1. `|:`
+    + matches musical repeat block, which is very intuitive
+    + reminds label a: ...
+    + keeps body visually clean after bar, as if returning result, condition clarifies body: `[x*2]` → `[x*2 |: x in 1..10]`
+    + `|:` sounds like `|` such `:` that, swoooch th th
+      + matches set builder `x++ |: x < 5` as `x++ such that x < 5`
+    - it subtly conflicts with elvis operator `x in 1..10 ?: body`, but `x in 1..10 |: body`
+      ~ we don't have elvis
+    + `x * 2 |` is close intuition to standard list comprehension syntax
+    + musically loop may have multiple ends and end mark `:|` place is uncertain, but `|:` is unambiguously at the beginning of loop.
+    + refer to looping body, not condition, which is better by musical intuition
+      - it disjoints condition from repeating part. In music |: denotes the beginning of loop, whereas here it stands in the middle.
+    - does not stand as nice with parens `range |: (# + 1);`
 
-  + it takes step away from associating `|>` with js pipes: it's not pipe.
-  + has less to do with wrong assoc with `|>` etc.
+    + it takes step away from associating `|>` with js pipes: it's not pipe.
+    + has less to do with wrong assoc with `|>` etc.
 
-  - `|:` is less obvious for pipes than `|>`, `out |>= gen() |> lp(#) |> amp(#)`
-    ? `out |:= gen() :|: lp() :|: amp()`
-      - not as nice for multiline
-  - not convinced yet, way too fancy
-  - no obvious way to write to destination
-2. `|>`
-  + looks like play
-  + indicates direction
-  + allows vertical stacking
-  - looks like pipe but has less to do with actual pipes
-  - wrong operator sequence with loop `for i=0, i<len, i++`
-  + allows directing output to range as `out[..] |> op(#) |> out[..]`
-    ~ not necessary since can be done as `out[..] = out[..] |> op(#)` or `out[..] |>= op(#)`
-  + gives flow feeling
-3. `<++`, `<=++`
-  + matches operator sequence from loop
-  - doesnt' work as pipe vertically
-4. `|<`, `|<=`
-  + keeps pipe vertically
-  - not nice to type due to autocomplete
-5. `->`, `=>`
-  - no pipe feeling
-  - confusable with fn definitions
+    - `|:` is less obvious for pipes than `|>`, `out |>= gen() |> lp(#) |> amp(#)`
+      ? `out |:= gen() :|: lp() :|: amp()`
+        - not as nice for multiline
+    - not convinced yet, way too fancy
+    - no obvious way to write to destination
+  2. `|>`
+    + looks like play
+    + indicates direction
+    + allows vertical stacking
+    - looks like pipe but has less to do with actual pipes
+    - wrong operator sequence with loop `for i=0, i<len, i++`
+    + allows directing output to range as `out[..] |> op(#) |> out[..]`
+      ~ not necessary since can be done as `out[..] = out[..] |> op(#)` or `out[..] |>= op(#)`
+    + gives flow feeling
+  3. `<++`, `<=++`
+    + matches operator sequence from loop
+    - doesnt' work as pipe vertically
+  4. `|<`, `|<=`
+    + keeps pipe vertically
+    - not nice to type due to autocomplete
+  5. `->`, `=>`
+    - no pipe feeling
+    - confusable with fn definitions
 
 ## [x] Prohibit non-range operands for loops, `a |> x` means iterate over 1 element only
 
-+ to iterate array always provide range or list `a[..] |> #`, `a, b, c |> #`
-+ removes ambiguity from code and from brain
+  + to iterate array always provide range or list `a[..] |> #`, `a, b, c |> #`
+  + removes ambiguity from code and from brain
 
-## [x] Is `a ? b;` void or not? -> not void, like elvis a ?: b or a ? b : c
+## [ ] Is `a ? b;` void or not? -> ~~not void, like elvis a ?: b or a ? b : c~~ void
 
-* research was done somewhere here, but keyword "void" wasn't used, so to clarify
-- same as elvis `a ?: b` is not void, this is not void
+  * research was done somewhere here, but keyword "void" wasn't used, so to clarify
+  + void: makes it direct, simple and different from `a && b`
+  +? we have void operator also, do we? at least fns can return nothing, so
+  - `a ? ./b;` is not void
+    ~ but return doesn't affect
+  - same as elvis `a ?: b` is not void, this is not void
 
 ## [ ] Element of range: `a in b`? -> likely `a ~< (b,c,d)`
 
-* Range can be iterable, so comparison can cause evaluation
+  * Range can be iterable, so comparison can cause evaluation
 
-0. `x < 0..2`
-  - `x < 0..2` is `x < 0, x < 1`
-1. `x ~< from..to`, `x ~< a,b,c`
-  - `x <~ from..to` is `x < ~from..to`
-    + `from..to ~> x`
-  - conflicts with `x ~ from..to` for just clamp
-  - heavy
-  - doesn't play well with sets
-  + logical in a sense referring to `~` for ranges
-2. `from < x < to`
-  - makes comparison nary operator
-  - destroys range, meaning it cannot be calculable
-  - doesn't play with sets
-3. `x = from..to ? ^`
-4. `x <> from..to`
-  - wrong direction of `>`
-4.1 `x >< from..to`, `x ><= from..to`, `x >< a,b,c`
-  + right direction of operands `x > from && x < to`
-  - refers to intersection
-5. `from..to -> x`, `a,b,c -> x`
-  + follows https://en.wikipedia.org/wiki/Element_(mathematics)
-  ?+ can be used for loops: `x[..] -> i : i+1 : i + 2 => x[..]`
-    - conflict with `i = a,b,c : i**2`
-6. `a ==|| (b,c,d)` for set comparison
-  + `a == b || a == c || a == d`
-  - non-conventional use joined operator, usually that's assignment
-7. `a ?:== (b,c,d)`
-8. `a -| b..c`
-9. `a <: b..c`, `a <=: b..c`
-9.1 `a :< b..c`, `a :<= b..c`
+  0. `x < 0..2`
+    - `x < 0..2` is `x < 0, x < 1`
+  1. `x ~< from..to`, `x ~< a,b,c`
+    - `x <~ from..to` is `x < ~from..to`
+      + `from..to ~> x`
+    - conflicts with `x ~ from..to` for just clamp
+    - heavy
+    - doesn't play well with sets
+    + logical in a sense referring to `~` for ranges
+  2. `from < x < to`
+    - makes comparison nary operator
+    - destroys range, meaning it cannot be calculable
+    - doesn't play with sets
+  3. `x = from..to ? ^`
+  4. `x <> from..to`
+    - wrong direction of `>`
+  4.1 `x >< from..to`, `x ><= from..to`, `x >< a,b,c`
+    + right direction of operands `x > from && x < to`
+    - refers to intersection
+  5. `from..to -> x`, `a,b,c -> x`
+    + follows https://en.wikipedia.org/wiki/Element_(mathematics)
+    ?+ can be used for loops: `x[..] -> i : i+1 : i + 2 => x[..]`
+      - conflict with `i = a,b,c : i**2`
+  6. `a ==|| (b,c,d)` for set comparison
+    + `a == b || a == c || a == d`
+    - non-conventional use joined operator, usually that's assignment
+  7. `a ?:== (b,c,d)`
+  8. `a -| b..c`
+  9. `a <: b..c`, `a <=: b..c`
+  9.1 `a :< b..c`, `a :<= b..c`
 
 ## [x] Write out operator `x[..] : a : b : x[..]` -> `x[..] |> a() |> b() |> x[..] = _`
 
-* we need it for copying loops or redirection, since `a = b` is not always the most useful
-1. `a..b -> x[..]`
-1.1 `a..b => x[..]`
-  - conflict with arrow fns
-2. `a..b := x[..]`
-  - reads as `a..b : a..b = x[..]`
-2.1 `a..b =: x[..]`
-  - breaks end pipe alignment
+  * we need it for copying loops or redirection, since `a = b` is not always the most useful
+  1. `a..b -> x[..]`
+  1.1 `a..b => x[..]`
+    - conflict with arrow fns
+  2. `a..b := x[..]`
+    - reads as `a..b : a..b = x[..]`
+  2.1 `a..b =: x[..]`
+    - breaks end pipe alignment
 
 ## [x] ~~`, : ? =` precedence riddle~~ -> we use pipe instead of `:` for loops
 
-* `a ? b : c`
-  * `:` >= `?`
-* `a = b : b`
-  ? `=` >= `:`
-  + can be `:` > `=` for loops
-  - must be `:` < `=` in `a ? b=c : d=e`
-* `a = b ? c`
-  *  `=` <= `?`
+  * `a ? b : c`
+    * `:` >= `?`
+  * `a = b : b`
+    ? `=` >= `:`
+    + can be `:` > `=` for loops
+    - must be `:` < `=` in `a ? b=c : d=e`
+  * `a = b ? c`
+    *  `=` <= `?`
 
 ## [x] `(x = (a, b..c[], d[e..] |> _*2) + f..g) |> x ? ^ : x+1` - how? -> see loop group iterations test
 
-1. rhs is dynamic function, generated code for the first sequence
-  ```js
-  const r = (v) => x ? break : x+1;
-  let fgi = 0
-  r(x=a+(f+fgi++));
-  for (i = b; i < c; i++) r(i + fgi++);
-  for (i = e; i < d[]; i++) r(double(d[i]) + fgi++);
-  ```
-  - creating unnecessary scope & exec context
-  - each pipe operation creates a (macro) function in memory
-  - no obvious way to break iteration
+  1. rhs is dynamic function, generated code for the first sequence
+    ```js
+    const r = (v) => x ? break : x+1;
+    let fgi = 0
+    r(x=a+(f+fgi++));
+    for (i = b; i < c; i++) r(i + fgi++);
+    for (i = e; i < d[]; i++) r(double(d[i]) + fgi++);
+    ```
+    - creating unnecessary scope & exec context
+    - each pipe operation creates a (macro) function in memory
+    - no obvious way to break iteration
 
-2. rhs is loop, lhs is switch condition (or flattened generator function)
-  - switch condition creates unnecessary check
-    ~ that's minimal evil, and only for sequences
-  + makes everything flat
-  + supports break, skip
-  ```js
-  let g0i = 0, g01i, g02i, g1i = 0, g0, g1 // left group members & results
-  while () {
-    // 1. produce group results
-    // FIXME: in subscript we optimized that by having an array of function checkers
-    // (a, b..c[], d[e..] |> _*2) group
-    // a
-    if (g0i === 0) { g0 = a; g0i++; g01i = b; }
-    // b..c[]
-    else if (g0i === 1) { if (g01i < c[]) {g0 = g01i; g01i+=step} else g0i++, g02i = e; }
-    // d[e..] |> _*2
-    else if (g0i === 2) {
-      g02 = d[g02i++]
-      g1 = _ = g02*2
+  2. rhs is loop, lhs is switch condition (or flattened generator function)
+    - switch condition creates unnecessary check
+      ~ that's minimal evil, and only for sequences
+    + makes everything flat
+    + supports break, skip
+    ```js
+    let g0i = 0, g01i, g02i, g1i = 0, g0, g1 // left group members & results
+    while () {
+      // 1. produce group results
+      // FIXME: in subscript we optimized that by having an array of function checkers
+      // (a, b..c[], d[e..] |> _*2) group
+      // a
+      if (g0i === 0) { g0 = a; g0i++; g01i = b; }
+      // b..c[]
+      else if (g0i === 1) { if (g01i < c[]) {g0 = g01i; g01i+=step} else g0i++, g02i = e; }
+      // d[e..] |> _*2
+      else if (g0i === 2) {
+        g02 = d[g02i++]
+        g1 = _ = g02*2
+      }
+
+      // f..g group
+      if (g1i === 0) {  }
+
+      // 1.1 calculate groups result
+      _ = (x = g0 + g1)
+
+      // 2. body
+      x = x ? break : x+1
+
+      // 3. write to stack, if needed
+      stack.push(x)
     }
-
-    // f..g group
-    if (g1i === 0) {  }
-
-    // 1.1 calculate groups result
-    _ = (x = g0 + g1)
-
-    // 2. body
-    x = x ? break : x+1
-
-    // 3. write to stack, if needed
-    stack.push(x)
-  }
-  ```
+    ```
 
 ## [x] Should we make `a,b` saved to stack, `a..b` saved to heap? -> no, storing range in stack is meaningless
 
-+ meets limitation of 1000 members for stack
-+ can possibly optimize sequences calc
-+ v128 can store a..b
-  - we can's store generic ranges `a..b[]`
-+ allows returning plain arrays in JS side
-- cannot export such function
+  + meets limitation of 1000 members for stack
+  + can possibly optimize sequences calc
+  + v128 can store a..b
+    - we can's store generic ranges `a..b[]`
+  + allows returning plain arrays in JS side
+  - cannot export such function
 
 ## [x] Assignment resolution `x = (1,2,3)` vs `x[1,2,3] = x[3,1,2]` - iterated (last item) vs saved/restored
 
-* first case is `(x=1; x=2; x=3)` - list is iterated in case of |> operator (else just last item)
-* second case needs resolution via stack or heap - list is saved (to heap/stack) and retreived
+  * first case is `(x=1; x=2; x=3)` - list is iterated in case of |> operator (else just last item)
+  * second case needs resolution via stack or heap - list is saved (to heap/stack) and retreived
 
 ## [ ] Groups with ranges - are ops iterations or group mappers? -> ~~`=` is iterating operator~~ `= |>` is only iterating operator
 
-1. `x = (a,b..c)`
-  * `x=a, x=b..c`
-2. `log(x = (a,b..c))`
-  a. ~~calls multiple times? `log(x=a); log(x=b..c)`~~
-  b. calls once with final argument `log(x=c)`
-    ? makes `=` a uniquely iterating operator
-      ~ it's already unique in assignment
-      ~ not really - it returns lhs as signle arg
-    - `(a,b..c) + 1` returns group
-3. `log((a,b..c))`
-  * ~~calls as `log(a), log(b), log(...), log(c)`~~
-    - that's inconsistent with `(a,b,c)` as items in stack
-    - `x()=(a,b..c);log(x())` - makes `log` be called multiple times
-    -? how to pass multiple args to a function as result of other function?
-      * must be as simple as `y(x())`
-        - but it contradicts calling as direct group `y((1,2,3))`
-    -? how to get first output from result of a function `x()`?
-      * ~~must be as simple as `x()[0]`~~
-        - which is confusable with getting 0 item of each element in a group
-      * ~~can be done as `x().0`~~
-        - group is pop/push, not any index
-      * ~~then `^x()`~~
-        - not clear how to pick multiple
-      * `(a,..)=x()`
-  * passes group as args to call
-    - it implies random-length args passed to fn
-      ~ we can limit that possibility as `fn((a,b,c)=x())`
+  1. `x = (a,b..c)`
+    * `x=a, x=b..c`
+  2. `log(x = (a,b..c))`
+    a. ~~calls multiple times? `log(x=a); log(x=b..c)`~~
+    b. calls once with final argument `log(x=c)`
+      ? makes `=` a uniquely iterating operator
+        ~ it's already unique in assignment
+        ~ not really - it returns lhs as signle arg
+      - `(a,b..c) + 1` returns group
+  3. `log((a,b..c))`
+    * ~~calls as `log(a), log(b), log(...), log(c)`~~
+      - that's inconsistent with `(a,b,c)` as items in stack
+      - `x()=(a,b..c);log(x())` - makes `log` be called multiple times
+      -? how to pass multiple args to a function as result of other function?
+        * must be as simple as `y(x())`
+          - but it contradicts calling as direct group `y((1,2,3))`
+      -? how to get first output from result of a function `x()`?
+        * ~~must be as simple as `x()[0]`~~
+          - which is confusable with getting 0 item of each element in a group
+        * ~~can be done as `x().0`~~
+          - group is pop/push, not any index
+        * ~~then `^x()`~~
+          - not clear how to pick multiple
+        * `(a,..)=x()`
+    * passes group as args to call
+      - it implies random-length args passed to fn
+        ~ we can limit that possibility as `fn((a,b,c)=x())`
+        ~ or we can implement dynamic args
 
 ### [x] ~~Get element of group~~ - can get only head of stack, but see pick below
 
-* Suppose `x()` returns multiple elements, so we have groups as elements on stack
+  * Suppose `x()` returns multiple elements, so we have groups as elements on stack
 
-1. `(a,b)[0]`
-  - `a[0],b[0]`
-2. `(a,b).1`
-  ~- can be confused with `a.1,b.2`
-    ~+ less so, since `.1` looks a bit more part of name
-  - mb a bit too heavy load on `.` - it already means a lot everywhere
-    ~+ `.` has to do with iterators/groups anyways
-  - introduces syntax layer, which is not good
-3. `(a,b)#1`
+  1. `(a,b)[0]`
+    - `a[0],b[0]`
+  2. `(a,b).1`
+    ~- can be confused with `a.1,b.2`
+      ~+ less so, since `.1` looks a bit more part of name
+    - mb a bit too heavy load on `.` - it already means a lot everywhere
+      ~+ `.` has to do with iterators/groups anyways
+    - introduces syntax layer, which is not good
+  3. `(a,b)#1`
 
-* Since group deals with stack/heap, we cannot get arbitrary item, it is pop/push mechanics.
+  * Since group deals with stack/heap, we cannot get arbitrary item, it is pop/push mechanics.
 
-### [x] How to pop/pick from group? -> `(a..) = x()`
+### [ ] How to pop/pick from group? -> `a.. = x()`
 
-* See above: what if we need to get first element of returned group from `x()`?
+  * See above: what if we need to get first element of returned group from `x()`?
 
-1. `(a,b)>>;(a,b)<<1`
-  - `(a<<1,b<<1)`
-2. `^(a,b,c) === a`
-  + regex does that
-  + that means arrow up operator
-  - not clear how to pick multiple
-3. `(a,b,c..) = d`
+  1. `(a,b)>>;(a,b)<<1`
+    - `(a<<1,b<<1)`
+  2. `^(a,b,c) === a`
+    + regex does that
+    + that means arrow up operator
+    - not clear how to pick multiple
+  3. `(a,b,c..) = d`
+    - contradicts to js
+    + logical
+  4. `(a,b) = (c,d,e)`
+    + matches JS
+    - blocks loops
+    - conflicts with meaning of groups
+  5. `a = (b,c,d)` as JS, but `(a = (b,c,d)) |> a` as loop
+    + covers JS style
+    + covers loops
+    - at odds with group ops like `a + (b,c,d)`
+
+### [ ] `=` and `|>` precedence
+
+  1. `a=b |> c`
+    - unlike JS
+  2. `a = b|>c`
+    + js-like
+    + organic for source rewrite
+      - we may not need full source rewrite
+    - forces iteration variable to be wrapped `a = (i = b) |> c`
+    ?- but since `i` is defined within isolated scope, it's not accessible for `c`
+      ~+ nah, `i` is defined per-fn scope, not inside, so all good, no need to wrap

@@ -55,3 +55,7 @@ t('vars: vars misc', t => {
   // x = compileWat(compileMel(`x;x()=1;x`)).instance.exports.x // late-func type
   x = compileWat(compileMel(`x;x=[];x`)).instance.exports.x // late-arr type
 })
+
+t('vars: scopes', t => {
+  `((i = 2); i)`
+})

@@ -22,11 +22,13 @@
 * [x] account ops for expected number of returns instead of forcing drops
 * [x] make `;;` for comments
 * [x] make `.` for 'return nothing'
+  * [ ] undo `.` - make semicolon-based void
+* [ ] make global operator `^`
 * [ ] range iterator via pipe
-* [ ] pair-wise iteration
+  * [ ] pair-wise iteration
 * [ ] convert all string instructions to builder calls
 * [ ] list comprehension
-* [ ] make use of `./`, `../`, `.../`
+* [ ] make use of `./`, `../`, `.../` for loops only (not parent)
 * [ ] all readmes test
 * [ ] first bytebeat
 * [ ] `~, ~=`
