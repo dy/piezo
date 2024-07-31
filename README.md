@@ -34,13 +34,6 @@ default=1, eval=fn, else=0;   ;; no reserved words
 true = 0b1, false = 0b0;      ;; alias bools
 inf = 1/0, nan = 0/0;         ;; alias infinity, NaN
 
-;; Statements
-foo();                        ;; semi-colons are mandatory
-(c = a + b; c);               ;; returns last statement
-(c = a + b; c;);              ;; void return
-(a = b + 1; a,b,c);           ;; return multiple values
-(a ? ./b; c);                 ;; early return b
-
 ;; Units
 1k = 1000; 1pi = 3.1415926;   ;; define units
 1s = 44100; 1m = 60s;         ;; as sample indexes
@@ -129,7 +122,6 @@ copy = triple;                ;; capture function
 copy(10);                     ;; also 30
 dup(x) = (x,x);               ;; return multiple values
 (a,b) = dup(b);               ;; multiple returns
-f() = (a+(b+(c)); a,b,c)      ;; vars are defined in fn scope
 a=1; f()=(^a; a=2);           ;; global variables
 
 ;; State vars
