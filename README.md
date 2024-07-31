@@ -449,9 +449,9 @@ Basic algorithm of compilation:
 
 ## Motivation
 
-_Web Audio_ is unreliable - it has unpredictable pauses, glitches and so on, so <q>audio is better handled in WASM worklet</q> ([@stagas](https://github.com/stagas)). Besides, audio processing in general has no cross-platform solution, various environments deal with audio differently, some don't have audio processing at all.
+Audio processing in has no cross-platform solution, various environments deal with audio differently, some don't have audio processing at all. Besides, _Web Audio API_ is unreliable - it has unpredictable pauses, glitches and so on, so <q>audio is better handled in WASM worklet</q> ([@stagas](https://github.com/stagas)).
 
-_Ylang_ attempts to fill that gap, providing a common layer for audio processing. It is personal attempt of language design - what if JS had groups, ranges and had no clutter? WASM target gives max performance and compatibility - browsers, [audio/worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) etc.
+_Melo_ attempts to fill that gap, providing a common layer for audio processing. It is also a personal attempt on language design - rethinking parts and providing safe ground. WASM target gives max performance and compatibility - browsers, [audio/worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) etc.
 
 <!--
 ### Principles
