@@ -16,9 +16,10 @@ const PREC_SEMI = 1, // a; b;
   PREC_END = 2,
   PREC_RETURN = 4, // x ? ./a,b : y
   PREC_STATE = 4, // FIXME: *a,b,c, d=4 is confusing group
-  PREC_PIPE = 5, // |> FIXME: should we raise that to ASSIGN to match js?
   PREC_SEQ = 6, //  ./a,b,c;  a, b ? (c,d) : (e,f); a,b,c |> d
   PREC_IF = 8,    // a ? b=c;  a = b?c;
+  // FIXME: should pipe be lower than if? a |> b?c;
+  PREC_PIPE = 8, // |> should match JS pipe, a = b|>c; a, b|>c, d; a|>b ? c
   PREC_ASSIGN = 8.25,  // a=b, c=d,  a = b||c,  a = b | c,   a = b&c
   PREC_LOR = 11,
   PREC_LAND = 12,

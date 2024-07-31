@@ -111,7 +111,7 @@ t('parse: lists', t => {
   // NOTE: we don't support labels/aliases
   // is(parse('list = [l:2, r:4]'), ['=','list',['[',[',',[':','l',[INT,2]], [':','r',[INT,4]]]]],'list with aliases')
   is(parse('[0..10]'), ['[]', ['..', [INT, 0], [INT, 10]]], 'list from range')
-  is(parse('[i = 0..8 |> i*2]'), ['[]', ['|>', ['=', 'i', ['..', [INT, 0], [INT, 8]]], ['*', 'i', [INT, 2]]]], 'list comprehension')
+  is(parse('[0..8 |> _*2]'), ['[]', ['|>', ['..', [INT, 0], [INT, 8]], ['*', '_', [INT, 2]]]], 'list comprehension')
   // is(parse('[2]list = list1'), ['=',['[',[INT,2],'list'],'list1'], '(sub)list of fixed size')
   // is(parse('list.0, list.1'), [',',['.','list',[INT,0]],['.','list',[INT,1]]],'short index access notation')
   // is(parse('list.l = 2'), ['=',['.','list','l'], [INT, 2]],'alias index access')
@@ -166,26 +166,26 @@ t('parse: conditions', t => {
 })
 
 t('parse: loops', t => {
-  is(parse('a=b|c'), ['=', 'a', ['|', 'b', 'c']])
-  is(parse('a|b=c'), ['=', ['|', 'a', 'b'], 'c'])
+  is(parse('a=b|>c'), ['=', 'a', ['|>', 'b', 'c']])
+  is(parse('a=b|>c|>d'), ['=', 'a', ['|>', 'b', 'c', 'd']])
+  is(parse('a|>b=c'), ['|>', 'a', ['=', 'b', 'c']])
+  is(parse('a|>b=c=d'), ['|>', 'a', ['=', 'b', ['=', 'c', 'd']]])
 
+  is(parse(`v = v |> _ == null |> foo`), ['=', 'v', ['|>', 'v', ['==', '_', 'null'], 'foo']])
   // NOTE: loop is meaningful backwards, ie. (a|>(b=c=d|>e=f))
-  is(parse(`a |> b = c = d |> e = f`), ['|>', 'a', ['=', 'b', ['=', 'c', 'd']], ['=', 'e', 'f']], 'equals')
+  is(parse('a |> b = c |> d'), ['|>', 'a', ['=', 'b', ['|>', 'c', 'd']]], 'a |> b = c |> d')
   is(parse('a |> b = c | d'), ['|>', 'a', ['=', 'b', ['|', 'c', 'd']]], 'a |> b | c')
-  is(parse('a = b | c'), ['=', 'a', ['|', 'b', 'c']], `a = b | c`)
-  is(parse('a |> b | c'), ['|>', 'a', ['|', 'b', 'c']], 'a |> b | c')
-  is(parse('a |> b = c'), ['|>', 'a', ['=', 'b', 'c']], `a |> b = c`)
+  is(parse(`a |> b = c = d |> e = f`), ['|>', 'a', ['=', 'b', ['=', 'c', ['|>', 'd', ['=', 'e', 'f']]]]], 'equals')
   is(parse('a |> b | c |> d'), ['|>', 'a', ['|', 'b', 'c'], 'd'], 'a |> b | c |> d')
   is(parse('c |> d |> e'), ['|>', 'c', 'd', 'e'], 'c |> d |> e')
   is(parse('a -= b += c'), ['-=', 'a', ['+=', 'b', 'c']])
   is(parse('a |> b = c'), ['|>', 'a', ['=', 'b', 'c']])
-  is(parse('a?b:c |> d'), ['|>', ['?:', 'a', 'b', 'c'], 'd'])
-  is(parse('a , b|>c'), ['|>', [',', 'a', 'b'], 'c'])
-  is(parse('b|>c, d'), ['|>', 'b', [',', 'c', 'd']])
+  is(parse('a?b:c |> d'), ['?:', 'a', 'b', ['|>', 'c', 'd']])
+  is(parse('a , b |> c'), [',', 'a', ['|>', 'b', 'c']])
+  is(parse('b |> c, d'), [',', ['|>', 'b', 'c'], 'd'])
   is(parse('a |> b | c | c |> d'), ['|>', 'a', ['|', ['|', 'b', 'c'], 'c'], 'd'], 'a |> b | c | c |> d')
   is(parse('x |> x | y'), ['|>', 'x', ['|', 'x', 'y']], 'pipe seq2')
   is(parse('c |> d |> e | f'), ['|>', 'c', 'd', ['|', 'e', 'f']], 'loop seq')
-  is(parse(`a |> b = c = d | e = f`), ['|>', 'a', ['=', 'b', ['=', 'c', ['=', ['|', 'd', 'e'], 'f']]]], 'equals')
 
   is(parse('s[] < 50 |> (s += hi)'), ['|>', ['<', ['[', 's', undefined], [INT, 50]], ['()', ['+=', 's', 'hi']]], 'inline loop')
   is(parse(`
@@ -372,7 +372,7 @@ t('parse: sequence precedence', t => {
 
 t('parse: loop precedence riddle', t => {
   is(parse(`a ? b : c`), ['?:', 'a', 'b', 'c']);
-  is(parse(`a = b |> c`), ['|>', ['=', 'a', 'b'], 'c']);
+  is(parse(`a = b |> c`), ['=', 'a', ['|>', 'b', 'c']]);
   is(parse(`a = b ? c`), ['=', 'a', ['?', 'b', 'c']]);
   is(parse(`a = b ? c : d`), ['=', 'a', ['?:', 'b', 'c', 'd']]);
 })

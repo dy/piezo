@@ -56,9 +56,9 @@ Object.assign(expr, {
     return node.flatMap((a, i) => {
       if (!i || !a) return [a]
       a = expr(a)
-      if (a[0] === '(') {
-        // FIXME: if internal expr returns groups - must turn full group into heap expr
-      }
+      // if (a[0] === '(') {
+      // FIXME: if internal expr returns groups - must turn full group into heap expr
+      // }
       return [a]
     })
   },
@@ -73,11 +73,10 @@ Object.assign(expr, {
   },
 
   '()'([, a]) {
-    // NOTE: we make sure parens are present only if internal condition is dynamic
-    // otherwise parents are unwrapped
+    // we get rid of parens for compiler
     a = expr(a)
     // a=() -> a=(), ignore comment stubs
-    if (!a || !a.length) return ['()']
+    if (!a || !a.length) return
     // ((x)) -> (x)
     if (a[0] === '()') return a
     // (0.5) -> 0.5
@@ -86,7 +85,7 @@ Object.assign(expr, {
     if (a[1] === '..') return a
     // (a,b,c) -> a,b,c
     if (a[0] === ',') return a
-    return ['()', a]
+    return a
   },
 
   // f(a,b,c)
@@ -160,9 +159,8 @@ Object.assign(expr, {
     // a() = ...
     // FIXME: can handle better: collect args, returns etc.
     if (a[0] === '(') {
-      // normalize body to (a;b;) form
-      b = b[0] === '()' ? b : ['()', b]
-      b[1] = !b[1] ? [';'] : b[1][0] === ';' ? b[1] : [';', b[1]]
+      // normalize body to b; form
+      b = !b ? [';'] : b[0] === ';' ? b : [';', b]
 
       // normalize args list
       let [, name, args] = a
@@ -184,10 +182,10 @@ Object.assign(expr, {
     // (a,b)=(b,a) -> (t0=b,t1=a;a=t0,b=t1);
     if (a[0] === ',' && intersect(ids(a), ids(b))) {
       const n = a.length - 1
-      return ['()', [';',
+      return [';',
         unroll('=', [',', ...Array.from({ length: n }, (b, i) => `t:${i}`)], b),
         unroll('=', a, [',', ...Array.from({ length: n }, (a, i) => `t:${i}`)])
-      ]]
+      ]
     }
 
     // x[b]=b
@@ -198,6 +196,7 @@ Object.assign(expr, {
     }
 
     return unroll('=', a, b) || ['=', a, b]
+    // return ['=', a, expr(b)]
   },
 
   '+='([, a, b]) { return expr(['=', a, ['+', a, b]]) },
@@ -387,6 +386,7 @@ Object.assign(expr, {
 })
 
 // if a,b contain multiple elements - try regrouping to simple ops
+// FIXME: not sure if there's much sense to unroll like that, mb easier be done in compiler
 function unroll(op, a, b) {
   if (!b) {
     // -(a,b) -> (-a,-b)
@@ -419,7 +419,7 @@ function unroll(op, a, b) {
     // return [';',['=','__tmp',b], ['(', [',', ...as.map(a => [op, a, '__tmp'])]]]
   }
 
-  // a * (b0, b1) -> tmp=a; (a * b0, a * b1)
+  // a * (b0, b1) -> tmp=a; (tmp * b0, tmp * b1)
   if (b[0] === ',') {
     const [, ...bs] = b
     return a = expr(a), [',', ...bs.map(b => [op, a, expr(b)])]

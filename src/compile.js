@@ -181,31 +181,6 @@ Object.assign(expr, {
     )
   },
 
-  // (a)
-  '()'([, body], out) {
-    // FIXME: make sure returning nothing is fine here (when empty brackets)
-    if (!body) return
-
-    // FIXME: detect block type, if it needs early return - then we ought to wrap it
-    let parentReturns = returns;
-    returns = [];
-
-    let str = expr(body, out);
-
-    // early returns are always f64, so for return consistency we wrap result into f64
-    if (returns.length) {
-      let l = str.type.length
-      for (let ret of returns) {
-        if (ret.type.length !== l) err(`Inconsistent returned members in \`${func}\``)
-      }
-      str = float(str);
-    }
-
-    returns = parentReturns;
-
-    return str;
-  },
-
   // a()
   '('([, name, [, ...args]], out) {
     if (!globals[name]) err('Unknown function call: ' + name)
@@ -408,8 +383,16 @@ Object.assign(expr, {
       // pointer to a function - need to be declared before parsing body, since body may contain refs
       globals[name] = { func: true, args, type: 'i32' };
 
-      body[1].splice(1, 0, ...inits) // prepend inits
+      body.splice(1, 0, ...inits) // prepend inits
+
+      // collect returns
+      returns = [];
+
       result = expr(body)
+      if (returns.length) result = float(result)
+
+      returns = null
+
       // define result, comes after (param) before (local)
       if (result?.type?.length) dfn.push(`(result ${result.type.join(' ')})`)
 

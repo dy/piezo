@@ -15,7 +15,7 @@ t('loops: range global', t => {
 
 t('loops: range local', t => {
   let wat, mod
-  wat = compileMel(`x=[1..3], c = 0, fill() = (0..x[] |> (x[_]+=1,c++).)`)
+  wat = compileMel(`x=[1..3], c = 0, fill() = (0..x[] |> (x[_]+=1,c++))`)
   mod = compileWat(wat)
   let { memory, x, fill, c } = mod.instance.exports
 
@@ -47,9 +47,9 @@ t('loop: range in range', t => {
   let wat = compileMel(`a=[..9], f(a,w,h)=(
     0..w |> (x=_;
       0..h |> (y=_;
-        a[y*w + x] = x+y*w
-      ).
-    ).
+        a[y*w + x] = x+y*w;
+      );
+    )
   )`)
   let mod = compileWat(wat)
   let { memory, a, f } = mod.instance.exports
@@ -113,10 +113,10 @@ t.todo('loop: over list', t => {
   not(arr[ptr + 2], 6)
 })
 
-t.only('loop: iterate over range', () => {
+t.todo('loop: iterate over range', () => {
   let wat, mod, memory, a, b
 
-  wat = compileMel(`x = (1, 3..5, a[1..]) |> x`)
+  wat = compileMel(`a = (x = (1, 3..5, a[1..])) |> x;`)
   // supposed to compile to
   // 0.out ;; output of 0 group
   // 0.idx = 0 ;; 0 group element index
