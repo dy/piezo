@@ -8,10 +8,6 @@ Compiles to compact 0-runtime WASM with linear memory.<br/>
 ## Reference
 
 ```
-;; Numbers
-16, 0x10, 0b0;                ;; int, hex or binary
-16.0, .1, 1e3, 2e-3;          ;; float
-
 ;; Operators
 + - * / % -- ++               ;; arithmetical (float)
 ** %% //                      ;; power, unsigned mod, flooring div
@@ -22,23 +18,36 @@ Compiles to compact 0-runtime WASM with linear memory.<br/>
 ?: ?                          ;; conditions
 x[i] x[]                      ;; member access, length
 a..b a.. ..b ..               ;; ranges
-./ ../ .../                   ;; skip, break, return
 |> _                          ;; pipe / loop
+./ ../ .../                   ;; skip, break, return
 ~ ~= ~< ~/ ~* ~// ~**         ;; clamp, normalize, lerp
+
+;; Numbers
+16, 0x10, 0b0;                ;; int, hex or binary
+16.0, .1, 2e-3;               ;; float
+1k = 1000; 1pi = 3.1415926;   ;; units
+1s = 44100; 1m = 60s;         ;; eg: sample indexes
+10.1k, 2pi, 1m30s;            ;; 10100, 6.283..., 66150
 
 ;; Variables
 foo=1, bar=2.0;               ;; declare vars
 AbC, $0, Δx, x@1, A#;         ;; names permit alnum, unicodes, _$#@
-foo != Foo, bar == bAr;       ;; capfirst-sensitive
+foo == Foo, bar == bAr;       ;; case-insensitive
 default=1, eval=fn, else=0;   ;; no reserved words
-true = 0b1, false = 0b0;      ;; alias bools
-inf = 1/0, nan = 0/0;         ;; alias infinity, NaN
+true = 0b1, false = 0b0;      ;; eg: alias bools
+inf = 1/0, nan = 0/0;         ;; eg: alias infinity, NaN
 
-;; Units
-1k = 1000; 1pi = 3.1415926;   ;; define units
-1s = 44100; 1m = 60s;         ;; as sample indexes
-10.1k, 2pi;                   ;; 10100, 6.283...
-2m35s;                        ;; combinations
+;; Groups
+(a,b,c) = (1,2,3);            ;; assign (a=1, b=2, c=3)
+(a,b) = (b,a);                ;; swap
+(a,b,c) = d;                  ;; duplicate: (a=d, b=d, c=d);
+(a,,b) = (c,d,e);             ;; skip: (a=c, b=e);
+(a,b) + (c,d);                ;; group binary: (a+c, b+d)
+(a, b, c)++;                  ;; group unary: (a++, b++, c++)
+(a,b)[1] = c[2,3];            ;; props: (a[1]=c[2], b[1]=c[3])
+(a,b,..,z) = (1,2,3,4);       ;; pick: (a=1, b=2, z=4)
+a = (b,c,d);                  ;; iterate: a=b; a=c; a=d;
+(a,b) = (1,2,3,4);            ;; pairs: a=1,b=2; a=3,b=4;
 
 ;; Ranges
 0..10;                        ;; from 1 to 9 (10 exclusive)
@@ -54,26 +63,6 @@ a ~< 0..10;                   ;; a >= 0 && a < 10
 a ~/ 0..10; a ~* 0..10;       ;; normalize(a, 0, 10); lerp(a, 0, 10);
 a ~// 0..10; a ~** 0..10;     ;; smoothstep(a, 0, 10); ismoothstep(a, 0, 10);
 
-;; Groups
-(a,b,c) = (1,2,3);            ;; assign (a=1, b=2, c=3)
-(a,b) = (b,a);                ;; swap
-(a,b,c) = d;                  ;; duplicate: (a=d, b=d, c=d);
-(a,,b) = (c,d,e);             ;; skip: (a=c, b=e);
-(a,b) + (c,d);                ;; group binary: (a+c, b+d)
-(a, b, c)++;                  ;; group unary: (a++, b++, c++)
-(a,b)[1] = c[2,3];            ;; props: (a[1]=c[2], b[1]=c[3])
-(a,b,..,z) = (1,2,3,4);       ;; pick: (a=1, b=2, z=4)
-a = (b,c,d);                  ;; iterate: a=b; a=c; a=d;
-(a,b) = (1,2,3,4);            ;; pairwise: a=1,b=2; a=3,b=4;
-
-;; Conditions
-a ? b;                        ;; if a then b
-sign = a < 0 ? -1 : +1;       ;; ternary conditional
-(2+2 >= 4) ? log(1) :         ;; multiline/switch
-  3 <= 1..2 ? log(2) :        ;; else if
-  log(3);                     ;; else
-a && b || c;                  ;; (a and b) or c
-
 ;; Arrays
 m = [..10];                   ;; array of 10 elements
 m = [..10 |> 2];              ;; filled with 2
@@ -87,27 +76,33 @@ m = [0..4 |> _ ** 2];         ;; list comprehension
 length = m[];                 ;; get length
 m[0] = 1;                     ;; set value
 m[2..] = (1, 2..4, n[1..3]);  ;; set multiple values from offset 2
-m[0..] = 0..4 * 2;            ;; set from range
 m[1,2] = m[2,1];              ;; swap
-m[0..] = m[-1..0];            ;; reverse order
+m[0..] = m[-1..0];            ;; reverse
 m[0..] = m[1..,0];            ;; rotate
-min~= ..m[..], max~= m[..]..; ;; find min/max in array
+
+;; Conditions
+a ? b;                        ;; if a then b, void
+sign = a < 0 ? -1 : +1;       ;; ternary conditional
+(2+2 >= 4) ? log(1) :         ;; multiline/switch
+  3 <= 1..2 ? log(2) :        ;; else if
+  log(3);                     ;; else
+a && b || c;                  ;; (a and b) or c
 
 ;; Loops
 (a, b, c) |> f(_)             ;; for each item in a, b, c do f(item)
 (i = 10..) |> (               ;; descend over range
-  i < 5 ? ./                  ;; if item < 5 continue
-  i < 0 ? ../                 ;; if item < 0 break
+  i < 5 ? ./                  ;; if item < 5 skip (continue)
+  i < 0 ? ../                 ;; if item < 0 stop (break)
 );                            ;;
-x[..] |> f(_) |> g(_);        ;; sequence of ops
-x[..] |> _ *= 2;              ;; overwrite source
+x[..] |> f(_) |> g(_);        ;; pipeline sequence
+x[..] |>= _ * 2;              ;; overwrite source
 (i = 0..w) |> (               ;; nest iterations
   (j = 0..h) |> f(i, j);      ;; f(x,y)
 );                            ;;
-((a,b) = 0..10) |> a+b;       ;; loop pairs
-(x,,y) = (a,b,c) |> _ * 2;    ;; write result x = a*2, y = c*2;
+((a,b) = 0..10) |> a+b;       ;; iterate by pairs
+(x,,y) = (a,b,c) |> _ * 2;    ;; capture result x = a*2, y = c*2;
 .. |> i < 10 ? i++ : ../;     ;; while i < 10 i++
-..(i < 10) / 0 |> i++;        ;; alternstive while
+..(i < 10) / 0 |> i++;        ;; alternative while
 
 ;; Functions
 double(n) = n*2;              ;; define a function
@@ -116,27 +111,14 @@ times(m = 1, n ~ 1..) = (     ;; optional, clamped arg
   m * n                       ;; default return
 );                            ;;
 times(3,2);                   ;; 6
-times(5);                     ;; 5 - optional argument
-times(,10);                   ;; 10 - skipped argument
-copy = triple;                ;; capture function
-copy(10);                     ;; also 30
-dup(x) = (x,x);               ;; return multiple values
-(a,b) = dup(b);               ;; multiple returns
-a=1; f()=(^a; a=2);           ;; global variables
-
-;; State vars
-a() = ( *i=0; ++i );          ;; i persists value between calls
-a(), a();                     ;; 1, 2
-fib() = (                     ;;
-  *i=[1,0,0];                 ;; local memory of 3 items
-  i[1..] = i[0..];            ;; shift memory
-  i[0] = i[1] + i[2];         ;; sum prev 2 items
-);                            ;;
-fib(), fib(), fib();          ;; 1, 2, 3
-c() = (fib(), fib(), fib());  ;; state is defined by fn scope
-fib(); c();                   ;; 5; 1, 2, 3;
-d(fn) = (fib(), fn());        ;; to get external state, pass fn as argument
-d(c);                         ;; 1, 8;
+times(4), times(,5);          ;; 4, 5 - optional, skipped arg
+dup(x) = (x,x);               ;; return multiple
+(a,b) = dup(b);               ;; destructure
+a=1; f()=(a);                 ;; globals are read-only
+a() = ( *i=0; ++i );          ;; static vars: keep value between calls
+a(), a();                     ;; 1,2
+a1 = a;                       ;; instantiate
+a(), a(); a1(), a1();         ;; 3,4; 1,2;
 
 ;; Export
 x, y, z                       ;; exports last statement
@@ -386,7 +368,7 @@ _Y_ is available as CLI or JS package.
 ### CLI
 
 ```sh
-y source.y -o dest.y
+y source.y -o dest.wasm
 ```
 
 This produces compiled WASM binary.
@@ -394,30 +376,30 @@ This produces compiled WASM binary.
 ### JS
 
 ```js
-import y from 'melo'
+import y from 'y'
 
-;; create wasm arrayBuffer
+// create wasm arrayBuffer
 const buffer = y.compile(`
   n=1;
   mult(x) = x*PI;
   arr=[1, 2, sin(1.08)];
   mult, n, arr;
 `, {
-  ;; js objects or paths to files
+  // js objects or paths to files
   imports: {
     math: Math,
     mylib: './path/to/my/lib.y'
   },
-  ;; optional: import memory
+  // optional: import memory
   memory: true
 })
 
-;; create wasm instance
+// create wasm instance
 const module = new WebAssembly.Module(buffer)
 const instance = new WebAssembly.Instance(module, {
   imports: {
     math: Math,
-    ;; imported memory
+    // imported memory
     memory: new WebAssembly.Memory({
       initial: 10,
       maximum: 100,
@@ -425,27 +407,19 @@ const instance = new WebAssembly.Instance(module, {
   }
 })
 
-;; use API
+// use API
 const { mult, n, arr, memory } = instance.exports
 
-;; number exported as global
+// number exported as global
 n.value = 2;
 
-;; function exported directly
-mult(108) ;; 216
+// function exported directly
+mult(108)
 
-;; array is a number pointer to memory
-const arrValues = new Float64Array(memory, arr.value, 3)
+// array is a pointer to memory, get values via
+const arrValues = y.array(arr, memory)
 ```
 -->
-
-### Compiler
-
-Basic algorithm of compilation:
-
-1. [Parse](./src/parse.js) with set of instructions/precedences into lispy tree.
-2. [Precompile](./src/precompile.js) - clean up, normalize, validate, unroll groups, prepare for compiler.
-3. [Compile](./src/compile.js) into wasm via code builder methods with stdlib includes.
 
 ## Motivation
 
