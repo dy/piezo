@@ -339,6 +339,7 @@
     - npm is taken (by chinese)
     + yyfx
     + kirtan.y, mono.y, sobel.y, viznut.y, predestined-fate.y
+      + source.y
   * ilang
     + alternative prononciation of ylang-ylang
     + iPhone, iLang
@@ -1646,7 +1647,7 @@
       + doesn't reinvent the meaning of `:` & create clutter
       + easier to find-all loops, opposed to mixup of `?:` and `:`
 
-## [ ] Overwrite method
+## [ ] Arrays: Overwrite method
 
   1. `a[..] |>= _+1`
     - new operator
@@ -2117,7 +2118,7 @@
     + in JS that's common practice how it's done - one declaration block, rest is just reuse of vars
     - cannot shadow globals, so the code is still sensitive to presence of global variables, some global names can affect logic
 
-### [x] Variables: coming together -> global indicator
+### [x] Variables: coming together -> globals are read-only, writes define locals
 
   * we need special assignment precedence only for declarations, everywhere else that's group `a,b,c = d,e,f`
   * declaration would allow us to secure scope - make it independent of global
@@ -3248,19 +3249,29 @@
     + matches array layout
     + it already indexes like that in biquad filter code `x1,x2 = x0,x1`
 
-## [ ] Variables: how do we make var/let/const? -> we must indicate global vars, like python
+## [x] Variables: how do we make var/let/const? -> implicitly; globals are available for read, but not write.
 
-  * `~x;`
+  * The logic: we use global fns directly, so globals should be available without prefixes either: `f()=sin();`
+    * we don't redeclare something already available, and we declare something new: `f(a,b,c)=(*d,*e;)`
+      + this allows preventing typos as well
+      * same time global we define as `a=1`, therefore local must be as simple, `a=1`.
+        * yes, and we can import global fn also (with new scope) as `f() = (^g; g())`
+
+  * `~x,~y=2;`
     + `~` means "variable"
       - conflicts with `~` for clamp
     + introduces "variable type": can be `.param=10 <- 0..100` for external param via UI (unlike argument).
       + state variable `*`, ui variabl `.`, regular variable `~`, const `-`
-    - conflicts with global "no-prefix" inits.
+    - conflicts with global "no-prefix" inits `a=1;f()=(~a=2;)`.
       ~ we can make it an indicator of actual variable, opposed to const `-arr[10]`
         - still, pollutes global...
           ~ can be quite useful, as indicator that we don't change globals. So only globals can be defined directly.
     - a concept user doesn't have to know necessarily
     + is not new syntax, just an extra meaning for regular syntax - doesn't break anything
+
+  * `+x,+y=2,-z=1; +(a,b,c);`
+    + same as previous but less heavy
+    + `+` means arguments AND locals
 
   * `:x,y,z;`
     + nice use of `:`
@@ -3270,51 +3281,65 @@
     + no new syntax
     - unusual use
 
-  * `x(a,b,c=c,d=d)` - list globals
-    - no clarity about reassigning global
-
-  * `x(...) = (_a, _b)` - lowdash to enforce local
-    + global never starts with lowdash
-    - forces all internal vars be prefixed
-
-  * `x(...) = (a + A)` - capcase for global
-    - enforces cap-sensitivity
-
-  * `x(...) = (a,b,c;)` - effectless group/vars make them init
-    + organic
-    - init or global assign `a=1, b=2, c=3;`
-
   * `x(...) = (&(a,b,c); )`
     + args AND locals
 
   * `x(...) = (@(a,b,c); )`
 
-  * force globals to be constants/modifyable from outside
-    + globals are unlikely to change
-      ~ one example is subscript
-    + can be worked as array `cur = [0]; x() = (cur[0]; cur[0] = 1)`
-    - throws compile-time error, but the problem remains: we may not have control over 3rd party code to isolate locals
+  * `x(a,b,c=c,d=d)` - list globals
+    - no clarity about reassigning global
+    - no way to set it
 
-  * prefix global anyhow
+  * `x(...) = (a,b,c;)` - effectless group/vars make them init
+    + organic, intuitive
+    + it's not good to use unknown variable right in the middle of the code: prevents typos
+    - is it init or global assign `a=1, b=2, c=3;`
+
+  * make naming difference of locals/globals
+    + maintains scope transparency
+    a. `x(...) = (_a, _b)` - lowdash to enforce local
+      + global never starts with lowdash
+      - forces all internal vars be prefixed
+    b. `x(...) = (a + A)` - capcase for global
+      - enforces cap-sensitivity
+      + like Golang
+    c. `$a=1;x()=(a+$a)` - prefixing like Ruby
+      - limited naming scope: fns dont have to be named like that
+      + displays global explicitly
+
+  * indicate globals anyhow, like `global x`
     + `window.x` is good JS practice, vs unclear `x`
     + python, PHP has that practice
     + we don't need to initialize global variables
     ? how
 
-### [ ] Variables: how to indicate global vars? -> `^x;`
+  * force globals to be constants/modifyable from outside only
+    ~ globals can change, eg. subscript
+      + can be done via static variables
+    + can be worked around as array `cur = [0]; x() = (cur[0]; cur[0] = 1)`
+    - throws compile-time error, but the problem remains: we may not have control over 3rd party code to isolate locals
+      ~+ any write to global will create local variable instance
+    - artificially limits globals
+
+  * global var is same as static by meaning
+    + `g=1;f()=(*x=g;)` is same as `f()=(^g;)`
+    + like Python - we can make writing variable as local, and reading as transparent
+      + that seems to be a pattern: we read imports but write from outside; we read globals but write from outside
+
+### [x] Variables: how to indicate global vars? -> ~~`^x;x;`~~ globals are available for read by default
 
   1. Python `global x;` + prevent modification
   2. Ruby `$x;`
-  3. `^x;`
+  3. `f(a) = (^x; x+a);`
     + reference to "global" scope
     + nice use of `^` operator
-    -~ new operator, not full reuse of existing one
-  4. `<x>;`
+    + python compatible
+    -~ new operator, not full reuse of existing one, no precedents of such use
+    * should be used once, on on declaration, eg. `x() = (^size; size=123)`, since must be same as global fn use ``
+  4. `f(a) = (<x>; x+a);` as declaration
     + indicates place of "insertion" like imports
-    + doesn't require a separate declaration of global
-    + immediately seen as global anywhere in expression
-    + doesn't meld with name, obviously separate `<a> = 123;`
-    - can block imports
+      + kind-of in-sync with logic, since globals can be imported in global scope same way
+    - interfere with imports
     - not as compact as `^`
 
 ## [x] Variables: UI variables -> move to latr
@@ -3654,7 +3679,7 @@
   + makes easy to store variables in memory
   -> ok, so variables are always f64, but calc results can be any, so we only extend i32 to f64 in assignment or fn return
 
-## [x] How to pass int to a function? -> we force ints into floats every so often
+## [x] How to pass int to a function? -> we force ints into floats
 
   1. Detect i32 from default value `x(i=1)=(...)`
     - default value can be calculable, not primitive, eg. `x(a,b=a)=(...)`
@@ -3703,7 +3728,7 @@
   - no scope isolation like `let` in JS
   - global variable can affect workable local code: not nice
 
-## [x] Variables: Overdeclaring local variables -> shadowing is not nice anyways
+## [x] Variables: Overdeclaring local variables -> shadowing is not nice, we keep fn scope
 
   * `(x=1; (x=2;))` - `x` in both scopes is the same variable, so that we can't declare `x` within nested scope this way.
     - ie outer scope affects code within inner scope
@@ -4397,9 +4422,9 @@
     - prohibits `x[1..10] <|= # * 2`
     - breaks pipe `0..items[] |> filter(items[#]) |> gain(items[#])` is super-verbose
 
-## [x] How to represent array pointer in code? -> let's try f64
+## [ ] How to represent array pointer in code? -> let's try f64
 
-  ? ALT: Use multiple stack values?
+  1. Use multiple stack values?
     + allows returning arrays as a couple [ptr,length] instead of storing length in memory
     * see https://hacks.mozilla.org/2019/11/multi-value-all-the-wasm/
     + allows creating multiple buffers from same memory part
@@ -4419,9 +4444,10 @@
       + by-operator, as we do now with ints/floats
     - not clear which fn argument can be an array, even from call signature `a(arr, b, c)`
       -> arg must be only one
-  ? with GC types can be solved as `(type $ptr (struct i32 i32)) (func (param (ref $ptr)))`
+  1.1 We reserve special types sequence eg. `(i32, i32)`
+  2. with GC types can be solved as `(type $ptr (struct i32 i32)) (func (param (ref $ptr)))`
     - unknown when structs will be supported
-  ? ~~ALT: funcref returning ptr and length upon call?~~
+  3. funcref returning ptr and length upon call?~~
     + we anyways read length via operator
     + can store these variables anywhere, not just memory
     ~- not any js fn can be passed
@@ -4429,16 +4455,18 @@
     - requires memory variable to be exported...
       ~ maybe unavoidable if user needs to import memory
     - not sure if we can create infinite functions
-  ? ~~ALT: can be fn getter/setter that writes or reads value of the array~~
+  4. can be fn getter/setter that writes or reads value of the array~~
     - not sure if we can create dynamic functions with local state...
-  ? ALT: use `i64` to store both array pointer and length.
+  5. use `i64` to store both array pointer and length.
     - returns BigInt, which needs to be reinterpreted client-side to get pointer to memory, not obvious how
-  ? ALT: use `f64` real/fraction for address/length
+  6. use `f64` real/fraction for address/length
     + wider addr/length range, up to `2^52` of int values
       - it may be not as good as `2^25`, consider storing length as `i16` (32756) - not so much, but already 52-16=36 bits for array length...
         ~kind of fine still, we can store fraction as the right part of float, at the very end
       - generally it's precision scaling problem
     + possible to use as ptr directly in JS `new Float64Array(memory, ptr, ptr%1)`
+      - length is non-trivial to figure out
+      - data type is not accounted for
     - value needs to be checked somehow if that's an array = we don't have clear understanding if that's an array or float
       ?+ we can avoid value check if we consider it an array by-operation, so that all array ops are non-overlapping with math. Eg. `a |> b` and `a ~ b`
         + we just enforce lhs `a |> #+1` to be a list
@@ -4457,19 +4485,24 @@
     ~- some dec combinations are impossible, eg. `1.102` turns into `1.10200000000000009059`
       + we need to encode int24 into fractional part as binary, allows up to 99999999 memory address value
 
-  ? ALT: v128
-    + throws at times ensuring arrays belong to lino, not outside
-    + perfectly holds 2xi64 or something else like eg. shift or memory idx
-    - fn arg requires to be indicated somehow via syntax, like `a([]x)`
-      ?+ do we need that? operator `|>` can naturally expect v128
-        - yes: to define function signature / types, we should know what type of argument is that
-    ?- no conversions from/to i32/f64.
-      ? Do we need it?
-    ? how to interact with arrays from JS side?
+  7. v128
+    + throws at times ensuring arrays belong to melo, not outside
+    + properly stores 4xi32 for tech purposes: address, length, data type, shift etc
+    - fn arg requires to be indicated somehow via syntax, like `a(x[])`
+      + that gives slight type definition, which facilitates handling them
+      + that definition would be helpful with vars as well
+      ~ drawbacks of `x[] = y` form
+    + no unnecessary conversions to get value
+    ?- how to interact with arrays from JS side?
+      ~ we'd need special function
+        + we may need it anyways, if we enable dynamic values via heap
+      + global v128s are exported fine, we can just read them as `array(gv128)`
+      - functions can return a tuple for v128, since v128 directly throws an error
+        ~ we may prohibit returning arrays in exported functions and limit exchange to (global) memory only
     - requires SIMD
-    - may be not available in some environments
+      ~+ available almost everywhere
 
-  ? ALT: track all known array ptrs in a table/memory or just as global vars
+  8. track all known array ptrs in a table/memory or just as global vars
     + we can represent them single-var via just id, not actual pointer
     - we can do infinite slices, storing all of them as ids is impossible
 
@@ -4986,7 +5019,7 @@
 
 ## [ ] Make func args identical with group destructuring?
 
-  * `(a[..10], b=2, c<=4, (d,e)) = (e:12, x[..])`
+  * `(a[..10], b=2, c~4, (d,e)) = (e:12, x[..])`
   * `fn(a[..10])=(); fn(1..10)`
     + factually defines infinite arguments
   * `fn(a,,b,c)=(); fn(a,,b,c)`
@@ -5074,7 +5107,7 @@
       ~+ prelim returns belong to userland anyways, it's not demanded internally
     - we can't
 
-## [x] State variables: How can we call same fn twice with same context? -> context is the same per-fn-scope; to call with other context - wrap into a function; you can pass funcs by reference.
+## [x] State variables: How can we call same fn twice with same context? -> instance is created via new static declaration
 
   * It seems for now to be able only externally
   ? but what if we need to say fill an array with signal from synth?
@@ -5182,11 +5215,15 @@
           ? same time how to create new instance then?
             !? `x()=(sin(x))` calls root instance, `*y()=(sin(x))` creates new instance?
               ? how to make mixed new and old instances then, eg. `y()=(*sin(a)+sin(b))`?
+            !? you  an import global as `y()=(^sin;sin())`
             !? pass fn as arg: `x(sin1)=(sin()+sin1())` - keeps state of parent fn
               + we can pass fn refs as floats as well - it seems trivial to store all funcs in a table
                 + that allows calling directly or indirectly
 
-## [ ] State variables:logic - how to map callsite to memory address? -> see implementation
+  9. Simple static vars: we have a function with single static context
+    9.1 Define fn instances via static as `*fn=a;`
+
+## [ ] State variables:logic - how to map callsite to memory address? -> ~~see implementation~~ - we use simple static vars
 
   ```
   sin(f, (; scope-id ;)) = (*phase=0;>phase+=f;...);
@@ -5380,15 +5417,21 @@
     );
   ```
 
-## [ ] Prohibit dynamic-size list comprehensions ->
+## [ ] Prohibit dynamic-size groups, make reflect stack -> likely yes
 
-  + Solves issue of state vars logic: we can precalculate addresses
-  + Likely we don't need heap: can be fully static memory
+  + ~~Solves issue of state vars logic: we can precalculate addresses~~
+  + ~~Likely we don't need heap: can be fully static memory~~
   + There's plenty of places where dynamic lists are not supported anyways: function return, function args
+    + makes type known in advance
+  + makes simple groups === stack
+    + dynamic groups would force explicitly returning an array
   ~ maybe we need to introduce some meaningful static-only limitations for the beginning and get v1 of lang ready.
     * like array building, static-size map/reduce, state variables etc. once that's ready we may think of extending to dynamic-size ones.
   + we cannot dynamically declare local variables within loop. Static-size loop would make it possible to declare all variables in advance...
     - it would require thousands of local variables...
+  * Likely loops generally won't need to produce output, except for list comprehension
+  ? Is there cases when we need dynamic arrays?
+
 
 ## [x] Loop vs fold: no difference -> ~~returns list <| or last |>~~ no difference, use `|>`
 

@@ -23,7 +23,10 @@
 * [x] make `;;` for comments
 * [x] make `.` for 'return nothing'
   * [x] undo `.` - make semicolon-based void
-* [ ] make global operator `^`
+* [ ] make simple static variables
+  * [ ] make fn capture declaring new static
+* [ ] Make static-only (stack) groups
+* [ ] make nan as null in fn arguments (`config(a,,b,c)`)
 * [ ] range iterator via pipe
   * [ ] pair-wise iteration
 * [ ] convert all string instructions to builder calls
