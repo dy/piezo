@@ -16,22 +16,23 @@ export function compileWat(code, imports = {}) {
     code
 
   // WABT compilation
-  // const wasmModule = wabt.parseWat('inline', code, {
-  //   simd: true,
-  //   reference_types: true,
-  //   gc: true,
-  //   bulk_memory: true
-  //   // function_references: true
-  // })
-  // const { buffer } = wasmModule.toBinary({
-  //   log: true,
-  //   canonicalize_lebs: true,
-  //   relocatable: false,
-  //   write_debug_names: false,
-  // })
-  // wasmModule.destroy()
+  const wasmModule = wabt.parseWat('inline', code, {
+    simd: true,
+    reference_types: true,
+    gc: true,
+    bulk_memory: true
+    // function_references: true
+  })
+  const { buffer } = wasmModule.toBinary({
+    log: true,
+    canonicalize_lebs: true,
+    relocatable: false,
+    write_debug_names: false,
+  })
+  wasmModule.destroy()
 
-  const buffer = watr(code)
+  // WATR compilation
+  // const buffer = watr(code)
 
   const config = {
     imports: {

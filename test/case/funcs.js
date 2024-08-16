@@ -2,7 +2,7 @@ import t, { almost, is, not, ok, same, throws } from 'tst'
 import compileMel from '../../src/compile.js'
 import { compileWat } from '../util.js'
 
-t('functions: oneliners', t => {
+t('funcs: oneliners', t => {
   let wat, mod
   // no semi
   wat = compileMel(`mult(a, b=2) = a * b`)
@@ -21,9 +21,14 @@ t('functions: oneliners', t => {
   is(mod.instance.exports.mult(2, 4), undefined)
 })
 
-t('functions: shadows global args', t => {
-  let mod = compileWat(compileMel(`a=1, mult(a) = (a=2)`))
+t('funcs: shadow global args', t => {
+  let mod = compileWat(compileMel(`a=1, x(a) = (a=2)`))
   is(mod.instance.exports.a.value, 1)
-  is(mod.instance.exports.mult(), 2)
+  is(mod.instance.exports.x(), 2)
+  is(mod.instance.exports.a.value, 1)
+
+  mod = compileWat(compileMel(`a=1, x() = (a=2)`))
+  is(mod.instance.exports.a.value, 1)
+  is(mod.instance.exports.x(), 2)
   is(mod.instance.exports.a.value, 1)
 })

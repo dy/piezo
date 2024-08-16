@@ -43,7 +43,7 @@ t('vars: globals multiple', () => {
 })
 
 
-t('vars: vars misc', t => {
+t('vars: globals misc', t => {
   let wat, x;
   x = compileWat(compileMel(`x;x`)).instance.exports.x // unknown type falls to f64
   x = compileWat(compileMel(`x=1;x`)).instance.exports.x // int type
@@ -56,6 +56,6 @@ t('vars: vars misc', t => {
   x = compileWat(compileMel(`x;x=[];x`)).instance.exports.x // late-arr type
 })
 
-t('vars: scopes', t => {
-  `((i = 2); i)`
+t('vars: scoped globals', t => {
+  is(compileWat(compileMel(`((x = 2); x)`)).instance.exports.x.value, 2)
 })

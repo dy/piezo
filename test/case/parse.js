@@ -234,12 +234,12 @@ t('parse: argument cases', t => {
   is(parse('a(a=1,b) = a'), ['=', ['(', 'a', [',', ['=', 'a', [INT, 1]], 'b']], 'a'], 'inline function')
 })
 
-t('parse: stateful variables', t => {
+t('parse: state variables', t => {
   is(parse(`
-    a() = ( *i=0; ++i );      ;; stateful variable persist value between fn calls
+    a() = ( *i=0; ++i );      ;; state variable persist value between fn calls
     a(), a();                     ;; 0, 1
   `), [';',
-    ['=', ['(', 'a', ,], ['()', [';', ['*', ['=', 'i', [INT, 0]]], ['+=', 'i', [INT, 1]]]]],
+    ['=', ['(', 'a', ,], ['()', [';', ['=', ['*', 'i'], [INT, 0]], ['+=', 'i', [INT, 1]]]]],
     [',', ['(', 'a', ,], ['(', 'a', ,]]
     , [],
   ])
@@ -249,7 +249,7 @@ t('parse: stateful variables', t => {
     i[0] = i[1]+1;              ;; read previous value
     i[0]                        ;; return currrent value
   );`), [';', ['=', ['(', 'b', ,], ['()', [';',
-    ['*', ['=', 'i', ['[]', ['..', undefined, [INT, 4]]]]],
+    ['=', ['*', 'i'], ['[]', ['..', undefined, [INT, 4]]]],
     ['=', ['[', 'i', [INT, 0]], ['+', ['[', 'i', [INT, 1]], [INT, 1]]],
     ['[', 'i', [INT, 0]]
   ]]], ,])
@@ -347,7 +347,7 @@ t('parse: sine gen', t => {
       ['(', 'sine', 'freq'],
       ['()',
         [';',
-          ['*', ['=', 'phase', [INT, 0]]],
+          ['=', ['*', 'phase'], [INT, 0]],
           ['+=', 'phase', ['/', ['*', 'freq', 'pi2'], 'sampleRate']],
           ['[]', ['(', 'sin', 'phase']]
         ]

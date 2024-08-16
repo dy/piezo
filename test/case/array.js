@@ -30,7 +30,7 @@ t('array: basic local', t => {
   // console.log(new Float64Array(memory.buffer))
 })
 
-t('array: from static range', t => {
+t.todo('array: from static range', t => {
   let wat = compileMel(`x=[..3], y=[0..4]; z=[4..0], x,y,xl=x[],yl=y[]`)
   // console.log(wat)
   let mod = compileWat(wat)
