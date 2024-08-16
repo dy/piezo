@@ -1,5 +1,5 @@
 export const std = {
-  // signed min/max
+  // signed min/max (better be called i32.max_s)
   "i32.smax": "(func $i32.smax (param i32 i32) (result i32) (select (local.get 0) (local.get 1) (i32.ge_s (local.get 0) (local.get 1))))",
   "i32.smin": "(func $i32.smin (param i32 i32) (result i32) (select (local.get 0) (local.get 1) (i32.le_s (local.get 0) (local.get 1))))",
   "i32.dup": "(func $i32.dup (param i32) (result i32) (local.get 0)(local.get 0))",

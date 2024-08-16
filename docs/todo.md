@@ -23,6 +23,7 @@
 * [x] make `;;` for comments
 * [x] make `.` for 'return nothing'
   * [x] undo `.` - make semicolon-based void
+* [x] make globals readable, but locals writable
 * [ ] make simple static variables
   * [ ] make fn capture declaring new static
 * [ ] Make static-only (stack) groups
@@ -32,6 +33,7 @@
 * [ ] convert all string instructions to builder calls
 * [ ] list comprehension
 * [ ] make use of `./`, `../`, `.../` for loops only (not parent)
+* [ ] `a.xyz`, `a.lr`
 * [ ] all readmes test
 * [ ] first bytebeat
 * [ ] `~, ~=`

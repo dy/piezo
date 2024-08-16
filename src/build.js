@@ -1,5 +1,5 @@
 // builder actually generates wast code from params / current context
-import { globals, locals, slocals, funcs } from "./compile.js"
+import { globals, locals, funcs, func } from "./compile.js"
 import { err } from "./util.js"
 import stdlib from "./stdlib.js"
 import { print } from "watr"
@@ -44,34 +44,30 @@ export function op(str = '', type, info = {}) {
   return Object.assign(str, { type, ...info })
 }
 
-// (local.set) or (global.set) (if no init - takes from stack)
-export function set(name, init = '') {
-  return op(`(${locals?.[name] || slocals?.[name] ? 'local' : 'global'}.set $${name} ${init})`, null)
-}
-
 // (local.get) or (global.get)
 export function get(name) {
-  return op(`(${locals?.[name] || slocals?.[name] ? 'local' : 'global'}.get $${name})`, (locals?.[name] || slocals?.[name] || globals[name]).type)
+  if (!func && name[0] !== '_') return globals[name] ||= { type: 'f64' }, op(`(global.get $${name})`, globals[name].type)
+  // read local if it's defined, else read global
+  return !globals[name] && (locals[name] ||= { type: 'f64' }), op(`(${locals?.[name] ? 'local' : 'global'}.get $${name})`, (locals?.[name] || globals[name]).type)
+}
+
+// (local.set) or (global.set) (if no init - takes from stack)
+export function set(name, init = '') {
+  // global only if name doesn't start with _
+  if (!func && name[0] !== '_') return globals[name] ||= { type: init.type || 'f64' }, op(`(global.set $${name} ${init})`)
+  return locals[name] ||= { type: init.type || 'f64' }, op(`(local.set $${name} ${init})`)
 }
 
 // (local.tee) or (global.set)(global.get)
 export function tee(name, init = '') {
-  return op(locals?.[name] || slocals?.[name] ? `(local.tee $${name} ${init})` : `(global.set $${name} ${init})(global.get $${name})`, init.type)
+  if (!func && name[0] !== '_') return globals[name] ||= { type: init.type || 'f64' }, op(`(global.set $${name} ${init})(global.get $${name})`, init.type)
+  return locals[name] ||= { type: init.type || 'f64' }, op(`(local.tee $${name} ${init})`, init.type)
 }
 
 // produce function call method
 export function call(name, ...args) {
   if (!funcs[name]) err(`Unknown function call '${name}'`)
   return op(`(call $${name} ${args.join(' ')})`, funcs[name].type)
-}
-
-// define variable in current scope, export if necessary; returns resolved name
-// FIXME if name includes `:` - it enforces local name (in start local function)
-// definition includes { var, type, init } object
-export function define(name, type = 'f64', init) {
-  if (locals?.[name] || slocals?.[name] || globals?.[name]) return name;
-  ; (locals || (name.includes(':') ? slocals : globals))[name] = { var: true, type, init }
-  return name
 }
 
 // wrap expression to float, if needed
@@ -117,7 +113,8 @@ export function pick(count, input) {
     if (count === 1) return input
     // (a,b,c) = d - duplicating via tmp var is tentatively faster & more compact than calling a dup function
     // FIXME: can be single global variable
-    const name = define(`dup:${input.type[0]}`, input.type[0])
+    const name = `dup:${input.type[0]}`
+    locals[name] ||= { type: input.type[0] }
     return op(
       `(local.set $${name} ${input})${`(local.get $${name})`.repeat(count)}`,
       Array(count).fill(input.type[0])

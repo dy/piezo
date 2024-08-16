@@ -348,29 +348,6 @@
     + npm is free
     + kirtan.i, mono.i, sobel.i, viznut.i, predestined-fate.i
 
-## [ ] Free operators
-
-  * `<>`, `><`
-    ~-- not always available
-  * `::`
-  * `-<`, `=<`, `~<`
-  * `-/`, `=/`, ~~`~/`~~
-  * `-|`, `=|`, `~|`
-  * ~~`-\`, `=\`, `~\`~~
-  * `=>`, `~>`, `->`
-  * `''`, ``
-  * `?=`, `:=` ~~`~=`~~
-
-## [x] WAT, WASM? All targets
-
-  Having wat files is more useful than direct compilation to binary form:
-
-  + wat files are human-readable, so it's possible to debug mistakes and do changes
-  + wat files are standard interchangeable format with proven compiler: no need to reimplement compilation and deal with its bugs
-  + optimization out of the box
-  - wat files are still a bit hard
-  - modifying wat files creates divergence from son files..
-
 ### [x] ? Should it compile to wat or to wasm? → wat for now
 
   - wasm is faster
@@ -402,30 +379,32 @@
   * Native bytecode
   * others?
 
-## [x] frames as vectors
+## [ ] Standard channel names `a.lr`, `a.xyzw`
 
-  * like glsl (data views to underlying block buffer), with [standard channel ids](https://en.wikipedia.org/wiki/Surround_sound#Standard_speaker_channels); swizzles as `a.l, a.r = a.r, a.l; a.fl, a.fr = a.fl`
+  + like glsl (data views to underlying block buffer), with [standard channel ids](https://en.wikipedia.org/wiki/Surround_sound#Standard_speaker_channels); swizzles as `a.l, a.r = a.r, a.l; a.fl, a.fr = a.fl`
 
-## [x] `f(x, y) = x + y` -> yes
-  + standard classic way to define function in math
-  + also as in F# or Elixir
-  - conflicts with anonymous fn notation
+## [x] Function: signature -> `f(x, y) = x + y`
 
-### ~~[x] `f(x,y) -> x + y`~~
-  + looks very similar
-  + also classic-ish function notation
-  + natural extension of lambda functions
-  + unifies lambda functions look
-  + organically permits lambda functions
-  - conflicts with mapper/transform
-  - lambdas require dynamic fn context allocation, which is not worth it
+  1. `f(x, y) = x + y`
+    + standard classic way to define function in math
+    + also as in F# or Elixir
+    - conflicts with anonymous fn notation
 
-### ~~[x] Alt: `f = (x,y) -> x + y`~~
-  + all pros of prev
-  + JS-familiar notation
-  + less fancy syntax extensions
-  + better indicator of fn primitive
-  ? batch output: `~() -> 1` vs `() -> ~1` vs `() ~> 1`
+  2. ~~[x] `f(x,y) -> x + y`~~
+    + looks very similar
+    + also classic-ish function notation
+    + natural extension of lambda functions
+    + unifies lambda functions look
+    + organically permits lambda functions
+    - conflicts with mapper/transform
+    - lambdas require dynamic fn context allocation, which is not worth it
+
+  3. `f = (x,y) -> x + y`~~
+    + all pros of prev
+    + JS-familiar notation
+    + less fancy syntax extensions
+    + better indicator of fn primitive
+    ? batch output: `~() -> 1` vs `() -> ~1` vs `() ~> 1`
 
 ## [x] Ranges: f(x ~ 0..100=100, y ~ 0..100, p ~ 0.001..5, shape = sin)
 
@@ -464,7 +443,7 @@
     - has different precedence with `=`
     - has possible conflict with ternary
 
-  * ~~`f(x = 100 ~= 0..100, y ~= 0..100 = 1, z ~= 1..100, p ~= 0.001..5, shape ~= (tri, sin, tan) = sin)`~~
+  * `f(x = 100 ~= 0..100, y ~= 0..100 = 1, z ~= 1..100, p ~= 0.001..5, shape ~= (tri, sin, tan) = sin)`
     + matches Ruby's regex-search operator, inversed
     + matches "equals" as "clamp"
     - isn't interchangable with `=`, has different meaning
@@ -507,7 +486,7 @@
     + frees `:` for technical needs, like import or named args
     - `x <= 0..3` means `x <= 0, x <= 1, x <= 2`
 
-  * ~~`f(x = 100 -| 0..100, y -| 0..100 = 1, z -| 1..100, p -| 0.001..5, shape -| (tri, sin, tan) = sin)`~~
+  * `f(x = 100 -| 0..100, y -| 0..100 = 1, z -| 1..100, p -| 0.001..5, shape -| (tri, sin, tan) = sin)`
     - looks too much like table separators
 
 ## [x] Enums → try avoiding explicit notation
@@ -615,6 +594,18 @@
   + `<>` means insert something here
 
 ## [ ] strings: string operations - concat, split, join etc
+  ~ likely via stdlib
+  * `a ++ b` for concat, `"abc" ++ "def";`
+    + zlang/purescript/etc - compatible
+    * `a -- b` for split?
+      * `"abc:def" -- ":"`
+  * `a <> b` for concat, `"abc" <> "def"`
+    * `a >< b` for split, `"abc:def" >< ":"`
+  * `a :: b` for concat, `"abc" :: "def"`
+  * `a // b`, `"ab:cd" // ":"` for split would be better
+  !? make concat and join a single operator
+    * `a <:> b`, eg `"abc" <:> "def"`
+  * `"abc$<def>"` for concat
 
 ## [x] Numbers: float64 by default, unless it's statically inferrable as int32, like ++, +-1 etc ops only
   * Boolean operators turn float64 into int64
@@ -2134,7 +2125,7 @@
     * what if we detect next expression as next unrelated operand, regardless of separator?
     - nah, too much noise.
 
-## [x] Compiler: How do we map various clauses to wat/wasm? → ~~`allocBlock` function, untyped (f64 by default), see audio-gain~~ we don't use clauses
+## [x] Functions: How do we map various clauses to wat/wasm? → ~~`allocBlock` function, untyped (f64 by default), see audio-gain~~ we don't use clauses
 
   1. fixed pointers and `fn(aCh, bCh, ..., x, y, z)`
     - harder to manage variable number of inputs
@@ -2306,43 +2297,6 @@
     * memory can store last available item in global variable
       + allows manual memory management
       - doesn't allow sharing memory easily
-
-## [x] Compiler: How do we organize output of function (array)?
-
-  * Predefined memory statically indicated locations of input/output.
-  * Dynamized memory loses output location, unless indicated by arguments...
-
-  ? Can we avoid that by providing OUTPUT_PTR?
-    - not really. We should pass output pointer and size to detect channels.
-  →  + not necessarily. If we follow array method (see above), we can return pointer to first element of array, but 0 element indicates its length, so we can easily grab length from pointer.
-
-## [x] Clauses/function overload: → optional, but can select by argument type (pointer vs value)
-  + (input, aParam, kParam) signature handles any-channels input
-  + (i1, i2, i3, a, k) handles multiple inputs
-  + ((l, r), a, k) handles per-channel input
-  + return a, b, c - returns multiple outputs
-  + return (a, b, c) - single multichannel output
-  → so group acts as single element
-  - clauses impose clause selector. That selector can be implemented manually or in JS side.
-    + not necessarily. Static-time clause can be preselected within wasm.
-    + providing different clause increases efficiency: eg. 2-channel processor can be faster than n-channel.
-  - no-selector simplifies API: no need to pass number of channels.
-  ? what if we provide generic clause selector?
-    ~ preselecting clause is similar to creating fn instance.
-  - direct case allows 1:1 arguments matching in fn signatures.
-    - it is faster, unambiguous, unconflicting
-  * This is optional extension, can be avoided.
-  * Case can be identified by passing pointers to "audio buffers" - channeled arg slots.
-
-### [x] Direct values clause is hindered by clause selector →
-
-  * ? How do we select direct values clause? `gain(inp, .75, outp)`
-    ~ `gain(inp, .75, outp, 2)` is fine (null-arg means direct)
-
-  * ? How do we export direct-values functions [ideally] without extra step of args detection?
-    ~ the worst-case damage is extra fn call + extra nan comparison that sees - ok, there's no signature, fall back to direct call.
-    ~ single runs are not expected to be very regular externally, since for batch runs there's clause cases.
-    ? we detect from apparent channels idicator: gain(v, amp) is direct clause, gain((..ch), amp) is all-channels clause
 
 ## [x] Autogenerate mono/stereo clauses fn code or define fn clauses manually in syntax -> ~~autogenerate~~ manual
 
@@ -2801,21 +2755,6 @@
       newline continues prev line, explicit convention
     + "bullshit" noise
       ~ well it's line noise
-
-## [x] Flowy operators -> ~~<-~~ ~~>-~~ -<
-
-  Draft is ready, needs polishing corners and reaching the planned feeling.
-  Taking r&d issues and aligning them.
-
-  * There are 4 types available: numbers, functions, booleans, strings. Build around that and reinforce that.
-
-  * <-, ->, >-, -< is group of similar operators, they should build intuition around. "Would be cool if JS had them"
-    * |: → :>, <: loop → nah, `-<` is nicer for loop?
-    * `<-` is in operator
-    * `>-` is reducer? or something else? switch?
-    * `->` is lambda
-
-  * Don't extend conditionals, elvis `?:` is enough, the rest is &&, ||
 
 ## [x] Make channeled input an array: `gain([left, right], amp)` instead of group destructuring `gain((left, right), amp)`? -> nah, avoid unnecessary meaning for destruction
 
@@ -3629,13 +3568,13 @@
   - not clear if `'oscillator'`, `'Oscillator'`, `oscillator` and `Oscillator` resolve to the same
   - can cause conflicts with "bad" names, like `pipe/arg`
 
-## [x] Ranges: how to organize in wasm level? -> let's try syntactic ranges only
+## [ ] Ranges: how to organize in wasm level? ->
 
   1. v128 as f64x2
     + stores
     - need to read vector item
     - exporting isn't allowed
-    + exporting is possible
+    + exporting global is possible
 
   2. 2 spots in memory
     - need to manage memory
@@ -3657,6 +3596,28 @@
     ? do we ever need saved/exported ranges?.
     + allows fast direct static ranges easily
     + removes tacky problems: ranges combination, min/max reading (since they're immediately available)
+
+## [ ] Ranges: stack, heap, how? ->
+
+  0. `a,b` saved to stack, `a..b` saved to heap?
+    + meets limitation of 1000 members for stack
+    + can possibly optimize sequences calc
+    + allows returning plain arrays in JS side
+  0.5. `a,b` saved to stack (static), `a..b` to array
+    - entails GC
+  1. `0..10` as v128
+    - we can's store generic ranges `a..b[]`
+      - we can, by converting to value immediately, which screws subsequent range step
+    - we cannot modify ranges like `1..5 * 2 + 1`
+    - a..b * 2 must be same length range
+    - cannot export such function since v128 is prohibited for exports
+  2. func ref or i64 referring to element table
+    + static function can act as generator
+    + can store all range modifications
+    * `range1..a*b+c(a,b,c) = (*cur=1; out = cur * b + c; cur++; cur >= a ? cur=1; out);`
+    * `range1();range1();...`
+    - returning such function with dynamic params would require currying / binding mechanics
+      * `x(a)=(0..a); x(10);`
 
 ## [x] Drop ints and use only f64? -> let's try to use only f64 for variables, but operands cast to types
 
@@ -4422,7 +4383,7 @@
     - prohibits `x[1..10] <|= # * 2`
     - breaks pipe `0..items[] |> filter(items[#]) |> gain(items[#])` is super-verbose
 
-## [ ] How to represent array pointer in code? -> let's try f64
+## [ ] Arrays: How to represent array pointer in code? -> ~~let's try f64~~
 
   1. Use multiple stack values?
     + allows returning arrays as a couple [ptr,length] instead of storing length in memory
@@ -4445,16 +4406,26 @@
     - not clear which fn argument can be an array, even from call signature `a(arr, b, c)`
       -> arg must be only one
   1.1 We reserve special types sequence eg. `(i32, i32)`
+
   2. with GC types can be solved as `(type $ptr (struct i32 i32)) (func (param (ref $ptr)))`
     - unknown when structs will be supported
+      ~ it's supported everywhere already
+    + standard way
+    + no memory burden
+    + returns JS arrays
+    - involves GC, which might be not good
+      - may complicate compilation to simpler embedded envs
+        - eg. not supported by wasm2c
+    - what do we need memory for then?
+
   3. funcref returning ptr and length upon call?~~
     + we anyways read length via operator
     + can store these variables anywhere, not just memory
     ~- not any js fn can be passed
-    + csn be stored in separate table
-    - requires memory variable to be exported...
+    + can be stored in separate table
+    - requires memory variable to be exported to get pointer at it
       ~ maybe unavoidable if user needs to import memory
-    - not sure if we can create infinite functions
+    - not sure if we can create functions in runtime
   4. can be fn getter/setter that writes or reads value of the array~~
     - not sure if we can create dynamic functions with local state...
   5. use `i64` to store both array pointer and length.
@@ -4505,6 +4476,11 @@
   8. track all known array ptrs in a table/memory or just as global vars
     + we can represent them single-var via just id, not actual pointer
     - we can do infinite slices, storing all of them as ids is impossible
+
+  9. Use WASM GC
+    + supported by all wasm engines
+    + direct returns in JS side
+    - involves GC
 
 ## [x] Prohibit dynamic arrays `a()=(x=[1,2,3])`? -> keep them, but dispose immediately once ref is lost, statically
 
@@ -4910,13 +4886,14 @@
   + i32 can automatically mean function reference
   + allows storing funcs in lists
     - we'd need to use NaNs with non-canonical form as list members
+  ~ better use native func refs
 
 ## [ ] Use v128 of i64 for rational numbers?
 
   + Converts back to f64 on export
   + Gives extreme precision/dimension
 
-## [x] min, max, clamp as `a <? 0..100`? ~~yes~~ ~~keep `a <= 0..100` for in, and~~ `a ~ 0..100` for clamp
+## [x] min, max, clamp as `a <? 0..100`? ~~yes~~ ~~keep `a <= 0..100` for in, and~~ ~~`a ~ 0..100` for clamp~~
 
   * `a |< ..10`, `a >| 10` for
   * can be solved via clamp operator `a <> ..10`, `a <> 10..`
@@ -4941,11 +4918,14 @@
   * ALT: `a <= 0..10` for clamp, `a <? 0..10` is within check
     + more meaningful for function arguments
     - less matching definition of `a < 10 ? 10 : a > 0 ? 0 : a`
+    - `a <= 0..2` is `a<=0, a<=1`
   * `a -< 0..10`
     + allows `a -<= 0..10`
     + visually clear
     + aligns with `-/` for smoothstep operator
     + looks cooler than `<?`
+    - some uncertainty/conflict with `in`
+      ? maybe `a <> 0..10`
   * `a ~ 0..10` for clamp, `a ~= 0..10` for `a = a ~ 0..10`
     + super short
     + has matching mathy meaning
@@ -4957,6 +4937,7 @@
     + enables definitions like `x = 10 ~ 0..10;`
     ? what about smoothstep
       ~ likely we'd need to have a range modifier, eg. `x = 10 ~ 0..10**0.2`
+    - not cool enough
 
 ## [x] Create empty array - how? -> `[..10]` since range is exclusive
 
@@ -5107,7 +5088,7 @@
       ~+ prelim returns belong to userland anyways, it's not demanded internally
     - we can't
 
-## [x] State variables: How can we call same fn twice with same context? -> instance is created via new static declaration
+## [ ] State variables: How can we call same fn twice with same context? -> instance is created via new static declaration `*fn = a`
 
   * It seems for now to be able only externally
   ? but what if we need to say fill an array with signal from synth?
@@ -5417,7 +5398,7 @@
     );
   ```
 
-## [ ] Prohibit dynamic-size groups, make reflect stack -> likely yes
+## [ ] Prohibit dynamic-size groups, make reflect stack ->
 
   + ~~Solves issue of state vars logic: we can precalculate addresses~~
   + ~~Likely we don't need heap: can be fully static memory~~
@@ -5431,6 +5412,7 @@
     - it would require thousands of local variables...
   * Likely loops generally won't need to produce output, except for list comprehension
   ? Is there cases when we need dynamic arrays?
+    * `x() = (1..10)` - ranges can return v128 tokens
 
 
 ## [x] Loop vs fold: no difference -> ~~returns list <| or last |>~~ no difference, use `|>`
@@ -5720,15 +5702,6 @@
       stack.push(x)
     }
     ```
-
-## [x] Should we make `a,b` saved to stack, `a..b` saved to heap? -> no, storing range in stack is meaningless
-
-  + meets limitation of 1000 members for stack
-  + can possibly optimize sequences calc
-  + v128 can store a..b
-    - we can's store generic ranges `a..b[]`
-  + allows returning plain arrays in JS side
-  - cannot export such function
 
 ## [x] Assignment resolution `x = (1,2,3)` vs `x[1,2,3] = x[3,1,2]` - iterated (last item) vs saved/restored
 

@@ -15,7 +15,6 @@ const OPAREN = 40, CPAREN = 41, OBRACK = 91, CBRACK = 93, SPACE = 32, QUOTE = 39
 const PREC_SEMI = 1, // a; b;
   PREC_END = 2,
   PREC_RETURN = 4, // x ? ./a,b : y
-  PREC_STATE = 4, // FIXME: *a,b,c, d=4 is confusing group
   PREC_SEQ = 6, //  ./a,b,c;  a, b ? (c,d) : (e,f); a,b,c |> d
   PREC_IF = 8,    // a ? b=c;  a = b?c;
   // FIXME: should pipe be lower than if? a |> b?c;
@@ -152,7 +151,7 @@ binary('<', PREC_COMP)
 binary('>=', PREC_COMP)
 binary('<=', PREC_COMP)
 
-// logics
+// logic
 unary('!', PREC_UNARY)
 binary('||', PREC_LOR)
 binary('&&', PREC_LAND)
@@ -199,7 +198,7 @@ token('.../', PREC_TOKEN, (a, b) => !a && (b = expr(PREC_RETURN), b ? ['.../', b
 // token('.', PREC_CALL, (a,b) => a && (b=next(isId)) && ['.', a, b])
 
 // *a
-unary('*', PREC_STATE)
+unary('*', PREC_UNARY)
 
 // conditions & ternary
 // a?b - returns b if a is true, else returns a
