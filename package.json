@@ -19,7 +19,8 @@
   },
   "type": "module",
   "scripts": {
-    "test": "node test"
+    "test": "node test",
+    "watch": "esbuild --bundle --watch ./index.js --outfile=./melo.js --format=esm"
   },
   "repository": {
     "type": "git",

@@ -26,16 +26,16 @@
 * [x] make globals readable, but locals writable
 * [ ] make simple static variables
   * [ ] make fn capture declaring new static
-* [ ] Make static-only (stack) groups
+* [ ] Make static groups
 * [ ] make nan as null in fn arguments (`config(a,,b,c)`)
 * [ ] range iterator via pipe
   * [ ] pair-wise iteration
 * [ ] convert all string instructions to builder calls
 * [ ] list comprehension
 * [ ] make use of `./`, `../`, `.../` for loops only (not parent)
-* [ ] `a.xyz`, `a.lr`
+* [ ] swizzles `a.xyz`, `a.lr`
 * [ ] all readmes test
-* [ ] first bytebeat
+* [x] first bytebeat: viznut
 * [ ] `~, ~=`
 * [ ] `~/, ~*`
 * [ ] strings

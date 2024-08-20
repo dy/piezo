@@ -72,12 +72,12 @@ m = [1, 2..4, 5];             ;; mixed definition
 m = [1, [2, 3, [4]]];         ;; nested arrays (tree)
 m = [0..4 |> _ ** 2];         ;; list comprehension
 (a, z) = (m[0], m[-1]);       ;; get by index
-(b, ..z) = m[1, 2..];         ;; get multiple values
+(b, .., z) = m[1, 2..];       ;; get multiple values
 length = m[];                 ;; get length
 m[0] = 1;                     ;; set value
 m[2..] = (1, 2..4, n[1..3]);  ;; set multiple values from offset 2
 m[1,2] = m[2,1];              ;; swap
-m[0..] = m[-1..0];            ;; reverse
+m[0..] = m[-1..];             ;; reverse
 m[0..] = m[1..,0];            ;; rotate
 
 ;; Conditions
@@ -89,7 +89,7 @@ sign = a < 0 ? -1 : +1;       ;; ternary conditional
 a && b || c;                  ;; (a and b) or c
 
 ;; Loops
-(a, b, c) |> f(_)             ;; for each item in a, b, c do f(item)
+(a, b, c) |> f(_);            ;; for each item in a, b, c do f(item)
 (i = 10..) |> (               ;; descend over range
   i < 5 ? ./                  ;; if item < 5 skip (continue)
   i < 0 ? ../                 ;; if item < 0 stop (break)

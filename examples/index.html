@@ -4,36 +4,41 @@
   {
     "imports": {
       "tst": "../node_modules/tst/tst.js",
-      "subscript": "../../subscript/subscript.js",
-      "subscript/parse.js": "../node_modules/subscript/parse.js",
+      "melo": "../melo.js",
       "ts-dedent": "../node_modules/ts-dedent/esm/index.js",
-      "watr": "../node_modules/watr/watr.js",
       "sprae": "../node_modules/sprae/sprae.js"
     }
   }
 </script>
 
-<body :with="{tracks:[
-  'viznut-2011-09-18.li'
-]}">
-  <a :each="track, i in tracks" :href="'#' + track" :text="track" @click="
-    console.log('clicked', track)
-    const resp = await window.fetch(`/examples/${track}`)
-    const code = await resp.text();
-    runSample(code)
-  " />
+<body>
+  <a :each="track, i in tracks" :href="'#' + track" :text="track"
+     :onclick="() => loadExample(track)" />
 </body>
 
 <script type="module">
   import sprae from 'sprae';
-  import lino from '../index.js'
+
+  let audioContext, processor
+  async function init() {
+    if (audioContext) return
+    audioContext = new AudioContext();
+    await audioContext.audioWorklet.addModule("processor.js");
+    processor = new AudioWorkletNode(
+      audioContext,
+      "processor",
+    );
+    processor.connect(audioContext.destination);
+  }
 
   // init UI
   sprae(document.body, {
-    runSample(code) {
-      console.log(code)
-
-      const wasm = lino(code)
-    }
+    tracks: [
+      'viznut-2011-09-18'
+    ],
+    async loadExample(url) {
+      const [, code] = await Promise.all([init(), (await window.fetch(`/examples/${url}.mel`)).text()])
+      processor.port.postMessage(code)
+    },
   });
 </script>

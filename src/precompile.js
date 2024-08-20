@@ -381,7 +381,6 @@ Object.assign(expr, {
     )
   },
   '?'([, a, b]) { a = expr(a), b = expr(b); return unroll('?', a, b) || ['?', a, b] },
-  '!'([, a]) { a = expr(a); return unroll('!', a) || ['!', a] },
   '?:'([, a, b, c]) { a = expr(a); return a[1] === 0 ? expr(c) : (typeof a[1] === 'number' && a[1]) ? expr(b) : ['?:', a, expr(b), expr(c)] }
 })
 
