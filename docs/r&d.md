@@ -348,7 +348,7 @@
     + npm is free
     + kirtan.i, mono.i, sobel.i, viznut.i, predestined-fate.i
 
-### [x] ? Should it compile to wat or to wasm? → wat for now
+### [x] Compiler: Should it compile to wat or to wasm? → wat for now
 
   - wasm is faster
   - wasm allows web compilation: doesn't require heavy wabt dependency
@@ -364,7 +364,7 @@
 
   * ? Can be both I suppose, but needs researching wasm format - mb we can utilize fn tables in better way
 
-### [x] Compile targets: → WAT
+### [x] Compiler: targets → WAT
 
   * WASM
   * WAT
@@ -379,11 +379,11 @@
   * Native bytecode
   * others?
 
-## [ ] Standard channel names `a.lr`, `a.xyzw`
+## [ ] Variables: Standard channel names `a.lr`, `a.xyzw`
 
   + like glsl (data views to underlying block buffer), with [standard channel ids](https://en.wikipedia.org/wiki/Surround_sound#Standard_speaker_channels); swizzles as `a.l, a.r = a.r, a.l; a.fl, a.fr = a.fl`
 
-## [x] Function: signature -> `f(x, y) = x + y`
+## [x] Functions: signature -> `f(x, y) = x + y`
 
   1. `f(x, y) = x + y`
     + standard classic way to define function in math
@@ -505,7 +505,7 @@
     → sets can be listed as `(a,b,c)` ()
       ⇒ or even better, as functional languages do: `type in a|b|c`
 
-## [x] Strings -> useful for floatbeats, use `""` notation
+## [x] Strings: -> useful for floatbeats, use `""` notation
 
   * Erlang-like "hello" === [104,101,108,108,111]
     + Standard
@@ -526,7 +526,7 @@
   ALT: can we introduce alternative syntax for HEX/data?
     * `{0xabaababa13241abbabaabbabab123451236546389}` or something like
 
-### [ ] String is array of uint8, but melo supports only f64 numbers. How to read as uint8s? ->
+### [ ] Strings: String is array of uint8, but melo supports only f64 numbers. How to read as u8s? ->
 
   1. discard uint8 and just do f64 instead?
     ~ since strings are static, we at-part know what type it has.
@@ -585,7 +585,7 @@
   ! We can reserve atoms for import directives.
   + can be useful for throwing expressions
 
-## [ ] strings: interpolation -> likely `"a $<b> c"`
+## [ ] Strings: interpolation -> likely `"a $<b> c"`
 
   1. `"a {b} c"`
   2. `"a $<b> c"`
@@ -593,7 +593,8 @@
   + matches JS regex signature
   + `<>` means insert something here
 
-## [ ] strings: string operations - concat, split, join etc
+## [ ] Strings: string operations - concat, split, join etc
+
   ~ likely via stdlib
   * `a ++ b` for concat, `"abc" ++ "def";`
     + zlang/purescript/etc - compatible
@@ -601,16 +602,20 @@
       * `"abc:def" -- ":"`
   * `a <> b` for concat, `"abc" <> "def"`
     * `a >< b` for split, `"abc:def" >< ":"`
-  * `a :: b` for concat, `"abc" :: "def"`
+  * `"ab:cd" :- ":"` for split
+    * `"ab", "cd" :+ ":"` for join
+    * `a :: b` for concat, `"abc" :: "def"`
   * `a // b`, `"ab:cd" // ":"` for split would be better
   !? make concat and join a single operator
     * `a <:> b`, eg `"abc" <:> "def"`
   * `"abc$<def>"` for concat
+  * `"ab", "cd" |> # ++ ":" ++ _` for join
+    * `"ab:cd:ef" |> _ === ":"`
 
 ## [x] Numbers: float64 by default, unless it's statically inferrable as int32, like ++, +-1 etc ops only
   * Boolean operators turn float64 into int64
 
-## [x] ~~Pipes: → | with anon functions~~ ~~transform ternary `list | x -> a(x) | x -> b(x)`~~ pipes are loops `x |> _ * 0.6 + reverb(_) * 0.4 |> `
+## [x] Pipes: ~~→ | with anon functions~~ ~~transform ternary `list | x -> a(x) | x -> b(x)`~~ pipes are loops `x |> _ * 0.6 + reverb(_) * 0.4 |> `
 
   1. Placeholder as `x | #*0.6 + reverb() * 0.4`, `source | lp($, frq, Q)`?
     ? can there be multiple args to pipe operator? `a,b |` runs 2 pipes, not multiarg.
@@ -765,7 +770,7 @@
       + plays well with implicit arguments #t, #i etc.
     - same as 5 - let's avoid implicit stuff
 
-## [x] ~~Lambda -> we can use only lambdas everywhere~~ wasm doesn't have dynamic func references, creating memory for calls is costly
+## [ ] Lambda: -> ~~ we can use only lambdas everywhere~~ ~~wasm doesn't have dynamic func references, creating memory for calls is costly~~ no need for now
 
   * should there be lambda? `value | x -> x*.6 + reverb(x) * .4`
     - lambda function has diverging notation from regular fn definition.
@@ -783,7 +788,7 @@
   ! → operator must uniquely identify type and be macros
   ?! Try x(..args) -> operation for regular functions?
 
-## [x] ~~Reduce/fold operator: let's use |> with lambdas~~ easier to use just loops `sum=0; list |> sum+=_; sum`
+## [x] Operators: Reduce/fold ~~let's use |> with lambdas~~ -> easier to use just loops `sum=0; list |> sum+=_; sum`
 
   * ? Reduce operator? It can be eg. `:>` (2 become 1), or `=>`.
     * ? `a,b,c :> reducer`, like `signals :> #0 + #1`
@@ -1165,7 +1170,7 @@
     + that solves problem of instancing
     + identified by callstack
 
-## [x] State variables: syntax → `*` seems to match "save value" pointers intuition, star for save
+## [x] Static variables: syntax → `*` seems to match "save value" pointers intuition, star for save
 
   * There's disagreement on `...` is best candidate for loading prev state. Let's consider alternatives.
   1. `...x1,y1,x2,y2`
@@ -1642,6 +1647,7 @@
 
   1. `a[..] |>= _+1`
     - new operator
+      - JS doesn't have it
     - doesn't allow conditional overwrite
     -? `=` operator likely puts elements to stack, at least sequences `(a,b,c) = (d,e,f)`
       - that means we're limited in cycling through
@@ -1652,7 +1658,6 @@
     + no new operator
     + allows conditional overwrite `a[..] |> _ > 10 ? _ += 10;`
     - not obvious on long pipes  `a[..] |> _ + 1 |> _ += 2` - should it prohibit or ovewrite something?
-      ? maybe it would be cleaner to have special character then `a[..] |> $ + 1 |> $ += 1`
     - new unknown pattern, can be unexpected
 
 ## [x] Arrays: to be or not to be? → persistent fixed-size flat structures
@@ -1674,24 +1679,6 @@
     - nah, just do `(a,b,c) = d`
     ? Alternatively: do we need nested structures at all? Maybe just flat all the time?
 
-## [ ] -< operator purpose?
-
-  * ? splits list by some sorter: `a,b,c -< v -> v`
-  * ? or in fact multiplexor? selects input by condition? like a,b,c -< x -> x > 2 ? 1 : 0
-  * ? switch operator?
-  * ? what if we use it as loop? [ x <- 1,2,3 -< x * 2]
-    + matches that arrow madness
-  * ? maybe that's just inverse reduce operator. a = sum -< a,b,c
-    * inverse reduce is loop
-  * -<, >- look more from condition block-diagram scope. Maybe can be used for switches somehow?
-  * -> ! what if that's iterator operator, an extension of `in`/`from`/`of`: `[x <- 1,2,3 <| x * 2]`
-    ~- more familiar to just `[1,2,3 | x -> x * 2]`
-    + can be used in pipes also as `x <- list | x + 2`
-    + can iterate over ranges as `x <- 0..10 <| x*2`
-    + can iterate groups `x <- 1,2,3 <|`
-    + can iterate simple number `x <- 10`
-    + it's mainly `for (x of list)` operator
-
 ## [x] ~~what's the meaning of `>-`?~~ confusable with `a > -x`
 
   * must be the opposite-ish to `for of`.
@@ -1701,13 +1688,6 @@
     + meaningful as `-<` counterpart
     + enables if-else as `1,0 >- x ? true : false;`
       . `1 >- x ? true`;
-
-## [x] What if we swap `-<` with `<-`, as `x in y` and `x of y`? -> no, `x<-y` is `x< -y`
-  + `a |> b -> c` becomes symmetrical with `c <- b <| a`
-  + `c <- b` is more conventional for `a of b`
-  + `x -< 0..10` is nicer for range indication limit and for clamp
-  + `x -<= 0..10` is just a nice construct
-  -  `x <- y` vs `x < -y`
 
 ## [ ] Comments: `//`, `/*` vs `;;` and `(; ;)` → ~~`//` is most based choice. `\\` gives many benefits~~ `;;` either, but least toxic
 
@@ -1969,7 +1949,7 @@
         ? how do we map arrays then
           * list comprehension: i <- arr <| i * 10
 
-## [ ] Group assignment: a,b=c,d -> let's use more familiar flowy JS style for now a=1, b=2 and force groups be scoped
+## [ ] Groups: Assignment a,b=c,d -> let's use more familiar flowy JS style for now a=1, b=2 and force groups be scoped
 
   * lhs can only be ids, props or fn
   * lhs member on its own without assignment doesn't make sense other than in definition `a,b,c`
@@ -2036,7 +2016,7 @@
     ? mb based on number of lhs-idables
     + to make single-assign do `(a,b,c)=1`
 
-## [x] Raise `,` precedence for groups? -> nah, let's keep groups scoped
+## [x] Groups: Raise `,` precedence? -> nah, let's keep groups scoped
 
   - not having `()` around sequence can be misleading, `()` visually outlines group
   + `^ a,b,c` ~~`a,b,c.` - naturally done via `x ? a,b,c .` operator~~
@@ -2049,7 +2029,7 @@
     - `*` elements cannot be part of sequence
   * generally `,` can be above all operators which cannot be part of group, eg. `^(a,b),c` is impossible
 
-## [x] Group ops: how? deconstruct to per-component ops with duplication
+## [x] Groups: ops - how? deconstruct to per-component ops with duplication
 
   * Must not introduce any dynamic tax
 
@@ -2063,7 +2043,7 @@
     * `(... (x ? ^ a,b); ...; c,d) * y();` - where y returns multiple values also
     * `(a <| @) * (b <| @);`
 
-## [x] Convolver operator? -> let's try to hold on until use-case comes
+## [x] Convolve operator? -> let's try to hold on until use-case comes
 
   * Fold operator gives thought to convolver operator which slides window depending on number of arguments,
     samples ^ (a,b,c,d,e) -> a*0.1 + b*0.2 + c*0.4 + d*0.2 + e*0.1 returns all same samples weighted with a formula
@@ -2073,23 +2053,15 @@
   * Pipe can be used as simple convolver (see above):
     * `a,b,c | a,b -> a+b` means  `((a,b) | a,b->a+b, (b,c) | a,b->a+b)`
 
-## [x] Array slice takes ranges a[1..3], unlike python
-
 ## [x] Notes as hi-level aliases for frequencies A4, B1 etc. -> available
   * import 'musi' - imports all these constants
   + allows building chords as (C3, E3, G3) = Cmaj
     ~ would require # to be valid part of identifier
 
-## [x] ? Parts of identifier: $, #, @, _
-  + allows private-ish variables
-  + allows notes constants
-  ~ mb non-standardish
+## [x] Functions: `x() = a; b; c.` -> let's use `x() = (a; b; c);` for now
 
-## [x] Variables: Scope or not to scope? → make () a block if new variables are defined there
-
-  + maybe we need `{}` as indicator of scope: outside of it variables are not visible.
-  - (a,b)=>a+b also creates scope: a and b are unavailable outside of fn body - why not stretching that to language?
-  - look at [erlang functions](https://www.erlang.org/doc/reference_manual/functions.html): they use only `;` and `.`
+  * [erlang functions](https://www.erlang.org/doc/reference_manual/functions.html): they use only `;` and `.`
+  + allows no-block syntax
 
 ### [x] Variables: blocks: {} vs () -> `()`
 
@@ -2105,7 +2077,7 @@
     - makes parens affect vars visibility, eg `((a);(a=0))` loses variable
     - makes code logic sensitive to presence of parens, ie parens are not transparent anymore (same defect as state vars defining fn scope)
   2. all variables are declared per fn body scope
-    + in-sync with state variables
+    + in-sync with static variables
     + in JS that's common practice how it's done - one declaration block, rest is just reuse of vars
     - cannot shadow globals, so the code is still sensitive to presence of global variables, some global names can affect logic
 
@@ -2438,6 +2410,47 @@
       * `~gen() = (out)`
         + simplifies output type indicator as block.
 
+## [x] How to differentiate a-param from k-param argument -> no fn overloading
+
+  * There's no way to differentiate gain(channels, aParam) and gain(channels, kParam).
+
+  1. `offset = block(n)` offset can be float, which works for `typedarray.set(data,offset)`, as well as indicates kParam type.
+    * ? Only takes finding out "impossible-ish" fraction values.
+      * we can export that "key fraction" turning argument into offset as global
+      * ? What if fraction reflects actual offset? Eg. 1234.0000004321
+        - nah, that increases possible fractions
+      * Consider also main part must be one of limited set of addresses.
+      * Suppose different orders encoding reduces chance. Eg. `1234.1112340000000114321000000111234`
+        * Similar to passwords encoding: more concepts engaged the better.
+          + order gaps
+          + static part of a key (11)
+          + replica of a key (1234)
+          + reflection of a key (4321)
+          + ? sum of a key
+          + https://en.wikipedia.org/wiki/Luhn_algorithm ?
+        * Each this check reduces chance of matching offset with random input argument.
+    - That's too shaky
+  2. Export under different names: gain_a_k, gain_a2_k, gain_a1_a1
+    + no conflicts
+    + no perf tax
+    + scalability (say, another input argument type)
+    - Exporting all these names pointlessly increase module size
+      ~ insignificantly though
+    - `k` isn't real k-param, it's simple argument.
+      ~ can be done as real k-param
+  3. `[inputId, inputOffset] = aparam(n); process(inputId, ...args)`
+    - decouples inputId from inputOffset: can be not obvious what passing id means.
+  → 4. Prohibit overloading functions?
+    + removes ambiguity
+    + simple solution
+    + all pros from 2.
+    + solves this issue completely
+    + doesn't enforce artificial naming convention
+    + argument doesn't drive function clause
+    - it complicates `curve(input, param)` and `input | curve(param)` case.
+      ~ either we introduce pipe operator `input |> curve(param)`
+        + less code (no need to define pipe fns), + less need in arrow functions, + less overloaded operators
+
 ## [x] `t`, `i` are global params? Or must be imported? Or per-sound? -> manual time management
 
   * ? cannot be imported since generally global-time t/i are unknown. Mb defined as `...t as time`?
@@ -2666,9 +2679,6 @@
     - that implies for multichannel input to pass pointers to each individual channel, or else that count gets meaning of "blockSize" (not generic number of samples to process)
   → just have global blockSize, allocBlock and make functions match signature in son 1:1, by passing blocks for batching
 
-## [x] Tree shaking
-  * must shake off unused fns in compilation
-
 ## [x] Latr: alloc, array etc.
   * latr can provide alloc and other common helpers
   - not latr but std. Latr is generic synthesis/science
@@ -2676,7 +2686,7 @@
   * Lino Audio Toolkit ... R?
   * Laboratory Transformator
 
-## [x] Array/string length → `arr[]` for length is the most natural
+## [x] Arrays: length → `arr[]` for length is the most natural
   * Ref https://en.wikipedia.org/wiki/Comparison_of_programming_languages_(array)
   * Ref https://en.wikipedia.org/wiki/Cardinality
   * Lua, J langs propose # operator for length
@@ -2723,7 +2733,7 @@
   * channels | len
     - precedence isn't nice
 
-## [x] Binary operators → let's stick to common syntax and not break it
+## [x] Bitwise operators → let's stick to common syntax and not break it
 
   1. JS convention: a|b, a&b, a^b
     - occupies significant operators with secondary operations
@@ -2731,7 +2741,7 @@
     - conflicts with topic operator ^ + b
   2. Overloaded a+b, a*b for booleans
     - doesn't apply for integers
-  3. Reverse convention: a&&b, a||b, a^^b for binaries
+  3. Reverse convention: a&&b, a||b, a^^b for bitwise
     + shorter conditioning a & b | c
     - unconventional
   4. Get rid of them
@@ -2741,8 +2751,9 @@
     - makes bytebeats harder to implement
     - makes useless 0x00 and 0b00 notations
     + less questions of converting one numbers to another
+  5. `a/\b, a\/b, a><b`
 
-## [x] ASI: semicolons or not? → enforce semicolons. But last one is optional.
+## [x] ASI (semicolons): semicolons or not? → enforce semicolons. But last one is optional.
 
   1. Don't enforce `;` everywhere. Recognize newline intelligently.
     - C/Java-family has them mandatory; Also many JS folk tend to make it mandatory also.
@@ -2922,7 +2933,7 @@
   + we anyways have to provide imports in compiler options, so that's unnecessary in code
   - introduces implicit environment
 
-## [x] Do we need to have `@` for imports? Can't we just indicate atom directly? -> we can import without atoms
+## [x] Import: Do we need to have `@` for imports? Can't we just indicate atom directly? -> we can import without atoms
 
   ? Can we do directly `'math#sin,cos'`?
   + saves from `@'@brain/pkg'` case
@@ -2936,53 +2947,12 @@
   - some imports can be without quotes, like `@math#pi;`
     + less separation from code
 
-## [x] Wasmtree instead of IR would be simpler -> nope, it's less flexible and less supported
+## [x] Compiler: Wasmtree instead of IR would be simpler -> nope, it's less flexible and less supported
 
   * ['module', ['func', '$name', ['param', 'a', 'b'], ...statements], ['global'], ['exports']]
   + it would allow to just apply a bunch of transforms to inputs, keeping the format
   + it takes less space and less computation
   + it is easier serializable
-
-## [x] How to differentiate a-param from k-param argument -> no fn overloading
-
-  * There's no way to differentiate gain(channels, aParam) and gain(channels, kParam).
-
-  1. `offset = block(n)` offset can be float, which works for `typedarray.set(data,offset)`, as well as indicates kParam type.
-    * ? Only takes finding out "impossible-ish" fraction values.
-      * we can export that "key fraction" turning argument into offset as global
-      * ? What if fraction reflects actual offset? Eg. 1234.0000004321
-        - nah, that increases possible fractions
-      * Consider also main part must be one of limited set of addresses.
-      * Suppose different orders encoding reduces chance. Eg. `1234.1112340000000114321000000111234`
-        * Similar to passwords encoding: more concepts engaged the better.
-          + order gaps
-          + static part of a key (11)
-          + replica of a key (1234)
-          + reflection of a key (4321)
-          + ? sum of a key
-          + https://en.wikipedia.org/wiki/Luhn_algorithm ?
-        * Each this check reduces chance of matching offset with random input argument.
-    - That's too shaky
-  2. Export under different names: gain_a_k, gain_a2_k, gain_a1_a1
-    + no conflicts
-    + no perf tax
-    + scalability (say, another input argument type)
-    - Exporting all these names pointlessly increase module size
-      ~ insignificantly though
-    - `k` isn't real k-param, it's simple argument.
-      ~ can be done as real k-param
-  3. `[inputId, inputOffset] = aparam(n); process(inputId, ...args)`
-    - decouples inputId from inputOffset: can be not obvious what passing id means.
-  → 4. Prohibit overloading functions?
-    + removes ambiguity
-    + simple solution
-    + all pros from 2.
-    + solves this issue completely
-    + doesn't enforce artificial naming convention
-    + argument doesn't drive function clause
-    - it complicates `curve(input, param)` and `input | curve(param)` case.
-      ~ either we introduce pipe operator `input |> curve(param)`
-        + less code (no need to define pipe fns), + less need in arrow functions, + less overloaded operators
 
 ## [x] Do we need arrow functions? → Lets wait for use-case for now, but worst case make them macro/operator-helpers
 
@@ -3018,7 +2988,7 @@
 ## [x] Tape machines -> try using array with shift, no need for explicit tape machines
 
   * They're like buffers/arrays, but every batch call they shift index.
-  * In a way similar to state variables, but in fact state arrays (variables with memory of prev values)
+  * In a way similar to static variables, but in fact state arrays (variables with memory of prev values)
   * In mono done as `v()=(#:1; y=#(0); #=y+1;y);` (create, read, write)
 
   1. `v = (in[2,1024]) -> (*state[1]; y=state.0; state.0=y+1; arr[100]=[1,2,3]; y)`
@@ -3453,7 +3423,7 @@
 
 ## [x] !Prefer operator `x()=(a;<<x=1;a*x;)` - declares values at the beginning? -> nah
 
-## [ ] Try-catch -> `x() ?= (a, b, c)` makes fn definition wrapped with try-catch
+## [ ] Try-catch: -> `x() ?= (a, b, c)` makes fn definition wrapped with try-catch
 
   ! Golang-like `result, err = fn()`
     + matches reverse-ternary op
@@ -3474,7 +3444,7 @@
   * Possible syntax: `fn(a) ?= (!a ? 'Bad arg'!; 1/a);`
     - no: `a ?= b` is `a = a ? b`, same as `a ?:= b` is `a = a ?: b`
 
-## [ ] How do we define throw?
+## [ ] Try-catch: How do we define throw?
   * `!'Error message'`
     + makes use of atoms
   * `?'Error'`
@@ -3483,21 +3453,6 @@
     + returning an atom indicates error
   ~- we can do that via just returns
   - Errors make program syntax case-sensitive
-
-## [x] Pipe: replace with `|>` operator? -> let's use lowered-precedence `|` for now and see for side-effects
-
-  + Doesn't mess up precedence of `a,b | c`
-    - actually it's desired precedence...
-  - Doesn't look like classic pipe
-
-## [x] Switch operator problem: `a >- b ? c` vs `a > -b ? c` -> deprecate switch
-  + switch can be more naturally and unambiguously expressed via sequence of ternaries
-
-## [x] `in` operator problem: `a <- b ? c` vs `a < -b ? c` -> try removing `in` operator for now
-  + removing it solves the issue
-  + removing it makes iterators available only as maps: `list | x -> x`
-    + which is less ambiguity
-    + keeps loops logic simple
 
 ## [ ] Case-insensitive variable names? -> likely yes: AbB/ABb, x1/X1, ~~@math.E/@math.e~~, export names, import names, constants, strings, atoms
   * should not be too smart, should be very simple
@@ -3510,11 +3465,11 @@
   + reduces use of camelcase convention
   + lowcase constants are fun `4p * i`
     - can define via units
-  - `AbB` vs `ABb` can be different chords, but lino mixes them up together
+  - `AbB` vs `ABb` can be different chords, but melo mixes them up together
     ~ can be addressed via separators `Ab_B`, `A_Bb` or (?) `Ab.B`, `A.Bb`
   - `X1` and `x1` can be different things in math
     ~ can be solved as eg. `x1` and `_x1`, `@x1`, `#x1`, `$x1`
-  - `sampleRate` becomes `samplerate` - can be confusing
+  -~ `sampleRate` becomes `samplerate` - can be confusing
     ~ doesn't have to lowcase
   - export naming: `'AbB': AbB, 'sampleRate': sampleRate.`?
     + can take exact name though
@@ -3697,15 +3652,7 @@
   ~+ shadowing variables in JS is not nice practice anyways `let x = 0; if () { let x = 1; } `
     - but at least it secures/incapsulates code block, makes independent of globals
 
-## [x] Remove desugaring or keep? -> remove, make desugaring in analyser
-
-  - desugaring solves initially
-  + removing is shorter
-  + desugaring can be done in-place
-  + it can be helpful to maintain parentheses, since parens define scope
-  + good for parens opening, not always scope is needed
-
-## [x] Dynamic arrays, eg. `a->[1,a,2]` -> wait for structs generally, currently try memory pointers approach
+## [x] Arrays: Dynamic arrays, eg. `a->[1,a,2]` -> wait for structs generally, currently try memory pointers approach
 
   1. Alloc memory every return
   - needs somehow freeing memory, gc or manually
@@ -3767,7 +3714,7 @@
   - direct allocation requires disposal which we want to avoid.
     ? wait for structs?
 
-## [x] 1-based index vs 0-based index -> stick to 0-based
+## [x] Arrays: 1-based index vs 0-based index -> stick to 0-based
 
   * 1-based
     * See ref https://www.reddit.com/r/ProgrammingLanguages/comments/t86ebp/thoughts_on_1based_indexing/
@@ -3831,47 +3778,7 @@
     - no type checking
     - hard to write values
 
-## [x] Compiler: expressions return type -> use side-effects?
-
-  1. expr must return string result;
-    + allows nested processing like `(parent.expr (nested.expr))`
-  2. modify current fn body, return none
-    + allows more flexible write to different targets
-  3. modify fn and return last element
-
-## [x] Batch function as a syntax sugar -> nah, simplify functions as much as possible, use loops operators to generate processings
-
-  * We often can find code like `gain = (in,vol) -> (*out=[..in[]];out[0..]=in|x->x*vol;out)`
-
-  1. Instead, we can write single-sample functions as `gain = (in[],vol)->in*vol`
-    + that's way more natural syntax for single-sample processing, as it was intended initially
-    + it allows natural piping as `[1,2,3] | process`
-      - passing params eg. `[1,2,3] | x -> process(x, vol)` breaks batching logic
-        ~ or at least requires sort of type inference case and 2 compile clauses
-      ? What's the way to produce it for generators? `x -> [()]`?
-        ~ kind of meaningful, no? The issue is persisting output array instead of recreating that
-          - nah, it will produce an array of one item.
-    a. `gain = ([]in, vol) -> in * vol`; `gen = (f) -> [](code)`
-    b. `gain = (in[], vol) -> in * vol`; `gen = (f)[] -> code`
-    c. `gain = ([in], vol) -> in * vol`; `gen = f -> [code]`
-    d. `gain = (|in, vol) -> in * vol; [1,2,3] | gain(vol)`;
-      ? do we ever need piped value to be not first argument?
-    e. `gain = (x,v)->x*v; [1,2,3] | x -> gain(vol)`, `gen=f->code; ..1024 | gen`
-      - if we unroll function code at every pipe usage, our pipes will get huge. Ideally we need functions itself taking iterable parameter, and in simple 1-sample case it's just one.
-
-  2. We can make function code either take single-sample or batch-input, depending on usage clauses
-    . so that `gain = (in,vol) -> in * vol` can work as `[1,2,3] | gain` or `[1,2,3] | x -> gain(x,vol)`
-    + no pointers mental load
-    + same way we handle any-arg ops, making auto-type coercion if needed
-    - from external API we can't detect if value is a pointer or a number
-      -> we open old pandora box of indicating type of argument, there's just no good way
-    - there's no way of passing full array as a pointer `a([1,2,3],1)` - it will convert to batcher
-
-  * We're looking for something like `[1,2,3] | gain(volume) | filter(f:440,gain:-1000)` which returns an array as a result.
-    * Therefore `gain`, `filter` functions should expect some hidden or first argument to be not an item but full array
-  * We're also looking at gain code looking like `gain = (x, volume) -> x * volume`
-
-## [x] Pipe - should it work more as single-sample processing, or can take whole argument? -> ok, use pipe as iterator, benefits outweight block-processing functions
+## [x] Pipe: should it work more as single-sample processing, or can take whole argument? -> ok, use pipe as iterator, benefits outweight block-processing functions
 
   1. `[1,2,3] | x -> x` - per sample
   + enriches mapper meaning with iterator
@@ -3905,46 +3812,6 @@
   * Optional args must be detected statically in fn callsite for perfect performance
     - makes exported functions require all params
 
-## [x] Precedence hurdle: |, (<|, |>), (=, +=) -> don't use `|`, keep `|` precedence as is
-
-  * it seems loop/fold, assign and BOR must be right-assoc same-precedence operator
-  * otherwise there are tradeoffs like `i<|x[i] = 1` or `a=b | c` or `a <| b|c |> d`
-  * NOTE: assign has += *= etc, also it's right assoc whereas loops are not.
-
-  * `a | b <| c`
-    * `a|b <| c` or `a | b <| c`
-  * `a <| b | c`
-    * `a<|b | c` or `a <| b | c`: `|` <= `<|`, lassoc
-  * `a | b = c`
-    ?
-  * `a = b | c`
-    * `a = b|c`: `|` >= `=`, rassoc
-    * `a=b | c`
-      - can break existing common binary expressions, but other tradeoff is worse
-    * `a=b <| c`, since `|` == `<|`
-      + pretty meaningful too
-  * `a <| b[i] = c`
-    * `a <| b[i]=c` : `=` >= `<|`, rassoc
-    * `a<|b[i] = c`
-      - left side is meaningless here
-  * `a = b <| c`
-    ? `a=b <| c`
-
-  * Ideal: `a <| b = c = d | e = f` -> `(a <| (b=c=d)) | (e=f)`
-    * `=` > `<|`, `<|` == `=`
-
-  ?! can we make pipe rassoc same level as =, and `<|`, `|>` - lassoc?
-    * seems it just needs special token parser
-  -> we can reduce problem only to `a=b|c`, so that pipe operator requires explicit `(a=b)|c`,
-    but the rest works fine
-
-## [x] how to include `a=b|c` expression? (a=b)|c doesn't make sense. -> ~~let's guess standard | precedence, and expect pipes to be properly wrapped~~ let's make `| ->` a ternary operator and keep `|` precedence
-
-  ? what's heuristic behind this?
-
-  * assignment lhs?
-    - can be `a <| b = c | d`
-
 ## [x] Arrays: rotate or not rotate? -> rotate via memcpy ops
 
   * Rotate: `list << 1`, `list >> 2`
@@ -3969,7 +3836,7 @@
 
     ?! note: we can use `@i++, @p++` directives to indicate that phase is incremented after the fn call
 
-  * Rotate as `/ a = [1..,0];` via memory copy ops
+  * Rotate as `a = [1..,0];` via memory copy ops
     ? how efficient is that?
 
 ## [x] Arrays: neg-index access or no? -> let's try modwrap + static optimization
@@ -3982,7 +3849,7 @@
   + we kind-of need idx checker function if we're going to implement ring buffer
   + modwrap operator is for that purpose...
 
-## [x] Scope resolution (fns within fns) -> functions have no nested functions and declared at the top level
+## [x] Functions: Scope resolution (fns within fns) -> functions have no nested functions and declared at the top level
 
   * Would be nice to make all variables local
     + less noise in code, + local.tee available
@@ -3994,7 +3861,7 @@
     - not always possible, like in recursion case, which is main use-case
       ~- maybe possible - via block or loop?
 
-## [x] Make functions `f(x)=x` separate from mappers `f=x->x`? -> yes, let's separate
+## [x] Functions: Make functions `f(x)=x` separate from mappers `f=x->x`? -> yes, let's separate
 
   + We don't support anonymous functions anyways `x -> y -> z`
     * with `x(a,b) = (a * b)` it's impossible to create anonymous function
@@ -4011,7 +3878,7 @@
     * likely can be `osc=[sin(x)=...x,tri(x)=...x]`
   + resolves the issue of scope (above): no need to make all vars global since no scope recursion
 
-## [x] Replace `<|`, `|`, `|>`? -> ~~Let's try `::` for loop/generator and `list -> item ::` for extended loop/tranformer~~ ~~let's use `<|`, `|>` for map/reduce,~~ ~~`<|` and~~ ~~`|>`~~ `|:` for loop (multiple/single arg), `#` for topic token, ~~`x -> x*2` for mapping function~~
+## [x] Loops: What's the operator character? -> `a..b |> c`
 
   + Less problems with overloading `|`
   + Fold operator is likely not as useful
@@ -4247,7 +4114,7 @@
 
   ? ALT: `<( x>2?!; )>`
 
-### [x] What's the best character for topic placeholder? -> ~~`#` feels the best~~ `_` means "insert here" and scala-compatible
+### [x] Loops: What's the best character for topic placeholder? -> ~~`#` feels the best~~ `_` means "insert here" and scala-compatible
 
   * `list |> #*2`, `list |> #>2?^^#:^#;`
     + `#` is almost perfect for topic/reference, associates with `#`th item
@@ -4326,14 +4193,14 @@
   * `list |x> x*2`, `a,b,c |x> x*2`, `0..10 |x> x*2`
     - `list | (x > x*2)`
 
-## [x] What's the difference of `list <| # * 2` vs `list |> # * 2`? -> multiple vs single return, we don't need <| if we detect if returns are necessary
+## [x] Loops: What's the difference of `list <| # * 2` vs `list |> # * 2`? -> multiple vs single return, we don't need <| if we detect if returns are necessary
 
   ? First one returns multiple members, last one returns single (last) value
     ? can we detect that by-use-case?
       - unlikely, same use-case can include both `[0,1,2<|@*2, 0,1,2|>@*2]`
     + first uses heap, the second doesn't (is faster)
 
-## [x] `list <| x` vs `a < 1 <| x` - how do we know lh type for while loops. -> .. |> (cond ? ^;)
+## [x] Loops: `list <| x` vs `a < 1 <| x` - how do we know lh type for while loops. -> .. |> (cond ? ^;)
 
   * type can be unknown, like `x(arg)=(arg <| ...)`
     ? do we run it until condition holds true?
@@ -4482,7 +4349,7 @@
     + direct returns in JS side
     - involves GC
 
-## [x] Prohibit dynamic arrays `a()=(x=[1,2,3])`? -> keep them, but dispose immediately once ref is lost, statically
+## [x] Arrays: Prohibit dynamic arrays `a()=(x=[1,2,3])`? -> keep them, but dispose immediately once ref is lost, statically
 
   + ensures static memory: doesn't grow cept comprehension
   -? we can track & dispose them by the end of function call ourselves...
@@ -4492,7 +4359,7 @@
   + we can slice existing memory easily
   - we can declare memory size in advance by just `[1,2,3]`
 
-## [x] List comprehension: how? -> via heap
+## [x] Arrays: List comprehension: how? -> via heap
 
   * The size of final list is unknown in advance. It requires dynamic-size mem allocation.
   ? Can we detect size in advance somehow?
@@ -4502,7 +4369,7 @@
   3. Just create new array and push members to it, increasing array's length. We suggest there's only one dynamic array at-a-time created, so it's safe to increase length on creating time.
     -> Or better just write length after the array is created, eg. somewhere in dynamic `$alloc` method.
 
-## [x] Should loops return multiple arguments? How to maintain the heap? -> `<|` returns multiple members to heap
+## [x] Loops: Should loops return multiple arguments? How to maintain the heap? -> `<|` returns multiple members to heap
 
   + allows `fn(list <| @ * 2)`
   + allows `[(a,b,c) <| @ * 2]`
@@ -4590,7 +4457,7 @@
 
   * Mixed no-heap as much as possible, otherwise heap
 
-## [x] Import into function scope? -> no, too big of a workaround for wasm imports
+## [x] Import: into function scope? -> no, too big of a workaround for wasm imports
 
   * `saw() = (<math#pi>; pi*2+...)`
   + allows avoiding conflicts
@@ -4599,7 +4466,7 @@
     - also we don't have array aliases.
   - conflicts with the way imports are done in wasm
 
-## [x] Import JS things? -> yes, import only via JS, hold on with importing files
+## [x] Import: JS things? -> yes, import only via JS, hold on with importing files
 
   * Must look more like a native object
   + `@math.pi` can be directly mapped as `(import "math" "pi")`
@@ -4608,7 +4475,7 @@
     + makes `#` part of var names
     + allows avoiding quotes
 
-## [x] Should we make memory importable, instead of exportable? -> internalize memory - it is exported only if imported
+## [x] Memory: Should we make memory importable, instead of exportable? -> internalize memory - it is exported only if imported
 
   + naturally enables shared memory
   ? can help with question of naming memory?
@@ -4619,7 +4486,7 @@
   ! if user needs to read memory - he must pass it as import argument; if memory is not passed - it is internal and there's no way to read it.
     - useless to pass memory object in advance only to know mem signature
 
-## [x] Directly call imported items as `@math.pi`? -> no: makes code unnecessarily verbose
+## [x] Import: Directly call imported items as `@math.pi`? -> no: makes code unnecessarily verbose
 
   + so js does.
   + nicely separates namespace
@@ -4691,14 +4558,14 @@
       ~ so `label:` works more as part of block/group as `(name: a,b,c)` rather than individual items.
         + which makes sense in terms of importing `@modul:a,b,c`
 
-## [x] Control flow blocks: loop, condition -> deal with precedence of `|>` and `?` operators only, they're lower than commas.
+## [x] Loop, condition: how to define block -> deal with precedence of `|>` and `?` operators only, they're lower than commas.
 
   * these are apparently a separate syntax group
   * these operators may require lower precedence than `,` or even `;`: `a ? x(), y(), z()` - these are elements of array, but not part of a condition.
     ~ can be done as `a ? (x(); y(); z())`
   * one possible simplest loop is without any condition, only by breaks `(a() ? x.; b(); c() ? y!;)`
 
-## [x] Is it worthy introducing `:` only for importing members, ie. -> no, we use href as `<math#a,b>`
+## [x] Import: Is it worthy introducing `:` only for importing members, ie. -> no, we use href as `<math#a,b>`
 
   1. `@math:sin,cos`
 
@@ -4736,7 +4603,7 @@
     - imports is part of JS, code may be not known
     + good for embeddable systems since all code is known in advance
 
-## [ ] Import type detection: `@math.pi` vs `@math.sin()` - we have to detect type and fn signature. How? -> let's try passing config object for now
+## [ ] Import: type detection: `@math.pi` vs `@math.sin()` - we have to detect type and fn signature. How? -> let's try passing config object for now
 
   1. By usage. `@math.pi * 2` - imports number, `@math.sin()` - imports a function.
     + we apply same logic in ops: `()` treats as fn, `[]` as array and `+` as number
@@ -4754,12 +4621,12 @@
       - it doesn't detect multiple return arguments
     - it requires creating a memory object in advance for compiler, whereas it's required in instance
 
-## [x] Should we make dot part of name, eg. `x.1`, `x.2`? -> no, it can be `a . 0`
+## [x] Variables: Should we make dot part of name, eg. `x.1`, `x.2`? -> no, it can be `a . 0`
 
   - likely no, since we use it in `@math.pi`
   - we don't really need member access generally
 
-## [x] Changing variables type `x=1;x=1.0;` -> vars are always f64, operators can cast to int
+## [x] Variables: Changing variables type `x=1;x=1.0;` -> vars are always f64, operators can cast to int
 
   * that's problematic via wasm, since it enforces variable type: would be wrong to cast float to int
   ? upgrade type definition to float if it's ever assigned to
@@ -4767,7 +4634,7 @@
     + allows merging analyser into 1-pass compiler
     + retains precision
 
-## [x] mix, smoothstep operators -> normalize is `a ~/ x..y`, mix is `a ~* x..y`
+## [x] Operators: mix, smoothstep operators -> normalize is `a ~/ x..y`, mix is `a ~* x..y`
 
   * `x -< a..b` defines clamping?
   * `x -/ a..b` for smoothstep?
@@ -4801,8 +4668,7 @@
   * `x <= a..b`
     - can be used to compare ranges
 
-
-## [x] how do we represent infinity? -> `1/0`, `0/0`
+## [x] Variables: ow do we represent infinity? -> `1/0`, `0/0`
 
   * `oo`
   * `~~`
@@ -4815,7 +4681,7 @@
     + even simpler and more mathy
     + reminds actual infinity sign
 
-## [x] exclusive / non-inclusive range: how? -> use `0..10` as exclusive, operators decide inclusivity
+## [x] Ranges: exclusive / non-inclusive range: how? -> use `0..10` as exclusive, operators decide inclusivity
 
   * `0..<10`, `0<..10`
     - `0 > ..10`, `0.. < 10`
@@ -4852,7 +4718,7 @@
     + `+` has no meaning as operator anyways
     - `10..-+10` vs `10..+-10` is weird, vs `10..=-10`
 
-## [x] replace clamp `x -< 0..10` with clamp-assign `x =< 0..10`? -> ~~clamp is `x <? 0..10`~~ clamp is `x ~ 0..10`
+## [x] Ranges: replace clamp `x -< 0..10` with clamp-assign `x =< 0..10`? -> ~~clamp is `x <? 0..10`~~ clamp is `x ~ 0..10`
 
   ? do we ever need `clamp(x, 0, 10)`, opposed to `x = clamp(x, 0, 10)`?
     + it seems from examples we always `x = clamp(x, 0..10)`
@@ -4870,7 +4736,7 @@
       * `x = x -/ 0..10`, `x =/ 0..10`
   - seems that's confusable: `a <= b..c` vs `a =< b..c`
 
-## [x] Limited variables `x:0..100; x = 1000;` -> nah, perf-unwise
+## [x] Ranges: Limited variables `x:0..100; x = 1000;` -> nah, perf-unwise
 
   + allows static tracking of value
   + compatible with arguments limiting
@@ -4880,7 +4746,7 @@
   - can be unexpected meaning
   - can slow down calculations, since performs runtime checks on every write
 
-## [ ] Function references: use i32?
+## [ ] Functions: for references use i32?
 
   + we can hold both $x global and $x function name
   + i32 can automatically mean function reference
@@ -4893,7 +4759,7 @@
   + Converts back to f64 on export
   + Gives extreme precision/dimension
 
-## [x] min, max, clamp as `a <? 0..100`? ~~yes~~ ~~keep `a <= 0..100` for in, and~~ ~~`a ~ 0..100` for clamp~~
+## [x] Ranges, operators: min, max, clamp as `a <? 0..100`? ~~yes~~ ~~keep `a <= 0..100` for in, and~~ ~~`a ~ 0..100` for clamp~~
 
   * `a |< ..10`, `a >| 10` for
   * can be solved via clamp operator `a <> ..10`, `a <> 10..`
@@ -4939,7 +4805,7 @@
       ~ likely we'd need to have a range modifier, eg. `x = 10 ~ 0..10**0.2`
     - not cool enough
 
-## [x] Create empty array - how? -> `[..10]` since range is exclusive
+## [x] Arrays: Create empty array - how? -> `[..10]` since range is exclusive
 
   * `[..10]`
     - not clear if that's 10 members from 1 to 10 or 0 to 10 or what
@@ -4992,22 +4858,13 @@
     - creates not very nice condition in code of property access.
     - enforces 1-based index for list elements
 
-## [x] Should we keep immediate list notation? -> yes, let's keep
+## [x] Arrays: Should we keep immediate list notation? -> yes, let's keep
 
   + Allows passing memory area directly `gain([1,2,3])`
   + Enables nested lists for tree structures, unlike groups `[1,2,[3,4,[5]]]`
   + Looks more natural
 
-## [ ] Make func args identical with group destructuring?
-
-  * `(a[..10], b=2, c~4, (d,e)) = (e:12, x[..])`
-  * `fn(a[..10])=(); fn(1..10)`
-    + factually defines infinite arguments
-  * `fn(a,,b,c)=(); fn(a,,b,c)`
-    + defines arguments to skip
-  + removes questions, merges pattern
-
-## [x] How to create sublist/subarray? -> @latr.sublist or directly math `y+=2; y[]-=2;`
+## [ ] Arrays: How to create subarray? -> ~~@latr.sublist or directly math `y+=2; y[]-=2;`~~
 
   * `x[] = y[1,2..3]`
     - syntactically creates copy of y
@@ -5039,7 +4896,7 @@
     * that's just math trick, not actual operator.
     * that's why we can wrap it into `@latr.subarray(x, start, end)`
 
-## [ ] Range step -> likely 0..10:0.5
+## [ ] Ranges: Range step -> likely 0..10:0.5
 
   * `[-10..10..0.5]`
   * `[-10..0.5..10]`
@@ -5067,7 +4924,7 @@
   * `[0..10 ++ .5]`
     - what about descending range?
 
-## [ ] Range modifiers:
+## [x] Ranges: Range modifiers: -> any operators are range modifiers
 
   * `0..100 ** 0.01`
     * `a ~ 0..100 ** .01` - maps to pow range?
@@ -5088,7 +4945,7 @@
       ~+ prelim returns belong to userland anyways, it's not demanded internally
     - we can't
 
-## [ ] State variables: How can we call same fn twice with same context? -> instance is created via new static declaration `*fn = a`
+## [ ] Static variables: How can we call same fn twice with same context? -> instance is created via new static declaration `*fn = a`
 
   * It seems for now to be able only externally
   ? but what if we need to say fill an array with signal from synth?
@@ -5204,7 +5061,7 @@
   9. Simple static vars: we have a function with single static context
     9.1 Define fn instances via static as `*fn=a;`
 
-## [ ] State variables:logic - how to map callsite to memory address? -> ~~see implementation~~ - we use simple static vars
+## [ ] Static variables:logic - how to map callsite to memory address? -> ~~see implementation~~ - we use simple static vars
 
   ```
   sin(f, (; scope-id ;)) = (*phase=0;>phase+=f;...);
@@ -5398,7 +5255,7 @@
     );
   ```
 
-## [ ] Prohibit dynamic-size groups, make reflect stack ->
+## [ ] Groups: Prohibit dynamic-size groups, make reflect stack ->
 
   + ~~Solves issue of state vars logic: we can precalculate addresses~~
   + ~~Likely we don't need heap: can be fully static memory~~
@@ -5407,21 +5264,20 @@
   + makes simple groups === stack
     + dynamic groups would force explicitly returning an array
   ~ maybe we need to introduce some meaningful static-only limitations for the beginning and get v1 of lang ready.
-    * like array building, static-size map/reduce, state variables etc. once that's ready we may think of extending to dynamic-size ones.
+    * like array building, static-size map/reduce, static variables etc. once that's ready we may think of extending to dynamic-size ones.
   + we cannot dynamically declare local variables within loop. Static-size loop would make it possible to declare all variables in advance...
     - it would require thousands of local variables...
   * Likely loops generally won't need to produce output, except for list comprehension
   ? Is there cases when we need dynamic arrays?
     * `x() = (1..10)` - ranges can return v128 tokens
 
-
-## [x] Loop vs fold: no difference -> ~~returns list <| or last |>~~ no difference, use `|>`
+## [x] Loops: Loop vs fold: no difference -> ~~returns list <| or last |>~~ no difference, use `|>`
 
   * `sum=0; xs <| (x) -> (sum += x)`
   * `xs |> (x, sum) -> sum + x`
   * Folds seem to be more efficient than loops: they create single value as result, loop creates multiple values (heap?).
 
-## [x] Alternative: merge `<|` and `|>` -> yes, we can just introduce single operator in context
+## [x] Loops: Alternative: merge `<|` and `|>` -> yes, we can just introduce single operator in context
 
   + this allows us to not know different kinds of loops
   + we anyways need a strategy to know if op result is required or not.
@@ -5432,7 +5288,7 @@
   * `(a,b,c |> ^*2) + 1;` produces group
   + allows better precedence
 
-## [x] pow, stdlib -> compiled
+## [x] Stdlib: pow -> compiled
 
   1. https://chromium.googlesource.com/external/github.com/WebAssembly/musl/+/landing-branch/src/math
     + musl, standard good impl
@@ -5467,7 +5323,7 @@
     - we don't track exact size, we measure in pages
   + `@` is current array member
 
-## [x] Static precompilation step -> yes
+## [x] Compiler: Static precompilation step -> yes
   + removes static checks
   + unrolls group operations
   + dedupes/denormalizes a * (b,c)
@@ -5480,7 +5336,7 @@
   + static errors detection
   * everything that can be statically precalculated
 
-## [x] `(a,b) ? (a,b)=h++` problem - what does it transform to? -> let's simply duplicate (most obvious)
+## [x] Groups: `(a,b) ? (a,b)=h++` problem - what does it transform to? -> let's simply duplicate (most obvious)
 
   1. `(a ? a = h++, b ? b = h++)`
     - duplicates calculation
@@ -5500,13 +5356,13 @@
     -~ duplicated code, but gated
     - extra condition per
 
-## [x] should we introduce `??` and `??=` for init states -> nah
+## [x] Operators: should we introduce `??` and `??=` for init states -> nah
 
   -~ works on `nan` only: there's no `undefined` state
   -? should all undefined numbers become `nan`s?
   - discrepancy with JS: `NaN ?? 1` gives `NaN`
 
-## [x] should we make heap precompilable, rather than compilable? -> let's try tail-heap strategy
+## [x] Compiler: should we make heap precompilable, rather than compilable? -> let's try tail-heap strategy
 
   * `@heap=[..1024], @heap.cur=0`
   + allows customizing heap via code
@@ -5523,7 +5379,7 @@
     + it doesn't require memcopy for flat dynamic arrays
     + it requires same or less amount of memcopy than head-heap would, since first layer is skipped
 
-## [x] Binaries: replace `&` with `/\` and `|` with `\/`? -> not clear what's xor
+## [x] Operators: replace `&` with `/\` and `|` with `\/`? -> not clear what's xor
 
   *  `t*(((t>>12)|(t>>8))&(63&(t>>4)))` -> `t*(((t>>12)\/(t>>8))/\(63/\(t>>4)))`
   + makes use of font ligatures
@@ -5536,11 +5392,11 @@
     * `a/!\b`?
   - `~` is still busy
 
-## [ ] Linear regression from Julia x \ y
+## [ ] Operators: Linear regression from Julia x \ y
 
   ? what's that?
 
-## [x] Replace `|>` with `|:` for loops? -> nah, let's keep `|>`
+## [x] Loops: Replace `|>` with `|:` for loops? -> nah, let's keep `|>`
 
   1. `|:`
     + matches musical repeat block, which is very intuitive
@@ -5583,12 +5439,12 @@
     - no pipe feeling
     - confusable with fn definitions
 
-## [x] Prohibit non-range operands for loops, `a |> x` means iterate over 1 element only
+## [x] Loops: Prohibit non-range operands for loops, `a |> x` means iterate over 1 element only -> yes
 
   + to iterate array always provide range or list `a[..] |> #`, `a, b, c |> #`
   + removes ambiguity from code and from brain
 
-## [ ] Is `a ? b;` void or not? -> ~~not void, like elvis a ?: b or a ? b : c~~ void
+## [ ] Conditions: Is `a ? b;` void or not? -> ~~not void, like elvis a ?: b or a ? b : c~~ void
 
   * research was done somewhere here, but keyword "void" wasn't used, so to clarify
   + void: makes it direct, simple and different from `a && b`
@@ -5597,7 +5453,7 @@
     ~ but return doesn't affect
   - same as elvis `a ?: b` is not void, this is not void
 
-## [ ] Element of range: `a in b`? -> likely `a ~< (b,c,d)`
+## [ ] Ranges: Element of range: `a in b`? -> likely `a ~< (b,c,d)`
 
   * Range can be iterable, so comparison can cause evaluation
 
@@ -5632,7 +5488,7 @@
   9. `a <: b..c`, `a <=: b..c`
   9.1 `a :< b..c`, `a :<= b..c`
 
-## [x] Write out operator `x[..] : a : b : x[..]` -> `x[..] |> a() |> b() |> x[..] = _`
+## [x] Loops: Write out operator `x[..] : a : b : x[..]` -> `x[..] |> a() |> b() |> x[..] = _`
 
   * we need it for copying loops or redirection, since `a = b` is not always the most useful
   1. `a..b -> x[..]`
@@ -5643,18 +5499,7 @@
   2.1 `a..b =: x[..]`
     - breaks end pipe alignment
 
-## [x] ~~`, : ? =` precedence riddle~~ -> we use pipe instead of `:` for loops
-
-  * `a ? b : c`
-    * `:` >= `?`
-  * `a = b : b`
-    ? `=` >= `:`
-    + can be `:` > `=` for loops
-    - must be `:` < `=` in `a ? b=c : d=e`
-  * `a = b ? c`
-    *  `=` <= `?`
-
-## [x] `(x = (a, b..c[], d[e..] |> _*2) + f..g) |> x ? ^ : x+1` - how? -> see loop group iterations test
+## [x] Loops: `(x = (a, b..c[], d[e..] |> _*2) + f..g) |> x ? ^ : x+1` - how? -> see loop group iterations test
 
   1. rhs is dynamic function, generated code for the first sequence
     ```js
@@ -5708,7 +5553,7 @@
   * first case is `(x=1; x=2; x=3)` - list is iterated in case of |> operator (else just last item)
   * second case needs resolution via stack or heap - list is saved (to heap/stack) and retreived
 
-## [ ] Groups with ranges - are ops iterations or group mappers? -> ~~`=` is iterating operator~~ `= |>` is only iterating operator
+## [ ] Groups: Groups with ranges - are ops iterations or group mappers? -> ~~`=` is iterating operator~~ `= |>` is only iterating operator
 
   1. `x = (a,b..c)`
     * `x=a, x=b..c`
@@ -5739,7 +5584,7 @@
         ~ we can limit that possibility as `fn((a,b,c)=x())`
         ~ or we can implement dynamic args
 
-### [x] ~~Get element of group~~ - can get only head of stack, but see pick below
+### [x] Groups: ~~Get element of group~~ - can get only head of stack, but see pick below
 
   * Suppose `x()` returns multiple elements, so we have groups as elements on stack
 
@@ -5755,7 +5600,7 @@
 
   * Since group deals with stack/heap, we cannot get arbitrary item, it is pop/push mechanics.
 
-### [ ] How to pop/pick from group? -> `a.. = x()`
+### [ ] Groups: How to pop/pick from group? -> `a.. = x()`
 
   * See above: what if we need to get first element of returned group from `x()`?
 
@@ -5777,7 +5622,7 @@
     + covers loops
     - at odds with group ops like `a + (b,c,d)`
 
-### [ ] `=` and `|>` precedence
+### [ ] Loops: `=` and `|>` precedence
 
   1. `a=b |> c`
     - unlike JS
