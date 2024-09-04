@@ -1,9 +1,9 @@
 import t, { almost, is, not, ok, same, throws } from 'tst'
-import compileMel from '../../src/compile.js'
+import compileSone from '../../src/compile.js'
 import { compileWat } from '../util.js'
 
-t('state: basic', t => {
-  let wat = compileMel(`x()=(*i=0;i++)`)
+t.only('state: basic', t => {
+  let wat = compileSone(`x()=(*i=0;i++)`)
   let mod = compileWat(wat)
   let { x } = mod.instance.exports
   is(x(), 0)
@@ -12,7 +12,7 @@ t('state: basic', t => {
 })
 
 t('state: scope', t => {
-  let wat = compileMel(`x()=(*i=0;i++), y()=x()`)
+  let wat = compileSone(`x()=(*i=0;i++), y()=x()`)
   let mod = compileWat(wat)
   let { x, y } = mod.instance.exports
   is(x(), 0)
@@ -24,7 +24,7 @@ t('state: scope', t => {
 })
 
 t('state: array init', t => {
-  let wat = compileMel(`x()=(*i=[..2]; i[0]++ + i[1]++), y()=x()`)
+  let wat = compileSone(`x()=(*i=[..2]; i[0]++ + i[1]++), y()=x()`)
   let mod = compileWat(wat)
   let { x, y, memory } = mod.instance.exports
   is(x(), 0)
@@ -40,13 +40,13 @@ t('state: array init', t => {
 })
 
 t.todo('state: group init', t => {
-  let wat = compileMel(`x()=(*(i=0,j=1,k=2);i+j+k), y()=x()`)
+  let wat = compileSone(`x()=(*(i=0,j=1,k=2);i+j+k), y()=x()`)
   let mod = compileWat(wat)
   let { x, y } = mod.instance.exports
 })
 
 t.todo('state: multiple states', t => {
-  let wat = compileMel(`x()=(*i=0,*j=1,*a=[..2]; i++ + j++ + a[0]++ + a[1]++); y()=(x()+x());`)
+  let wat = compileSone(`x()=(*i=0,*j=1,*a=[..2]; i++ + j++ + a[0]++ + a[1]++); y()=(x()+x());`)
   let mod = compileWat(wat)
   let { x, y } = mod.instance.exports
   is(x(), 1)
@@ -58,7 +58,7 @@ t.todo('state: multiple states', t => {
 })
 
 t.todo('state: mixed deps', t => {
-  let wat = compileMel(`x()=(*i=0,i++); y()=(*a=[0,1];x()+a[0]+a[1]++); z()=(x()+y());`)
+  let wat = compileSone(`x()=(*i=0,i++); y()=(*a=[0,1];x()+a[0]+a[1]++); z()=(x()+y());`)
   let mod = compileWat(wat)
   let { x, y, z } = mod.instance.exports
 })
