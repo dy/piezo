@@ -30,13 +30,13 @@ export default function compile(node, config = {}) {
   let prevCtx = { imports, globals, locals, funcs, func, exports, datas, mem, returns, depth };
 
   // init compiling context
-  globals = {} // global scope (as name props), {var: #isNotConstant, init: #initValue, type: 'f64'}
+  globals = {} // global scope (as name props), { init: #initValue, type: 'f64', static: bool}
   locals = {} // current fn local scope (or module init function scope)
   imports = [] // imported statements (regardless of libs) - funcs/globals/memory
   funcs = {} // defined user and util functions
   exports = {} // items to export
   returns = null // returned items from block (collects early returns)
-  func = null // current function that's being initialized
+  func = null // current function (name string) that's being initialized
   mem = false // indicates if memory must be included and how much bytes
   depth = 0 // current loop/nested block counter
   datas = {} // static-size data sections
@@ -48,7 +48,7 @@ export default function compile(node, config = {}) {
   const lastNode = node[0] === ';' ? node[node.length - 1] : node
 
   // generic exports, excluding private names
-  for (let id of ids(lastNode)) if (!id.includes(':')) exports[id] = globals[id] || err('Unknown export member `' + id + `'`)
+  for (let id of ids(lastNode)) if (!id.includes(':')) exports[id] = globals[id] || funcs[id] || err('Unknown export member `' + id + `'`)
 
   if (Object.keys(imports).length) {
     code += `;;;;;;;;;;;;;;;;;;;;;;;;;;;; Imports\n`
@@ -100,7 +100,7 @@ export default function compile(node, config = {}) {
   // provide exports
   for (let name in exports) { code += `;;;;;;;;;;;;;;;;;;;;;;;;;;;; Exports\n`; break }
   for (let name in exports) {
-    code += `(export "${name}" (${exports[name].func ? 'func' : 'global'} $${name}))\n`;
+    code += `(export "${name}" (${funcs[name] ? 'func' : 'global'} $${name}))\n`;
   }
   console.groupCollapsed()
   console.log(code);
@@ -332,23 +332,6 @@ Object.assign(expr, {
       return call('arr.' + (out ? 'tee' : 'set'), expr(name), int(expr(idx)), float(expr(b)))
     }
 
-    // a = b,  a = (b,c),   a = (b;c,d)
-    if (typeof a === 'string') {
-      if (globals[a]?.func) err(`Redefining function '${a}' is not allowed`)
-
-      // global constants init doesn't require operation
-      if (!func && (b[0] === INT || b[0] === FLOAT)) {
-        globals[a] = { var: true, type: 'f64', init: b[1] }
-        // FIXME: are we sure we don't need returning value here?
-        return
-      }
-
-      locals[a] ||= { type: 'f64' }
-      const bop = expr(b)
-
-      return (out ? tee : set)(a, float(bop))
-    }
-
     // x(a,b) = y
     if (a[0] === '(') {
       let [, name, [, ...args]] = a, body = b, inits = [], result, dfn = [], prepare = [], defer = []
@@ -357,7 +340,7 @@ Object.assign(expr, {
       if (func) err('Declaring local function `' + name + '`: not allowed');
 
       // FIXME: maybe it's ok to redeclare function? then we'd need to use table
-      if (globals[name]) err('Redefining function `' + name + '`: not allowed');
+      if (funcs[name]) err('Redefining function `' + name + '`: not allowed');
 
       let prevFunc = func, rootLocals = locals
       func = name
@@ -382,10 +365,6 @@ Object.assign(expr, {
         return name
       })
 
-      // FIXME: put function to a table
-      // pointer to a function - need to be declared before parsing body, since body may contain refs
-      globals[name] = { func: true, args, type: 'i32' };
-
       body.splice(1, 0, ...inits) // prepend inits
 
       // collect returns
@@ -400,34 +379,29 @@ Object.assign(expr, {
       if (result?.type?.length) dfn.push(`(result ${result.type.join(' ')})`)
 
       // declare locals
-      for (let name in locals) if (!locals[name].arg) dfn.push(`(local $${name} ${locals[name].type})`)
+      for (let name in locals) if (!locals[name].arg && !locals[name].static) dfn.push(`(local $${name} ${locals[name].type})`)
 
-      // if fn is stateful - defer saving values
-      // FIXME: possibly we may need to upgrade state vars to always read/write from memory, but now too complicated
-      globals[name].state?.forEach(name => {
-        defer.push(f64.store(get(name + '.adr'), get(name)))
-      })
       locals = rootLocals
 
       let initState
 
-      // alloc state, if required
-      if (globals[name].state) {
-        // state is just region of memory storing sequence of i32s - pointers to memory holding actual state values
-        locals[name + '.state'] ||= { type: 'i32' }
-        include('malloc'), mem ||= 0
-        initState = op(`(global.set $${name}.state ${call('malloc', i32.const(globals[name].state.length << 2))})`)
-      }
+      // // alloc state, if required
+      // if (globals[name].state) {
+      //   // state is just region of memory storing sequence of i32s - pointers to memory holding actual state values
+      //   locals[name + '.state'] ||= { type: 'i32' }
+      //   include('malloc'), mem ||= 0
+      //   initState = op(`(global.set $${name}.state ${call('malloc', i32.const(globals[name].state.length << 2))})`)
+      // }
 
-      // if has calls to internal stateful funcs (indirect state) - push state to stack, to recover on return
-      for (let fn in globals[name].substate) {
-        dfn.push(`(local $${fn}.prev i32)`)
-        // NOTE: we can't push/pop state from stack because fn body produces result (output) that will cover stack
-        prepare.push(`(local.set $${fn}.prev (global.get $${fn}.state))`) // save prev state
-        // put local state fragment to the stack
-        prepare.push(`(global.set $${fn}.state (i32.add (global.get $${name}.state) ${i32.const(globals[name].substate[fn] << 2)} ))`)
-        defer.push(`(global.set $${fn}.state (local.get $${fn}.prev))`) // load prev state
-      }
+      // // if has calls to internal stateful funcs (indirect state) - push state to stack, to recover on return
+      // for (let fn in globals[name].substate) {
+      //   dfn.push(`(local $${fn}.prev i32)`)
+      //   // NOTE: we can't push/pop state from stack because fn body produces result (output) that will cover stack
+      //   prepare.push(`(local.set $${fn}.prev (global.get $${fn}.state))`) // save prev state
+      //   // put local state fragment to the stack
+      //   prepare.push(`(global.set $${fn}.state (i32.add (global.get $${name}.state) ${i32.const(globals[name].substate[fn] << 2)} ))`)
+      //   defer.push(`(global.set $${fn}.state (local.get $${fn}.prev))`) // load prev state
+      // }
 
       // init body - expressions write themselves to body
       // FIXME: save func args as types as well
@@ -441,6 +415,31 @@ Object.assign(expr, {
       func = prevFunc
 
       return initState
+    }
+
+    // *a = b - static variable init
+    if (a[0] === '*') {
+      [, a] = a
+      locals[a] ||= { static: `${func}.${a}`, type: 'f64' }
+      globals[`${func}.${a}`] = { type: 'f64' };
+    }
+
+    if (typeof a === 'string') {
+      // a = b,  a = (b,c),   a = (b;c,d)
+      if (globals[a]?.func) err(`Redefining function '${a}' is not allowed`)
+
+      // global constants init doesn't require operation
+      if (!func && (b[0] === INT || b[0] === FLOAT)) {
+        globals[a] = { type: 'f64', init: b[1] }
+        // FIXME: are we sure we don't need returning value here?
+        return
+      }
+
+      locals[a] ||= { type: 'f64' }
+
+      const bop = expr(b)
+
+      return (out ? tee : set)(a, float(bop))
     }
 
     err(`Unknown assignment left value \`${stringify(a)}\``)
@@ -548,58 +547,6 @@ Object.assign(expr, {
     return op(`(f64.add ${float(aop)} ${float(bop)})`, 'f64')
   },
   '*'([, a, b], out) {
-    // stateful variable
-    if (!b) {
-      if (!func) err('State variable declared outside of function')
-
-      const state = globals[func].state ||= []
-
-      // *i;
-      if (typeof a === 'string') {
-        locals[a] ||= { type: 'f64' }
-        state.push(a)
-        return;
-      }
-
-      // *i=10; *i=[0..10];
-      if (a[0] === '=') {
-        let [, name, init] = a
-        locals[name] ||= { type: 'f64' }
-        include('malloc'), mem ||= 0
-
-        let ptr = name + '.cur', // i.cur points to state instance + offset
-          adr = name + '.adr', // i.adr stores address of variable value
-          stateName = func + `.state`
-        locals[ptr] = locals[adr] = { type: 'i32' }
-
-        let res =
-          // first calculate state cell
-          set(adr,
-            state.length ? i32.add(`(global.get $${stateName})`, i32.const(state.length << 2)) :
-              `(global.get $${stateName})`
-          ) +
-          // if pointer is zero - init state
-          `(if ${out ? `(result f64)` : ``} ${i32.eqz(i32.load(get(adr)))}\n` +
-          `(then\n` +
-          // allocate memory for a single variable
-          i32.store(get(adr), tee(adr, call('malloc', i32.const(8)))) +
-          // initialize value in that location (saved to memory by fn defer)
-          (out ? tee : set)(name, float(expr(init))) +
-          `)\n` +
-          `(else \n` +
-          // local variable from state ptr
-          (out ? tee : set)(name, f64.load(tee(adr, i32.load(get(adr))))) +
-          `)` +
-          `)\n`
-
-        state.push(name);
-        return op(res, 'f64');
-      }
-
-      // *(i,j)=10,20;
-      err('State variable: unimplemented')
-    }
-
     // group multiply
     let aop = expr(a, out), bop = expr(b, out)
     if (!out) return op(aop + bop);
@@ -683,9 +630,6 @@ Object.assign(expr, {
     return op(`(i32.and ${int(aop)} ${int(bop)})`, `i32`)
   },
   '^'([, a, b], out) {
-    // ^a for globals
-    if (!b) return console.log(123)
-
     // a ^ b
     let aop = expr(a, out), bop = expr(b, out);
     if (!out) return op(aop + bop);

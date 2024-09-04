@@ -47,6 +47,10 @@ export function op(str = '', type, info = {}) {
 // (local.get) or (global.get)
 export function get(name) {
   if (!func && name[0] !== '_') return globals[name] ||= { type: 'f64' }, op(`(global.get $${name})`, globals[name].type)
+
+  // static
+  if (locals[name].static) return op(`(global.get $${locals[name].static})`, locals[name].type)
+
   // read local if it's defined, else read global
   return !globals[name] && (locals[name] ||= { type: 'f64' }), op(`(${locals?.[name] ? 'local' : 'global'}.get $${name})`, (locals?.[name] || globals[name]).type)
 }
@@ -55,12 +59,20 @@ export function get(name) {
 export function set(name, init = '') {
   // global only if name doesn't start with _
   if (!func && name[0] !== '_') return globals[name] ||= { type: init.type || 'f64' }, op(`(global.set $${name} ${init})`)
+
+  // static
+  if (locals[name].static) return op(`(global.set $${locals[name].static} ${init})`)
+
   return locals[name] ||= { type: init.type || 'f64' }, op(`(local.set $${name} ${init})`)
 }
 
 // (local.tee) or (global.set)(global.get)
 export function tee(name, init = '') {
   if (!func && name[0] !== '_') return globals[name] ||= { type: init.type || 'f64' }, op(`(global.set $${name} ${init})(global.get $${name})`, init.type)
+
+  // static
+  if (locals[name].static) return op(`(global.set $${locals[name].static} ${init})(global.get $${locals[name].static})`, locals[name].type)
+
   return locals[name] ||= { type: init.type || 'f64' }, op(`(local.tee $${name} ${init})`, init.type)
 }
 
