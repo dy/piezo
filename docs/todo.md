@@ -24,8 +24,10 @@
 * [x] make `.` for 'return nothing'
   * [x] undo `.` - make semicolon-based void
 * [x] make globals readable, but locals writable
+* [x] first bytebeat: viznut
 * [ ] make simple static variables
   * [ ] make fn capture declaring new static
+  * [ ] make ^ global variable operator
 * [ ] Make static groups
 * [ ] make nan as null in fn arguments (`config(a,,b,c)`)
 * [ ] range iterator via pipe
@@ -35,7 +37,6 @@
 * [ ] make use of `./`, `../`, `.../` for loops only (not parent)
 * [ ] swizzles `a.xyz`, `a.lr`
 * [ ] all readmes test
-* [x] first bytebeat: viznut
 * [ ] `~, ~=`
 * [ ] `~/, ~*`
 * [ ] strings
@@ -146,10 +147,11 @@
 
 ## Application
 
-* [ ] Floatbeats collection
-* [ ] MelFX - ZZFX binary
+* [ ] Bytebeats/Floatbeats collection
+* [ ] ZZFX binary
 * [ ] Web-Audio-API
 * [ ] Metronome app: variable speed, variable tone
+* [ ] Sedi: sound editor
 
 ## 1.1
 
@@ -231,3 +233,10 @@
 * get channel: `a[0]`?
 * get value at a time `a(t)`?
 * integrate: `∫(a, dt)`? `acc(a, dt)`?
+
+## Use cases
+
+* Speech enhancer for any videos (from Prabhupada to...)
+  * Dereverb
+* Feedback suppressor, soft loudness processor for live stream, compressor
+*

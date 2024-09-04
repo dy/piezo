@@ -42,6 +42,7 @@
   * soneslang?
   * solo? solr? soloscript? solos?
     - taken
+    + like mono
   * sound-fun
     + like "sounds fun" phrase.
   * sonf?
@@ -3245,6 +3246,7 @@
     + python compatible
     -~ new operator, not full reuse of existing one, no precedents of such use
     * should be used once, on on declaration, eg. `x() = (^size; size=123)`, since must be same as global fn use ``
+    + we need it to simplify internal implementation also
   4. `f(a) = (<x>; x+a);` as declaration
     + indicates place of "insertion" like imports
       + kind-of in-sync with logic, since globals can be imported in global scope same way
@@ -4746,13 +4748,13 @@
   - can be unexpected meaning
   - can slow down calculations, since performs runtime checks on every write
 
-## [ ] Functions: for references use i32?
+## [ ] Functions: for references use i32? -> likely not, use regular fn refs
 
   + we can hold both $x global and $x function name
   + i32 can automatically mean function reference
   + allows storing funcs in lists
     - we'd need to use NaNs with non-canonical form as list members
-  ~ better use native func refs
+  - better use native func refs
 
 ## [ ] Use v128 of i64 for rational numbers?
 
@@ -5059,7 +5061,9 @@
                 + that allows calling directly or indirectly
 
   9. Simple static vars: we have a function with single static context
-    9.1 Define fn instances via static as `*fn=a;`
+    * `a() = (...); b = a;` - assignment creates fn instance.
+      + assignment happens via global anyways
+        + in global fn state has 0 value anyways
 
 ## [ ] Static variables:logic - how to map callsite to memory address? -> ~~see implementation~~ - we use simple static vars
 

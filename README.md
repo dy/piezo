@@ -1,4 +1,4 @@
-# melo ![stability](https://img.shields.io/badge/stability-experimental-black) [![test](https://github.com/dy/melo/actions/workflows/test.yml/badge.svg)](https://github.com/dy/melo/actions/workflows/test.yml)
+# sone ![stability](https://img.shields.io/badge/stability-experimental-black) [![test](https://github.com/dy/sone/actions/workflows/test.yml/badge.svg)](https://github.com/dy/sone/actions/workflows/test.yml)
 
 Mini language for audio processing and floatbeats.<br/>
 Compiles to compact 0-runtime WASM with linear memory.<br/>
@@ -361,14 +361,14 @@ See [all examples](/examples)
 <!--
 ## Usage
 
-_Y_ is available as CLI or JS package.
+_Sone_ is available as CLI or JS package.
 
-`npm i y`
+`npm i sone`
 
 ### CLI
 
 ```sh
-y source.y -o dest.wasm
+sone source.s -o dest.wasm
 ```
 
 This produces compiled WASM binary.
@@ -376,10 +376,10 @@ This produces compiled WASM binary.
 ### JS
 
 ```js
-import y from 'y'
+import sone from 'sone'
 
 // create wasm arrayBuffer
-const buffer = y.compile(`
+const buffer = sone.compile(`
   n=1;
   mult(x) = x*PI;
   arr=[1, 2, sin(1.08)];
@@ -425,7 +425,7 @@ const arrValues = y.array(arr, memory)
 
 Audio processing in has no cross-platform solution, various environments deal with audio differently, some don't have audio processing at all. Besides, _Web Audio API_ is unreliable - it has unpredictable pauses, glitches and so on, so <q>audio is better handled in WASM worklet</q> ([@stagas](https://github.com/stagas)).
 
-_Melo_ attempts to fill that gap, providing a common layer for audio processing. It is also a personal attempt on language design - rethinking parts and providing safe ground. WASM target gives max performance and compatibility - browsers, [audio/worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) etc.
+_Sone_ attempts to fill that gap, providing a common layer for audio processing. It is also a personal attempt on language design - rethinking parts and providing safe ground. WASM target gives max performance and compatibility - browsers, [audio/worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) etc.
 
 <!--
 ### Principles
@@ -447,11 +447,10 @@ _Melo_ attempts to fill that gap, providing a common layer for audio processing.
 -->
 
 <!--
-## Projects using melo
+## Projects using sone
 
 * [web-audio-api](https://github.com/audiojs/web-audio-api)
 * [audiojs](https://github.com/audiojs/)
-* [melo](https://github.com/melo/)
 -->
 
 
