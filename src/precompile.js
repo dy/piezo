@@ -176,6 +176,11 @@ Object.assign(expr, {
       return
     }
 
+    // *a, *(a,b)
+    if (a[0] === '*') {
+      return ['=', a, b]
+    }
+
     a = expr(a)
 
     // if b contains some members of a
@@ -234,10 +239,6 @@ Object.assign(expr, {
   },
   '*'([, a, b]) {
     a = expr(a)
-
-    // *a
-    if (!b) return unroll('*', a) || ['*', a]
-
     b = expr(b);
     return unroll('*', a, b) || (
       (typeof a[1] === 'number' && typeof b[1] === 'number') ? [FLOAT, a[1] * b[1]] :
@@ -316,6 +317,9 @@ Object.assign(expr, {
     )
   },
   '^'([, a, b]) {
+    // ^a (global)
+    if (!b) return unroll('^', a) || `^${a}`
+
     // a ^ b
     a = expr(a), b = expr(b)
 
@@ -387,8 +391,8 @@ Object.assign(expr, {
 // if a,b contain multiple elements - try regrouping to simple ops
 // FIXME: not sure if there's much sense to unroll like that, mb easier be done in compiler
 function unroll(op, a, b) {
+  // -(a,b) -> (-a,-b)
   if (!b) {
-    // -(a,b) -> (-a,-b)
     if (a[0] === ',') {
       const [, ...as] = a
       return [',', ...as.map((a) => [op, expr(a)])]

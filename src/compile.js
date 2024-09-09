@@ -4,7 +4,7 @@ import parse from './parse.js';
 import precompile from './precompile.js';
 import { ids, stringify, err, u82s } from './util.js';
 import { print, compile as watr } from 'watr';
-import { op, float, int, set, get, tee, call, include, pick, fun, i32, f64, cond, loop } from './build.js'
+import { op, float, int, set, get, tee, call, include, pick, fun, i32, f64, cond, loop, isConstExpr } from './build.js'
 
 export let imports, globals, locals, funcs, func, exports, datas, mem, returns, depth;
 
@@ -77,7 +77,7 @@ export default function compile(node, config = {}) {
   // NOTE: it sets functions as global variables
   for (let name in globals) if (!name.includes(':')) { code += `;;;;;;;;;;;;;;;;;;;;;;;;;;;; Globals\n`; break; }
   for (let name in globals)
-    if (!globals[name].import) code += `(global $${name} (mut ${globals[name].type}) (${globals[name].type}.const ${globals[name].init || 0}))\n`
+    if (!globals[name].import) code += `(global $${name} (mut ${globals[name].type}) ${globals[name].init || ''})\n`
   code += `\n`
 
   // declare funcs
@@ -127,6 +127,8 @@ function expr(statement, out = true) {
     locals[statement] ||= { type: 'f64' }
     return out ? get(statement) : op()
   }
+
+  // if (typeof statement === 'number') return op(`(f64.const ${statement})`, 'f64')
 
   // cached
   if (statement.expr) return statement.expr
@@ -421,7 +423,16 @@ Object.assign(expr, {
     if (a[0] === '*') {
       [, a] = a
       locals[a] ||= { static: `${func}.${a}`, type: 'f64' }
-      globals[`${func}.${a}`] = { type: 'f64' };
+
+      // precalculable init, like *a=0
+      if (isConstExpr(b)) {
+        globals[`${func}.${a}`] = { type: 'f64', init: float(expr(b)) };
+        return
+      }
+
+      // *a=0; becomes a!=a?a=0;
+      globals[`${func}.${a}`] = { type: 'f64', init: '(f64.const nan)' }; // FIXME: make signaling nan:0x01 (requires watr)
+      return expr(['?', ['!=', a, a], ['=', a, b]], out)
     }
 
     if (typeof a === 'string') {
@@ -429,8 +440,8 @@ Object.assign(expr, {
       if (globals[a]?.func) err(`Redefining function '${a}' is not allowed`)
 
       // global constants init doesn't require operation
-      if (!func && (b[0] === INT || b[0] === FLOAT)) {
-        globals[a] = { type: 'f64', init: b[1] }
+      if (!func && isConstExpr(b)) {
+        globals[a] = { type: 'f64', init: float(expr(b[1])) }
         // FIXME: are we sure we don't need returning value here?
         return
       }

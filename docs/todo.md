@@ -27,8 +27,10 @@
 * [x] first bytebeat: viznut
 * [ ] make simple static variables
   * [ ] make fn capture declaring new static
-  * [ ] make ^ global variable operator
-* [ ] Make static groups
+  * [x] make ^ referring to global
+  * [x] make init detection
+  * [ ] make nan: & constant expressions for watr
+  * [ ] Make static groups *(a,b,c)
 * [ ] make nan as null in fn arguments (`config(a,,b,c)`)
 * [ ] range iterator via pipe
   * [ ] pair-wise iteration

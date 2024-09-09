@@ -3,6 +3,7 @@ import { globals, locals, funcs, func } from "./compile.js"
 import { err } from "./util.js"
 import stdlib from "./stdlib.js"
 import { print } from "watr"
+import { FLOAT, INT } from "./const.js"
 
 export const i32 = {
   const: a => op(`(i32.const ${a})`, 'i32'),
@@ -145,3 +146,9 @@ export function pick(count, input) {
   // NOTE: repeating els like (a,b,c)=(b,c,a) are not a threat, we don't need a function
   // putting them directly to stack is identical to passing to pick(b,c,a) as args
 }
+
+// check if node is statically precalculable (see extended constants expressions)
+// FIXME: add constant expressions to watr
+export const isConstExpr = (a) => //(typeof a === 'string' && globals[a]) ||
+  a[0] === INT || a[0] === FLOAT
+// || ((a[0] === '+' || a[0] === '-' || a[0] === '*') && a.slice(1).every(isConstExpr))

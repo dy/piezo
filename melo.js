@@ -388,6 +388,9 @@ Object.assign(expr2, {
       units[unit] = expr2(["/", b, [FLOAT, n]]);
       return;
     }
+    if (a[0] === "*") {
+      return ["=", a, b];
+    }
     a = expr2(a);
     if (a[0] === "," && intersect(ids(a), ids(b))) {
       const n = a.length - 1;
@@ -440,9 +443,9 @@ Object.assign(expr2, {
     return unroll("-", a, b) || (typeof a[1] === "number" && typeof b[1] === "number" ? [a[0] === INT && b[0] === INT ? INT : FLOAT, a[1] - b[1]] : a[1] === 0 ? ["-", b] : b[1] === 0 ? a : ["-", a, b]);
   },
   "*"([, a, b]) {
-    a = expr2(a);
     if (!b)
-      return unroll("*", a) || ["*", a];
+      return unroll("*", a) || `*${a}`;
+    a = expr2(a);
     b = expr2(b);
     return unroll("*", a, b) || (typeof a[1] === "number" && typeof b[1] === "number" ? [FLOAT, a[1] * b[1]] : a[1] === 0 || b[1] === 0 ? [FLOAT, 0] : b[1] === 1 ? a : a[1] === 1 ? b : ["*", a, b]);
   },
@@ -503,6 +506,8 @@ Object.assign(expr2, {
     ));
   },
   "^"([, a, b]) {
+    if (!b)
+      return unroll("^", a) || `^${a}`;
     a = expr2(a), b = expr2(b);
     return unroll("^", a, b) || (typeof a[1] === "number" && typeof b[1] === "number" ? [INT, a[1] ^ b[1]] : ["^", a, b]);
   },
@@ -1522,17 +1527,21 @@ function op(str3 = "", type, info = {}) {
   return Object.assign(str3, { type, ...info });
 }
 function get(name) {
-  if (!func && name[0] !== "_")
+  if (name[0] === "^" || !func && name[0] !== "_")
     return globals[name] ||= { type: "f64" }, op(`(global.get $${name})`, globals[name].type);
+  if (locals[name].static)
+    return op(`(global.get ${locals[name].static})`, globals[locals[name].static].type);
   return !globals[name] && (locals[name] ||= { type: "f64" }), op(`(${locals?.[name] ? "local" : "global"}.get $${name})`, (locals?.[name] || globals[name]).type);
 }
 function set(name, init = "") {
-  if (!func && name[0] !== "_")
+  if (name[0] === "^" || !func && name[0] !== "_")
     return globals[name] ||= { type: init.type || "f64" }, op(`(global.set $${name} ${init})`);
+  if (locals[name].static)
+    return op(`(global.set ${locals[name].static} ${init})`);
   return locals[name] ||= { type: init.type || "f64" }, op(`(local.set $${name} ${init})`);
 }
 function tee(name, init = "") {
-  if (!func && name[0] !== "_")
+  if (name[0] === "^" || !func && name[0] !== "_")
     return globals[name] ||= { type: init.type || "f64" }, op(`(global.set $${name} ${init})(global.get $${name})`, init.type);
   return locals[name] ||= { type: init.type || "f64" }, op(`(local.tee $${name} ${init})`, init.type);
 }
@@ -1853,17 +1862,6 @@ Object.assign(expr3, {
       include("arr.len"), include("arr.set"), include("arr.tee"), include("i32.modwrap");
       return call("arr." + (out ? "tee" : "set"), expr3(name), int(expr3(idx2)), float(expr3(b)));
     }
-    if (typeof a === "string") {
-      if (globals[a]?.func)
-        err2(`Redefining function '${a}' is not allowed`);
-      if (!func && (b[0] === INT || b[0] === FLOAT)) {
-        globals[a] = { var: true, type: "f64", init: b[1] };
-        return;
-      }
-      locals[a] ||= { type: "f64" };
-      const bop = expr3(b);
-      return (out ? tee : set)(a, float(bop));
-    }
     if (a[0] === "(") {
       let [, name, [, ...args]] = a, body = b, inits = [], result, dfn = [], prepare = [], defer = [];
       if (func)
@@ -1904,17 +1902,6 @@ Object.assign(expr3, {
       });
       locals = rootLocals;
       let initState;
-      if (globals[name].state) {
-        locals[name + ".state"] ||= { type: "i32" };
-        include("malloc"), mem ||= 0;
-        initState = op(`(global.set $${name}.state ${call("malloc", i32.const(globals[name].state.length << 2))})`);
-      }
-      for (let fn in globals[name].substate) {
-        dfn.push(`(local $${fn}.prev i32)`);
-        prepare.push(`(local.set $${fn}.prev (global.get $${fn}.state))`);
-        prepare.push(`(global.set $${fn}.state (i32.add (global.get $${name}.state) ${i32.const(globals[name].substate[fn] << 2)} ))`);
-        defer.push(`(global.set $${fn}.state (local.get $${fn}.prev))`);
-      }
       fun(name, `(func $${name} ${dfn.join(" ")}` + (prepare.length ? `
 ${prepare.join("\n")}` : ``) + (result ? `
 ${result}` : ``) + (defer.length ? `
@@ -1923,6 +1910,19 @@ ${defer.join(" ")}` : ``) + // defers have 0 stack outcome, so result is still t
       `)`, result.type);
       func = prevFunc;
       return initState;
+    }
+    if (typeof a === "string") {
+      if (a[0] === "*")
+        locals[a.slice(1)] ||= { static: a = `^${func}.${a.slice(1)}`, type: "f64" };
+      if (globals[a]?.func)
+        err2(`Redefining function '${a}' is not allowed`);
+      if (!func && (b[0] === INT || b[0] === FLOAT)) {
+        globals[a] = { type: "f64", init: b[1] };
+        return;
+      }
+      locals[a] ||= { type: "f64" };
+      const bop = expr3(b);
+      return (out ? tee : set)(a, float(bop));
     }
     err2(`Unknown assignment left value \`${stringify(a)}\``);
   },
@@ -1985,42 +1985,6 @@ ${defer.join(" ")}` : ``) + // defers have 0 stack outcome, so result is still t
     return op(`(f64.add ${float(aop)} ${float(bop)})`, "f64");
   },
   "*"([, a, b], out) {
-    if (!b) {
-      if (!func)
-        err2("State variable declared outside of function");
-      const state = globals[func].state ||= [];
-      if (typeof a === "string") {
-        locals[a] ||= { type: "f64" };
-        state.push(a);
-        return;
-      }
-      if (a[0] === "=") {
-        let [, name, init] = a;
-        locals[name] ||= { type: "f64" };
-        include("malloc"), mem ||= 0;
-        let ptr = name + ".cur", adr = name + ".adr", stateName = func + `.state`;
-        locals[ptr] = locals[adr] = { type: "i32" };
-        let res = (
-          // first calculate state cell
-          set(
-            adr,
-            state.length ? i32.add(`(global.get $${stateName})`, i32.const(state.length << 2)) : `(global.get $${stateName})`
-          ) + // if pointer is zero - init state
-          `(if ${out ? `(result f64)` : ``} ${i32.eqz(i32.load(get(adr)))}
-(then
-` + // allocate memory for a single variable
-          i32.store(get(adr), tee(adr, call("malloc", i32.const(8)))) + // initialize value in that location (saved to memory by fn defer)
-          (out ? tee : set)(name, float(expr3(init))) + `)
-(else 
-` + // local variable from state ptr
-          (out ? tee : set)(name, f642.load(tee(adr, i32.load(get(adr))))) + `))
-`
-        );
-        state.push(name);
-        return op(res, "f64");
-      }
-      err2("State variable: unimplemented");
-    }
     let aop = expr3(a, out), bop = expr3(b, out);
     if (!out)
       return op(aop + bop);

@@ -2,7 +2,7 @@ import t, { almost, is, not, ok, same, throws } from 'tst'
 import compileSone from '../../src/compile.js'
 import { compileWat } from '../util.js'
 
-t.only('state: basic', t => {
+t('state: basic', t => {
   let wat = compileSone(`x()=(*i=0;i++)`)
   let mod = compileWat(wat)
   let { x } = mod.instance.exports
