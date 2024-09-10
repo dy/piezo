@@ -29,7 +29,7 @@
   * [ ] make fn capture declaring new static
   * [x] make ^ referring to global
   * [x] make init detection
-  * [ ] make nan: & constant expressions for watr
+  * [x] make nan: & constant expressions for watr
   * [ ] Make static groups *(a,b,c)
 * [ ] make nan as null in fn arguments (`config(a,,b,c)`)
 * [ ] range iterator via pipe
