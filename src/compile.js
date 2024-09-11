@@ -77,7 +77,7 @@ export default function compile(node, config = {}) {
   // NOTE: it sets functions as global variables
   for (let name in globals) if (!name.includes(':')) { code += `;;;;;;;;;;;;;;;;;;;;;;;;;;;; Globals\n`; break; }
   for (let name in globals)
-    if (!globals[name].import) code += `(global $${name} (mut ${globals[name].type}) ${globals[name].init || ''})\n`
+    if (!globals[name].import) code += `(global $${name} (mut ${globals[name].type}) ${globals[name].init || `(${globals[name].type}.const 0)`})\n`
   code += `\n`
 
   // declare funcs
@@ -184,17 +184,7 @@ Object.assign(expr, {
 
   // a()
   '('([, name, [, ...args]], out) {
-    if (!globals[name]) err('Unknown function call: ' + name)
-
-    // FIXME: make sure default args are gotten values?
-    let { state } = globals[name]
-
-    // if internal call is stateful, the current function becomes stateful either
-    if (state) {
-      const callerState = globals[func].state ||= [];
-      ; (globals[func].substate ||= {})[name] = callerState.length // save offset within caller state
-      callerState.length += state.length
-    }
+    if (!funcs[name]) err('Unknown function call: ' + name)
 
     if (out) return call(name, args.map(arg => float(expr(arg))))
     return op(call(name, args.map(arg => float(expr(arg)))) + `(drop)`.repeat(!out && funcs[name].type.length))
@@ -441,7 +431,7 @@ Object.assign(expr, {
 
       // global constants init doesn't require operation
       if (!func && isConstExpr(b)) {
-        globals[a] = { type: 'f64', init: float(expr(b[1])) }
+        globals[a] = { type: 'f64', init: float(expr(b)) }
         // FIXME: are we sure we don't need returning value here?
         return
       }
@@ -641,6 +631,7 @@ Object.assign(expr, {
     return op(`(i32.and ${int(aop)} ${int(bop)})`, `i32`)
   },
   '^'([, a, b], out) {
+    console.log('^', a, b)
     // a ^ b
     let aop = expr(a, out), bop = expr(b, out);
     if (!out) return op(aop + bop);

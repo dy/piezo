@@ -6,9 +6,9 @@
   "dependencies": {
     "arg": "^5.0.2",
     "subscript": "^8.4.0",
-    "watr": "^2.2.5"
+    "watr": "^2.4.0"
   },
-  "name": "melo",
+  "name": "sone",
   "description": "Low-level language for audio/signal purposes",
   "version": "0.0.0",
   "main": "index.js",
@@ -20,11 +20,11 @@
   "type": "module",
   "scripts": {
     "test": "node test",
-    "watch": "esbuild --bundle --watch ./index.js --outfile=./melo.js --format=esm"
+    "watch": "esbuild --bundle --watch ./index.js --outfile=./sone.js --format=esm"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dy/melo.git"
+    "url": "git+https://github.com/dy/sone.git"
   },
   "keywords": [
     "sones",
@@ -34,7 +34,7 @@
   "author": "dmitry iv",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/dy/melo/issues"
+    "url": "https://github.com/dy/sone/issues"
   },
-  "homepage": "https://github.com/dy/melo#readme"
+  "homepage": "https://github.com/dy/sone#readme"
 }

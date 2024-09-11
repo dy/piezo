@@ -4,7 +4,7 @@
   {
     "imports": {
       "tst": "../node_modules/tst/tst.js",
-      "melo": "../melo.js",
+      "sone": "../sone.js",
       "ts-dedent": "../node_modules/ts-dedent/esm/index.js",
       "sprae": "../node_modules/sprae/sprae.js"
     }
@@ -37,7 +37,7 @@
       'viznut-2011-09-18'
     ],
     async loadExample(url) {
-      const [, code] = await Promise.all([init(), (await window.fetch(`/examples/${url}.mel`)).text()])
+      const [, code] = await Promise.all([init(), (await window.fetch(`/examples/${url}.s`)).text()])
       processor.port.postMessage(code)
     },
   });

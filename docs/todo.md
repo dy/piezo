@@ -26,11 +26,12 @@
 * [x] make globals readable, but locals writable
 * [x] first bytebeat: viznut
 * [ ] make simple static variables
-  * [ ] make fn capture declaring new static
-  * [x] make ^ referring to global
-  * [x] make init detection
-  * [x] make nan: & constant expressions for watr
-  * [ ] Make static groups *(a,b,c)
+  * [ ] fn capture declaring new static `*b = a` or `b = *a` etc
+  * [ ] ^ referring to global (test)
+  * [x] init detection
+  * [x] nan: & constant expressions for watr
+  * [ ] static groups *(a,b,c)
+  * [ ] make deferred operator: it's weird to stack result
 * [ ] make nan as null in fn arguments (`config(a,,b,c)`)
 * [ ] range iterator via pipe
   * [ ] pair-wise iteration

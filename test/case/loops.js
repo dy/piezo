@@ -15,7 +15,7 @@ t('loops: range global', t => {
 
 t('loops: range local', t => {
   let wat, mod
-  wat = compileMel(`x=[1..3], c = 0, fill() = (0..x[] |> (x[_]+=1,c++))`)
+  wat = compileMel(`x=[1..3], c = 0, fill() = (0..x[] |> (x[_]+=1,^c++))`)
   mod = compileWat(wat)
   let { memory, x, fill, c } = mod.instance.exports
 

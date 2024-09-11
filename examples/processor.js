@@ -1,4 +1,4 @@
-import melo from '../melo.js'
+import sone from '../sone.js'
 import watr from '../node_modules/watr/watr.js'
 
 class MeloProcessor extends AudioWorkletProcessor {
@@ -8,7 +8,7 @@ class MeloProcessor extends AudioWorkletProcessor {
     super(...args);
     this.port.onmessage = async (e) => {
       console.log('received', e.data);
-      const wast = melo(e.data)
+      const wast = sone(e.data)
       const buffer = watr(wast)
       const module = await WebAssembly.compile(buffer)
       const instance = await WebAssembly.instantiate(module);
