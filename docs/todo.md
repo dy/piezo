@@ -25,13 +25,13 @@
   * [x] undo `.` - make semicolon-based void
 * [x] make globals readable, but locals writable
 * [x] first bytebeat: viznut
+* [ ] make writable globals, init on the first line
 * [ ] make simple static variables
-  * [ ] fn capture declaring new static `*b = a` or `b = *a` etc
-  * [ ] ^ referring to global (test)
+  * [ ] fn capture declaring new static `*b = a`
   * [x] init detection
-  * [x] nan: & constant expressions for watr
+  * [x] `nan:` and constant expressions for watr
   * [ ] static groups *(a,b,c)
-  * [ ] make deferred operator: it's weird to stack result
+  * [ ] ^ for deferred
 * [ ] make nan as null in fn arguments (`config(a,,b,c)`)
 * [ ] range iterator via pipe
   * [ ] pair-wise iteration

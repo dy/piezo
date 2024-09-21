@@ -1,4 +1,4 @@
-# sone ![stability](https://img.shields.io/badge/stability-experimental-black) [![test](https://github.com/dy/sone/actions/workflows/test.yml/badge.svg)](https://github.com/dy/sone/actions/workflows/test.yml)
+# solo ![stability](https://img.shields.io/badge/stability-experimental-black) [![test](https://github.com/dy/solo/actions/workflows/test.yml/badge.svg)](https://github.com/dy/solo/actions/workflows/test.yml)
 
 Mini language for audio processing and floatbeats.<br/>
 Compiles to compact 0-runtime WASM with linear memory.<br/>
@@ -18,7 +18,7 @@ Compiles to compact 0-runtime WASM with linear memory.<br/>
 ?: ?                          ;; conditions
 x[i] x[]                      ;; member access, length
 a..b a.. ..b ..               ;; ranges
-|> _                          ;; pipe / loop
+|> #                          ;; pipe / loop
 ./ ../ .../                   ;; skip, break, return
 ~ ~= ~< ~/ ~* ~// ~**         ;; clamp, normalize, lerp
 
@@ -45,9 +45,8 @@ inf = 1/0, nan = 0/0;         ;; eg: alias infinity, NaN
 (a,b) + (c,d);                ;; group binary: (a+c, b+d)
 (a, b, c)++;                  ;; group unary: (a++, b++, c++)
 (a,b)[1] = c[2,3];            ;; props: (a[1]=c[2], b[1]=c[3])
-(a,b,..,z) = (1,2,3,4);       ;; pick: (a=1, b=2, z=4)
-a = (b,c,d);                  ;; iterate: a=b; a=c; a=d;
-(a,b) = (1,2,3,4);            ;; pairs: a=1,b=2; a=3,b=4;
+(a,..,z) = (1,2,3,4);         ;; pick: (a=1, z=4)
+a = (b,c,d);                  ;; pick first: a=b; see loops
 
 ;; Ranges
 0..10;                        ;; from 1 to 9 (10 exclusive)
@@ -114,11 +113,12 @@ times(3,2);                   ;; 6
 times(4), times(,5);          ;; 4, 5 - optional, skipped arg
 dup(x) = (x,x);               ;; return multiple
 (a,b) = dup(b);               ;; destructure
-a=1; f()=(a);                 ;; globals are read-only
+a=1,b=1; x()=(a=2;b=2); x();  ;; a==1, b==2 – first statement declares locals
 a() = ( *i=0; ++i );          ;; static vars: keep value between calls
 a(), a();                     ;; 1,2
-a1 = a;                       ;; instantiate
+*a1 = a;                      ;; instantiate function
 a(), a(); a1(), a1();         ;; 3,4; 1,2;
+f() = (*t=0; ^t++; t*2);      ;; defer t++ – called after function
 
 ;; Export
 x, y, z                       ;; exports last statement
@@ -361,14 +361,14 @@ See [all examples](/examples)
 <!--
 ## Usage
 
-_Sone_ is available as CLI or JS package.
+_Solo_ is available as CLI or JS package.
 
-`npm i sone`
+`npm i solo`
 
 ### CLI
 
 ```sh
-sone source.s -o dest.wasm
+solo source.s -o dest.wasm
 ```
 
 This produces compiled WASM binary.
@@ -376,10 +376,10 @@ This produces compiled WASM binary.
 ### JS
 
 ```js
-import sone from 'sone'
+import solo from 'solo'
 
 // create wasm arrayBuffer
-const buffer = sone.compile(`
+const buffer = solo.compile(`
   n=1;
   mult(x) = x*PI;
   arr=[1, 2, sin(1.08)];
@@ -425,7 +425,7 @@ const arrValues = y.array(arr, memory)
 
 Audio processing in has no cross-platform solution, various environments deal with audio differently, some don't have audio processing at all. Besides, _Web Audio API_ is unreliable - it has unpredictable pauses, glitches and so on, so <q>audio is better handled in WASM worklet</q> ([@stagas](https://github.com/stagas)).
 
-_Sone_ attempts to fill that gap, providing a common layer for audio processing. It is also a personal attempt on language design - rethinking parts and providing safe ground. WASM target gives max performance and compatibility - browsers, [audio/worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) etc.
+_Solo_ attempts to fill that gap, providing a common layer for audio processing. It is also a personal attempt on language design - rethinking parts and providing safe ground. WASM target gives max performance and compatibility - browsers, [audio/worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) etc.
 
 <!--
 ### Principles
@@ -447,7 +447,7 @@ _Sone_ attempts to fill that gap, providing a common layer for audio processing.
 -->
 
 <!--
-## Projects using sone
+## Projects using solo
 
 * [web-audio-api](https://github.com/audiojs/web-audio-api)
 * [audiojs](https://github.com/audiojs/)

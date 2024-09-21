@@ -43,6 +43,13 @@
   * solo? solr? soloscript? solos?
     - taken
     + like mono
+    + viznut.solo
+    + запилить соло
+  * sola
+    + sound language
+    + sol la
+    + viola, triola, sola
+    - not colloquial
   * sound-fun
     + like "sounds fun" phrase.
   * sonf?
@@ -1171,7 +1178,7 @@
     + that solves problem of instancing
     + identified by callstack
 
-## [x] Static variables: syntax → `*` seems to match "save value" pointers intuition, star for save
+## [ ] Static variables: syntax → `*` seems to match "save value" pointers intuition, star for save
 
   * There's disagreement on `...` is best candidate for loading prev state. Let's consider alternatives.
   1. `...x1,y1,x2,y2`
@@ -1204,9 +1211,11 @@
     )
     ```
     - `song()=(...t=0;)`
-  2. ~~`^x1, ^y1, ^x2, ^y2`~~
-    + topical reference enjoining with the last value
-    - too many meanings to topical operator
+  2. `^x1, ^y1, ^x2, ^y2`
+    - ~~too many meanings to topical operator~~
+    + refers as "belonging" to the function
+    + doesn't create opposites `*/` for static `/` defer.
+    - doesn't feel like static (yet), `#x` is more direct intuition
   → 3. `*x1, *x2, *y1, *y2`
     + existing convention of `*` as save
     + "star operator" for "save"
@@ -1217,31 +1226,32 @@
         - * implies variable is pointer, & implies variable is value.
         + * is more ambiguous than &: & gets address of a value, * indicates pointer declaration, as well as assigns (saves) value: it acts almost as part of variable name.
       + C intuition for "save" value by pointer is `*value = 123`
+      - conflicts with pointer intuition in C, it's too much to remember - yet another meaning for `*`
     + Go pointers don't have pointers arithmetic, so we're not going to need pointer assignment
     ~+ group can be defined as `*(a=0,b=1)`
     ~ `song()=(*t=0;)`
     + used in JS for generators and other "additional" stuff
     - a bit hard to "find all" since * is not part of id
     ```
-    lp(x0, freq = 100 ~ 1..10000, Q = 1.0 ~ 0.001..3.0) = (
-      *(x1, x2, y1, y2) = 0;    // internal state
+      lp(x0, freq = 100 ~ 1..10000, Q = 1.0 ~ 0.001..3.0) = (
+        *(x1, x2, y1, y2) = 0;    // internal state
 
-      w = pi2 * freq / sampleRate;
-      sin_w, cos_w = sin(w), cos(w);
-      a = sin_w / (2.0 * Q);
+        w = pi2 * freq / sampleRate;
+        sin_w, cos_w = sin(w), cos(w);
+        a = sin_w / (2.0 * Q);
 
-      b0, b1, b2 = (1.0 - cos_w) / 2.0, 1.0 - cos_w, b0;
-      a0, a1, a2 = 1.0 + a, -2.0 * cos_w, 1.0 - a;
+        b0, b1, b2 = (1.0 - cos_w) / 2.0, 1.0 - cos_w, b0;
+        a0, a1, a2 = 1.0 + a, -2.0 * cos_w, 1.0 - a;
 
-      b0, b1, b2, a1, a2 *= 1.0 / a0;
+        b0, b1, b2, a1, a2 *= 1.0 / a0;
 
-      y0 = b0*x0 + b1*x1 + b2*x2 - a1*y1 - a2*y2;
+        y0 = b0*x0 + b1*x1 + b2*x2 - a1*y1 - a2*y2;
 
-      x1, x2 = x0, x1;
-      y1, y2 = y0, y1;
+        x1, x2 = x0, x1;
+        y1, y2 = y0, y1;
 
-      y0
-    )
+        y0
+      )
     ```
     +! can use postfix `x1*;` to save state, that's just hidden hack
     - looks like Python's splat operator `*(a,b,c)`
@@ -1249,15 +1259,20 @@
   3.1 ~~`x1*, x2*, y1*, y2*`~~
     + typographic meaning as footnote
     - `x1*=2`
-  4. `#x1, #x2, #y1, #y2`, `#(x1,x2,x3)`
+  4. `#x1, #x2, #y1, #y2`, ~~`#(x1,x2,x3)`~~
     + private state from JS, act as instance private properties
     + indicator of special meaning
     + doesn't clash with known operators
+    + compatible with `#` for "current value" in loops, as indicator of scope-specific variable
+      ~- makes global access like `fn.#t` not nice
+        ~- otherwise if `#` is operator - then makes `#` for current value meaningless
     + closer to name of the variable than * etc
-    - conflict with note names A#
+    -~ conflict with note names A#
+    - cannot use `#(x1,x2,x3)` to init group
     - pollutes the code with #x1 etc.
       - doesn't look like operator
     - often means compiler directive or comment
+      ~ which makes it less of operator
     - ~~may conflict with cardinal number (count) operator~~
   5. ~~`[x1, x2, y1, y2] = #`~~
     + involves destructuring syntax
@@ -1266,6 +1281,7 @@
     - `#` is reserved for too many things: count, import, comment.
   6. ~~`#(x1, x2, y1, y2)`~~
   7. `<x1, x2, y1, y2>`
+    - doesn't come along with regular definition `x=1, <y>=2`
   8. ~~Introduce keywords? Not having if (a) b can be too cryptic.~~
 
   9. `$x1, $x2, $y1, $y2`
@@ -1343,7 +1359,7 @@
     - `song()=(<<t=0;)`
     - opens tag
 
-## [x] Binding/referencing variables via pointers? → no
+## [x] Variables: Binding/referencing variables via pointers? → no
 
   * Purpose of pointers in go is to pass value by address, rather than copying.
   * Also it can create references to a variable in memory.
@@ -2059,7 +2075,7 @@
   + allows building chords as (C3, E3, G3) = Cmaj
     ~ would require # to be valid part of identifier
 
-## [x] Functions: `x() = a; b; c.` -> let's use `x() = (a; b; c);` for now
+## [x] Functions: erlang-like `x() = a; b; c.` -> let's use `x() = (a; b; c);` for now
 
   * [erlang functions](https://www.erlang.org/doc/reference_manual/functions.html): they use only `;` and `.`
   + allows no-block syntax
@@ -3159,7 +3175,7 @@
     + matches array layout
     + it already indexes like that in biquad filter code `x1,x2 = x0,x1`
 
-## [x] Variables: how do we make var/let/const? -> implicitly; globals are available for read, but not write.
+## [x] Variables: how do we make var/let/const? -> implicitly; globals are available for read, but not write on the first line.
 
   * The logic: we use global fns directly, so globals should be available without prefixes either: `f()=sin();`
     * we don't redeclare something already available, and we declare something new: `f(a,b,c)=(*d,*e;)`
@@ -3203,7 +3219,7 @@
   * `x(...) = (a,b,c;)` - effectless group/vars make them init
     + organic, intuitive
     + it's not good to use unknown variable right in the middle of the code: prevents typos
-    - is it init or global assign `a=1, b=2, c=3;`
+    - is it init or global assign `a=1, b=2, c=3;` (see below)
 
   * make naming difference of locals/globals
     + maintains scope transparency
@@ -3236,7 +3252,11 @@
     + like Python - we can make writing variable as local, and reading as transparent
       + that seems to be a pattern: we read imports but write from outside; we read globals but write from outside
 
-### [x] Variables: how to indicate global vars? -> ~~`^x;x;`~~ globals are available for read by default
+  * first line is for declaring locals, rest is read/write globals but define locals `a,b;f()=(a=1;b=2)` - defines local `a`, writes global `b`
+    + compatible with last-line for returns
+    + intuitive as sequence of vars `a,b,c;` for declaring locals (prev option), but assignment is allowed on first line.
+
+### [x] Variables: how to indicate global vars? -> ~~`^x;x;`~~ globals are available for read by default; and for write after first line
 
   1. Python `global x;` + prevent modification
   2. Ruby `$x;`
@@ -3312,116 +3332,125 @@
   Top Back Center - TBC
   Top Back Right - TBR
 
-## [ ] Defer -> `x(a) = (>>log(a); >>a+=1; a)`
+## [ ] Defer -> ~~`x(a) = (/log(a); /a+=1; a)`~~ `x(a) = (^log(a); ^a++; a)`
 
   + like golang defer execution runs item after function return
   + allows separating return value from increments needed after function
-  ? no deferring?
+  * no deferring?
     + obvious code sequence
     + no conceptual/syntax/mental layer over operator
     - no nice definition of variable state and its change
     - noisy code of creating result holder var, performing state update, returning result
     + kind of natural
     - state vars really need it, `x()=(*a=[0,1];>>a[1..]=a[0..];)`
-  * symbols: `>>, ||, ~>, //, \\, >-, >>|, <|, <!`,
-    * `x()=(@(a);b,c;@(d))`
-      - brings `@` into local scope
-      - not straight meaning
-    * `x() = (//a; b,c; //d;)`
-      - strong association with comment
-    * `x() = (*i=0;\i++;)`, `x()=(\a; b,c,; \d;)`, `x(a) = (\log(a); \a+=1; a)`
-      - a bit too heavy by meaning
-      - takes away cool `\\` as comments
-    * `x() = (*i=0;**i++;)`, `x()=(**a; b,c,; **d;)`, `x(a) = (**log(a); **a+=1; a)`
-      * `x()=(*a=[0,1];**a[1..]=a[0..])`
-    * `x() = (/a; b,c; /d;)`, `x()=(*i=0;/i++;*phase=0;/phase+=t;)`, `x()=(/log(a))`
-      + one-symbol
-      + associates with reddit tags
-      + associates with HTML close-elements
-      + generally "close" meaning is `/`
-      + complementary with `*` as `*a=0; /a++;`
-        - reinforces meaning of opposites `*/`, which is not the case here
-      + doesn't feel like part of identifier
-      - too many slashes `/a/b //divide a by b`
-      - too strong association with something not-end, like `/imagine` or etc.
-      - doesn't feel right typing `/` as meaning for defer.
-    * `x() = (&a; b,c; &d)`
-      + meaning of "and also this"
-      + also "counterpart" of `*` from C-lang
-        + it was even an alternative to `*` in the beginning
-      - has meaning as "part" of identifier, not operator (higher precedence)
-        - ie. `&i++` raises confusion, it's not `&(i++)`, it's `(&i)++`
-    * `x() = (~a; b,c; ~d)`
-      + meaning of "destructor"
-      + relatively safe within other options: `/i++, \i++, &i++, 'i++, #i++, @i++, >>i++, .i++`
-      + follows spirit of C in terms of "common" operators choice `*, ~`
-      + `~` means "after all that is here"
-      + `~` also means "delete" or "erase" in markdown
-      + minimal noise
-      - subtle dissonance with `*`: `x()=(*i=0;~i++;)`
-      - reserved for unary "binary inversion", already married
-    * `x() = (a.; b,c; d.)`
-      + meaning "at the end"
-      + same operator is used for export
-      - not immediately obvious that it's deferring `*phase=init; phase+=(iterating,phase).;`
-      - not nice with `*i=0,i++.;`
-        - not clear if the whole phrase is at the end or just i++
-    * `x() = (.a; b,c; .d)`
-      - has wrong associatino with property access
-    * `x() = (&i=0;*i++)`
-      - takes away "save" meaning
-      + star means "footnote", like "afterword" in typographics
-      + `&` means "with" for variables, it was main alternative to `*`
-      - `*` has too strong association with "save"
-    * `x() = (*i=0;>>i++;)`, `x()=(>>a; b,c,; >>d;)`, `x(a) = (>>log(a); >>a+=1; a)`
-      + clear meaning of "shift"
-      + Sercy sneezed
-      + related to playback's `>>` as fast-forward
-      - association with C++ pipe (cout)
-      - 2 chars, opposed to 1 char in `*i=0;`
-      - a bit too much visual noise, defer doesn't have primary meaning
-    * `x() = (*i=0;>i++;*phase=0;>phase+=t;)`, `x()=(>log(a);>a+=1;)`
-      + refers to `>>`
-      + obvious that there's something fishy going on
-      + refers to "quote" from markdown
-      + minimal
-      + adds to the feeling of flow
-      + association with terminal's command "output"
-      - breaks loop `a |> b` into `a | >b`
-        ~ fixable-ish via precedence
-        ~ loop has never defers (?)
-        ? can we change loop to `?>`, so it means "until condition holds, defer code"
-      - a bit heavy, ruby-like, unfamiliar vibe
-    * `x() = (*i=0;>|i++)`
-      + `skip forward`
-      - too many symbols
-      - somehow related to pipes
-    * `x()=(*i=0;=>i++;)`
-      - equals noise
-    * `x()=(*i=0;'i++)`
-      + refers to footnote
-      - quotes usually come in pairs
-    * `x()=(*i=0;#i++)`
-      + also refers to footnote
-      + like hashtags, comes afterwards
-      - a bit too heavy to reserve such prominent operator for just deferring
-      - reserves # as operator
-      + includes notion of "double", like double hash `//` in it
-        ? is that why python uses # instead of // for comment?
-      + associates with comment, something that comes "after"
-    * `x() = (*i=0::i++;)`, `x()=(::a; b,c,; ::d;)`, `x(a) = (::log(a); ::a+=1; a)`
-      - noisy
-      + meaningful in semantic sense (after all ops)
-        - not really. `a : : b` means do it once now
-    * `x() = (*i=0;:i++;)`, `x()=(:a; b,c,; :d;)`, `x(a) = (:log(a); :a+=1; a)`
-      + 1-character only
-      + kind-of matches meaning of labels in JS
-      - a bit clumsy
-    * `x() = (*i=0;^:i++;)`, `x()=(^:a; b,c,; ^:d;)`, `x(a) = (^:log(a); ^:a+=1; a)`
-      + means "after return"
-      - colon is not nice here
+  * `x()=(@(a);b,c;@(d))`
+    - brings `@` into local scope
+    - not straight meaning
+  * `x() = (//a; b,c; //d;)`
+    - strong association with comment
+  * `x() = (*i=0;\i++;)`, `x()=(\a; b,c,; \d;)`, `x(a) = (\log(a); \a+=1; a)`
+    - a bit too heavy by meaning
+    - takes away cool `\\` as comments
+  * `x() = (*i=0;**i++;)`, `x()=(**a; b,c,; **d;)`, `x(a) = (**log(a); **a+=1; a)`
+    * `x()=(*a=[0,1];**a[1..]=a[0..])`
+    - creates faux double meaning for `*`
+  * ~~`x() = (/a; b,c; /d;)`, `x()=(*i=0;/i++;*phase=0;/phase+=t;)`, `x()=(/log(a))`~~
+    + one-symbol
+    + associates with reddit tags
+    + associates with HTML close-elements
+    + generally "close" meaning is `/`
+    + complementary with `*` as `*a=0; /a++;`
+      - reinforces meaning of opposites `*/`, which is not the case here
+    + doesn't feel like part of identifier
+    - ~~too many slashes `/a/b //divide a by b`~~
+      ~+ comments are `;;` now
+    - association with something not-end, like `/imagine` or etc.
+    + plays along with `./a; ../a;` for return, and `/a;` for just defer.
+      - maybe creates unnecessary confusion
+    - `.. /a` vs `../ a`
+  * `x() = (&a; b,c; &d)`
+    + meaning of "and also this"
+    + also "counterpart" of `*` from C-lang
+      + it was even an alternative to `*` in the beginning
+    - has meaning as "part" of identifier, not operator (higher precedence)
+      - ie. `&i++` raises confusion, it's not `&(i++)`, it's `(&i)++`
+  * ~~`x() = (~a; b,c; ~d)`~~
+    + meaning of "destructor"
+    + relatively safe within other options: `/i++, \i++, &i++, 'i++, #i++, @i++, >>i++, .i++`
+    + follows spirit of C in terms of "common" operators choice `*, ~`
+    + `~` means "after all that is here"
+    + `~` also means "delete" or "erase" in markdown
+    + minimal noise
+    - subtle dissonance with `*`: `x()=(*i=0;~i++;)`
+    - reserved for unary "binary inversion", already married
+  * `x() = (a.; b,c; d.)`
+    + meaning "at the end"
+    + same operator is used for export
+    - not immediately obvious that it's deferring `*phase=init; phase+=(iterating,phase).;`
+    - not nice with `*i=0,i++.;`
+      - not clear if the whole phrase is at the end or just i++
+  * `x() = (.a; b,c; .d)`
     * `x() = (*i=0;.i++;)`, `x()=(.a; b,c,; .d;)`, `x(a) = (.log(a); .a+=1; a)`
-      - not easy to find-select
+    - has wrong associatino with property access
+    - not easy to find-select
+  * ~~`x() = (&i=0;*i++)`~~
+    - takes away "save" meaning
+    + star means "footnote", like "afterword" in typographics
+    + `&` means "with" for variables, it was main alternative to `*`
+    - `*` has too strong association with "save"
+  * `x() = (*i=0;>>i++;)`, `x()=(>>a; b,c,; >>d;)`, `x(a) = (>>log(a); >>a+=1; a)`
+    + clear meaning of "shift"
+    + Sercy sneezed
+    + related to playback's `>>` as fast-forward
+    - association with C++ pipe (cout)
+    - 2 chars, opposed to 1 char in `*i=0;`
+    - a bit too much visual noise, defer doesn't have primary meaning
+  * `x() = (*i=0;>i++;*phase=0;>phase+=t;)`, `x()=(>log(a);>a+=1;)`
+    + refers to `>>`
+    + obvious that there's something fishy going on
+    + refers to "quote" from markdown
+    + minimal
+    + adds to the feeling of flow
+    + association with terminal's command "output"
+    - breaks loop `a |> b` into `a | >b`
+      ~ fixable-ish via precedence
+      ~ loop has never defers (?)
+      ? can we change loop to `?>`, so it means "until condition holds, defer code"
+    - a bit heavy, ruby-like, unfamiliar vibe
+  * `x() = (*i=0;>|i++)`
+    + `skip forward`
+    - too many symbols
+    - somehow related to pipes
+  * `x()=(*i=0;=>i++;)`
+    - equals noise
+    - faux function association
+  * `x()=(*i=0;'i++)`
+    + refers to footnote
+    - quotes usually come in pairs
+  * `x()=(*i=0;#i++)`
+    + also refers to footnote
+    + like hashtags, comes afterwards
+    - a bit too heavy to reserve such prominent operator for just deferring
+    - reserves # as operator
+    + includes notion of "double", like double hash `//` in it
+      ? is that why python uses # instead of // for comment?
+    + associates with comment, something that comes "after"
+  * `x() = (*i=0::i++;)`, `x()=(::a; b,c,; ::d;)`, `x(a) = (::log(a); ::a+=1; a)`
+    - noisy
+    + meaningful in semantic sense (after all ops)
+      - not really. `a : : b` means do it once now
+  * `x() = (*i=0;:i++;)`, `x()=(:a; b,c,; :d;)`, `x(a) = (:log(a); :a+=1; a)`
+    + 1-character only
+    + kind-of matches meaning of labels in JS
+    - a bit clumsy
+  * `x() = (*i=0;^:i++;)`, `x()=(^:a; b,c,; ^:d;)`, `x(a) = (^:log(a); ^:a+=1; a)`
+    + means "after return"
+    - colon is not nice here
+  * `x() = (*i=0;^i++;)`, `x(a) = (^log(a); ^a+=1; a)`
+    + means "delay" operator in some contexts (aka next tick but technically not)
+    + means "after return"
+    + `^` and `A` have similar shape
+    + reminds debugger's jump over icon ↷
 
 ## [x] !Prefer operator `x()=(a;<<x=1;a*x;)` - declares values at the beginning? -> nah
 
@@ -4870,21 +4899,27 @@
 
   * `x[] = y[1,2..3]`
     - syntactically creates copy of y
-    - writes to x's length, which is weird
+    - writes to x's length
 
   * `x[10]; y = x + 3;`
     + mathematically correct
     + keeps proper offset
     - may need to have special fn to change length, since uses reinterpreting
     - knows about pointers
+    - super confusing to represent array as number
 
   * `x[10]; y = @latr.sublist(x, len: 3, start: 2)`
 
   * `x[..] = y[..]`
-    - creates a copy
+    - writes into x
+
+  * `x = *y` for copy array, `x = y` for subarray
+    - subtle conflict with C's pointers
+    - in Kotlin `*` is for spread
 
   * `x = y[..]`
-    - takes first item from many
+    - ~~takes first item from many~~
+    - attempts to iterate through array
 
   * `x = [10..]y`
     - weird syntax
@@ -4893,10 +4928,6 @@
     ~ kind of valid self-slicing
     - loses reference to initial list
     - means `x = x[10..]` would create reference, not clone
-
-  * `x = [..10]; y = x+3; y[] -= 3;`
-    * that's just math trick, not actual operator.
-    * that's why we can wrap it into `@latr.subarray(x, start, end)`
 
 ## [ ] Ranges: Range step -> likely 0..10:0.5
 
@@ -4947,7 +4978,7 @@
       ~+ prelim returns belong to userland anyways, it's not demanded internally
     - we can't
 
-## [ ] Static variables: How can we call same fn twice with same context? -> instance is created via new static declaration `*fn = a`
+## [ ] Static variables / Functions: How can we call same fn twice with same context? How to call with different contetx ->
 
   * It seems for now to be able only externally
   ? but what if we need to say fill an array with signal from synth?
@@ -5002,7 +5033,8 @@
     ? what about dynamic indexing
 
   6.1 `osc:0()`, `osc:1()`, `osc:i()`
-    - `:` is reserved for labeling
+    -~ `:` is reserved for labeling
+    + different from dot access
   6.2 `osc#0()`, `osc#1()`, `osc#i()`
     + `#` used as id across many environments
     + `#` used as `member` naturally
@@ -5060,12 +5092,54 @@
               + we can pass fn refs as floats as well - it seems trivial to store all funcs in a table
                 + that allows calling directly or indirectly
 
-  9. Simple static vars: we have a function with single static context
-    * `a() = (...); b = a;` - assignment creates fn instance.
-      + assignment happens via global anyways
-        + in global fn state has 0 value anyways
+  9. Simple static vars: we have a function with single static context.
 
-## [ ] Static variables:logic - how to map callsite to memory address? -> ~~see implementation~~ - we use simple static vars
+### [x] Functions / Static variables: how to create context? `x() = (*f1 = f);`
+
+  1. Operator
+    a. `a() = (*t=0;^t++); b = a;` - assignment creates fn instance.
+    + assignment happens via global anyways
+      + in global fn state has 0 value anyways
+    - not intuitive that it copies instance rather than just creates reference
+    b. `a() = (*t=0;^t++); *b = a;`
+    - `*[a,a,a]` - no control over individual cloning instances
+    c. `a() = (*t=0;^t++); b = *a;`, `[a, *a, a]`
+    - conflict of `*` for static and `*` for new
+
+  * We cannot have an operator for that, since it would imply runtime work, but static vars are created at static time - we can't randomly clone a function.
+
+  2. `[12]a(x) = x*2; a[0](1)`
+    + matches `[12]x = [1,2,3]`
+      - introduces implicit type for `x`
+    - number of instances can be figured out from eg. `a#5` call
+    - if we import fn from other module, we cannot create multiple instances of it
+
+  3. `(a,a1,a2)(x) = (...)`
+    + organic way to create multiple instances
+    + no new operators introduced
+    - not clear how to instantiate imported fn multiple times
+
+  4. `c1 = c` - default assignment is clonable
+    + we know that `c` is a function, not number (know its type)
+      - not necessarily, if fn is passed as an argument
+    + allows cloning imported fns
+    - redefines meaning of `=` operator as literally just assigning
+      ? do we ever need literal assignment?
+        - yes, eg. `prev = cur; cur = new; cur(); cur = prev;`
+
+  5. `c1 = clone(c)`
+    - it is not runtime function
+    - forces imports
+
+  6. ref-assign eg. `*f1 = f`, `*arr1 = arr`
+
+  7. The `*f1 = f` operator clones a function
+    + this is intention of `*f1` - to have local instance of generic fn
+      + we almost never process code globally, I wonder what are these cases
+    + this is essentially global vars locally defined
+
+
+## [ ] Static variables: logic - how to map callsite to memory address? -> ~~see implementation~~ - we use simple static vars
 
   ```
   sin(f, (; scope-id ;)) = (*phase=0;>phase+=f;...);
