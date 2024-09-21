@@ -5136,7 +5136,7 @@
   7. The `*f1 = f` operator clones a function
     + this is intention of `*f1` - to have local instance of generic fn
       + we almost never process code globally, I wonder what are these cases
-    + this is essentially global vars locally defined
+    + this allows create clones as `f1(x) = (*_f=f;_f(x))` - like global vars locally defined
 
 
 ## [ ] Static variables: logic - how to map callsite to memory address? -> ~~see implementation~~ - we use simple static vars
