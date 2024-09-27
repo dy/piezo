@@ -13,7 +13,6 @@ const OPAREN = 40, CPAREN = 41, OBRACK = 91, CBRACK = 93, SPACE = 32, QUOTE = 39
 
 // precedences
 const PREC_SEMI = 1, // a; b;
-  PREC_END = 2,
   PREC_RETURN = 4, // x ? ./a,b : y
   PREC_SEQ = 6, //  ./a,b,c;  a, b ? (c,d) : (e,f); a,b,c |> d
   PREC_IF = 8,    // a ? b=c;  a = b?c;
@@ -189,8 +188,11 @@ token('..', PREC_RANGE, a => (['..', a, expr(PREC_RANGE)]))
 
 // returns
 token('./', PREC_TOKEN, (a, b) => !a && (b = expr(PREC_RETURN), b ? ['./', b] : ['./'])) // continue: ./
-token('../', PREC_TOKEN, (a, b) => (!a && (b = expr(PREC_RETURN), b ? ['../', b] : ['../']))) // break: ../
+token('../', PREC_TOKEN, (a, b) => !a && (b = expr(PREC_RETURN), b ? ['../', b] : ['../'])) // break: ../
 token('.../', PREC_TOKEN, (a, b) => !a && (b = expr(PREC_RETURN), b ? ['.../', b] : ['.../'])) // return: ../
+
+// defer ^a,b,c
+unary('^', PREC_RETURN);
 
 // a.b
 // NOTE: we don't parse expression to avoid 0..1 recognizing as 0[.1]

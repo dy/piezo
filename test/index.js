@@ -1,5 +1,6 @@
 import './case/array.js'
 import './case/comments.js'
+import './case/defer.js'
 import './case/examples.js'
 import './case/export.js'
 import './case/funcs.js'
