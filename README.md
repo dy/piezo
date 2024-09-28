@@ -19,7 +19,7 @@ Compiles to compact 0-runtime WASM with linear memory.<br/>
 x[i] x[]                      ;; member access, length
 a..b a.. ..b ..               ;; ranges
 |> _                          ;; loop, map / reduce
-./ ../ .../                   ;; skip, break, return
+./ ../ /                      ;; skip/continue, stop/break, return
 ~ ~= ~< ~/ ~* ~// ~**         ;; clamp, normalize, lerp
 * ^                           ;; static, defer
 
@@ -102,12 +102,11 @@ x[..] |>= _ * 2;              ;; overwrite source
 ((a,b) = 0..10) |> a+b;       ;; iterate by pairs
 (x,,y) = (a,b,c) |> _ * 2;    ;; capture result x = a*2, y = c*2;
 .. |> i < 10 ? i++ : ../;     ;; while i < 10 i++
-..(i < 10) / 0 |> i++;        ;; alternative while
 
 ;; Functions
 double(n) = n*2;              ;; define a function
 times(m = 1, n ~ 1..) = (     ;; optional, clamped arg
-  n == 0 ? ./n;               ;; early return
+  n == 0 ? /n;                ;; early return
   m * n                       ;; default return
 );                            ;;
 times(3,2);                   ;; 6
