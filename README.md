@@ -1,6 +1,6 @@
-# solo ![stability](https://img.shields.io/badge/stability-experimental-black) [![test](https://github.com/dy/solo/actions/workflows/test.yml/badge.svg)](https://github.com/dy/solo/actions/workflows/test.yml)
+# sruti ![stability](https://img.shields.io/badge/stability-experimental-black) [![test](https://github.com/dy/sruti/actions/workflows/test.yml/badge.svg)](https://github.com/dy/sruti/actions/workflows/test.yml)
 
-Mini language for audio processing and floatbeats.<br/>
+Mini language for signal processing, synthesis and analysis.<br/>
 Compiles to compact 0-runtime WASM with linear memory.<br/>
 
 <!--[Motivation](./docs/motivation.md)  |  [Documentation](./docs/reference.md)  |  [Examples](./docs/examples.md).-->
@@ -18,9 +18,10 @@ Compiles to compact 0-runtime WASM with linear memory.<br/>
 ?: ?                          ;; conditions
 x[i] x[]                      ;; member access, length
 a..b a.. ..b ..               ;; ranges
-|> #                          ;; pipe / loop
+|> _                          ;; loop, map / reduce
 ./ ../ .../                   ;; skip, break, return
 ~ ~= ~< ~/ ~* ~// ~**         ;; clamp, normalize, lerp
+* ^                           ;; static, defer
 
 ;; Numbers
 16, 0x10, 0b0;                ;; int, hex or binary
@@ -37,17 +38,6 @@ default=1, eval=fn, else=0;   ;; no reserved words
 true = 0b1, false = 0b0;      ;; eg: alias bools
 inf = 1/0, nan = 0/0;         ;; eg: alias infinity, NaN
 
-;; Groups
-(a,b,c) = (1,2,3);            ;; assign (a=1, b=2, c=3)
-(a,b) = (b,a);                ;; swap
-(a,b,c) = d;                  ;; duplicate: (a=d, b=d, c=d);
-(a,,b) = (c,d,e);             ;; skip: (a=c, b=e);
-(a,b) + (c,d);                ;; group binary: (a+c, b+d)
-(a, b, c)++;                  ;; group unary: (a++, b++, c++)
-(a,b)[1] = c[2,3];            ;; props: (a[1]=c[2], b[1]=c[3])
-(a,..,z) = (1,2,3,4);         ;; pick: (a=1, z=4)
-a = (b,c,d);                  ;; pick first: a=b; see loops
-
 ;; Ranges
 0..10;                        ;; from 1 to 9 (10 exclusive)
 0.., ..10, ..;                ;; open ranges
@@ -61,6 +51,17 @@ a ~= 0..10;                   ;; a = clamp(a, 0, 10);
 a ~< 0..10;                   ;; a >= 0 && a < 10
 a ~/ 0..10; a ~* 0..10;       ;; normalize(a, 0, 10); lerp(a, 0, 10);
 a ~// 0..10; a ~** 0..10;     ;; smoothstep(a, 0, 10); ismoothstep(a, 0, 10);
+
+;; Groups
+(a,b,c) = (1,2,3);            ;; assign: a=1, b=2, c=3
+(a,b) = (b,a);                ;; swap
+(a,b,c) = d;                  ;; duplicate: a=d, b=d, c=d
+(a,,b) = (c,d,e);             ;; skip: a=c, b=e
+(a,b) + (c,d);                ;; group binary: a+c, b+d
+(a, b, c)++;                  ;; group unary: a++, b++, c++
+(a,b)[1] = c[2,3];            ;; props: a[1]=c[2], b[1]=c[3]
+(a,..,z) = (1,2,3,4);         ;; pick: a=1, z=4
+a = (b,c,d);                  ;; pick first: a=b; see loops
 
 ;; Arrays
 m = [..10];                   ;; array of 10 elements
@@ -110,15 +111,16 @@ times(m = 1, n ~ 1..) = (     ;; optional, clamped arg
   m * n                       ;; default return
 );                            ;;
 times(3,2);                   ;; 6
-times(4), times(,5);          ;; 4, 5 - optional, skipped arg
+times(4), times(,5);          ;; 4, 5: optional, skipped arg
 dup(x) = (x,x);               ;; return multiple
 (a,b) = dup(b);               ;; destructure
-a=1,b=1; x()=(a=2;b=2); x();  ;; a==1, b==2 – first statement declares locals
+a=1,b=1; x()=(a=2;b=2); x();  ;; a==1, b==2: first statement declares locals
 a() = ( *i=0; ++i );          ;; static vars: keep value between calls
 a(), a();                     ;; 1,2
-*a1 = a;                      ;; instantiate function
+a1() = ( *copy=a; copy());    ;; clone function
 a(), a(); a1(), a1();         ;; 3,4; 1,2;
-f() = (*t=0; ^t++; t*2);      ;; defer t++ – called after function
+f() = (*t=0; ^t++; t*2);      ;; defer: t++ called after return
+x(a[], f()) = (a[0] + f(1));  ;; array, function args
 
 ;; Export
 x, y, z                       ;; exports last statement
@@ -134,8 +136,8 @@ string[2..10];                ;; substring
 string[1, 2..10, -1];         ;; slice/pick multiple elements
 string[-1..0];                ;; reversed
 string[];                     ;; length
-(..a[] |> a[_] == b[_] ?: ../)[-1];   ;; compare (==,!=,>,<)
-a = "$<b>$<c>";           ;; concat: "hello worldhello world"
+(..a[] |> a[#] == b[#] ?: ../)[-1];   ;; compare (==,!=,>,<)
+a = b ++ c;                   ;; concat: "hello worldhello world"
 a[..] |> _==" " ? (a[from..to],from=to) : to++              ;; split: "a b" / " " = ["a", "b"]
 (list[..]|>(_[..]," "))[..-1];;; join: " " * ["a", "b"] = "a b"
 ..2 |> b[..]                  ;; repeat: "abc" * 2 = "abcabc"
@@ -361,14 +363,14 @@ See [all examples](/examples)
 <!--
 ## Usage
 
-_Solo_ is available as CLI or JS package.
+_Sruti_ is available as CLI or JS package.
 
-`npm i solo`
+`npm i sruti`
 
 ### CLI
 
 ```sh
-solo source.s -o dest.wasm
+sruti source.s -o dest.wasm
 ```
 
 This produces compiled WASM binary.
@@ -376,10 +378,10 @@ This produces compiled WASM binary.
 ### JS
 
 ```js
-import solo from 'solo'
+import sruti from 'sruti'
 
 // create wasm arrayBuffer
-const buffer = solo.compile(`
+const buffer = sruti.compile(`
   n=1;
   mult(x) = x*PI;
   arr=[1, 2, sin(1.08)];
@@ -425,7 +427,7 @@ const arrValues = y.array(arr, memory)
 
 Audio processing in has no cross-platform solution, various environments deal with audio differently, some don't have audio processing at all. Besides, _Web Audio API_ is unreliable - it has unpredictable pauses, glitches and so on, so <q>audio is better handled in WASM worklet</q> ([@stagas](https://github.com/stagas)).
 
-_Solo_ attempts to fill that gap, providing a common layer for audio processing. It is also a personal attempt on language design - rethinking parts and providing safe ground. WASM target gives max performance and compatibility - browsers, [audio/worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) etc.
+_Sruti_ attempts to fill that gap, providing a common layer for audio processing. It is also a personal attempt on language design - rethinking parts and providing safe ground. WASM target gives max performance and compatibility - browsers, [audio/worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) etc.
 
 <!--
 ### Principles
@@ -447,7 +449,7 @@ _Solo_ attempts to fill that gap, providing a common layer for audio processing.
 -->
 
 <!--
-## Projects using solo
+## Projects using sruti
 
 * [web-audio-api](https://github.com/audiojs/web-audio-api)
 * [audiojs](https://github.com/audiojs/)

@@ -1,4 +1,4 @@
-## [ ] name -> mel
+## [ ] name -> sruti
 
   * soufn, sofn, sofun, so-fun, funzo, zfun
   * sound-fu, zound-fu, zo-fu, sonfu, sone-fu
@@ -45,6 +45,7 @@
     + like mono
     + viznut.solo
     + запилить соло
+    - not unique enough
   * sola
     + sound language
     + sol la
@@ -170,9 +171,11 @@
     + reminds audio directly
     + 3 letters
     + refers to auro
-    + consequence from line
+    + consequence from line-in
     - conflicts with auxlang https://en.wikipedia.org/wiki/International_auxiliary_language
     - reminds mux, which it is not
+    + au-dio [processing,synthesis,analysis]
+      ~- can be not just audio
   * adya
     + short from audio
     + "now" in sanskrit
@@ -227,23 +230,37 @@
 
   * synl
   * syne
-    + sine
+    + sine modified - cooler than sine
     + sync
-    + `.sy` is cool
+    + `.s`, `.sy` is cool
     + sone without o
-    + synt
+    + synth
+    + mentions y from yv
+    + sinelang is cool
+    + syntax
+    + shinto
+    - zyne lang is there
+    - too similar to "sane" - cannot publish
+  * synto
   * sinu
   * sinusoid
   * sina
 
   * soid
   * zoid
+  * zynt
   * sen
 
   * symph
     + symphony
     + more personal
   * symf
+
+  * shruti
+    + that which is heard
+    + reference to vedas
+    + sruti-lang
+    + cryptic
 
   * fuzz, buzz, hizz
   * patchr
@@ -1131,7 +1148,7 @@
   ? If `?..` is early return current scope, then how to break loop?
     * we can avoid return generally and only bail out from current scope.
 
-### [ ] ? Can we use something else but . for export? → ~~let's try `a.` as global export operator~~ -> last members are exported by default
+### [ ] Export: ? Can we use something else but . for export? → ~~let's try `a.` as global export operator~~ -> last members are exported by default
 
   - that seems to create confusion for `a(x,y) = x*y.` case
   - that doesn't seem to belong to natural languages - marking . with export.
@@ -4149,7 +4166,7 @@
 
   * `list |> #*2`, `list |> #>2?^^#:^#;`
     + `#` is almost perfect for topic/reference, associates with `#`th item
-      - pipe is not loop, it's "previous expressino output insert here"
+      - pipe is not loop, it's "previous expression output insert here"
     - has more meaning as "number of" rather than i-th number
       ~+ current item number as well
     + has typographical meaning as placeholder, or "insertion field"
@@ -4160,6 +4177,9 @@
     -~ interferes with `<math#a,b,c>`
       ~ these imports are unwieldy tbh, too much legacy mixup: JSX, C++, types, URLs.
     + no "select-all" problem as acute as with `_`
+    - can be used for some actual operator rather than variable placeholder
+      ~ unless we allow `#` as part of variable name
+    - has strong flavor of directive (C++ etc) or comment (Python etc)
   * ~~`list |> &*2`, `list |> &>2?^^&:^&;`~~
     + & is almost-character, feels more like an id
     - has weird connotation as binary
@@ -4184,42 +4204,43 @@
   * `list |> _ * 2`, `list |> _>2?^^_:^_`
     + less mystery than with `@`
     + more conventional (Elixir, Julia, Scala, Perl, PowerShell)
-    + not an operator
+    + not an operator anywhere
     + literally means "insert here" like in written forms for fields
     - not as distinguished from code, as `^@#&`
     - select-all problem, esp. since default separator in vars is `_`, like `sin_w`
       ~ not necessary, since we are likely case-sensitive
     - has tinge of "throwaway variable"
       ~+ we don't need throwaways, since we support skipped args `(,,)`
-    - has tinge of "private variable"
-      ~ we don't have privates
+    - has tinge of "private variable" (locals)
+      ~+ it's private in a way
     + literally means "placeholder", for "placeholder" variable
     + we don't have special designation for lowdash otherwise
-  * `list |> ^ * 2`
+  * ~~`list |> ^ * 2`~~
     - conflicts with `^` for return `list |> ^>2?^^^:^^;`
     + compatible with js proposal; compatible with makefile;
   * ~~`list |> ~ * 2`~~
   * ~~`list |> () * 2`~~
-  * `list |> . * 2`
+  * ~~`list |> . * 2`~~
     - conflicts with export
     - field is taken by `..`, `.` as export, `x.2` as prop, `.2` as float
     - hard to select-all
     - reminds tits `a(.)`
-  * `list:x |> x * 2`, `list:x |> x>2?^^x:^x`;
+    - `...`: `. ..` or `.. .`?
+  * ~~`list:x |> x * 2`, `list:x |> x>2?^^x:^x`;~~
     + differentiates `a > 1 |> x` vs `a : x |> x`
     - conflict-ish with step `0..10:0.5:x |> x * 2`
       ? `0..10 + 0.5 : x |> x * 2`
     - conflicts with condition `a ? x : y |> z`
     ? not clear for individual items `(a,b,c):x |> x * 2`
-  * `list<x> |> x*2`, `a,b,c<x> |> x*2`, `0..10<x> |> x*2`
+  * ~~`list<x> |> x*2`, `a,b,c<x> |> x*2`, `0..10<x> |> x*2`~~
     + Sercy sneezed
     + matches graphics of loop
     + allows defining multiple variables `a,b,c <x,i>`
     - syntactically horrific
     - reminds type templates from C, which it is not
-  * `<list:x> x*2`, `<0..10 : x> x*2`
+  * ~~`<list:x> x*2`, `<0..10 : x> x*2`~~
     -~ `<list: (x>x*2);`
-  * `list <x> x*2`, `a,b,c <x> x*2`, `0..10 <x> x*2`
+  * ~~`list <x> x*2`, `a,b,c <x> x*2`, `0..10 <x> x*2`~~
     - `(list < x) > x*2`
   * `list |x> x*2`, `a,b,c |x> x*2`, `0..10 |x> x*2`
     - `list | (x > x*2)`
@@ -5138,6 +5159,13 @@
       + we almost never process code globally, I wonder what are these cases
     + this allows create clones as `f1(x) = (*_f=f;_f(x))` - like global vars locally defined
 
+### [ ] Functions / Static variables: How do we detect passed function as an argument? `f1(f) = (*_f=f; _f())`;
+
+  1. By usage. If it is ever called - that's a function. If not - we don't care.
+    - we cannot say if we should instantiate or not here: `f1(f) = (*_f=f; _f)`
+  2. Type definition for args: `f1(a[], b, f()) = (*_f=f;_f)`
+    + gentle types, feel natural & friendly
+    + allows making vars something else but integers, with static-time checks
 
 ## [ ] Static variables: logic - how to map callsite to memory address? -> ~~see implementation~~ - we use simple static vars
 
