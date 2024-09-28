@@ -1,4 +1,4 @@
-## [ ] name -> sruti
+## [x] name -> sruti
 
   * soufn, sofn, sofun, so-fun, funzo, zfun
   * sound-fu, zound-fu, zo-fu, sonfu, sone-fu
@@ -11,7 +11,6 @@
     + like .tone but .sone - more about signals/noises
     + legacy own name
       - smells old
-
   * sonnes, sonn, sounes
     + is sonnes (sounds in french), sones, sonne in German
   * sonra, sondra
@@ -255,13 +254,6 @@
     + symphony
     + more personal
   * symf
-
-  * shruti
-    + that which is heard
-    + reference to vedas
-    + sruti-lang
-    + cryptic
-
   * fuzz, buzz, hizz
   * patchr
   * phono
@@ -372,6 +364,14 @@
     + ivanov lang
     + npm is free
     + kirtan.i, mono.i, sobel.i, viznut.i, predestined-fate.i
+
+  * shruti, sruti
+    + that which is heard
+    + reference to vedas
+    + sruti-lang
+    + cryptic
+    + factually floatbeats are what sruti-box is doing
+    + sruti.box for collection of floatbeats
 
 ### [x] Compiler: Should it compile to wat or to wasm? → wat for now
 
@@ -885,6 +885,19 @@
 
   + improves precision
 
+## [x] Function: Always return result, or allow void functions? → implicit return, same as (a;b) in scopes; solved by required number of output as well
+
+  + always return is more natural practice
+  - no-result case is more generic and closer no wasm, by forcing result we limit capabilities
+  + less choice is better: when no-result is needed?
+  + solves issue of `a(x,y) = x*y.` - meaning export function a, not result. vs `a(x,y) = x*y..`
+  ~ makes `.` optional at the end
+    ~ makes `.` less common for fn result - mostly limiting to early return as `a(x)=(x?1.;x)` ← this is fine though
+    - we still allow `.` as last token:
+      * `a(x,y)=(x*y.)` is valid "result of function", therefore `a(x,y)=x*y.` is too
+      * or else `.` depends on `()`: `(a.)` is result, `a.` is export.
+  + Since `(a;b;c)` naturally returns last element, so must function body.
+
 ## [x] End operator → indicator of no-return statement, last statement automatically returns
 
   * `.` operator can finish function body and save state. `delay(x,y) = (*d=[1s], z=0; d[z++]=x; d[z-y].)`
@@ -915,7 +928,7 @@
       - doesn't help much if expr comes after, eg. `pi,rate. a=3;`
     -> so seems uncovered period can stand only at the end of scope. Else there must be a semi.
 
-### [x] End operator (discussion above is old): to have or not to have? -> no, less ops the better
+### [ ] End operator `.` (discussion above is old): to have or not to have? -> we should have void operator.
 
   1. `a,b,c.` explicitly indicates exported members
       - we can do export by last statement as `a,b,c`, thinking it be similar to fn return
@@ -931,12 +944,16 @@
     + end = no return, which is logical
     + matches `./` intuition: it would be `(a;./b)` to return something, but we just do `(a;b.)`to force returning none
       - what's the point if `(a;./)` === `(a;.)`?
+        + we can do explicit indication `(a;b.)` - means return nothing
+        ~+ `./` can be used only for loops, since it's `continue`
+    -? `./` as `. /` (void return)
+      + void can only be postfix unary `a.;`
     + resolves last semicolon confusion - now `;` can always return last statement even with semicolon, unless `.` indicates nothing.
       ~- not so elegant as just skipping semi
     + typographical, erlangy
     - `.` could've been used as part of name (like stateful instance) or static props in the future
 
-## [x] Early return operator? → ~~keep `a ? ^;` for now~~ `./`, `../`, `.../` is most logical
+## [x] Early return operator? → ~~keep `a ? ^;` for now~~ `./`, `../`, `/` is most logical
 
   * can often see `if (a) return;` - useful construct. How's that in lino?
   1. `a ? value.`
@@ -1030,6 +1047,7 @@
   * `cond ?/; cond ?/ x; cond ?// x; cond ?/// x;`
     - not following patterns
     - conflicts with comments
+    + consistent with `./` for skip, `../` for break
   * `cond ?< b; cond ?<; cond ? <<b;`
   * `cond ? =b; cond ? .=b; cond ? := b`
   * `cond ?= b; cond ? ==b; cond ?=;`
@@ -1073,7 +1091,7 @@
 
   4. `a..b |> (x < 10 ?>; x > 100 ?.)`
 
-## [x] Return operator: alternatives → try using `./` for returning value from block.
+## [ ] Return operator: alternatives → try using `/` for returning value from block.
 
   1. `.`
     + erlang-y
@@ -1097,25 +1115,22 @@
     - enforces `?`, `^` operators
   6. `a ? ./b;`
     + frees `^`
+    - conflicts with skip
   7. `a ? \; a ? \b; a ? \\b,c;`
     - without return doesn't look good
+    - not heavy enough
+  8. `a ? #; a ? #b; a ? #b,c;`
+    + `#` reads as `=//` visually
+    + heavy enough
+    - `a ? #.;` === `a ? #;` if `.` is void
+    - `#` has heavy alternative associations
+    - doesn't match skip, stop
+  9. `a ? /; a ? /b; a ? /b,c;`
+    + matches `./`, `../` logically
 
-## [x] Always return result, or allow no-result functions? → implicit return, same as (a;b) in scopes; solved by required number of output as well
+## [ ] Break, continue, return? -> `./` for continue, `../` for return, `/` for root return.
 
-  + always return is more natural practice
-  - no-result case is more generic and closer no wasm, by forcing result we limit capabilities
-  + less choice is better: when no-result is needed?
-  + solves issue of `a(x,y) = x*y.` - meaning export function a, not result. vs `a(x,y) = x*y..`
-  ~ makes `.` optional at the end
-    ~ makes `.` less common for fn result - mostly limiting to early return as `a(x)=(x?1.;x)` ← this is fine though
-    - we still allow `.` as last token:
-      * `a(x,y)=(x*y.)` is valid "result of function", therefore `a(x,y)=x*y.` is too
-      * or else `.` depends on `()`: `(a.)` is result, `a.` is export.
-  + Since `(a;b;c)` naturally returns last element, so must function body.
-
-## [ ] Break, continue, return? -> `./` for continue, `../` for return, `.../` for root return.
-
-  1. `^` for continue, `^^` for break;
+  1. ~~`^` for continue, `^^` for break;~~
     + nice pattern to skip callstack;
     + brings point to prohibiting `^` as reference to last expression: simpler pipes;
     + combinable with return statement which is kind-of natural `(a?^b; c)`.
@@ -1125,6 +1140,7 @@
     + gives nice feeling of direction in language, meaning visually "get out of this scope"
       + that supports piper `|>`
     - a bit cryptic to see `^^^a`, as if some magic happens
+    - taken by 'defer'
   2. `>>` for continue, `^` for break.
   3. `.` for break or return, acting within the block; `^` for continue.
     - break can be used without stack argument, `.` by itself doesn't do much sense although possible
@@ -1148,7 +1164,20 @@
   ? If `?..` is early return current scope, then how to break loop?
     * we can avoid return generally and only bail out from current scope.
 
-### [ ] Export: ? Can we use something else but . for export? → ~~let's try `a.` as global export operator~~ -> last members are exported by default
+## [ ] Break, continue, return: from block or from function? -> ./ skip, ../ stop, / return
+
+  1. `./` - break block, `../` - break 2 blocks, `.../` - break to the root (parens-sensitive)
+    + consistent with loops: `.. |> ./`
+    - sensitive to parens `.. |> (./)` != `.. |> ./` - weird
+    - `.../` is not necessary for function return
+    - `.../` vs `.. ./`
+  2. `./` - skip/continue, `../` - stop/break
+    + meaningful for loops
+    ? how to make return from within the loop?
+      `/x` as absolute-level return?
+    !+ `(../x)` can be used as a way to break block as well, opposed to `(/x)` as absolute return
+
+## [x] Export: ? Can we use something else but . for export? → ~~let's try `a.` as global export operator~~ -> last members are exported by default
 
   - that seems to create confusion for `a(x,y) = x*y.` case
   - that doesn't seem to belong to natural languages - marking . with export.
@@ -1188,14 +1217,7 @@
     + `.` is replacement for `;`
     ?! missing `.` means program is unfinished? like, a library to include?
 
-## [x] State management → function state identified by callsite
-
-  * `...x1, y1, x2, y2`
-    + yes, that acts as hooks from react
-    + that solves problem of instancing
-    + identified by callstack
-
-## [ ] Static variables: syntax → `*` seems to match "save value" pointers intuition, star for save
+## [x] Static variables: syntax → `*` seems to match "save value" pointers intuition, star for save
 
   * There's disagreement on `...` is best candidate for loading prev state. Let's consider alternatives.
   1. `...x1,y1,x2,y2`
@@ -1723,7 +1745,7 @@
     + enables if-else as `1,0 >- x ? true : false;`
       . `1 >- x ? true`;
 
-## [ ] Comments: `//`, `/*` vs `;;` and `(; ;)` → ~~`//` is most based choice. `\\` gives many benefits~~ `;;` either, but least toxic
+## [x] Comments: `//`, `/*` vs `;;` and `(; ;)` → ~~`//` is most based choice. `\\` gives many benefits~~ `;;` either, but least toxic
 
   1. `;;`
   * Message: mel is like assembly, expect low-level stuff & reading docs
@@ -1983,7 +2005,7 @@
         ? how do we map arrays then
           * list comprehension: i <- arr <| i * 10
 
-## [ ] Groups: Assignment a,b=c,d -> let's use more familiar flowy JS style for now a=1, b=2 and force groups be scoped
+## [x] Groups: Assignment a,b=c,d -> let's use more familiar flowy JS style for now a=1, b=2 and force groups be scoped
 
   * lhs can only be ids, props or fn
   * lhs member on its own without assignment doesn't make sense other than in definition `a,b,c`
@@ -3349,7 +3371,7 @@
   Top Back Center - TBC
   Top Back Right - TBR
 
-## [ ] Defer -> ~~`x(a) = (/log(a); /a+=1; a)`~~ `x(a) = (^log(a); ^a++; a)`
+## [x] Defer -> ~~`x(a) = (/log(a); /a+=1; a)`~~ `x(a) = (^log(a); ^a++; a)`
 
   + like golang defer execution runs item after function return
   + allows separating return value from increments needed after function
@@ -3371,7 +3393,7 @@
   * `x() = (*i=0;**i++;)`, `x()=(**a; b,c,; **d;)`, `x(a) = (**log(a); **a+=1; a)`
     * `x()=(*a=[0,1];**a[1..]=a[0..])`
     - creates faux double meaning for `*`
-  * ~~`x() = (/a; b,c; /d;)`, `x()=(*i=0;/i++;*phase=0;/phase+=t;)`, `x()=(/log(a))`~~
+  * `x() = (/a; b,c; /d;)`, `x()=(*i=0;/i++;*phase=0;/phase+=t;)`, `x()=(/log(a))`
     + one-symbol
     + associates with reddit tags
     + associates with HTML close-elements

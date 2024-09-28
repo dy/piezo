@@ -18,10 +18,10 @@ Compiles to compact 0-runtime WASM with linear memory.<br/>
 ?: ?                          ;; conditions
 x[i] x[]                      ;; member access, length
 a..b a.. ..b ..               ;; ranges
-|> _                          ;; loop, map / reduce
-./ ../ /                      ;; skip/continue, stop/break, return
+|> _                          ;; pipe/loop, map
+./ ../ /                      ;; continue/skip, break/stop, return
 ~ ~= ~< ~/ ~* ~// ~**         ;; clamp, normalize, lerp
-* ^                           ;; static, defer
+* ^ .                         ;; static, defer, void
 
 ;; Numbers
 16, 0x10, 0b0;                ;; int, hex or binary

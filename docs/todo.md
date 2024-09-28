@@ -1,4 +1,4 @@
-## Stage 0
+## 0
 
 * [x] make subscript generate lispy tree (wasm, wat, js, ast targets are possible)
   . we need not immediately compile, we need intermediary state to codegenerate after.
@@ -13,7 +13,7 @@
 
 * [x] Parser
 
-## Stage 1
+## 0.1
 
 * [x] update subscript
 * [x] fix parsing
@@ -31,7 +31,10 @@
   * [x] init detection
   * [x] `nan:` and constant expressions for watr
   * [ ] static groups *(a,b,c)
-  * [ ] ^ for deferred
+* [ ] `^` for deferred
+  * [ ] preliminary return with defer `f()=(^i++;i>10?./1;)` - likely via block as `f()=(ret;(i>10?ret=1);i++;ret)`
+* [ ] `a.` for void operator
+* [ ] make `/`, `/a` as function return
 * [ ] make nan as null in fn arguments (`config(a,,b,c)`)
 * [ ] range iterator via pipe
   * [ ] pair-wise iteration
@@ -148,17 +151,9 @@
 * [ ] Ignore unassigned immediate constructs like `[1,2,3]` or `"abc"`.
 * [ ] All FIXMEs
 
-## Application
+## 1.0 MVP
 
-* [ ] Bytebeats/Floatbeats collection
-* [ ] ZZFX binary
-* [ ] Web-Audio-API
-* [ ] Metronome app: variable speed, variable tone
-* [ ] Sedi: sound editor
-
-## 1.1
-
-* [ ] Bytebeat collection
+* [ ] All Bytebeats/Floatbeats
   * [ ] classics http://viznut.fi/demos/unix/bytebeat_formulas.txt
   * [ ] https://github.com/darius/bytebeat
   * [ ] https://dollchan.net/bytebeat
@@ -174,13 +169,12 @@
   * [ ] http://wavepot.com/
   * [ ] https://github.com/stellartux/websynth
   * [ ] https://github.com/radavis/bytebeat
+* [ ] ZZFX
+* [ ] other bytebeat-like library (forgot name)
+* [ ] Web-Audio-API
+* [ ] Metronome app: variable speed, variable tone
 
-* [ ] Targets
-  * [ ] WASM
-  * [ ] WebGL
-  * [ ] JS
-
-## 2
+## Backlog
 
 * [ ] extend internal arrays as separate `addr` and `len` variables: speeds up perf, allows enhanced precision
 * [ ] Processing modules collection
@@ -196,8 +190,6 @@
   * `sin(432 + 10*sin(8)) * adsr(0, 0, .4, 0)`
 
 * [ ] Loudness meter for waveplay
-
-## 3
 
 * [ ] Repl with compiler selector
 * [ ] Web-audio-api
@@ -237,7 +229,7 @@
 * get value at a time `a(t)`?
 * integrate: `∫(a, dt)`? `acc(a, dt)`?
 
-## Use cases
+## Real Use Cases
 
 * Speech enhancer for any videos (from Prabhupada to...)
   * Dereverb
