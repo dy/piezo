@@ -124,12 +124,13 @@
     + mel scale
     - too programming / physycal / dry
 
-  * melo
+  * ~~melo~~
     + short from melody
     + alliterates to mono
     + dy/melo
     - not clear extension
     - 4 letters
+    - https://github.com/mistodon/melo
 
   * lila
     + sanskrit for "play"
