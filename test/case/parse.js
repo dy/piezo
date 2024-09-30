@@ -127,7 +127,7 @@ t('parse: lists', t => {
   // is(parse('list + 2'), ['+','list',[INT,2]],'math operators act on all members')
 })
 
-t('parse: statements', t => {
+t.only('parse: statements', t => {
   is(parse('foo()'), ['(', 'foo', undefined], 'semi-colons at end of line are mandatory')
   is(parse('(c = a + b; c)'), ['()', [';', ['=', 'c', ['+', 'a', 'b']], 'c']], 'parens define block, return last element')
   is(parse('(a=b+1; a,b,c)'), ['()', [';', ['=', 'a', ['+', 'b', [INT, 1]]], [',', 'a', 'b', 'c']]], 'block can return group')
@@ -138,7 +138,9 @@ t('parse: statements', t => {
   // is(parse('(a ? ./a,b; c)'), ['(',[';',['?','a',['./',[',','a','b']]],'c']], 'return/break token')
   is(parse('(a ? ./(a,b); c)'), ['()', [';', ['?', 'a', ['./', ['()', [',', 'a', 'b']]]], 'c']], 'return/break token')
   is(parse('(foo(); bar();)'), ['()', [';', ['(', 'foo', ,], ['(', 'bar', ,], ,]], 'semi-colon after last statement returns void')
-  is(parse('a ? ./a : ./b'), ['?:', 'a', ['./', 'a'], ['./', 'b']], 'order of labels')
+  is(parse('a ? ./a : ./b'), ['?:', 'a', ['./', 'a'], ['./', 'b']], 'skips')
+  is(parse('a ? ../a : ../b'), ['?:', 'a', ['../', 'a'], ['../', 'b']], 'breaks')
+  is(parse('a ? /a : /b'), ['?:', 'a', ['/', 'a'], ['/', 'b']], 'returns')
 })
 
 t('parse: conditions', t => {
@@ -359,7 +361,7 @@ t('parse: sine gen', t => {
 t('parse: sequence precedence', t => {
   is(parse(`./b,c`), ['./', [',', 'b', 'c']]);
   is(parse(`../b,c`), ['../', [',', 'b', 'c']]);
-  is(parse(`.../b,c`), ['.../', [',', 'b', 'c']]);
+  is(parse(`/b,c`), ['/', [',', 'b', 'c']]);
   // is(parse(`a,b?c,d:e,f`), [',', 'a', ['?', 'b', [',', 'c', 'd'], [',', 'e', 'f']]]);
   // is(parse(`a?b,c`), ['?', 'a', [',', 'b', 'c']]);
   is(parse(`a?b,c`), [',', ['?', 'a', 'b'], 'c']);

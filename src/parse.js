@@ -189,7 +189,7 @@ token('..', PREC_RANGE, a => (['..', a, expr(PREC_RANGE)]))
 // returns
 token('./', PREC_TOKEN, (a, b) => !a && (b = expr(PREC_RETURN), b ? ['./', b] : ['./'])) // continue: ./
 token('../', PREC_TOKEN, (a, b) => !a && (b = expr(PREC_RETURN), b ? ['../', b] : ['../'])) // break: ../
-token('.../', PREC_TOKEN, (a, b) => !a && (b = expr(PREC_RETURN), b ? ['.../', b] : ['.../'])) // return: ../
+token('/', PREC_TOKEN, (a, b) => !a && (b = expr(PREC_RETURN), b ? ['/', b] : ['/'])) // return: /
 
 // defer ^a,b,c
 unary('^', PREC_RETURN);
@@ -210,11 +210,6 @@ binary('?', PREC_IF, true)
 // ?: - we use modified ternary for our cases
 token('?', PREC_IF, (a, b, c) => a && (b = expr(PREC_IF - 0.5)) && next(c => c === COLON) && (c = expr(PREC_IF - 0.5), ['?:', a, b, c]))
 
-// /**/ // comments
-// token('/*', PREC_TOKEN, (a, prec) => (next(c => c !== STAR && cur.charCodeAt(idx + 1) !== SLASH), skip(2), a || expr(prec) || []))
-// token('//', PREC_TOKEN, (a, prec) => (next(c => c >= SPACE), a || expr(prec) || []))
-
-// token('\\', PREC_TOKEN, (a, prec) => (next(c => c >= SPACE), a || expr(prec) || []))
-
+// ;; (;;) comments
 token('(;', PREC_TOKEN, (a, prec) => (next(c => c !== SEMICOLON && cur.charCodeAt(idx + 1) !== PAREN_CLOSE), skip(2), a || expr(prec) || []))
 token(';;', PREC_TOKEN, (a, prec) => (next(c => c >= SPACE), a || expr(prec) || []))

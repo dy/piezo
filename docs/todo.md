@@ -26,14 +26,15 @@
 * [x] make globals readable, but locals writable
 * [x] first bytebeat: viznut
 * [ ] make writable globals, init on the first line
-* [ ] make simple static variables
-  * [ ] fn capture declaring new static `*b = a`
+* [ ] make simple static variables as `#b=a`
+  * [ ] `#` as static var
+  * [ ] fn capture declaring new static `#b = a`
   * [x] init detection
   * [x] `nan:` and constant expressions for watr
-  * [ ] static groups *(a,b,c)
+  * [ ] static groups `#(a,b,c)`
 * [ ] `^` for deferred
   * [ ] preliminary return with defer `f()=(^i++;i>10?./1;)` - likely via block as `f()=(ret;(i>10?ret=1);i++;ret)`
-* [ ] `a.` for void operator
+* [ ] `a.` for breaking void operator
 * [ ] make `/`, `/a` as function return
 * [ ] make nan as null in fn arguments (`config(a,,b,c)`)
 * [ ] range iterator via pipe

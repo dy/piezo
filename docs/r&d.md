@@ -928,7 +928,7 @@
       - doesn't help much if expr comes after, eg. `pi,rate. a=3;`
     -> so seems uncovered period can stand only at the end of scope. Else there must be a semi.
 
-### [ ] End operator `.` (discussion above is old): to have or not to have? -> we should have void operator.
+### [ ] End operator `.` (discussion above is old): to have or not to have? -> use `(a;/)` for void return
 
   1. `a,b,c.` explicitly indicates exported members
       - we can do export by last statement as `a,b,c`, thinking it be similar to fn return
@@ -943,9 +943,10 @@
   2. `a,b,c.` for void - return nothing
     + end = no return, which is logical
     + matches `./` intuition: it would be `(a;./b)` to return something, but we just do `(a;b.)`to force returning none
-      - what's the point if `(a;./)` === `(a;.)`?
-        + we can do explicit indication `(a;b.)` - means return nothing
-        ~+ `./` can be used only for loops, since it's `continue`
+    - `(a;/)` === `(a;.)`
+      - in coffee, if you want to return nothing, make it explicitly: `(a;/)`
+      + we can do explicit indication `(a;b.)` - means return nothing
+      ~+ `./` can be used only for loops, since it's `continue`
     -? `./` as `. /` (void return)
       + void can only be postfix unary `a.;`
     + resolves last semicolon confusion - now `;` can always return last statement even with semicolon, unless `.` indicates nothing.
@@ -1091,7 +1092,7 @@
 
   4. `a..b |> (x < 10 ?>; x > 100 ?.)`
 
-## [ ] Return operator: alternatives → try using `/` for returning value from block.
+## [ ] Return operator: alternatives → try `/` for returning value from ~~block~~ function.
 
   1. `.`
     + erlang-y
@@ -1164,18 +1165,186 @@
   ? If `?..` is early return current scope, then how to break loop?
     * we can avoid return generally and only bail out from current scope.
 
-## [ ] Break, continue, return: from block or from function? -> ./ skip, ../ stop, / return
+## [ ] Break, continue, return: from block or from function? -> ./ skip, ../ stop, / return, no block return
 
-  1. `./` - break block, `../` - break 2 blocks, `.../` - break to the root (parens-sensitive)
+  1. `./` - break block, `../` - break 2 blocks, `.../` - break blocks to the root
     + consistent with loops: `.. |> ./`
     - sensitive to parens `.. |> (./)` != `.. |> ./` - weird
+      + since parens are sequences `(a;b;c)` we have to have a way to early return `(a?./;b)`
+      -? how do we handle when we need continue/return from within parens?
     - `.../` is not necessary for function return
-    - `.../` vs `.. ./`
-  2. `./` - skip/continue, `../` - stop/break
+    - `.../` vs `.. ./` vs `. .. /` vs `. ../` vs `.. . /`
+  2. `./` - skip/continue, `../` - stop/break, `/` - fn return (no parent sensitivity)
     + meaningful for loops
-    ? how to make return from within the loop?
-      `/x` as absolute-level return?
+    + same as all langs now (simple)
+    -? how to make return from within the loop?
+      !+ `/x` as absolute-level return
     !+ `(../x)` can be used as a way to break block as well, opposed to `(/x)` as absolute return
+      - if `../x` breaks block it makes it susceptible to parens around, which is not what we want
+    - `../` vs `. ./` vs `.. /`
+      ~+ we never need void nor return inside of range
+    -? how to early-return parens?
+      a. `(a?b.;)` - make void operator act as returning operator.
+        + it anyways breaks current fn scope and used as last operator
+        + void operator has too little meaning anyways
+        -? how to return, not break?
+      b. we don't have parens return, use ternary `(a?b:c)`
+    -? how to define blocks?
+      ~? langs don't define blocks unnecessarily, why do we need it?
+  3. `^a` - skip, `^^a` - stop, ??? - return
+    + debugger means skip
+    + avoids conflicts with `.` for void etc
+    -? conflicts with defferred
+  4. `a.|` - skip, `a.||` - stop, `a.` - return
+    + connects to pipes as "next member" `.. |> a ? b .| : c ..|;`
+    - similar to `./` but less familiar
+      ~+ maintains similarity with paths
+    + connects with end as `a.`
+
+## [ ] Defer -> ~~`x(a) = (/log(a); /a+=1; a)`~~ `x(a) = (^log(a); ^a++; a)`
+
+  + like golang defer execution runs item after function return
+  + allows separating return value from increments needed after function
+  * no deferring?
+    + obvious code sequence
+    + no conceptual/syntax/mental layer over operator
+    - no nice definition of variable state and its change
+    - noisy code of creating result holder var, performing state update, returning result
+    + kind of natural
+    - state vars really need it, `x()=(*a=[0,1];>>a[1..]=a[0..];)`
+  * `x()=(@a;b,c;@(d)); x()=(*i=0;@i++;)`
+    + `@` for after
+    + good candidate by chatgpt as it's used for "annotations in Java/C#, so associated with modifying behavior"
+    - brings `@` into local scope
+    - not straight meaning
+    - makes `@` an opertator
+  * `x() = (//a; b,c; //d;)`
+    - strong association with comment
+      + maybe that's a pro
+    + if `./` is return, `//` means after return
+    - `x() = (#a; //a++;)` looks intimidating
+  * `x() = (*i=0;\i++;)`, `x()=(\a; b,c,; \d;)`, `x(a) = (\log(a); \a+=1; a)`
+    - a bit too heavy by meaning
+    - `\` doesn't match up with anything and has universal sense as `escape`
+    - ~~takes away cool `\\` as comments~~
+  * ~~`x() = (*i=0;**i++;)`, `x()=(**a; b,c,; **d;)`, `x(a) = (**log(a); **a+=1; a)`~~
+    * `x()=(*a=[0,1];**a[1..]=a[0..])`
+    - creates faux double meaning for `*`
+  * `x() = (/a; b,c; /d;)`, `x()=(*i=0;/i++;*phase=0;/phase+=t;)`, `x()=(/log(a))`
+    + one-symbol
+    + associates with reddit tags
+    + associates with HTML close-elements
+    + generally "close" meaning is `/`
+    + complementary with `*` as `*a=0; /a++;`
+      - reinforces meaning of opposites `*/`, which is not the case here (false friend)
+    + doesn't feel like part of identifier
+    - ~~too many slashes `/a/b //divide a by b`~~
+      ~+ comments are `;;` now
+    - association with something not-end, like `/imagine` or etc.
+    + plays along with `./a; ../a;` for return, and `/a;` for just defer.
+      - maybe creates unnecessary confusion
+    - `.. /a` vs `../ a`
+    - if `./` is continue, then `/` is weird for defer
+    - `#x;/x++` has slight dissonance
+  * ~~`x() = (&a; b,c; &d)`~~
+    + meaning of "and also this"
+    + also "counterpart" of `*` from C-lang
+      + it was even an alternative to `*` in the beginning
+    - has meaning as "part" of identifier, not operator (higher precedence)
+      - ie. `&i++` raises confusion, it's not `&(i++)`, it's `(&i)++`
+  * `x() = (~a; b,c; ~d)`
+    + meaning of "destructor"
+    + relatively safe within other options: `/i++, \i++, &i++, 'i++, #i++, @i++, >>i++, .i++`
+    + follows spirit of C in terms of "common" operators choice `*, ~`
+    + `~` means "after all that is here"
+    + `~` also means "delete" or "erase" in markdown
+    + minimal noise
+    + a candidate by chatgpt (not mentioned) since brings sense of "something in the future (skip this noise)"
+    - subtle dissonance with `*`: `x()=(*i=0;~i++;)`
+    - `x()=(*i;~++i)` is too cryptic: `~` doesn't stand out from regular operators
+      ~ `x()=(#i=0;~i++;)`
+    - reserved for unary "binary inversion", already married
+    - reserved for ranges
+  * ~~`x() = (a.; b,c; d.)`~~
+    + meaning "at the end"
+    + same operator is used for export
+    - not immediately obvious that it's deferring `*phase=init; phase+=(iterating,phase).;`
+    - not nice with `*i=0,i++.;`
+      - not clear if the whole phrase is at the end or just i++
+    - `.` is for void operator
+  * ~~`x() = (.a; b,c; .d)`, `x() = (*i=0;.i++;)`, `x()=(.a; b,c,; .d;)`, `x(a) = (.log(a); .a+=1; a)`~~
+    - has wrong associatino with property access
+    - not easy to find-select
+  * ~~`x() = (&i=0;*i++)`~~
+    - takes away "save" meaning
+    + star means "footnote", like "afterword" in typographics
+    + `&` means "with" for variables, it was main alternative to `*`
+    - `*` has too strong association with "save"
+  * `x()=(#i=0;>>i++;)`, `x()=(>>a; b,c,; >>d;)`, `x(a) = (>>log(a); >>a+=1; a)`
+    + clear meaning of "shift"
+    + Sercy sneezed
+    + related to playback's `>>` as fast-forward
+    + requires some operand, cannot be on its own in case of continue
+    + good candidate by chatgpt: "could suggest “pushing” an operation after the function"
+    - association with C++ pipe (cout)
+    - 2 chars, opposed to 1 char in `*i=0;`
+    - a bit too much visual noise, defer doesn't have primary meaning
+      - `>>++i` is line noise
+  * ~~`x() = (*i=0;>i++;*phase=0;>phase+=t;)`, `x()=(>log(a);>a+=1;)`~~
+    + refers to `>>`
+    + obvious that there's something fishy going on
+    + refers to "quote" from markdown
+    + minimal
+    + adds to the feeling of flow
+    + association with terminal's command "output"
+    - breaks loop `a |> b` into `a | >b`
+      ~ fixable-ish via precedence
+      ~ loop has never defers (?)
+      ? can we change loop to `?>`, so it means "until condition holds, defer code"
+    - a bit heavy, ruby-like, unfamiliar vibe
+  * ~~`x() = (*i=0;>|i++)`~~
+    + `skip forward`
+    - too many symbols
+    - somehow related to pipes
+  * ~~`x()=(*i=0;=>i++;)`~~
+    - equals noise
+    - faux function association
+  * ~~`x()=(*i=0;'i++)`~~
+    + refers to footnote
+    - quotes usually come in pairs
+  * `x()=(*i=0;#i++)`
+    + refers to footnote
+    + like hashtags, comes afterwards
+    - a bit too heavy to reserve such prominent operator for just deferring
+    - reserves # as operator
+    + includes notion of "double", like double hash `//` in it
+      ? is that why python uses # instead of // for comment?
+    + associates with comment, something that comes "after"
+  * ~~`x() = (*i=0::i++;)`, `x()=(::a; b,c,; ::d;)`, `x(a) = (::log(a); ::a+=1; a)`~~
+    - noisy
+    + meaningful in semantic sense (after all ops)
+      - not really. `a : : b` means do it once now
+    - has connection to static props in langs
+  * ~~`x() = (*i=0;:i++;)`, `x()=(:a; b,c,; :d;)`, `x(a) = (:log(a); :a+=1; a)`~~
+    + 1-character only
+    + kind-of matches meaning of labels in JS
+    - a bit clumsy
+    - has connection to types in langs
+  * `^` for return, `x() = (*i=0;^:i++;)`, `x()=(^:a; b,c,; ^:d;)`, `x(a) = (^:log(a); ^:a+=1; a)` for defer
+    + means "after return"
+  * `x() = (*i=0;^i++;)`, `x(a) = (^log(a); ^a+=1; a)`
+    + means "delay" operator in some contexts (aka next tick but technically not)
+    + means "after return"
+    + `^` and `A` have similar shape
+    + reminds debugger's jump over icon ↷
+    ~+ `x() = (#i=0;^i++;)` - good balance of familiarity and novation
+    + `^` means footnote in certain contexts
+
+## [x] !Prefer operator `x()=(a;<<x=1;a*x;)` - declares values at the beginning? -> nah
+
+## [ ] !Return to stack `=a;=b;` same as `a,b;`
+  + allows avoiding drops
+  + allows organizing deferred
 
 ## [x] Export: ? Can we use something else but . for export? → ~~let's try `a.` as global export operator~~ -> last members are exported by default
 
@@ -1217,10 +1386,10 @@
     + `.` is replacement for `;`
     ?! missing `.` means program is unfinished? like, a library to include?
 
-## [x] Static variables: syntax → `*` seems to match "save value" pointers intuition, star for save
+## [x] Static variables: syntax → ~~`*` seems to match "save value" pointers intuition, star for save~~ let's try `#` as it is more distinguishable
 
   * There's disagreement on `...` is best candidate for loading prev state. Let's consider alternatives.
-  1. `...x1,y1,x2,y2`
+  1. ~~`...x1,y1,x2,y2`~~
     + clear
     + matches punctuation meaning
     - ostensibly conflicts with ranges .. (imo no)
@@ -1298,42 +1467,52 @@
   3.1 ~~`x1*, x2*, y1*, y2*`~~
     + typographic meaning as footnote
     - `x1*=2`
-  4. `#x1, #x2, #y1, #y2`, ~~`#(x1,x2,x3)`~~
+  4. `#x1, #x2, #y1, #y2`, `#(x1,x2,x3)`
     + private state from JS, act as instance private properties
+    + sense of "private", "behind the cell"
     + indicator of special meaning
     + doesn't clash with known operators
     + compatible with `#` for "current value" in loops, as indicator of scope-specific variable
       ~- makes global access like `fn.#t` not nice
         ~- otherwise if `#` is operator - then makes `#` for current value meaningless
+          ~+ we don't use `#` for current value
     + closer to name of the variable than * etc
+    + known use case is `#define PI 3.14`, which can be simplified as `#pi=3.14`
+      + that gives "directive" sense: allows reuse `pi` without prefix and shows it's called only once.
+        ~- not necessarily good feeling
+      + gives sense of "global"-ish
+        - it's not really global
+    + easier to search separately from maths
+      + easier to handle in compiler
     -~ conflict with note names A#
-    - cannot use `#(x1,x2,x3)` to init group
-    - pollutes the code with #x1 etc.
-      - doesn't look like operator
-    - often means compiler directive or comment
+    - ~~pollutes the code with #x1 etc.~~
+      ~+ we use it as operator, not part of variable
+    - doesn't look like operator
+      ~+ we need it distinguishable from common operators
+    - often means compiler directive or comment, gives feeling of something global
       ~ which makes it less of operator
     - ~~may conflict with cardinal number (count) operator~~
+    - reserves `#` as operator, not part of variable name
   5. ~~`[x1, x2, y1, y2] = #`~~
     + involves destructuring syntax
     - introduces unnecessary token
     - `#` is hardly works on its own not in conjunction
     - `#` is reserved for too many things: count, import, comment.
-  6. ~~`#(x1, x2, y1, y2)`~~
-  7. `<x1, x2, y1, y2>`
+  6. `<x1, x2, y1, y2>`
     - doesn't come along with regular definition `x=1, <y>=2`
-  8. ~~Introduce keywords? Not having if (a) b can be too cryptic.~~
+  7. ~~Introduce keywords? Not having if (a) b can be too cryptic.~~
 
-  9. `$x1, $x2, $y1, $y2`
+  8. `$x1, $x2, $y1, $y2`
     + $ means "save"
     + $ means "state"
     + $ means "self"
     ± $ means money
     - speaks little about persistency
     - perceived as var name, not an operator
-  9.1 `$(x1, x2, y1, y2)`
+  8.1 `$(x1, x2, y1, y2)`
     - perceived as fn call, not operator
 
-  10. `&x1, &x2, &y1, &y2`
+  9. `&x1, &x2, &y1, &y2`
     + means "arguments and x1, x2, y1, y2"
     - from C logic means "get address of value"
     + doesn't indicate & as part of name, more operator-y
@@ -1362,7 +1541,7 @@
     ~ `song()=(&t=0;)`
     + complementary with `*` as defer operator
 
-  11. ~~`@x1, @x2, @y1, @y2`~~
+  10. ~~`@x1, @x2, @y1, @y2`~~
     + 'at' means current scope, 'at this'
     + more wordy - less operator-y, as if part of id
     + matches import directive by meaning
@@ -1388,11 +1567,11 @@
     )
     ```
     - feels a bit heavy for internals
-  12. `:> x1, x2, y1, y2`
+  11. `:> x1, x2, y1, y2`
     ~ `song()=(:>t=0;)`
-  13. `:: x1, x2, y1, y2`
+  12. `:: x1, x2, y1, y2`
     ~ `song()=(::t=0;)`
-  14. `<< x1, x2, y1, y2`
+  13. `<< x1, x2, y1, y2`
     + Matches ^
       +~ ASCII in 1962 had <- character for _, which was alternative to ^
     - `song()=(<<t=0;)`
@@ -3371,128 +3550,6 @@
   Top Back Center - TBC
   Top Back Right - TBR
 
-## [x] Defer -> ~~`x(a) = (/log(a); /a+=1; a)`~~ `x(a) = (^log(a); ^a++; a)`
-
-  + like golang defer execution runs item after function return
-  + allows separating return value from increments needed after function
-  * no deferring?
-    + obvious code sequence
-    + no conceptual/syntax/mental layer over operator
-    - no nice definition of variable state and its change
-    - noisy code of creating result holder var, performing state update, returning result
-    + kind of natural
-    - state vars really need it, `x()=(*a=[0,1];>>a[1..]=a[0..];)`
-  * `x()=(@(a);b,c;@(d))`
-    - brings `@` into local scope
-    - not straight meaning
-  * `x() = (//a; b,c; //d;)`
-    - strong association with comment
-  * `x() = (*i=0;\i++;)`, `x()=(\a; b,c,; \d;)`, `x(a) = (\log(a); \a+=1; a)`
-    - a bit too heavy by meaning
-    - takes away cool `\\` as comments
-  * `x() = (*i=0;**i++;)`, `x()=(**a; b,c,; **d;)`, `x(a) = (**log(a); **a+=1; a)`
-    * `x()=(*a=[0,1];**a[1..]=a[0..])`
-    - creates faux double meaning for `*`
-  * `x() = (/a; b,c; /d;)`, `x()=(*i=0;/i++;*phase=0;/phase+=t;)`, `x()=(/log(a))`
-    + one-symbol
-    + associates with reddit tags
-    + associates with HTML close-elements
-    + generally "close" meaning is `/`
-    + complementary with `*` as `*a=0; /a++;`
-      - reinforces meaning of opposites `*/`, which is not the case here
-    + doesn't feel like part of identifier
-    - ~~too many slashes `/a/b //divide a by b`~~
-      ~+ comments are `;;` now
-    - association with something not-end, like `/imagine` or etc.
-    + plays along with `./a; ../a;` for return, and `/a;` for just defer.
-      - maybe creates unnecessary confusion
-    - `.. /a` vs `../ a`
-  * `x() = (&a; b,c; &d)`
-    + meaning of "and also this"
-    + also "counterpart" of `*` from C-lang
-      + it was even an alternative to `*` in the beginning
-    - has meaning as "part" of identifier, not operator (higher precedence)
-      - ie. `&i++` raises confusion, it's not `&(i++)`, it's `(&i)++`
-  * ~~`x() = (~a; b,c; ~d)`~~
-    + meaning of "destructor"
-    + relatively safe within other options: `/i++, \i++, &i++, 'i++, #i++, @i++, >>i++, .i++`
-    + follows spirit of C in terms of "common" operators choice `*, ~`
-    + `~` means "after all that is here"
-    + `~` also means "delete" or "erase" in markdown
-    + minimal noise
-    - subtle dissonance with `*`: `x()=(*i=0;~i++;)`
-    - reserved for unary "binary inversion", already married
-  * `x() = (a.; b,c; d.)`
-    + meaning "at the end"
-    + same operator is used for export
-    - not immediately obvious that it's deferring `*phase=init; phase+=(iterating,phase).;`
-    - not nice with `*i=0,i++.;`
-      - not clear if the whole phrase is at the end or just i++
-  * `x() = (.a; b,c; .d)`
-    * `x() = (*i=0;.i++;)`, `x()=(.a; b,c,; .d;)`, `x(a) = (.log(a); .a+=1; a)`
-    - has wrong associatino with property access
-    - not easy to find-select
-  * ~~`x() = (&i=0;*i++)`~~
-    - takes away "save" meaning
-    + star means "footnote", like "afterword" in typographics
-    + `&` means "with" for variables, it was main alternative to `*`
-    - `*` has too strong association with "save"
-  * `x() = (*i=0;>>i++;)`, `x()=(>>a; b,c,; >>d;)`, `x(a) = (>>log(a); >>a+=1; a)`
-    + clear meaning of "shift"
-    + Sercy sneezed
-    + related to playback's `>>` as fast-forward
-    - association with C++ pipe (cout)
-    - 2 chars, opposed to 1 char in `*i=0;`
-    - a bit too much visual noise, defer doesn't have primary meaning
-  * `x() = (*i=0;>i++;*phase=0;>phase+=t;)`, `x()=(>log(a);>a+=1;)`
-    + refers to `>>`
-    + obvious that there's something fishy going on
-    + refers to "quote" from markdown
-    + minimal
-    + adds to the feeling of flow
-    + association with terminal's command "output"
-    - breaks loop `a |> b` into `a | >b`
-      ~ fixable-ish via precedence
-      ~ loop has never defers (?)
-      ? can we change loop to `?>`, so it means "until condition holds, defer code"
-    - a bit heavy, ruby-like, unfamiliar vibe
-  * `x() = (*i=0;>|i++)`
-    + `skip forward`
-    - too many symbols
-    - somehow related to pipes
-  * `x()=(*i=0;=>i++;)`
-    - equals noise
-    - faux function association
-  * `x()=(*i=0;'i++)`
-    + refers to footnote
-    - quotes usually come in pairs
-  * `x()=(*i=0;#i++)`
-    + also refers to footnote
-    + like hashtags, comes afterwards
-    - a bit too heavy to reserve such prominent operator for just deferring
-    - reserves # as operator
-    + includes notion of "double", like double hash `//` in it
-      ? is that why python uses # instead of // for comment?
-    + associates with comment, something that comes "after"
-  * `x() = (*i=0::i++;)`, `x()=(::a; b,c,; ::d;)`, `x(a) = (::log(a); ::a+=1; a)`
-    - noisy
-    + meaningful in semantic sense (after all ops)
-      - not really. `a : : b` means do it once now
-  * `x() = (*i=0;:i++;)`, `x()=(:a; b,c,; :d;)`, `x(a) = (:log(a); :a+=1; a)`
-    + 1-character only
-    + kind-of matches meaning of labels in JS
-    - a bit clumsy
-  * `x() = (*i=0;^:i++;)`, `x()=(^:a; b,c,; ^:d;)`, `x(a) = (^:log(a); ^:a+=1; a)`
-    + means "after return"
-    - colon is not nice here
-  * `x() = (*i=0;^i++;)`, `x(a) = (^log(a); ^a+=1; a)`
-    + means "delay" operator in some contexts (aka next tick but technically not)
-    + means "after return"
-    + `^` and `A` have similar shape
-    + reminds debugger's jump over icon ↷
-
-## [x] !Prefer operator `x()=(a;<<x=1;a*x;)` - declares values at the beginning? -> nah
-
 ## [ ] Try-catch: -> `x() ?= (a, b, c)` makes fn definition wrapped with try-catch
 
   ! Golang-like `result, err = fn()`
@@ -3524,7 +3581,7 @@
   ~- we can do that via just returns
   - Errors make program syntax case-sensitive
 
-## [ ] Case-insensitive variable names? -> likely yes: AbB/ABb, x1/X1, ~~@math.E/@math.e~~, export names, import names, constants, strings, atoms
+## [ ] Variables: Case-insensitive? -> likely yes: AbB/ABb, x1/X1, ~~@math.E/@math.e~~, export names, import names, constants, strings, atoms
   * should not be too smart, should be very simple
 
   0. Case-insensitive

@@ -19,9 +19,9 @@ Compiles to compact 0-runtime WASM with linear memory.<br/>
 x[i] x[]                      ;; member access, length
 a..b a.. ..b ..               ;; ranges
 |> _                          ;; pipe/loop, map
-./ ../ /                      ;; continue/skip, break/stop, return
+./ ../ / .                    ;; continue/skip, break/stop, return, void
 ~ ~= ~< ~/ ~* ~// ~**         ;; clamp, normalize, lerp
-* ^ .                         ;; static, defer, void
+# ^                           ;; static, defer
 
 ;; Numbers
 16, 0x10, 0b0;                ;; int, hex or binary
@@ -81,7 +81,7 @@ m[0..] = m[-1..];             ;; reverse
 m[0..] = m[1..,0];            ;; rotate
 
 ;; Conditions
-a ? b;                        ;; if a then b, void
+a ? b;                        ;; if a then b
 sign = a < 0 ? -1 : +1;       ;; ternary conditional
 (2+2 >= 4) ? log(1) :         ;; multiline/switch
   3 <= 1..2 ? log(2) :        ;; else if
@@ -91,8 +91,8 @@ a && b || c;                  ;; (a and b) or c
 ;; Loops
 (a, b, c) |> f(_);            ;; for each item in a, b, c do f(item)
 (i = 10..) |> (               ;; descend over range
-  i < 5 ? ./                  ;; if item < 5 skip (continue)
-  i < 0 ? ../                 ;; if item < 0 stop (break)
+  i < 5 ? a ./;               ;; if item < 5 skip (continue)
+  i < 0 ? a ../;              ;; if item < 0 stop (break)
 );                            ;;
 x[..] |> f(_) |> g(_);        ;; pipeline sequence
 x[..] |>= _ * 2;              ;; overwrite source
@@ -114,12 +114,14 @@ times(4), times(,5);          ;; 4, 5: optional, skipped arg
 dup(x) = (x,x);               ;; return multiple
 (a,b) = dup(b);               ;; destructure
 a=1,b=1; x()=(a=2;b=2); x();  ;; a==1, b==2: first statement declares locals
-a() = ( *i=0; ++i );          ;; static vars: keep value between calls
+
+;; Static vars
+a() = ( #i=0; ++i );          ;; i keeps value between calls
 a(), a();                     ;; 1,2
-a1() = ( *copy=a; copy());    ;; clone function
+a1() = ( #copy=a; copy() );   ;; clone function
 a(), a(); a1(), a1();         ;; 3,4; 1,2;
-f() = (*t=0; ^t++; t*2);      ;; defer: t++ called after return
-x(a[], f()) = (a[0] + f(1));  ;; array, function args
+f() = ( #t=0; ^t++; t*2 );    ;; defer: t++ called after return
+x(a[], f()) = f(a[0]);       ;; array, func args
 
 ;; Export
 x, y, z                       ;; exports last statement
