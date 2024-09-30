@@ -127,7 +127,7 @@ t('parse: lists', t => {
   // is(parse('list + 2'), ['+','list',[INT,2]],'math operators act on all members')
 })
 
-t.only('parse: statements', t => {
+t('parse: statements', t => {
   is(parse('foo()'), ['(', 'foo', undefined], 'semi-colons at end of line are mandatory')
   is(parse('(c = a + b; c)'), ['()', [';', ['=', 'c', ['+', 'a', 'b']], 'c']], 'parens define block, return last element')
   is(parse('(a=b+1; a,b,c)'), ['()', [';', ['=', 'a', ['+', 'b', [INT, 1]]], [',', 'a', 'b', 'c']]], 'block can return group')

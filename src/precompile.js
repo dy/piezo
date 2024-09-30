@@ -249,6 +249,9 @@ Object.assign(expr, {
     )
   },
   '/'([, a, b]) {
+    // /a - return
+    if (!b) return ['/', expr(a)]
+
     a = expr(a), b = expr(b);
     return unroll('/', a, b) || (
       (typeof a[1] === 'number' && typeof b[1] === 'number') ? [FLOAT, a[1] / b[1]] :
@@ -317,8 +320,8 @@ Object.assign(expr, {
     )
   },
   '^'([, a, b]) {
-    // ^a (global)
-    if (!b) return unroll('^', a) || `^${a}`
+    // ^b
+    if (!b) return ['^', expr(a)]
 
     // a ^ b
     a = expr(a), b = expr(b)

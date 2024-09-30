@@ -106,12 +106,6 @@ export function include(name) {
   if (!funcs[name]) fun(name, code, type)
 }
 
-// define (global) function
-export function fun(name, code, type) {
-  funcs[name] = new String(print(code))
-  funcs[name].type = type
-}
-
 /**
  * Pick N input args into stack, like (a,b,c) -> (a,b)
  *

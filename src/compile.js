@@ -4,9 +4,9 @@ import parse from './parse.js';
 import precompile from './precompile.js';
 import { ids, stringify, err, u82s } from './util.js';
 import { print, compile as watr } from 'watr';
-import { op, float, int, set, get, tee, call, include, pick, fun, i32, f64, cond, loop, isConstExpr } from './build.js'
+import { op, float, int, set, get, tee, call, include, pick, i32, f64, cond, loop, isConstExpr } from './build.js'
 
-export let imports, globals, locals, funcs, func, exports, datas, mem, returns, depth;
+export let imports, globals, locals, funcs, func, exports, datas, mem, returns, defers, depth;
 
 // limit of memory is defined as: (max array length i24) / (number of f64 per memory page i13)
 const MAX_MEMORY = 2048, HEAP_SIZE = 1024
@@ -27,7 +27,7 @@ export default function compile(node, config = {}) {
   console.log('compile', node)
 
   // save previous compiling context
-  let prevCtx = { imports, globals, locals, funcs, func, exports, datas, mem, returns, depth };
+  let prevCtx = { imports, globals, locals, funcs, func, exports, datas, mem, returns, defers, depth };
 
   // init compiling context
   globals = {} // global scope (as name props), { init: #initValue, type: 'f64', static: bool}
@@ -36,6 +36,7 @@ export default function compile(node, config = {}) {
   funcs = {} // defined user and util functions
   exports = {} // items to export
   returns = null // returned items from block (collects early returns)
+  defers = null // deferred expressions
   func = null // current function (name string) that's being initialized
   mem = false // indicates if memory must be included and how much bytes
   depth = 0 // current loop/nested block counter
@@ -106,7 +107,7 @@ export default function compile(node, config = {}) {
   console.log(code);
   console.groupEnd();
   // restore previous compiling context
-  ({ imports, globals, funcs, func, locals, exports, datas, mem, returns, depth } = prevCtx);
+  ({ imports, globals, funcs, func, locals, exports, datas, mem, returns, defers, depth } = prevCtx);
 
   if (config?.target === 'wasm')
     code = watr(code)
@@ -326,7 +327,7 @@ Object.assign(expr, {
 
     // x(a,b) = y
     if (a[0] === '(') {
-      let [, name, [, ...args]] = a, body = b, inits = [], result, dfn = [], prepare = [], defer = []
+      let [, name, [, ...args]] = a, body = b, inits = [], result = '', dfn = [], code
 
       // functions defined within scope of other functions, `x()=(y(a)=a;)`
       if (func) err('Declaring local function `' + name + '`: not allowed');
@@ -334,10 +335,9 @@ Object.assign(expr, {
       // FIXME: maybe it's ok to redeclare function? then we'd need to use table
       if (funcs[name]) err('Redefining function `' + name + '`: not allowed');
 
-      let prevFunc = func, rootLocals = locals
-      func = name
-
-      locals = {}
+      // enter into function, collect local vars, returns, defers
+      let rootLocals = locals
+      func = name, locals = {}, returns = [], defers = [];
 
       // detect optional / clamped args
       args = args.map(arg => {
@@ -357,54 +357,40 @@ Object.assign(expr, {
         return name
       })
 
-      body.splice(1, 0, ...inits) // prepend inits
+      b.splice(1, 0, ...inits) // prepend inits
 
-      // collect returns
-      returns = [];
 
-      result = expr(body)
-      if (returns.length) result = float(result)
-
-      returns = null
+      body = expr(b)
+      // if has early returns, enforce it float
+      // FIXME: can use i32
+      if (returns.length) body = float(body)
 
       // define result, comes after (param) before (local)
-      if (result?.type?.length) dfn.push(`(result ${result.type.join(' ')})`)
+      if (body?.type?.length) result = `(result ${body.type.join(' ')})`
+
+      // if it has defers - wrap to block
+      if (defers.length) body = op(`(block $func ${result} ${body})`, body.type)
 
       // declare locals
       for (let name in locals) if (!locals[name].arg && !locals[name].static) dfn.push(`(local $${name} ${locals[name].type})`)
 
-      locals = rootLocals
-
       let initState
-
-      // // alloc state, if required
-      // if (globals[name].state) {
-      //   // state is just region of memory storing sequence of i32s - pointers to memory holding actual state values
-      //   locals[name + '.state'] ||= { type: 'i32' }
-      //   include('malloc'), mem ||= 0
-      //   initState = op(`(global.set $${name}.state ${call('malloc', i32.const(globals[name].state.length << 2))})`)
-      // }
-
-      // // if has calls to internal stateful funcs (indirect state) - push state to stack, to recover on return
-      // for (let fn in globals[name].substate) {
-      //   dfn.push(`(local $${fn}.prev i32)`)
-      //   // NOTE: we can't push/pop state from stack because fn body produces result (output) that will cover stack
-      //   prepare.push(`(local.set $${fn}.prev (global.get $${fn}.state))`) // save prev state
-      //   // put local state fragment to the stack
-      //   prepare.push(`(global.set $${fn}.state (i32.add (global.get $${name}.state) ${i32.const(globals[name].substate[fn] << 2)} ))`)
-      //   defer.push(`(global.set $${fn}.state (local.get $${fn}.prev))`) // load prev state
-      // }
 
       // init body - expressions write themselves to body
       // FIXME: save func args as types as well
-      fun(name, `(func $${name} ${dfn.join(' ')}` +
-        (prepare.length ? `\n${prepare.join('\n')}` : ``) +
-        (result ? `\n${result}` : ``) +
-        (defer.length ? `\n${defer.join(' ')}` : ``) + // defers have 0 stack outcome, so result is still there
-        // FIXME: if preliminary return - defers won't work
-        `)`, result.type)
 
-      func = prevFunc
+      // define global function
+      funcs[name] = new String(print(
+        `(func $${name} ${dfn.join(' ')}${result}` +
+        (body ? `\n${body}` : ``) +
+        (defers.length ? `\n${defers.join(' ')}` : ``) + // defers have 0 stack outcome, so result is still there
+        // FIXME: if preliminary return - defers won't work
+        `)`
+      ))
+      funcs[name].type = body.type
+
+      locals = rootLocals
+      func = returns = defers = null
 
       return initState
     }
@@ -514,14 +500,6 @@ Object.assign(expr, {
     depth--
     return op(str, 'f64', { dynamic: true })
   },
-  './'([, a]) {
-    // ./a
-    let aop = expr(a)
-    returns.push(aop)
-    // we enforce early returns to be f64
-    // FIXME: consolidate it across all fn returns
-    return op(`(return ${float(aop)})`, 'f64')
-  },
 
   '-'([, a, b], out) {
     // [-, [int, a]] -> (i32.const -a)
@@ -563,6 +541,23 @@ Object.assign(expr, {
     return op(`(f64.mul ${float(aop)} ${float(bop)})`, 'f64')
   },
   '/'([, a, b], out) {
+    if (!b) {
+      // /a
+      let aop = expr(a)
+      if (!returns) err('Bad return')
+      returns.push(aop)
+      // we enforce early returns to be f64
+      // FIXME: consolidate it across all fn returns
+
+      // supposing defers are declared before returns - we wrap content in block
+      if (defers.length) {
+        return op(`${float(aop)}(br $func)`, 'f64')
+      }
+
+      return op(`(return ${float(aop)})`, 'f64')
+    }
+
+    // a / b
     let aop = expr(a, out), bop = expr(b, out)
     if (!out) return op(aop + bop);
     return op(`(f64.div ${float(aop)} ${float(bop)})`, 'f64')
@@ -631,7 +626,15 @@ Object.assign(expr, {
     return op(`(i32.and ${int(aop)} ${int(bop)})`, `i32`)
   },
   '^'([, a, b], out) {
-    console.log('^', a, b)
+    // ^b
+    if (!b) {
+      let aop = expr(a, false)
+      if (!defers) err('Bad defer')
+      if (returns.length) err('Defer after return')
+      defers.push(aop)
+      return
+    }
+
     // a ^ b
     let aop = expr(a, out), bop = expr(b, out);
     if (!out) return op(aop + bop);
