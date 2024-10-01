@@ -1,11 +1,16 @@
 
 import { FLOAT, INT } from "./const.js"
+import { print } from "watr"
 
 // show error meaningfully
 export function err(msg) {
   // Promise.resolve().then(() => {
   throw Error((msg || 'Bad syntax'))
   // })
+}
+
+export function pretty(str) {
+  return print(str + '', { indent: '  ', newline: '\n' })
 }
 
 // collect ids used within node

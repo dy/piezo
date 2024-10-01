@@ -2,8 +2,8 @@
 import { FLOAT, INT } from './const.js';
 import parse from './parse.js';
 import precompile from './precompile.js';
-import { ids, stringify, err, u82s } from './util.js';
-import { print, compile as watr } from 'watr';
+import { ids, stringify, err, u82s, pretty } from './util.js';
+import { compile as watr } from 'watr';
 import { op, float, int, set, get, tee, call, include, pick, i32, f64, cond, loop, isConstExpr, defineFn } from './build.js'
 
 export let imports, globals, locals, funcs, func, exports, datas, mem, returns, defers, depth;
@@ -84,17 +84,16 @@ export default function compile(node, config = {}) {
   // declare funcs
   for (let name in funcs) { code += `;;;;;;;;;;;;;;;;;;;;;;;;;;;; Functions\n`; break }
   for (let name in funcs) {
-    code += print(funcs[name], { indent: '  ', newline: '\n' }) + '\n\n'
+    code += pretty(funcs[name]) + '\n\n'
   }
 
   // run globals init, if needed
   if (init) {
     code += `;;;;;;;;;;;;;;;;;;;;;;;;;;;; Init\n` +
-      print(`(func $module:start
+      pretty(`(func $module:start
     ${Object.keys(locals).map((name) => `(local $${name} ${locals[name].type})`).join('')}
     ${init}
-    (return))`
-        , { indent: '  ', newline: '\n' }) +
+    (return))`) +
       `\n(start $module:start)\n\n`
   }
 
@@ -371,9 +370,6 @@ Object.assign(expr, {
       // if it has defers - wrap to block
       if (defers.length) body = op(`(block $func ${result} ${body})`, body.type)
 
-      // declare locals
-      for (let name in locals) if (!locals[name].arg && !locals[name].static) dfn.push(`(local $${name} ${locals[name].type})`)
-
       let initState
 
       // init body - expressions write themselves to body
@@ -381,7 +377,11 @@ Object.assign(expr, {
 
       // define global function
       defineFn(name,
-        `(func $${name} ${dfn.join(' ')}${result}` +
+        `(func $${name} ${dfn.join('')} ${result}` +
+        Object.entries(locals)
+          .filter(([k, v]) => !v.arg && !v.static)
+          .map(([k, v]) => `(local $${k} ${v.type})`)
+          .join(' ') +
         (body ? `\n${body}` : ``) +
         (defers.length ? `\n${defers.join(' ')}` : ``) + // defers have 0 stack, so result is from body
         `)`,

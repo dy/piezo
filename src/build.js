@@ -110,7 +110,7 @@ export function include(name) {
 export function defineFn(name, body, type) {
   if (funcs[name]) err(`Redefine func \`${name}\``)
   funcs[name] = new String(print(body))
-  funcs[name].type = body.type
+  funcs[name].type = type
 }
 
 

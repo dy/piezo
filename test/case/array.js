@@ -3,8 +3,11 @@ import compileSruti from '../../src/compile.js'
 import { compileWat } from '../util.js'
 
 t('array: basic', t => {
-  let wat = compileSruti(`x = [1.1, 2.22, 3.333], y = [4.1234,5.54321,654321.123456,7.7777777]; x,y,xl=x[],yl=y[]`)
+  let wat = compileSruti(`x = [1]`)
   let mod = compileWat(wat)
+
+  wat = compileSruti(`x = [1.1, 2.22, 3.333], y = [4.1234,5.54321,654321.123456,7.7777777]; x,y,xl=x[],yl=y[]`)
+  mod = compileWat(wat)
   let { memory, x, y, xl, yl } = mod.instance.exports
   let xarr = new Float64Array(memory.buffer, x.value, 3)
   is(xarr[0], 1.1, 'x0')
