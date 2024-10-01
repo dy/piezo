@@ -137,15 +137,10 @@ token('--', PREC_UNARY, a => a ? ['--', a] : ['-=', expr(PREC_UNARY - 1), [INT, 
 
 // bitwises
 unary('~', PREC_UNARY)
+binary('~', PREC_CLAMP)
 binary('|', PREC_BOR)
 binary('&', PREC_BAND)
 binary('^', PREC_XOR)
-binary('>>', PREC_SHIFT)
-binary('<<', PREC_SHIFT)
-binary('>>>', PREC_SHIFT)
-binary('<<<', PREC_SHIFT)
-
-binary('~', PREC_CLAMP)
 
 // logic
 binary('||', PREC_LOR)
@@ -168,6 +163,16 @@ binary('>', PREC_COMP)
 binary('<', PREC_COMP)
 binary('>=', PREC_COMP)
 binary('<=', PREC_COMP)
+
+// shifts
+binary('>>', PREC_SHIFT)
+binary('<<', PREC_SHIFT)
+binary('>>>', PREC_SHIFT)
+binary('<<<', PREC_SHIFT)
+binary('>>=', PREC_SHIFT)
+binary('<<=', PREC_SHIFT)
+binary('>>>=', PREC_SHIFT)
+binary('<<<=', PREC_SHIFT)
 
 // pow, mod
 binary('**', PREC_POW, true)

@@ -22,9 +22,9 @@ t('readme: standard operators', t => {
       o17, o18, o19, o20, o21, o22,
       o23, o24, o25, o26
     ) = (
-      a + b, a-b, a*b, a/b, a%b, --a, ++a, b++, b--,                ;; arithmetical (float)
-      a&&b, a||b, !a, a?b:c,                    ;; logical (boolean)
-      a>b, a>=b, a<b, a<=b, a==b, a!=b,                ;; comparisons (boolean)
+      a + b, a-b, a*b, a/b, a%b, --a, ++a, b++, b--,  ;; arithmetical (float)
+      a&&b, a||b, !a, a?b:c,                          ;; logical (boolean)
+      a>b, a>=b, a<b, a<=b, a==b, a!=b,               ;; comparisons (boolean)
       a&b, a|b, a^b, ~a, a>>b, a<<b,                  ;; binary (integer)
       a**b, -a %% b, a <<< b, a >>> b
     )

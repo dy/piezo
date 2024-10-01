@@ -57,6 +57,7 @@ t('parse: standard operators', t => {
   is(parse('a && b || !c'), ['||', ['&&', 'a', 'b'], ['!', 'c']], 'logical')
   is(parse('a & b | c ^ ~d'), ['|', ['&', 'a', 'b'], ['^', 'c', ['~', 'd']]], 'int / binary ops')
   is(parse('a == b != c >= d <= e'), ['!=', ['==', 'a', 'b'], ['<=', ['>=', 'c', 'd'], 'e']], 'comparisons')
+  is(parse(`a>b, a<b, a>>b, a<<b, a>>>b, a<<<b`), [',', ['>', 'a', 'b'], ['<', 'a', 'b'], ['>>', 'a', 'b'], ['<<', 'a', 'b'], ['>>>', 'a', 'b'], ['<<<', 'a', 'b']], 'shifts')
 })
 
 t('parse: clamp operator', t => {
