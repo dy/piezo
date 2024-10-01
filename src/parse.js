@@ -122,11 +122,14 @@ binary('*', PREC_MULT)
 binary('/', PREC_MULT)
 binary('%', PREC_MULT)
 
+// static
+unary('*', PREC_UNARY)
+
 // adds
-unary('+', PREC_UNARY)
-unary('-', PREC_UNARY)
 binary('+', PREC_ADD)
 binary('-', PREC_ADD)
+unary('+', PREC_UNARY)
+unary('-', PREC_UNARY)
 
 // increments
 token('++', PREC_UNARY, a => a ? ['++', a] : ['+=', expr(PREC_UNARY - 1), [INT, 1]])
@@ -142,18 +145,12 @@ binary('<<', PREC_SHIFT)
 binary('>>>', PREC_SHIFT)
 binary('<<<', PREC_SHIFT)
 
-// compares
-binary('==', PREC_EQ)
-binary('!=', PREC_EQ)
-binary('>', PREC_COMP)
-binary('<', PREC_COMP)
-binary('>=', PREC_COMP)
-binary('<=', PREC_COMP)
+binary('~', PREC_CLAMP)
 
 // logic
-unary('!', PREC_UNARY)
 binary('||', PREC_LOR)
 binary('&&', PREC_LAND)
+unary('!', PREC_UNARY)
 
 // assigns
 binary('=', PREC_ASSIGN, true)
@@ -164,12 +161,19 @@ binary('+=', PREC_ASSIGN, true)
 binary('-=', PREC_ASSIGN, true)
 binary('~=', PREC_ASSIGN, true)
 
+// compares
+binary('==', PREC_EQ)
+binary('!=', PREC_EQ)
+binary('>', PREC_COMP)
+binary('<', PREC_COMP)
+binary('>=', PREC_COMP)
+binary('<=', PREC_COMP)
+
 // pow, mod
 binary('**', PREC_POW, true)
 binary('%%', PREC_MULT, true)
 
 // clamps
-binary('~', PREC_CLAMP)
 binary('~<', PREC_CLAMP)
 binary('~/', PREC_CLAMP)
 binary('~*', PREC_CLAMP)
@@ -198,9 +202,6 @@ unary('^', PREC_RETURN);
 // NOTE: we don't parse expression to avoid 0..1 recognizing as 0[.1]
 // NOTE: for now we disable prop access since we don't have aliases and just static index can be done via x[0]
 // token('.', PREC_CALL, (a,b) => a && (b=next(isId)) && ['.', a, b])
-
-// *a
-unary('*', PREC_UNARY)
 
 // conditions & ternary
 // a?b - returns b if a is true, else returns a

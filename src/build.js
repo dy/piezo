@@ -103,8 +103,16 @@ export function include(name) {
   // FIXME: must be done better
   let code = stdlib[name]
   let type = code.match(/\(result\s+([^\)]+)\)/i)?.[1].trim().split(/\s+/)
-  if (!funcs[name]) fun(name, code, type)
+  if (!funcs[name]) defineFn(name, code, type)
 }
+
+// define a function
+export function defineFn(name, body, type) {
+  if (funcs[name]) err(`Redefine func \`${name}\``)
+  funcs[name] = new String(print(body))
+  funcs[name].type = body.type
+}
+
 
 /**
  * Pick N input args into stack, like (a,b,c) -> (a,b)

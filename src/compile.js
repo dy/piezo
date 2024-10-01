@@ -4,7 +4,7 @@ import parse from './parse.js';
 import precompile from './precompile.js';
 import { ids, stringify, err, u82s } from './util.js';
 import { print, compile as watr } from 'watr';
-import { op, float, int, set, get, tee, call, include, pick, i32, f64, cond, loop, isConstExpr } from './build.js'
+import { op, float, int, set, get, tee, call, include, pick, i32, f64, cond, loop, isConstExpr, defineFn } from './build.js'
 
 export let imports, globals, locals, funcs, func, exports, datas, mem, returns, defers, depth;
 
@@ -380,15 +380,12 @@ Object.assign(expr, {
       // FIXME: save func args as types as well
 
       // define global function
-      funcs[name] = new String(print(
+      defineFn(name,
         `(func $${name} ${dfn.join(' ')}${result}` +
         (body ? `\n${body}` : ``) +
-        (defers.length ? `\n${defers.join(' ')}` : ``) + // defers have 0 stack outcome, so result is still there
-        // FIXME: if preliminary return - defers won't work
-        `)`
-      ))
-      funcs[name].type = body.type
-
+        (defers.length ? `\n${defers.join(' ')}` : ``) + // defers have 0 stack, so result is from body
+        `)`,
+        body.type)
       locals = rootLocals
       func = returns = defers = null
 

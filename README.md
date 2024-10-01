@@ -116,11 +116,11 @@ dup(x) = (x,x);               ;; return multiple
 a=1,b=1; x()=(a=2;b=2); x();  ;; a==1, b==2: first statement declares locals
 
 ;; Static vars
-a() = ( #i=0; ++i );          ;; i keeps value between calls
+a() = ( *i=0; ++i );          ;; i keeps value between calls
 a(), a();                     ;; 1,2
-a1() = ( #copy=a; copy() );   ;; clone function
+a1() = ( *copy=a; copy() );   ;; clone function
 a(), a(); a1(), a1();         ;; 3,4; 1,2;
-f() = ( #t=0; ^t++; t*2 );    ;; defer: t++ called after return
+f() = ( *t=0; ^t++; t*2 );    ;; defer: t++ called after return
 x(a[], f()) = f(a[0]);       ;; array, func args
 
 ;; Export

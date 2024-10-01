@@ -1387,7 +1387,7 @@
     + `.` is replacement for `;`
     ?! missing `.` means program is unfinished? like, a library to include?
 
-## [x] Static variables: syntax → ~~`*` seems to match "save value" pointers intuition, star for save~~ let's try `#` as it is more distinguishable
+## [x] Static variables: syntax → `*` seems to be most natural for save ~~let's try `#` as it is more distinguishable~~
 
   * There's disagreement on `...` is best candidate for loading prev state. Let's consider alternatives.
   1. ~~`...x1,y1,x2,y2`~~
@@ -1420,6 +1420,33 @@
     )
     ```
     - `song()=(...t=0;)`
+  1.1 `.x, .y, .z`
+    + minimal look
+    + associates with "static members" in swift
+    + doesn't create new syntax
+    ```
+    lp([x0], freq = 100 in 1..10000, Q = 1.0 in 0.001..3.0) = (
+      .x1, .x2, .y1, .y2 = 0;    ;; internal state
+
+      w = pi2 * freq / sampleRate;
+      sin_w, cos_w = sin(w), cos(w);
+      a = sin_w / (2.0 * Q);
+
+      b0, b1, b2 = (1.0 - cos_w) / 2.0, 1.0 - cos_w, b0;
+      a0, a1, a2 = 1.0 + a, -2.0 * cos_w, 1.0 - a;
+
+      b0, b1, b2, a1, a2 *= 1.0 / a0;
+
+      y0 = b0*x0 + b1*x1 + b2*x2 - a1*y1 - a2*y2;
+
+      x1, x2 = x0, x1;
+      y1, y2 = y0, y1;
+
+      [y0]
+    )
+    ```
+    - `a..b` vs `a. .b`
+    - looks like mandatory part of variable
   2. `^x1, ^y1, ^x2, ^y2`
     - ~~too many meanings to topical operator~~
     + refers as "belonging" to the function
@@ -1428,6 +1455,7 @@
   → 3. `*x1, *x2, *y1, *y2`
     + existing convention of `*` as save
     + "star operator" for "save"
+    + star also refers to "new", since it clones a function as well
     . C / Rust / Go pointers are the same.
       > It (* - dereference operator) can be used to access or manipulate the data stored at the memory location, which is pointed by the pointer.
       > Any operation applied to the dereferenced pointer will directly affect the value of the variable that it points to.
@@ -1440,7 +1468,7 @@
     ~+ group can be defined as `*(a=0,b=1)`
     ~ `song()=(*t=0;)`
     + used in JS for generators and other "additional" stuff
-    - a bit hard to "find all" since * is not part of id
+    - hard to "find all" since * is not part of id
     ```
       lp(x0, freq = 100 ~ 1..10000, Q = 1.0 ~ 0.001..3.0) = (
         *(x1, x2, y1, y2) = 0;    // internal state
@@ -1462,8 +1490,8 @@
         y0
       )
     ```
-    +! can use postfix `x1*;` to save state, that's just hidden hack
-    - looks like Python's splat operator `*(a,b,c)`
+    - looks like Python's/Kotlin splat operator `*(a,b,c)`
+    - not distinct from common operators
 
   3.1 ~~`x1*, x2*, y1*, y2*`~~
     + typographic meaning as footnote
@@ -1494,6 +1522,7 @@
       ~ which makes it less of operator
     - ~~may conflict with cardinal number (count) operator~~
     - reserves `#` as operator, not part of variable name
+      - cannot use notes, indices `x#1, x#2`, placeholder `a |> #`
   5. ~~`[x1, x2, y1, y2] = #`~~
     + involves destructuring syntax
     - introduces unnecessary token
@@ -1542,7 +1571,7 @@
     ~ `song()=(&t=0;)`
     + complementary with `*` as defer operator
 
-  10. ~~`@x1, @x2, @y1, @y2`~~
+  10. `@x1, @x2, @y1, @y2`
     + 'at' means current scope, 'at this'
     + more wordy - less operator-y, as if part of id
     + matches import directive by meaning

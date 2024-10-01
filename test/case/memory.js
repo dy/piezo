@@ -1,10 +1,10 @@
 import t, { almost, is, not, ok, same, throws } from 'tst'
-import compileMel from '../../src/compile.js'
+import compileSruti from '../../src/compile.js'
 import { compileWat } from '../util.js'
 
 t.skip('memory: grow', t => {
   // FIXME: possibly add option to export internals
-  let wat = compileMel(`grow()=[..8192]`)
+  let wat = compileSruti(`grow()=[..8192]`)
   let mod = compileWat(wat)
   let { memory, __mem, grow } = mod.instance.exports
   for (let i = 1; i < 100; i++) {
