@@ -70,7 +70,7 @@ m = [1,2,3,4];                ;; array of 4 elements
 m = [n[..]];                  ;; copy n
 m = [1, 2..4, 5];             ;; mixed definition
 m = [1, [2, 3, [4]]];         ;; nested arrays (tree)
-m = [0..4 |> _ ** 2];         ;; list comprehension
+m = [0..4 |> # ** 2];         ;; list comprehension
 (a, z) = (m[0], m[-1]);       ;; get by index
 (b, .., z) = m[1, 2..];       ;; get multiple values
 length = m[];                 ;; get length
@@ -89,25 +89,25 @@ sign = a < 0 ? -1 : +1;       ;; ternary conditional
 a && b || c;                  ;; (a and b) or c
 
 ;; Loops
-(a, b, c) |> f(_);            ;; for each item in a, b, c do f(item)
+(a, b, c) |> f(#);            ;; for each item in a, b, c do f(item)
 (i = 10..) |> (               ;; descend over range
   i < 5 ? a ./;               ;; if item < 5 skip (continue)
   i < 0 ? a ../;              ;; if item < 0 stop (break)
 );                            ;;
-x[..] |> f(_) |> g(_);        ;; pipeline sequence
-x[..] |>= _ * 2;              ;; overwrite source
+x[..] |> f(#) |> g(#);        ;; pipeline sequence
+x[..] |>= # * 2;              ;; overwrite source
 (i = 0..w) |> (               ;; nest iterations
   (j = 0..h) |> f(i, j);      ;; f(x,y)
 );                            ;;
 ((a,b) = 0..10) |> a+b;       ;; iterate by pairs
-(x,,y) = (a,b,c) |> _ * 2;    ;; capture result x = a*2, y = c*2;
+(x,,y) = (a,b,c) |> # * 2;    ;; capture result x = a*2, y = c*2;
 .. |> i < 10 ? i++ : ../;     ;; while i < 10 i++
 
 ;; Functions
 double(n) = n*2;              ;; define a function
 times(m = 1, n ~ 1..) = (     ;; optional, clamped arg
   n == 0 ? /n;                ;; early return
-  m * n                       ;; default return
+  m * n;                      ;; default return
 );                            ;;
 times(3,2);                   ;; 6
 times(4), times(,5);          ;; 4, 5: optional, skipped arg
@@ -121,10 +121,10 @@ a(), a();                     ;; 1,2
 a1() = ( *copy=a; copy() );   ;; clone function
 a(), a(); a1(), a1();         ;; 3,4; 1,2;
 f() = ( *t=0; ^t++; t*2 );    ;; defer: t++ called after return
-x(a[], f()) = f(a[0]);       ;; array, func args
+x(a[], f()) = f(a[0]);        ;; array, func args
 
 ;; Export
-x, y, z                       ;; exports last statement
+x, y, z;                      ;; exports last statement
 ```
 
 <!--

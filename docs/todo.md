@@ -25,23 +25,22 @@
   * [x] undo `.` - make semicolon-based void
 * [x] make globals readable, but locals writable
 * [x] first bytebeat: viznut
+* [ ] make `#` as topic placeholder
 * [ ] make writable globals, init on the first line
-* [ ] make simple static variables as `#b=a`
-  * [ ] `#` as static var
-  * [ ] fn capture declaring new static `#b = a`
+* [x] make simple static variables as `*b=a`
+  * [ ] fn capture declaring new static `*b = a`
   * [x] init detection
   * [x] `nan:` and constant expressions for watr
-  * [ ] static groups `#(a,b,c)`
-* [ ] `^` for deferred
-  * [ ] preliminary return with defer `f()=(^i++;i>10?./1;)` - likely via block as `f()=(ret;(i>10?ret=1);i++;ret)`
-* [ ] `a.` for breaking void operator
-* [ ] make `/`, `/a` as function return
+  * [ ] static groups `*(a,b,c)`
+* [x] `^` for deferred
+  * [x] preliminary return with defer `f()=(^i++;i>10?./1;)` - likely via block as `f()=(ret;(i>10?ret=1);i++;ret)`
+* [ ] conciliate returns types
+* [x] make `/`, `/a` as function return
 * [ ] make nan as null in fn arguments (`config(a,,b,c)`)
 * [ ] range iterator via pipe
-  * [ ] pair-wise iteration
 * [ ] convert all string instructions to builder calls
 * [ ] list comprehension
-* [ ] make use of `./`, `../`, `.../` for loops only (not parent)
+* [ ] make use of `./`, `../` for loops only (not parent)
 * [ ] swizzles `a.xyz`, `a.lr`
 * [ ] all readmes test
 * [ ] `~, ~=`

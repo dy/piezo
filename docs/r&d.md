@@ -929,7 +929,7 @@
       - doesn't help much if expr comes after, eg. `pi,rate. a=3;`
     -> so seems uncovered period can stand only at the end of scope. Else there must be a semi.
 
-### [ ] End operator `.` (discussion above is old): to have or not to have? -> use `(a;/)` for void return
+### [ ] End operator `.` (discussion above is old): to have or not to have? -> use `(a;/)` for void return, otherwise last expression
 
   1. `a,b,c.` explicitly indicates exported members
       - we can do export by last statement as `a,b,c`, thinking it be similar to fn return
@@ -954,6 +954,8 @@
       ~- not so elegant as just skipping semi
     + typographical, erlangy
     - `.` could've been used as part of name (like stateful instance) or static props in the future
+
+  3. void return `(a;b;/)` (like coffee)
 
 ## [x] Early return operator? → ~~keep `a ? ^;` for now~~ `./`, `../`, `/` is most logical
 
@@ -1954,12 +1956,12 @@
     + enables if-else as `1,0 >- x ? true : false;`
       . `1 >- x ? true`;
 
-## [x] Comments: `//`, `/*` vs `;;` and `(; ;)` → ~~`//` is most based choice. `\\` gives many benefits~~ `;;` either, but least toxic
+## [x] Comments: `//`, `/*` vs `;;`,`(; ;)` ~~`//` is most based choice. `\\` gives many benefits~~ `;;` has same benefits, but least toxic
 
   1. `;;`
   * Message: mel is like assembly, expect low-level stuff & reading docs
   + ;; make more sense, since ; is separator, and everything behind it doesn't matter
-  + (; makes more sense as "group with comments", since we use only ( for groups.
+  + `(;` makes more sense as "group with comments", since we use only ( for groups.
   + ;; is less noisy than //
   + ;; is associated with assembler or lisp/clojure
     + wasm
@@ -1999,6 +2001,7 @@
   + hints to asm/wasm languages
   + if all programs use that comment style it seems fine: it's a good balance between neutrality, familiarity/intuitivity, innovation
   - it gives hand-made impression
+  - `x()=(;a)` is SUPER common use case when first line is used for local var inits
 
   1.1 should we make comment an alternative to semi token `fn() ;;do something`
     + less symbols
@@ -4271,7 +4274,7 @@
 
   ? ALT: `<( x>2?!; )>`
 
-### [x] Loops: What's the best character for topic placeholder? -> ~~`#` feels the best~~ `_` means "insert here" and scala-compatible
+### [x] Loops: What's the best character for topic placeholder? -> `#` feels the best ~~`_` means "insert here"~~
 
   * `list |> #*2`, `list |> #>2?^^#:^#;`
     + `#` is almost perfect for topic/reference, associates with `#`th item
@@ -4289,6 +4292,7 @@
     - can be used for some actual operator rather than variable placeholder
       ~ unless we allow `#` as part of variable name
     - has strong flavor of directive (C++ etc) or comment (Python etc)
+    + easier to scan visually, compared to `_`
   * ~~`list |> &*2`, `list |> &>2?^^&:^&;`~~
     + & is almost-character, feels more like an id
     - has weird connotation as binary
@@ -4324,6 +4328,7 @@
       ~+ it's private in a way
     + literally means "placeholder", for "placeholder" variable
     + we don't have special designation for lowdash otherwise
+    - HARD to scan - it doesn't look like id, compared to `#`
   * ~~`list |> ^ * 2`~~
     - conflicts with `^` for return `list |> ^>2?^^^:^^;`
     + compatible with js proposal; compatible with makefile;

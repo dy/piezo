@@ -6,7 +6,7 @@
   "dependencies": {
     "arg": "^5.0.2",
     "subscript": "^8.6.0",
-    "watr": "^2.4.0"
+    "watr": "^2.4.1"
   },
   "name": "sruti",
   "description": "Low-level language for audio/signal purposes",

@@ -46,11 +46,9 @@ Object.assign(expr, {
     return [INT, n]
   },
 
-  ';'(node) {
-    let list = []
-    // remove blank lines making sure last el is kept undefined
-    for (let i = 1, statement; i < node.length; i++) if ((statement = expr(node[i])) || i === node.length - 1) list.push(statement)
-    return list.length > 1 ? [';', ...list] : list[0]
+  ';'([, ...list]) {
+    // remove empty elements
+    return [';', ...list.filter((s, i) => !i || s).map(s => expr(s))]
   },
   ','(node) {
     return node.flatMap((a, i) => {
@@ -67,9 +65,6 @@ Object.assign(expr, {
   },
   '../'([, a]) {
     return ['../', expr(a)]
-  },
-  '.../'([, a]) {
-    return ['.../', expr(a)]
   },
 
   '()'([, a]) {
@@ -238,6 +233,7 @@ Object.assign(expr, {
     )
   },
   '*'([, a, b]) {
+    if (!b) return ['*', expr(a)]
     a = expr(a)
     b = expr(b);
     return unroll('*', a, b) || (

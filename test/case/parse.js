@@ -336,6 +336,11 @@ t('parse: semicolon', t => {
   is(parse(`
     a,b,c;
   `), [';', [',', 'a', 'b', 'c'], ,])
+
+
+  is(parse(`
+    (;a)
+  `), ['()', [';', , 'a']])
 })
 
 t('parse: sine gen', t => {
@@ -373,7 +378,7 @@ t('parse: sequence precedence', t => {
   is(parse(`a=b?c=d:e=f`), ['=', 'a', ['?:', 'b', ['=', 'c', 'd'], ['=', 'e', 'f']]]);
 })
 
-t('parse: loop precedence riddle', t => {
+t('parse: loop precedence', t => {
   is(parse(`a ? b : c`), ['?:', 'a', 'b', 'c']);
   is(parse(`a = b |> c`), ['=', 'a', ['|>', 'b', 'c']]);
   is(parse(`a = b ? c`), ['=', 'a', ['?', 'b', 'c']]);

@@ -18,17 +18,20 @@ t('funcs: oneliners', t => {
   is(mod.instance.exports.mult(2, 4), 8)
 
   mod = compileWat(compileSruti(` mult(a, b) = (b; a * b;)`))
+  is(mod.instance.exports.mult(2, 4), 8)
+
+  mod = compileWat(compileSruti(` mult(a, b) = (b; a * b; /)`))
   is(mod.instance.exports.mult(2, 4), undefined)
 })
 
-t('funcs: shadow global args', t => {
-  let mod = compileWat(compileSruti(`a=1, x(a) = (a=2)`))
+t('funcs: first line inits local', t => {
+  let mod = compileWat(compileSruti(`a=1, x() = (a=2)`))
   is(mod.instance.exports.a.value, 1)
   is(mod.instance.exports.x(), 2)
   is(mod.instance.exports.a.value, 1)
 
-  mod = compileWat(compileSruti(`a=1, x() = (a=2)`))
+  mod = compileWat(compileSruti(`a=1, x() = (;a=2)`))
   is(mod.instance.exports.a.value, 1)
   is(mod.instance.exports.x(), 2)
-  is(mod.instance.exports.a.value, 1)
+  is(mod.instance.exports.a.value, 2)
 })

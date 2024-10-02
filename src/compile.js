@@ -6,7 +6,18 @@ import { ids, stringify, err, u82s, pretty } from './util.js';
 import { compile as watr } from 'watr';
 import { op, float, int, set, get, tee, call, include, pick, i32, f64, cond, loop, isConstExpr, defineFn } from './build.js'
 
-export let imports, globals, locals, funcs, func, exports, datas, mem, returns, defers, depth;
+export let imports, // imported statements (regardless of libs) - funcs/globals/memory
+  globals,  // global scope (as name props), { init: #initValue, type: 'f64', static: bool}
+  locals,  // current fn local scope (or module init function scope)
+  funcs,  // defined user and util functions
+  func,  // current function (name string) that's being initialized
+  initing, // is first line in function, since it forces local-only vars
+  exports,  // items to export
+  datas,  // static-size data sections
+  mem,  // indicates if memory must be included and how much bytes
+  returns, // returned items from current fn (collects early returns)
+  defers,  // deferred expressions (within current fn)
+  depth;  // current loop/nested block counter
 
 // limit of memory is defined as: (max array length i24) / (number of f64 per memory page i13)
 const MAX_MEMORY = 2048, HEAP_SIZE = 1024
@@ -30,17 +41,17 @@ export default function compile(node, config = {}) {
   let prevCtx = { imports, globals, locals, funcs, func, exports, datas, mem, returns, defers, depth };
 
   // init compiling context
-  globals = {} // global scope (as name props), { init: #initValue, type: 'f64', static: bool}
-  locals = {} // current fn local scope (or module init function scope)
-  imports = [] // imported statements (regardless of libs) - funcs/globals/memory
-  funcs = {} // defined user and util functions
-  exports = {} // items to export
-  returns = null // returned items from block (collects early returns)
-  defers = null // deferred expressions
-  func = null // current function (name string) that's being initialized
-  mem = false // indicates if memory must be included and how much bytes
-  depth = 0 // current loop/nested block counter
-  datas = {} // static-size data sections
+  globals = {}
+  locals = {}
+  imports = []
+  funcs = {}
+  exports = {}
+  returns = null
+  defers = null
+  func = null
+  mem = false
+  depth = 0
+  datas = {}
 
   // run global in start function
   let init = expr(node, true).trim(), code = ``
@@ -159,17 +170,11 @@ Object.assign(expr, {
   },
 
   // a; b; c;
-  // NOTE: [;, a] returns a, [;, a,,] returns nop
   ';'([, ...statements], out) {
-    if (!statements[statements.length - 1]) out = false;
-    let list = statements.map((s, i) => i === statements.length - 1 ? expr(s, out) : expr(s, false));
-
-    if (!list.length) return
-    return op(list.join('\n'), list[list.length - 1].type)
-  },
-  // a,b,c. - voids result
-  '.'([, a]) {
-    return expr(a, false)
+    let last = statements.length - 1
+    // return last statement always
+    let list = statements.map((s, i) => (initing = !i, expr(s, i == last ? out : false)))
+    return op(list.join('\n'), list[last]?.type)
   },
 
   ','([, ...statements], out) {
@@ -201,10 +206,10 @@ Object.assign(expr, {
 
     // [1,2,3] - static array
     // FIXME: make work with nested static arrays as well: [1,[2,x=[3,]]]
-    if ((function isStatic(inits) {
-      return inits.every(x => typeof x[1] === 'number' || (x[0] === '[' && isStatic(x.slice(1)), false))
+    if ((function isPrimitive(inits) {
+      return inits.every(x => !x || (typeof x[1] === 'number' || (x[0] === '[' && isPrimitive(x.slice(1)))))
     })(inits)) {
-      const f64s = new Float64Array(inits.map(x => x[1]))
+      const f64s = new Float64Array(inits.map(x => x ? x[1] : 0))
       const offset = mem
       mem += f64s.length << 3
       datas[offset] = u82s(new Uint8Array(f64s.buffer))
@@ -358,11 +363,7 @@ Object.assign(expr, {
 
       b.splice(1, 0, ...inits) // prepend inits
 
-
       body = expr(b)
-      // if has early returns, enforce it float
-      // FIXME: can use i32
-      if (returns.length) body = float(body)
 
       // define result, comes after (param) before (local)
       if (body?.type?.length) result = `(result ${body.type.join(' ')})`
@@ -539,19 +540,20 @@ Object.assign(expr, {
   },
   '/'([, a, b], out) {
     if (!b) {
+      if (!returns) err('Bad return')
+
       // /a
       let aop = expr(a)
-      if (!returns) err('Bad return')
       returns.push(aop)
       // we enforce early returns to be f64
       // FIXME: consolidate it across all fn returns
 
       // supposing defers are declared before returns - we wrap content in block
       if (defers.length) {
-        return op(`${float(aop)}(br $func)`, 'f64')
+        return aop ? op(`${aop}(br $func)`, aop.type) : op(`(br $func)`)
       }
 
-      return op(`(return ${float(aop)})`, 'f64')
+      return aop ? op(`(return ${aop})`, aop.type) : op(`(return)`)
     }
 
     // a / b

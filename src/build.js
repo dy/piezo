@@ -1,8 +1,7 @@
 // builder actually generates wast code from params / current context
-import { globals, locals, funcs, func } from "./compile.js"
+import { globals, locals, funcs, func, initing } from "./compile.js"
 import { err } from "./util.js"
 import stdlib from "./stdlib.js"
-import { print } from "watr"
 import { FLOAT, INT } from "./const.js"
 
 export const i32 = {
@@ -47,29 +46,33 @@ export function op(str = '', type, info = {}) {
 
 // (local.get) or (global.get)
 export function get(name) {
-  if (!func && name[0] !== '_') return globals[name] ||= { type: 'f64' }, op(`(global.get $${name})`, globals[name].type)
+  // global
+  if ((!func && name[0] !== '_') || globals[name]) return globals[name] ||= { type: 'f64' }, op(`(global.get $${name})`, globals[name].type)
 
   // static
   if (locals[name].static) return op(`(global.get $${locals[name].static})`, locals[name].type)
 
-  // read local if it's defined, else read global
-  return !globals[name] && (locals[name] ||= { type: 'f64' }), op(`(${locals?.[name] ? 'local' : 'global'}.get $${name})`, (locals?.[name] || globals[name]).type)
+  // local
+  return locals[name] ||= { type: 'f64' }, op(`(local.get $${name})`, locals[name].type)
 }
 
 // (local.set) or (global.set) (if no init - takes from stack)
 export function set(name, init = '') {
-  // global only if name doesn't start with _
-  if (!func && name[0] !== '_') return globals[name] ||= { type: init.type || 'f64' }, op(`(global.set $${name} ${init})`)
+  // global
+  // TODO: disable for the first fn expression
+  if ((!func && name[0] !== '_') || (!initing && globals[name])) return globals[name] ||= { type: init.type || 'f64' }, op(`(global.set $${name} ${init})`)
 
   // static
   if (locals[name].static) return op(`(global.set $${locals[name].static} ${init})`)
 
+  // local
   return locals[name] ||= { type: init.type || 'f64' }, op(`(local.set $${name} ${init})`)
 }
 
 // (local.tee) or (global.set)(global.get)
 export function tee(name, init = '') {
-  if (!func && name[0] !== '_') return globals[name] ||= { type: init.type || 'f64' }, op(`(global.set $${name} ${init})(global.get $${name})`, init.type)
+  // global
+  if ((!func && name[0] !== '_') || (!initing && globals[name])) return globals[name] ||= { type: init.type || 'f64' }, op(`(global.set $${name} ${init})(global.get $${name})`, init.type)
 
   // static
   if (locals[name].static) return op(`(global.set $${locals[name].static} ${init})(global.get $${locals[name].static})`, locals[name].type)
@@ -109,10 +112,9 @@ export function include(name) {
 // define a function
 export function defineFn(name, body, type) {
   if (funcs[name]) err(`Redefine func \`${name}\``)
-  funcs[name] = new String(print(body))
+  funcs[name] = new String(body)
   funcs[name].type = type
 }
-
 
 /**
  * Pick N input args into stack, like (a,b,c) -> (a,b)
