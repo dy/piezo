@@ -4800,7 +4800,7 @@
     + allows merging analyser into 1-pass compiler
     + retains precision
 
-## [x] Operators: mix, smoothstep operators -> normalize is `a ~/ x..y`, mix is `a ~* x..y`
+## [x] Operators: normalize, step, mix, smoothstep operators -> normalize is `a ~/ x..y`, mix is `a ~* x..y`
 
   * `x -< a..b` defines clamping?
   * `x -/ a..b` for smoothstep?
@@ -4833,6 +4833,8 @@
     - can be confused with applying to each value in a range
   * `x <= a..b`
     - can be used to compare ranges
+
+## [ ] Operators: Do we need smoothstep/ismoothstep -> not for now, since there are many ways to do smoothness
 
 ## [x] Variables: ow do we represent infinity? -> `1/0`, `0/0`
 

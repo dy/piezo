@@ -1,6 +1,6 @@
 # sruti ![stability](https://img.shields.io/badge/stability-experimental-black) [![test](https://github.com/dy/sruti/actions/workflows/test.yml/badge.svg)](https://github.com/dy/sruti/actions/workflows/test.yml)
 
-Mini language for signal processing, synthesis and analysis.<br/>
+Simple language for signal processing, synthesis and analysis.<br/>
 Compiles to compact 0-runtime WASM with linear memory.<br/>
 
 <!--[Motivation](./docs/motivation.md)  |  [Documentation](./docs/reference.md)  |  [Examples](./docs/examples.md).-->
@@ -19,9 +19,9 @@ Compiles to compact 0-runtime WASM with linear memory.<br/>
 x[i] x[]                      ;; member access, length
 a..b a.. ..b ..               ;; ranges
 |> _                          ;; pipe/loop, map
-./ ../ / .                    ;; continue/skip, break/stop, return, void
-~ ~= ~< ~/ ~* ~// ~**         ;; clamp, normalize, lerp
-# ^                           ;; static, defer
+./ ../ /                      ;; continue/skip, break/stop, return, void
+~ ~= ~< ~/ ~*                 ;; clamp, normalize, lerp
+* ^                           ;; static, defer
 
 ;; Numbers
 16, 0x10, 0b0;                ;; int, hex or binary
@@ -49,8 +49,8 @@ inf = 1/0, nan = 0/0;         ;; eg: alias infinity, NaN
 a ~ 0..10;                    ;; clamp(a, 0, 10);
 a ~= 0..10;                   ;; a = clamp(a, 0, 10);
 a ~< 0..10;                   ;; a >= 0 && a < 10
-a ~/ 0..10; a ~* 0..10;       ;; normalize(a, 0, 10); lerp(a, 0, 10);
-a ~// 0..10; a ~** 0..10;     ;; smoothstep(a, 0, 10); ismoothstep(a, 0, 10);
+a ~/ 0..10;                   ;; normalize(a, 0, 10)
+a ~* 0..10;                   ;; lerp(a, 0, 10);
 
 ;; Groups
 (a,b,c) = (1,2,3);            ;; assign: a=1, b=2, c=3
