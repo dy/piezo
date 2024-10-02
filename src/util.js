@@ -3,6 +3,7 @@ import { FLOAT, INT } from "./const.js"
 import { print } from "watr"
 
 // show error meaningfully
+// FIXME: display line, fn name and other useful info
 export function err(msg) {
   // Promise.resolve().then(() => {
   throw Error((msg || 'Bad syntax'))

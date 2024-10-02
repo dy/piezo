@@ -5853,3 +5853,7 @@
     - forces iteration variable to be wrapped `a = (i = b) |> c`
     ?- but since `i` is defined within isolated scope, it's not accessible for `c`
       ~+ nah, `i` is defined per-fn scope, not inside, so all good, no need to wrap
+
+## [ ] Errors: shortness or specificity?
+  + Specificity allows better identifying
+  - It bloats the size

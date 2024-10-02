@@ -23,32 +23,33 @@ import t from 'tst'
 import { compileWat } from './util.js'
 
 
-t.todo('debugs', t => {
+t.skip('debugs', t => {
   const memory = new WebAssembly.Memory({ initial: 1 });
   const importObject = { x: { y: () => 123, z: 123 } };
   let { instance } = compileWat(`
-  (memory 1)
-
-  (global $g_v128 (export "x") (mut v128) (v128.const i32x4 0 0 0 0))
-
-  (func $test_v128
-    (result v128)
-
-    ;; Define two v128 vectors
-    (local $a v128)
-    (local $b v128)
-
-    ;; Initialize the vectors
-    (local.set $a (v128.const i32x4 1 2 3 4))
-    (local.set $b (v128.const i32x4 5 6 7 8))
-
-    ;; Perform addition on the vectors and return the result
-    (i32x4.add (local.get $a) (local.get $b))
+  ;; Define a function that returns an i32 by default,
+  ;; but may return an f32 early
+  (func $test (param i32) (result i32)
+    (local f32)    ;; Declare a local variable of type f32
+    local.get 0    ;; Get the function parameter (i32)
+    i32.const 10   ;; Push 10 onto the stack
+    i32.lt_s       ;; Compare param < 10
+    if (result i32)
+      ;; Early return with an f32 cast to i32
+      f32.const 1.5     ;; Push the float value 1.5
+      local.set 1       ;; Store it in local f32
+      local.get 1       ;; Load the float
+      i32.trunc_f32_s   ;; Convert the f32 to an i32 (truncated)
+      return
+    else
+      ;; Return the parameter directly if param >= 10
+      local.get 0       ;; Load the input parameter (i32)
+    end
   )
 
-  ;; Export the function to be called from outside
-  (export "test_v128" (func $test_v128))
+  ;; Export the function
+  (export "test" (func $test))
 `, importObject)
-  console.log(instance.exports.test_v128())
+  console.log(instance.exports.test())
   // instance.exports.x(instance.exports.x(instance.exports.cb))
 })
