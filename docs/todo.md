@@ -26,7 +26,7 @@
 * [x] make globals readable, but locals writable
 * [x] first bytebeat: viznut
 * [ ] make `#` as topic placeholder
-* [ ] make writable globals, init on the first line
+* [x] make writable globals, init on the first line
 * [x] make simple static variables as `*b=a`
   * [ ] fn capture declaring new static `*b = a`
   * [x] init detection
@@ -34,7 +34,7 @@
   * [ ] static groups `*(a,b,c)`
 * [x] `^` for deferred
   * [x] preliminary return with defer `f()=(^i++;i>10?./1;)` - likely via block as `f()=(ret;(i>10?ret=1);i++;ret)`
-* [ ] conciliate returns types
+* [x] conciliate returns types -> throw if inconsistent
 * [x] make `/`, `/a` as function return
 * [ ] make nan as null in fn arguments (`config(a,,b,c)`)
 * [ ] range iterator via pipe
