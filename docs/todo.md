@@ -34,7 +34,9 @@
   * [ ] static groups `*(a,b,c)`
 * [x] `^` for deferred
   * [x] preliminary return with defer `f()=(^i++;i>10?./1;)` - likely via block as `f()=(ret;(i>10?ret=1);i++;ret)`
-* [ ] conciliate returns types -> throw if inconsistent
+* [x] conciliate returns types
+* [x] remove op `info`
+* [x] unvoid `a ? b;`
 * [x] make `/`, `/a` as function return
 * [ ] make nan as null in fn arguments (`config(a,,b,c)`)
 * [ ] range iterator via pipe

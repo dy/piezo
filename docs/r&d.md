@@ -5730,14 +5730,16 @@
   + to iterate array always provide range or list `a[..] |> #`, `a, b, c |> #`
   + removes ambiguity from code and from brain
 
-## [ ] Conditions: Is `a ? b;` void or not? -> ~~not void, like elvis a ?: b or a ? b : c~~ void
+## [ ] Conditions: Is `a ? b;` void or not? -> not void, like elvis a ?: b or a ? b : c
 
   * research was done somewhere here, but keyword "void" wasn't used, so to clarify
   + void: makes it direct, simple and different from `a && b`
   +? we have void operator also, do we? at least fns can return nothing, so
-  - `a ? ./b;` is not void
-    ~ but return doesn't affect
+  - `a ? /b;` is not void
+    ~ but return doesn't affect operator
   - same as elvis `a ?: b` is not void, this is not void
+  - `/ a ? 1 : b ? 2;`
+    ~- essentially `a ? b` means `a ? b : nan`
 
 ## [ ] Ranges: Element of range: `a in b`? -> likely `a ~< (b,c,d)`
 
@@ -5924,7 +5926,7 @@
   + Specificity allows better identifying
   - It bloats the size
 
-## [ ] Function return: type conciliation
+## [x] Function return: type conciliation -> try upgrading return types/lengths
 
   1. Enforce explicit syntax consistency
     + consistent syntax `f()=(a?/1.0,0.0;b?/2.0,3.0;4.1,0.0)`
@@ -5945,6 +5947,10 @@
     - not clear how to do it, since we may track variables
       ? generate syntax tree instead of strings
       ~+ can produce strings with `$<return>` fields that are replaced after fn body with conciliated type conversion
+    - not sure if we can upgrade multiple elements in stack: we can easily upgrade the last one, but multiple?
+      ~ we can eg. allow ints only for single-item output
+      ~+ ok, we create as many temp variables per function as many items in stack are there and form proper output, that's extra write/read operation for inconsistent return
+    ? length we can also upgrade, considering some dynamic loops can have varied output size
 
   3. Force float for fn output
     + fn args are float-only anyways

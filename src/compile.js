@@ -4,7 +4,7 @@ import parse from './parse.js';
 import precompile from './precompile.js';
 import { ids, stringify, err, u82s, pretty } from './util.js';
 import { compile as watr } from 'watr';
-import { op, float, int, set, get, tee, call, include, pick, i32, f64, cond, loop, isConstExpr, defineFn } from './build.js'
+import { op, float, int, set, get, tee, call, include, pick, i32, f64, cond, loop, isConstExpr, defineFn, uptype, type } from './build.js'
 
 export let imports, // imported statements (regardless of libs) - funcs/globals/memory
   globals,  // global scope (as name props), { init: #initValue, type: 'f64', static: bool}
@@ -15,9 +15,11 @@ export let imports, // imported statements (regardless of libs) - funcs/globals/
   exports,  // items to export
   datas,  // static-size data sections
   mem,  // indicates if memory must be included and how much bytes
-  returnType, // returned items from current fn (collects early returns)
+  returns, // returned items from current fn (collects early returns)
   defers,  // deferred expressions (within current fn)
   depth;  // current loop/nested block counter
+
+export const RETURN = `%return%`
 
 // limit of memory is defined as: (max array length i24) / (number of f64 per memory page i13)
 const MAX_MEMORY = 2048, HEAP_SIZE = 1024
@@ -38,7 +40,7 @@ export default function compile(node, config = {}) {
   console.log('compile', node)
 
   // save previous compiling context
-  let prevCtx = { imports, globals, locals, funcs, func, exports, datas, mem, returnType, defers, depth };
+  let prevCtx = { imports, globals, locals, funcs, func, exports, datas, mem, returns, defers, depth };
 
   // init compiling context
   globals = {}
@@ -46,7 +48,7 @@ export default function compile(node, config = {}) {
   imports = []
   funcs = {}
   exports = {}
-  returnType = null
+  returns = null
   defers = null
   func = null
   mem = false
@@ -117,7 +119,7 @@ export default function compile(node, config = {}) {
   console.log(code);
   console.groupEnd();
   // restore previous compiling context
-  ({ imports, globals, funcs, func, locals, exports, datas, mem, returnType, defers, depth } = prevCtx);
+  ({ imports, globals, funcs, func, locals, exports, datas, mem, returns, defers, depth } = prevCtx);
 
   if (config?.target === 'wasm')
     code = watr(code)
@@ -129,7 +131,7 @@ export default function compile(node, config = {}) {
 // @out suggests if output value[s] must be saved on stack or discarded
 // since some expressions can be optimized (loops) if value can be discarded
 function expr(statement, out = true) {
-  if (!statement) return ''
+  if (!statement) return op()
 
   // a; - just declare in proper scope
   // FIXME: funcs may need returning something meaningful
@@ -341,7 +343,7 @@ Object.assign(expr, {
 
       // enter into function, collect local vars, returns, defers
       let rootLocals = locals
-      func = name, locals = {}, returnType, defers = [];
+      func = name, locals = {}, returns = Object.assign([], { type: [] }), defers = [];
 
       // detect optional / clamped args
       args = args.map(arg => {
@@ -365,15 +367,19 @@ Object.assign(expr, {
 
       body = expr(b)
 
-      // check returns
-      if (returnType && body.type.join(' ') != returnType.join(' ')) {
-        // try upgrading return to f64
-        if (returnType.join(' ') === 'f64' && body.type.join(' ') === 'i32') body = float(body)
-        else err(`Inconsistent default return from function \`${func}\``);
+      uptype(returns.type, body.type)
+
+      // insert returns with normalized type
+      let btype = body.type
+      for (let r of returns) {
+        if (defers.length) r = op(`${type(r, returns.type)}(br $func)`, returns.type)
+        else r = op(`(return ${type(r, returns.type)})`, returns.type)
+        body = body.replace(RETURN, r)
       }
+      body = type(op(body, btype), returns.type)
 
       // define result, comes after (param) before (local)
-      if (body?.type?.length) result = `(result ${body.type.join(' ')})`
+      if (returns.type.length) result = `(result ${returns.type.join(' ')})`
 
       // if it has defers - wrap to block
       if (defers.length) body = op(`(block $func ${result} ${body})`, body.type)
@@ -395,7 +401,7 @@ Object.assign(expr, {
         `)`,
         body.type)
       locals = rootLocals
-      func = returnType = defers = null
+      func = returns = defers = null
 
       return initState
     }
@@ -552,15 +558,14 @@ Object.assign(expr, {
       // /a
       let aop = expr(a)
 
-      if (returnType) (aop.type.join(' ') != returnType.join(' ')) && err(`Inconsistent return from func ${func}`);
-      else returnType = aop.type
+      // returns conciliation happens at the end of func, so we save expression and return a placeholder
+      returns.push(aop)
 
-      // supposing defers are declared before returns - we wrap content in block
-      if (defers.length) {
-        return aop ? op(`${aop}(br $func)`, aop.type) : op(`(br $func)`)
-      }
+      // find out target return type
+      if (!returns.type) returns.type = [...aop.type]
+      else uptype(returns.type, aop.type)
 
-      return aop ? op(`(return ${aop})`, aop.type) : op(`(return)`)
+      return op(RETURN, aop.type)
     }
 
     // a / b
@@ -636,7 +641,6 @@ Object.assign(expr, {
     if (!b) {
       let aop = expr(a, false)
       if (!defers) err('Bad defer')
-      if (returnType) err('Defer after return')
       defers.push(aop)
       return
     }

@@ -1,5 +1,5 @@
 // builder actually generates wast code from params / current context
-import { globals, locals, funcs, func, initing } from "./compile.js"
+import { globals, locals, funcs, func, initing, returns, RETURN } from "./compile.js"
 import { err } from "./util.js"
 import stdlib from "./stdlib.js"
 import { FLOAT, INT } from "./const.js"
@@ -37,11 +37,11 @@ export function loop(body) {
 // holds number of returns (ops)
 // makes sure it stringifies properly into wasm expression
 // provides any additional info: types, static, min/max etc
-export function op(str = '', type, info = {}) {
+export function op(str = '', type) {
   str = new String(str)
   if (!type) type = []
   else if (typeof type === 'string') type = [type]
-  return Object.assign(str, { type, ...info })
+  return Object.assign(str, { type })
 }
 
 // (local.get) or (global.get)
@@ -86,18 +86,6 @@ export function call(name, ...args) {
   return op(`(call $${name} ${args.join(' ')})`, funcs[name].type)
 }
 
-// wrap expression to float, if needed
-export function float(opStr) {
-  if (opStr.type[0] === 'f64') return opStr
-  if (opStr.startsWith('(i32.const')) return op(opStr.replace('(i32.const', '(f64.const'), 'f64')
-  return op(`(f64.convert_i32_s ${opStr})`, 'f64')
-}
-// cast expr to int
-export function int(opStr) {
-  if (opStr.type[0] === 'i32') return opStr
-  return op(`(i32.trunc_f64_s ${opStr})`, 'i32')
-}
-
 // add include from stdlib and return call
 // NOTE: we cannot remove it due to circular deps
 export function include(name) {
@@ -116,15 +104,63 @@ export function defineFn(name, body, type) {
   funcs[name].type = type
 }
 
+// upgrade/extend type of a to include type b (length and f64)
+export function uptype(a, b) {
+  // we upgrade type to f64 if it mismatches
+  if (a.length < b.length) a.length = b.length
+  for (let i = 0, l = b.length; i < l; i++)
+    if (a[i] !== b[i]) a[i] = 'f64'
+}
+
+// make sure operation has provided type in stack
+// unlike float/int it provides generic type enforcement
+// eg. 1,2 + f64,
+export function type(opStr, type) {
+  let dif = type.findIndex((t, i) => opStr.type[i] != t) // first different type
+
+  if (dif < 0) return opStr
+
+  // if dif type is last in op - upgrade it and fill rest with nans, eg.
+  // /1; /1.1 - single type mismatch
+  // /1,2; /1,2.2 - last type mismatch
+  if (dif >= opStr.type.length - 1) {
+    opStr = float(opStr)
+    // fill up stack with 0
+    // /1; /1,2 - length mismatch
+    // /1,2; /1,2.2,3 - length and last type mismatch
+    for (let i = opStr.type.length; i < type.length; i++) opStr += `(${type[i]}.const nan)`
+    return op(opStr, type)
+  }
+  // /1; /1.1,2 - type and/or length mismatch - needs temp vars
+  else {
+    // /1,2; /1.1,2 - one var type mismatch
+    err('Unimplemented return type mismatch')
+  }
+}
+
+// wrap expression to float, if needed
+export function float(opStr) {
+  if (opStr.type[0] === 'f64') return opStr
+  if (opStr == RETURN) return opStr // ignore return placeholders
+  if (opStr.startsWith('(i32.const')) return op(opStr.replace('(i32.const', '(f64.const'), 'f64')
+  return op(`(f64.convert_i32_s ${opStr})`, 'f64')
+}
+// cast expr to int
+export function int(opStr) {
+  if (opStr.type[0] === 'i32') return opStr
+  if (opStr == RETURN) return opStr // ignore return placeholders
+  return op(`(i32.trunc_f64_s ${opStr})`, 'i32')
+}
+
 /**
  * Pick N input args into stack, like (a,b,c) -> (a,b)
  *
  * @param {number} count - number of elements to pick
- * @param {string} input - stringified operation
+ * @param {string} input - stringified op to pick elements from
  * @returns {string}
  */
 export function pick(count, input) {
-  // (a,b,c) = d - we duplicate d to stack
+  // (a,b,c) = d - we duplicate d to stack N times
   if (input.type.length === 1) {
     // a = b - skip picking
     if (count === 1) return input
@@ -152,7 +188,6 @@ export function pick(count, input) {
 }
 
 // check if node is statically precalculable (see extended constants expressions)
-// FIXME: add constant expressions to watr
 export const isConstExpr = (a) => //(typeof a === 'string' && globals[a]) ||
   a[0] === INT || a[0] === FLOAT
 // || ((a[0] === '+' || a[0] === '-' || a[0] === '*') && a.slice(1).every(isConstExpr))

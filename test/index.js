@@ -23,28 +23,14 @@ import t from 'tst'
 import { compileWat } from './util.js'
 
 
-t.skip('debugs', t => {
+t('debugs', t => {
   const memory = new WebAssembly.Memory({ initial: 1 });
   const importObject = { x: { y: () => 123, z: 123 } };
   let { instance } = compileWat(`
   ;; Define a function that returns an i32 by default,
   ;; but may return an f32 early
-  (func $test (param i32) (result i32)
-    (local f32)    ;; Declare a local variable of type f32
-    local.get 0    ;; Get the function parameter (i32)
-    i32.const 10   ;; Push 10 onto the stack
-    i32.lt_s       ;; Compare param < 10
-    if (result i32)
-      ;; Early return with an f32 cast to i32
-      f32.const 1.5     ;; Push the float value 1.5
-      local.set 1       ;; Store it in local f32
-      local.get 1       ;; Load the float
-      i32.trunc_f32_s   ;; Convert the f32 to an i32 (truncated)
-      return
-    else
-      ;; Return the parameter directly if param >= 10
-      local.get 0       ;; Load the input parameter (i32)
-    end
+  (func $test (param $a f64)(result i32)
+    (i32.const nan)
   )
 
   ;; Export the function

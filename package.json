@@ -20,7 +20,8 @@
   "type": "module",
   "scripts": {
     "test": "node test",
-    "watch": "esbuild --bundle --watch ./index.js --outfile=./sruti.js --format=esm"
+    "watch": "esbuild --bundle --watch ./index.js --outfile=./sruti.js --format=esm",
+    "build": "esbuild --bundle --minify ./index.js --outfile=./sruti.js --format=esm"
   },
   "repository": {
     "type": "git",

@@ -46,9 +46,9 @@ inf = 1/0, nan = 0/0;         ;; eg: alias infinity, NaN
 (a-1)..(a+1);                 ;; computed range
 0..3 * 2;                     ;; mapped range: 0*2, 1*2, 2*2
 (a,b,c) = 0..3 * 2;           ;; destructure: a=0, b=2, c=4
-a ~< 0..10;                   ;; a >= 0 && a < 10
 a ~ 0..10;                    ;; clamp(a, 0, 10);
 a ~= 0..10;                   ;; a = clamp(a, 0, 10);
+a ~< 0..10;                   ;; a >= 0 && a < 10
 a ~/ 0..10;                   ;; normalize(a, 0, 10)
 a ~* 0..10;                   ;; lerp(a, 0, 10);
 
@@ -81,7 +81,7 @@ m[0..] = m[-1..];             ;; reverse
 m[0..] = m[1..,0];            ;; rotate
 
 ;; Conditions
-a ? b;                        ;; if a then b
+a ? b;                        ;; if a then b (else nan)
 sign = a < 0 ? -1 : +1;       ;; ternary conditional
 (2+2 >= 4) ? log(1) :         ;; multiline/switch
   3 <= 1..2 ? log(2) :        ;; else if
@@ -104,7 +104,7 @@ x[..] |> f(#) |> g(#);        ;; pipeline sequence
 
 ;; Functions
 double(n) = n*2;              ;; define a function
-times(m = 1, n -< 1..) = (    ;; optional, clamped arg
+times(m = 1, n ~ 1..) = (    ;; optional, clamped arg
   n == 0 ? /n;                ;; early return
   m * n;                      ;; returns last statement
 );                            ;;

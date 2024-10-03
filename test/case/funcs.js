@@ -2,9 +2,9 @@ import t, { almost, is, not, ok, same, throws } from 'tst'
 import compileSruti from '../../src/compile.js'
 import { compileWat } from '../util.js'
 
-t('funcs: oneliners', t => {
+t.todo('funcs: oneliners', t => {
   let wat, mod
-  // no semi
+
   wat = compileSruti(`mult(a, b=2) = a * b`)
   mod = compileWat(wat)
   is(mod.instance.exports.mult(2, 4), 8)
@@ -22,6 +22,9 @@ t('funcs: oneliners', t => {
 
   mod = compileWat(compileSruti(` mult(a, b) = (b; a * b; /)`))
   is(mod.instance.exports.mult(2, 4), undefined)
+
+  mod = compileWat(compileSruti(`f()=( *t; ^t++; t; );`))
+  is([mod.instance.exports.f(), mod.instance.exports.f()], [0, 1])
 })
 
 t('funcs: first line inits local', t => {

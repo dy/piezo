@@ -1,4 +1,4 @@
-import sone from '../sone.js'
+import sone from '../sruti.js'
 import watr from '../node_modules/watr/watr.js'
 
 class MeloProcessor extends AudioWorkletProcessor {
@@ -13,6 +13,7 @@ class MeloProcessor extends AudioWorkletProcessor {
       const module = await WebAssembly.compile(buffer)
       const instance = await WebAssembly.instantiate(module);
       this.f = instance.exports.f
+      console.log('compiled', this.f(), this.f(), this.f(), this.f(), this.f(), this.f(), this.f(), this.f(), this.f(), this.f(), this.f(), this.f(), this.f(), this.f(), this.f(), this.f(), this.f(), this.f(), this.f(), this.f())
     };
   }
   process(inputs, outputs, parameters) {
