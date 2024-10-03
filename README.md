@@ -18,7 +18,7 @@ Compiles to compact 0-runtime WASM with linear memory.<br/>
 ?: ?                          ;; conditions
 x[i] x[]                      ;; member access, length
 a..b a.. ..b ..               ;; ranges
-|> _                          ;; pipe/loop, map
+|> #                          ;; pipe/loop, map
 ./ ../ /                      ;; continue/skip, break/stop, return, void
 ~ ~= ~< ~/ ~*                 ;; clamp, normalize, lerp
 * ^                           ;; static, defer
@@ -46,9 +46,9 @@ inf = 1/0, nan = 0/0;         ;; eg: alias infinity, NaN
 (a-1)..(a+1);                 ;; computed range
 0..3 * 2;                     ;; mapped range: 0*2, 1*2, 2*2
 (a,b,c) = 0..3 * 2;           ;; destructure: a=0, b=2, c=4
+a ~< 0..10;                   ;; a >= 0 && a < 10
 a ~ 0..10;                    ;; clamp(a, 0, 10);
 a ~= 0..10;                   ;; a = clamp(a, 0, 10);
-a ~< 0..10;                   ;; a >= 0 && a < 10
 a ~/ 0..10;                   ;; normalize(a, 0, 10)
 a ~* 0..10;                   ;; lerp(a, 0, 10);
 
@@ -95,19 +95,18 @@ a && b || c;                  ;; (a and b) or c
   i < 0 ? a ../;              ;; if item < 0 stop (break)
 );                            ;;
 x[..] |> f(#) |> g(#);        ;; pipeline sequence
-x[..] |>= # * 2;              ;; overwrite source
 (i = 0..w) |> (               ;; nest iterations
   (j = 0..h) |> f(i, j);      ;; f(x,y)
 );                            ;;
-((a,b) = 0..10) |> a+b;       ;; iterate by pairs
+((a,b) = 0..10) |> a+b;       ;; iterate pairs
 (x,,y) = (a,b,c) |> # * 2;    ;; capture result x = a*2, y = c*2;
 .. |> i < 10 ? i++ : ../;     ;; while i < 10 i++
 
 ;; Functions
 double(n) = n*2;              ;; define a function
-times(m = 1, n ~ 1..) = (     ;; optional, clamped arg
+times(m = 1, n -< 1..) = (    ;; optional, clamped arg
   n == 0 ? /n;                ;; early return
-  m * n;                      ;; default return
+  m * n;                      ;; returns last statement
 );                            ;;
 times(3,2);                   ;; 6
 times(4), times(,5);          ;; 4, 5: optional, skipped arg

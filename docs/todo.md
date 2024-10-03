@@ -34,7 +34,7 @@
   * [ ] static groups `*(a,b,c)`
 * [x] `^` for deferred
   * [x] preliminary return with defer `f()=(^i++;i>10?./1;)` - likely via block as `f()=(ret;(i>10?ret=1);i++;ret)`
-* [x] conciliate returns types -> throw if inconsistent
+* [ ] conciliate returns types -> throw if inconsistent
 * [x] make `/`, `/a` as function return
 * [ ] make nan as null in fn arguments (`config(a,,b,c)`)
 * [ ] range iterator via pipe
@@ -150,6 +150,7 @@
   * [ ] Sine gen example
 * [ ] Ignore unassigned immediate constructs like `[1,2,3]` or `"abc"`.
 * [ ] All FIXMEs
+* [ ] customizable float type
 
 ## 1.0 MVP
 

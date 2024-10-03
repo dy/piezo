@@ -1,139 +1,5 @@
 ## [x] name -> sruti
 
-  * soufn, sofn, sofun, so-fun, funzo, zfun
-  * sound-fu, zound-fu, zo-fu, sonfu, sone-fu
-  * sone, sones, sonx, sounx, sonez, sonz, sounz
-    + sone-script (sonscript)
-    + unit of sound measurement
-    + synth.s, synth.sone
-      + both signal and sound
-    + doesn't attach to audio as much: can be signals also
-    + like .tone but .sone - more about signals/noises
-    + legacy own name
-      - smells old
-  * sonnes, sonn, sounes
-    + is sonnes (sounds in french), sones, sonne in German
-  * sonra, sondra
-    + feminine
-    + ra sound (Radha)
-    + mystical aspect, like spect
-  * sono
-    - close to suno
-  * sond, sondr, sounder? sounr? soonr?
-  * sonl? sonal?
-    + sona language
-    + soun
-  * sond?
-  * sone / sonescript
-    + like sanskrit
-    + sound script
-    + son is common root for sound
-    + (sonata, song, sone, )
-    + .son extension is ok: reverb.son
-    + sanskrit (lamish but ok teaches humbleness)
-    + le son
-    + sonr naturally grows as IDE
-    - son is confusing with a person
-    - weak association with sound
-      +~ same as other options
-    ~ script has association with javascript, or roots from that (assemblyscript etc) - to mind that point.
-    → if we root from assembly, it has more sense to call sont
-  * soneslang?
-  * solo? solr? soloscript? solos?
-    - taken
-    + like mono
-    + viznut.solo
-    + запилить соло
-    - not unique enough
-  * sola
-    + sound language
-    + sol la
-    + viola, triola, sola
-    - not colloquial
-  * sound-fun
-    + like "sounds fun" phrase.
-  * sonf?
-    + sound-functions
-    + sound-fun
-    + sound-formulas
-    + sound-fu
-  * sonr?
-    . maybe we should just keep name: it is short, clear, keeps .son files, playground
-  * soun
-    + short from sound
-    + abbreviation for sone
-    +~ soul
-    +~ sone
-    +~ sour
-
-  * line noise (lino)
-    - npm is taken and dispute is hard
-      ? redirect to `@audio-lab/lino`?
-    + sonlang can be more generic than just sound: any linear signals
-    + looks like line noise
-      + `linoify` = line noisify
-    + produces line noise
-    + matches `mono`
-    + lino is beginning of "linotype"
-    - good thing (for God) cannot be called bad words...
-      ~+ irony? God doesn't need things
-    - `.son` extension is missing
-      + `.lin` extension is pretty cool too, like flax
-    - `.lin` vs `.ln` vs `.li` vs `.lino`, `.l`
-    + it's more generic than sound
-  * lisa
-    ~+ like lino
-    + mono -> lisa
-    + reminds Julia lang
-    + file can be named literally mono.lisa
-    - already exists: https://github.com/Somainer/lisa-lang
-    - super-confusable
-  * lyno
-    + free
-    + alliteration to lino
-  * loni, lony
-  * looney
-    + looney tunes
-  * coo-coo
-    + sound
-  * noli
-    + reverse lino
-    + noli in russian
-
-  * mell
-    + melody language
-    + bell
-    + mell tunes
-    + .mel .me
-    + mellifluous (sweet-sounding)
-
-  * mela
-    + melody language
-    + metronome language
-    - .mela
-      + kirtan.mela
-        - source.mela is meaningless as "congregation"
-    + sanskrit for "tune"
-    + ChatGPT recommends it as unique name
-    - it means gathering, has nothing to do with melodies, there's a bunch of non-kirtan melas
-
-  * mel
-    + short
-    + in-line with other 3-letter langs
-    + extension .mel matches language name
-    + mel scale
-    - too programming / physycal / dry
-
-  * ~~melo~~
-    + short from melody
-    + alliterates to mono
-    + dy/melo
-    - not clear extension
-    - 4 letters
-    - https://github.com/mistodon/melo
-
-  * lila
-    + sanskrit for "play"
 
   * auriel, aureil, aury
     + available
@@ -193,6 +59,25 @@
     - `.aud` is australian dollar
   * audie
     + name
+  * audx
+  * auss
+  * auzio
+  * acoust, acoustica, acoustical
+
+  * beato
+  * beat, baet, beaut, bitr
+    + kick.beat
+  * beatr, beatl, bitl
+  * beatok
+
+  * chor, choir
+  * cyntia, synthia
+  * coo-coo
+    + sound
+  * coustic
+
+  * deci
+  * dizz
 
   * diau, dioau
     + play on au-di, like diaudiaudiau
@@ -203,6 +88,14 @@
     + audy
     + adya
     + gaudiya
+
+  * echo
+  * essay
+  * etude
+
+  * fuzz, buzz, hizz
+  * fono
+    - kick.fon,
 
   * gaur, gauro, gour
     + free
@@ -217,17 +110,181 @@
     - taken
   * gaudio
     + audio + gaudia
+  * gita
 
+  * gauzz, gauz
+  * gramo
+
+  * hear
+
+  * ilang
+    + alternative prononciation of ylang-ylang
+    + iPhone, iLang
+      - cheesy
+    + ivanov lang
+    + npm is free
+    + kirtan.i, mono.i, sobel.i, viznut.i, predestined-fate.i
+
+  * lila
+    + sanskrit for "play"
+
+  * line noise (lino)
+    - npm is taken and dispute is hard
+      ? redirect to `@audio-lab/lino`?
+    + sonlang can be more generic than just sound: any linear signals
+    + looks like line noise
+      + `linoify` = line noisify
+    + produces line noise
+    + matches `mono`
+    + lino is beginning of "linotype"
+    - good thing (for God) cannot be called bad words...
+      ~+ irony? God doesn't need things
+    - `.son` extension is missing
+      + `.lin` extension is pretty cool too, like flax
+    - `.lin` vs `.ln` vs `.li` vs `.lino`, `.l`
+    + it's more generic than sound
+  * lisa
+    ~+ like lino
+    + mono -> lisa
+    + reminds Julia lang
+    + file can be named literally mono.lisa
+    - already exists: https://github.com/Somainer/lisa-lang
+    - super-confusable
+  * lyno
+    + free
+    + alliteration to lino
+  * loni, lony
+  * looney
+    + looney tunes
+
+  * mell
+    + melody language
+    + bell
+    + mell tunes
+    + .mel .me
+    + mellifluous (sweet-sounding)
+  * mela
+    + melody language
+    + metronome language
+    - .mela
+      + kirtan.mela
+        - source.mela is meaningless as "congregation"
+    + sanskrit for "tune"
+    + ChatGPT recommends it as unique name
+    - it means gathering, has nothing to do with melodies, there's a bunch of non-kirtan melas
+  * mel
+    + short
+    + in-line with other 3-letter langs
+    + extension .mel matches language name
+    + mel scale
+    - too programming / physycal / dry
+  * ~~melo~~
+    + short from melody
+    + alliterates to mono
+    + dy/melo
+    - not clear extension
+    - 4 letters
+    - https://github.com/mistodon/melo
+  * medl
+  * melism
+  * melophone
+
+  * noli
+    + reverse lino
+    + noli in russian
   * naad
     + cosmic sound
     - .nd? .naad?
     + free
     - hindoo
+  * niva
+    + anagram to ivan-ov
+    + anagram to vina
+    + anagram to vani
+    + anagram to navi (ocean)
+    ~ residence, abode
+    ~ .n
+  * nowr
+    + sonr, latr
+    + iva-now
+    - `now` is taken by vercel
 
-  * beat, baet, beaut, bitr
-    + kick.beat
-  * beatr, beatl, bitl
+  * onna, ona, oha
 
+  * patchr
+  * phono
+  * phaso, phasae, phas
+    + free
+    + more generic than just sound
+
+  * raev
+    + рёв
+
+  * soufn, sofn, sofun, so-fun, funzo, zfun
+  * sound-fu, zound-fu, zo-fu, sonfu, sone-fu
+  * sonnes, sonn, sounes
+    + is sonnes (sounds in french), sones, sonne in German
+  * sonra, sondra
+    + feminine
+    + ra sound (Radha)
+    + mystical aspect, like spect
+  * sono
+    - close to suno
+  * sond, sondr, sounder? sounr? soonr?
+  * sonl? sonal?
+    + sona language
+    + soun
+  * sond?
+  * sone, sones, sonx, sounx, sonez, sonz, sounz
+    + sone-script (sonscript)
+    + unit of sound measurement
+    + synth.s, synth.sone
+      + both signal and sound
+    + doesn't attach to audio as much: can be signals also
+    + like .tone but .sone - more about signals/noises
+    + legacy own name
+      - smells old
+  * sone / sonescript
+    + like sanskrit
+    + sound script
+    + son is common root for sound
+    + (sonata, song, sone, )
+    + .son extension is ok: reverb.son
+    + sanskrit (lamish but ok teaches humbleness)
+    + le son
+    + sonr naturally grows as IDE
+    - son is confusing with a person
+    - weak association with sound
+      +~ same as other options
+    ~ script has association with javascript, or roots from that (assemblyscript etc) - to mind that point.
+    → if we root from assembly, it has more sense to call sont
+  * soneslang?
+  * solo? solr? soloscript? solos?
+    - taken
+    + like mono
+    + viznut.solo
+    + запилить соло
+    - not unique enough
+  * sola
+    + sound language
+    + sol la
+    + viola, triola, sola
+    - not colloquial
+  * sound-fun
+    + like "sounds fun" phrase.
+  * sonf?
+    + sound-functions
+    + sound-fun
+    + sound-formulas
+    + sound-fu
+  * sonr?
+    . maybe we should just keep name: it is short, clear, keeps .son files, playground
+  * soun
+    + short from sound
+    + abbreviation for sone
+    +~ soul
+    +~ sone
+    +~ sour
   * synl
   * syne
     + sine modified - cooler than sine
@@ -245,69 +302,18 @@
   * sinu
   * sinusoid
   * sina
-
   * soid
-  * zoid
-  * zynt
   * sen
-
   * symph
     + symphony
     + more personal
   * symf
-  * fuzz, buzz, hizz
-  * patchr
-  * phono
-  * deci
-  * vibr
-  * chor, choir
-  * timr
-  * zound
-    - everything with Z is now war-related
-  * onna, ona, oha
-
-  * nowr
-    + sonr, latr
-    + iva-now
-    - `now` is taken by vercel
-
-  * fono
-    - kick.fon,
-  * cyntia, synthia
-  * phaso
-  * beato
   * sizz
     + swizz
     + noise kind
     + zz
     + sister (Sercy)
   * swyz
-  * dizz
-  * auss
-  * gauzz, gauz
-  * auzio
-  * zvyk
-  * zwk
-    + free
-    + 3-letter
-    + russian "sound"
-    + starts with z
-  * zwn
-  * zwch
-  * wyzg
-  * gramo
-  * tonarm
-  * tona
-  * tono
-    + lino, mono(-tono)
-    + `kick.ton`, `clap.ton` is _cool_
-    + noto-
-    - no strong feelings
-    - associates with Antony, which
-  * tuno
-
-  * medl
-  * tych, tycho, tiho
   * swist
   * shym
     + shyam
@@ -319,6 +325,58 @@
   * suri
     + name of Krishna
     + wisdom
+  * shruti, sruti
+    + that which is heard
+    + reference to vedas
+    + sruti-lang
+    + cryptic
+    + factually floatbeats are what sruti-box is doing
+    + sruti.box for collection of floatbeats
+    - @shruti/@sruti org is taken
+    - has too strong Indian sense
+      -? web-audio build on sruti
+    - срути
+    - shruti or sruti - confusion
+  * sonarm
+    + tonarm + sone
+  * sonant
+  * sonat
+  * syntone, sinton, synton, syntonic
+  * sonm, solm
+  * sonant, sonorant
+
+  * timbr
+  * tonr, tonl
+  * tonar, tonae, toneau, tonau
+    + bureao
+  * tonarm, tonearm
+    + t for time
+    + .t extension can refer to t argument
+    + sound term
+    - taken for unknown person
+  * tonx
+    + tones
+    + tonics
+  * tons
+  * tone
+  * tona
+  * tono
+    + lino, mono(-tono)
+    + `kick.ton`, `clap.ton` is _cool_
+    + noto-
+    - no strong feelings
+    - associates with Antony, which
+  * tuno
+  * tuni
+  * tych, tycho, tiho
+  * tonic
+  * tonae
+    + free
+    + tone, sprae
+  * tonola
+
+  * utone, uton
+  * uphone
 
   * veena
     + narada's playing instrument
@@ -332,22 +390,9 @@
     + associated with Saraswati - goddess of arts, music, knowledge, speech.
     + anagram to ivan(ov)
     - taken as v-ani! Heck!
-  * niva
-    + anagram to ivan-ov
-    + anagram to vina
-    + anagram to vani
-    + anagram to navi (ocean)
-    ~ residence, abode
-    ~ .n
+  * vibr
 
-  * z
-    + zlang - zound/zvuk lang
-    + zzfx
-    - z language, z++ language exist
-  * zz
-
-  * raev
-    + рёв
+  * wyzg
   * waev
 
   * ylang
@@ -358,21 +403,38 @@
     + yyfx
     + kirtan.y, mono.y, sobel.y, viznut.y, predestined-fate.y
       + source.y
-  * ilang
-    + alternative prononciation of ylang-ylang
-    + iPhone, iLang
-      - cheesy
-    + ivanov lang
-    + npm is free
-    + kirtan.i, mono.i, sobel.i, viznut.i, predestined-fate.i
 
-  * shruti, sruti
-    + that which is heard
-    + reference to vedas
-    + sruti-lang
-    + cryptic
-    + factually floatbeats are what sruti-box is doing
-    + sruti.box for collection of floatbeats
+  * z
+    + zlang - zound/zvuk lang
+    + zzfx
+    - z language, z++ language exist
+  * zz
+  * zvyk
+  * zwk
+    + free
+    + 3-letter
+    + russian "sound"
+    + starts with z
+  * zwn
+  * zwch
+    * zoid
+  * zynt
+  * zound
+    - everything with Z is now war-related
+    - headplugs
+
+### [ ] Name matrix
+
+  * Prefix: syno, zylo, auro, mono, phono, tono, melo, micro, nano, pano, peri, neo, chrono, ambi, duro, uber/ober
+  * Postfix: -on, -ona, -l, -la, -al, -ala, -ula, -ela, -lo, -lu, -r, -a, -ar, -er, -ara, -or, -ora, -e, -ea, -ae, -oa, -oe, -ue, -ee, -eau, -eon, -eo, -iou, -o, -ou, -au, -ieu, -q, -y, -ya, -ay, -aya, -ey, -ant, -ata, -ine, -ism, -um, -ium, -us, -ify, -ory, -esque, -ique, -quoe, -quai, -oid, -ure, -ance, -ence, -iq, -ix, -ys, -yn, -ux, -yr, -io, -is, -os, -yre
+    * Vowels: aa, ae, ai, ao, au, ay, ea, ee, ei, eo, eu, ey, ia, ie, ii, io, iu, iy, oa, oe, oi, oo, ou, oy, ua, ue, ui, uo, uu, uy, ya, ye, yi, yo, yu, yy
+  * Ligatures: ae, oe, fi, fl, ff
+  * Doubles: sonne, tonne, mello, synn, fuzz, wuzz
+    * Consonant: bb, cc, dd, ff, gg, hh, jj, kk, ll, mm, nn, pp, qq, rr, ss, tt, vv, xx, zz
+      * Pairs: bl, bp, br, ch, ck, cl, cr, dr, dt, fl, fr, fv, gk, gl, lb, lm, mb, mn, nm, pl, pr, rl, sc, scr, sh, shr, sk, sl, sm, sn, sp, spl, spr, st, str, sw, sz, th, thw, tr, ts, tw, wh, wr, wv.
+  * Alliterations: fuzzy-wuzzy, susi-musi, sus-wus
+  * Transformations: noise -> noiz, sine -> syne
+    * Vowels: o -> au/ou -> aou/eau -> oeau, e -> oe/ea -> eau, i/y -> yi, ay - aie - aye- ae
 
 ### [x] Compiler: Should it compile to wat or to wasm? → wat for now
 
@@ -1215,25 +1277,25 @@
     - noisy code of creating result holder var, performing state update, returning result
     + kind of natural
     - state vars really need it, `x()=(*a=[0,1];>>a[1..]=a[0..];)`
-  * `x()=(@a;b,c;@(d)); x()=(*i=0;@i++;)`
+  * ~~`x()=(@a;b,c;@(d)); x()=(*i=0;@i++;)`~~
     + `@` for after
     + good candidate by chatgpt as it's used for "annotations in Java/C#, so associated with modifying behavior"
     - brings `@` into local scope
     - not straight meaning
-    - makes `@` an opertator
-  * `x() = (//a; b,c; //d;)`
+    - makes `@` an opertator - it's reserved for name now
+  * ~~`x() = (//a; b,c; //d;)`~~
     - strong association with comment
       + maybe that's a pro
     + if `./` is return, `//` means after return
     - `x() = (#a; //a++;)` looks intimidating
-  * `x() = (*i=0;\i++;)`, `x()=(\a; b,c,; \d;)`, `x(a) = (\log(a); \a+=1; a)`
+  * ~~`x() = (*i=0;\i++;)`, `x()=(\a; b,c,; \d;)`, `x(a) = (\log(a); \a+=1; a)`~~
     - a bit too heavy by meaning
     - `\` doesn't match up with anything and has universal sense as `escape`
     - ~~takes away cool `\\` as comments~~
   * ~~`x() = (*i=0;**i++;)`, `x()=(**a; b,c,; **d;)`, `x(a) = (**log(a); **a+=1; a)`~~
     * `x()=(*a=[0,1];**a[1..]=a[0..])`
     - creates faux double meaning for `*`
-  * `x() = (/a; b,c; /d;)`, `x()=(*i=0;/i++;*phase=0;/phase+=t;)`, `x()=(/log(a))`
+  * ~~`x() = (/a; b,c; /d;)`, `x()=(*i=0;/i++;*phase=0;/phase+=t;)`, `x()=(/log(a))`~~
     + one-symbol
     + associates with reddit tags
     + associates with HTML close-elements
@@ -1249,6 +1311,7 @@
     - `.. /a` vs `../ a`
     - if `./` is continue, then `/` is weird for defer
     - `#x;/x++` has slight dissonance
+    - used for "return"
   * ~~`x() = (&a; b,c; &d)`~~
     + meaning of "and also this"
     + also "counterpart" of `*` from C-lang
@@ -1256,16 +1319,17 @@
     - has meaning as "part" of identifier, not operator (higher precedence)
       - ie. `&i++` raises confusion, it's not `&(i++)`, it's `(&i)++`
   * `x() = (~a; b,c; ~d)`
-    + meaning of "destructor"
+    + very strong sense of "destructor"
     + relatively safe within other options: `/i++, \i++, &i++, 'i++, #i++, @i++, >>i++, .i++`
     + follows spirit of C in terms of "common" operators choice `*, ~`
     + `~` means "after all that is here"
     + `~` also means "delete" or "erase" in markdown
     + minimal noise
-    + a candidate by chatgpt (not mentioned) since brings sense of "something in the future (skip this noise)"
+    + a candidate by chatgpt since brings sense of "something in the future (skip this noise)"
     - subtle dissonance with `*`: `x()=(*i=0;~i++;)`
     - `x()=(*i;~++i)` is too cryptic: `~` doesn't stand out from regular operators
       ~ `x()=(#i=0;~i++;)`
+      ~ `x()=(#i=0;^++i;)`
     - reserved for unary "binary inversion", already married
     - reserved for ranges
   * ~~`x() = (a.; b,c; d.)`~~
@@ -1315,8 +1379,8 @@
   * ~~`x()=(*i=0;'i++)`~~
     + refers to footnote
     - quotes usually come in pairs
-  * `x()=(*i=0;#i++)`
-    + refers to footnote
+  * ~~`x()=(*i=0;#i++)`~~
+    + refers to footnote~~
     + like hashtags, comes afterwards
     - a bit too heavy to reserve such prominent operator for just deferring
     - reserves # as operator
@@ -5859,3 +5923,31 @@
 ## [ ] Errors: shortness or specificity?
   + Specificity allows better identifying
   - It bloats the size
+
+## [ ] Function return: type conciliation
+
+  1. Enforce explicit syntax consistency
+    + consistent syntax `f()=(a?/1.0,0.0;b?/2.0,3.0;4.1,0.0)`
+    - `f()=(a?/1; b?/2.)` throws error
+      - can be annoying fixing declarations all around
+
+  2. Autoconciliation
+    + permits `f()=(a?/1;b?/2,3;4.1)`
+      ~- creates wrong expectation from function as if it has varied return
+      * int/float must be only implicit optimization, not UI thing
+    + no need to search for all returns
+    + that's the principle of language
+    - can be unpredictable: changing main return changes all prev returns by default
+      ~+ ugrade is relatively safe and anticipated: just numbers to numbers, max length of outputs
+      + allows to shorten code, eg. `f() = (a?/; 1,2,3)` would just bail out null case meaningfully
+    - less efficient due to double scan
+      ~+ no need to double scan
+    - not clear how to do it, since we may track variables
+      ? generate syntax tree instead of strings
+      ~+ can produce strings with `$<return>` fields that are replaced after fn body with conciliated type conversion
+
+  3. Force float for fn output
+    + fn args are float-only anyways
+      - should not be the case
+        ~ eg. can be args type can be figured out from defaults
+    - not nice to pay with performance for syntax sugar
