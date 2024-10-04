@@ -23,8 +23,10 @@ t('parse: identifiers', t => {
 
 t('parse: numbers', t => {
   is(parse('16, 0x10, 0b010000'), [',', [INT, 16], [INT, 16], [INT, 16]]);
-  is(parse('16.0, .1, 1e+3, 2e-3'), [',', [FLOAT, 16], [FLOAT, 0.1], [FLOAT, 1e3], [FLOAT, 2e-3]]);
+  is(parse('16.0, .1'), [',', [FLOAT, 16], [FLOAT, 0.1]]);
+  is(parse('1e+3, 2.2e-3'), [',', [INT, 1e3], [FLOAT, 2.2e-3]]);
   is(parse('true=0b1; false=0b0'), [';', ['=', 'true', [INT, 1]], ['=', 'false', [INT, 0]]]);
+  is(parse('0..10'), ['..', [INT, 0], [INT, 10]]);
 
   // throws(() => parse('12.'), /Bad/)
   throws(() => parse('12e+'), /Bad/)

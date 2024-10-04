@@ -9,7 +9,7 @@ export const INT = 'int', FLOAT = 'flt'
 export default parse
 
 // char codes
-const OPAREN = 40, CPAREN = 41, OBRACK = 91, CBRACK = 93, SPACE = 32, QUOTE = 39, DQUOTE = 34, PERIOD = 46, BSLASH = 92, SLASH = 47, _0 = 48, _9 = 57, COLON = 58, SEMICOLON = 59, HASH = 35, AT = 64, PAREN_OPEN = 40, PAREN_CLOSE = 41, PLUS = 43, MINUS = 45, GT = 62
+const OPAREN = 40, CPAREN = 41, OBRACK = 91, CBRACK = 93, SPACE = 32, QUOTE = 39, DQUOTE = 34, PERIOD = 46, BSLASH = 92, SLASH = 47, _0 = 48, _1 = 49, _8 = 56, _9 = 57, _A = 65, _F = 70, _a = 97, _f = 102, _E = 69, _e = 101, _b = 98, _o = 111, _x = 120, COLON = 58, SEMICOLON = 59, HASH = 35, AT = 64, PAREN_OPEN = 40, PAREN_CLOSE = 41, PLUS = 43, MINUS = 45, GT = 62
 
 // precedences
 const PREC_SEMI = 1, // a; b;
@@ -44,22 +44,26 @@ const isNum = c => c >= _0 && c <= _9
 const num = (a) => {
   if (a) err(); // abc 023 - wrong
 
-  let n = next(isNum), sep = '', d = '', unit; // numerator, separator, denominator, unit
+  let n, t = INT, unit, node; // numerator, separator, denominator, unit
 
-  let c = cur.charCodeAt(idx + 1)
+  // parse prefix
+  n = next(c => c === _0 || c === _x || c === _o || c === _b)
 
-  if (numTypes[cur[idx]] && (isNum(c) || c === PLUS || c === MINUS)) {
-    sep = skip()
-    if (c === PLUS || c === MINUS) d = skip(), d += (next(isNum) || err('Bad number ' + n + sep + d))
-    else d = next(isNum)
-    if (sep && !d) err('Bad number ' + n + sep + d)
+  // 0x000
+  if (n === '0x') n = parseInt(next(c => isNum(c) || (c >= _a && c <= _f) || (c >= _A && c <= _F)), 16)
+  // 0o000
+  else if (n === '0o') n = parseInt(next(c => c >= _0 && c <= _8), 8)
+  // 0b000
+  else if (n === '0b') n = parseInt(next(c => c === _1 || c === _0), 2)
+  // 1.2, 1e3, -1e-3
+  else {
+    n += next(isNum)
+    if (cur.charCodeAt(idx) === PERIOD && isNum(cur.charCodeAt(idx + 1))) n += skip() + next(isNum), t = FLOAT
+    if (cur.charCodeAt(idx) === _E || cur.charCodeAt(idx) === _e) n += skip(2) + next(isNum)
+    n = +n
+    if (n != n) err(`Bad number ${n}`)
   }
-
-  if (!n && !d) err('Bad number')
-
-  // subscript takes 0/nullish value as wrong token, so we must wrap 0 into token
-  // can be useful after (hopefully)
-  let node = (numTypes[sep])(n, d);
+  node = [t, n]
 
   // parse units, eg. 1s
   if (unit = next(c => !isNum(c) && isId(c))) node.push(unit)
@@ -69,17 +73,12 @@ const num = (a) => {
 
   return node
 }
-const numTypes = {
-  '': (n, d) => [INT, +n],
-  '.': (n, d) => [FLOAT, Number(n + '.' + d)],
-  'e': (n, d) => [FLOAT, Number(n + 'e' + d)],
-  'x': (n, d) => [INT, parseInt(d, 16)],
-  'b': (n, d) => [INT, parseInt(d, 2)]
-}
-// 0-9
-for (let i = _0; i <= _9; i++) lookup[i] = num;
+
 // .1
 lookup[PERIOD] = a => !a && num();
+
+// 0-9
+for (let i = _0; i <= _9; i++) lookup[i] = num;
 
 
 // strings
