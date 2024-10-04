@@ -418,7 +418,7 @@ Object.assign(expr, {
       }
 
       // *a=0; becomes a!=a?a=0;
-      globals[`${func}.${a}`] = { type: 'f64', init: '(f64.const nan)' }; // FIXME: make signaling nan:0x01 (requires watr)
+      globals[`${func}.${a}`] = { type: 'f64', init: op('(f64.const nan)') }; // FIXME: make signaling nan:0x01 (requires watr)
       return expr(['?', ['!=', a, a], ['=', a, b]], out)
     }
 
@@ -537,6 +537,15 @@ Object.assign(expr, {
     return op(`(f64.add ${float(aop)} ${float(bop)})`, 'f64')
   },
   '*'([, a, b], out) {
+    // *a;
+    if (!b) {
+      locals[a] ||= { static: `${func}.${a}`, type: 'f64' }
+
+      // *a=0; becomes a!=a?a=0;
+      globals[`${func}.${a}`] = { type: 'f64', init: op('(f64.const nan)') };
+      return expr(a, out)
+    }
+
     // group multiply
     let aop = expr(a, out), bop = expr(b, out)
     if (!out) return op(aop + bop);
