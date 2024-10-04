@@ -1,10 +1,10 @@
 import t, { almost, is, not, ok, same, throws } from 'tst'
-import compileSruti from '../../src/compile.js'
+import compileZ from '../../src/compile.js'
 import { compileWat } from '../util.js'
 
 t('loops: range global', t => {
   let wat, mod, arr
-  wat = compileSruti(`x=[1..3]; 0..x[] |> x[_]=_+1; x`)
+  wat = compileZ(`x=[1..3]; 0..x[] |> x[_]=_+1; x`)
   mod = compileWat(wat);
   let { memory, x } = mod.instance.exports
   arr = new Float64Array(memory.buffer, x.value, 3)
@@ -15,7 +15,7 @@ t('loops: range global', t => {
 
 t('loops: range local', t => {
   let wat, mod
-  wat = compileSruti(`x=[1..3], c = 0, fill() = (0..x[] |> (x[_]++;c++))`)
+  wat = compileZ(`x=[1..3], c = 0, fill() = (0..x[] |> (x[_]++;c++))`)
   mod = compileWat(wat)
   let { memory, x, fill, c } = mod.instance.exports
 
@@ -34,7 +34,7 @@ t('loops: range local', t => {
 
 t.todo('loop: current item write', t => {
   let wat, mod
-  wat = compileSruti(`x=[1..3]; x[..] |> _+=1; x`)
+  wat = compileZ(`x=[1..3]; x[..] |> _+=1; x`)
   mod = compileWat(wat)
   let { memory, x } = mod.instance.exports
   arr = new Float64Array(memory.buffer, x.value, 3)
@@ -44,7 +44,7 @@ t.todo('loop: current item write', t => {
 })
 
 t('loop: range in range', t => {
-  let wat = compileSruti(`a=[..9], f(a,w,h)=(
+  let wat = compileZ(`a=[..9], f(a,w,h)=(
     0..w |> (x=_;
       0..h |> (y=_;
         a[y*w + x] = x+y*w;
@@ -61,13 +61,13 @@ t('loop: range in range', t => {
 })
 
 t.todo('loop: as fn return', () => {
-  let wat = compileSruti(`x=[1..3]; fill() = (0..x[] |> x[_]=_+1); fill, x`)
+  let wat = compileZ(`x=[1..3]; fill() = (0..x[] |> x[_]=_+1); fill, x`)
 })
 
 t
 
 t.todo('compile: current item assignment', t => {
-  let wat = compileSruti(`
+  let wat = compileZ(`
     x=[..4];
     (i=..3) |> x[i]=i*2`)
   let mod = compileWat(wat)
@@ -82,7 +82,7 @@ t.todo('compile: current item assignment', t => {
 })
 
 t.todo('loop: in loop', t => {
-  let wat = compileSruti(`
+  let wat = compileZ(`
     x=[..4];
     (i=..2) |> (
       (j=..2) |> (
@@ -104,7 +104,7 @@ t.todo('loop: in loop', t => {
 })
 
 t.todo('loop: over list', t => {
-  let wat = compileSruti(`x = [1,2,3]; y = x <| x -> x * 2`)
+  let wat = compileZ(`x = [1,2,3]; y = x <| x -> x * 2`)
   let mod = compileWat(wat)
   let { memory, y } = mod.instance.exports
   let arr = new Float64Array(memory.buffer, 0, 3), ptr = y.value
@@ -116,7 +116,7 @@ t.todo('loop: over list', t => {
 t.todo('loop: iterate over range', () => {
   let wat, mod, memory, a, b
 
-  wat = compileSruti(`a = (x = (1, 3..5, a[1..])) |> x;`)
+  wat = compileZ(`a = (x = (1, 3..5, a[1..])) |> x;`)
   // supposed to compile to
   // 0.out ;; output of 0 group
   // 0.idx = 0 ;; 0 group element index

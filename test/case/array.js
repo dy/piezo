@@ -1,12 +1,12 @@
 import t, { almost, is, not, ok, same, throws } from 'tst'
-import compileSruti from '../../src/compile.js'
+import compileZ from '../../src/compile.js'
 import { compileWat } from '../util.js'
 
 t('array: basic', t => {
-  let wat = compileSruti(`x = [1]`)
+  let wat = compileZ(`x = [1]`)
   let mod = compileWat(wat)
 
-  wat = compileSruti(`x = [1.1, 2.22, 3.333], y = [4.1234,5.54321,654321.123456,7.7777777]; x,y,xl=x[],yl=y[]`)
+  wat = compileZ(`x = [1.1, 2.22, 3.333], y = [4.1234,5.54321,654321.123456,7.7777777]; x,y,xl=x[],yl=y[]`)
   mod = compileWat(wat)
   let { memory, x, y, xl, yl } = mod.instance.exports
   let xarr = new Float64Array(memory.buffer, x.value, 3)
@@ -23,7 +23,7 @@ t('array: basic', t => {
 })
 
 t('array: basic local', t => {
-  let wat = compileSruti(`x() = [1, 2]`)
+  let wat = compileZ(`x() = [1, 2]`)
   let mod = compileWat(wat)
   let { memory, x } = mod.instance.exports
   let x0 = new Float64Array(memory.buffer, x(), 2)
@@ -34,7 +34,7 @@ t('array: basic local', t => {
 })
 
 t.todo('array: from static range', t => {
-  let wat = compileSruti(`x=[..3], y=[0..4]; z=[4..0], x,y,xl=x[],yl=y[]`)
+  let wat = compileZ(`x=[..3], y=[0..4]; z=[4..0], x,y,xl=x[],yl=y[]`)
   // console.log(wat)
   let mod = compileWat(wat)
   let { memory, x, y, xl, yl, z } = mod.instance.exports
@@ -57,7 +57,7 @@ t.todo('array: from static range', t => {
 })
 
 t('array: from dynamic range', t => {
-  let wat = compileSruti(`a=3, x=[0..a], xl=x[]`)
+  let wat = compileZ(`a=3, x=[0..a], xl=x[]`)
   // , y=[1, x[0]..x[2], 2..-2]; x,y, xl=x[],yl=y[]`)
   // console.log(wat)
   let mod = compileWat(wat)
@@ -71,14 +71,14 @@ t('array: from dynamic range', t => {
 
 t('array: from invalid ranges', t => {
   let wat
-  throws(() => { wat = compileSruti(`x=[2..]`) }, /range/)
-  throws(() => { wat = compileSruti(`x=[..]`) }, /range/)
-  throws(() => { wat = compileSruti(`x=[..-2]`) }, /range/)
+  throws(() => { wat = compileZ(`x=[2..]`) }, /range/)
+  throws(() => { wat = compileZ(`x=[..]`) }, /range/)
+  throws(() => { wat = compileZ(`x=[..-2]`) }, /range/)
 })
 
 t('array: nested static', t => {
-  let wat = compileSruti(`x=[1, y=[2, [3,3.14]]], w=[4,5]`)
-  // let wat = compileSruti(`y=[2], x=[1, y], w=[4,5]`)
+  let wat = compileZ(`x=[1, y=[2, [3,3.14]]], w=[4,5]`)
+  // let wat = compileZ(`y=[2], x=[1, y], w=[4,5]`)
   // console.log(wat)
   let mod = compileWat(wat)
   let { memory, x, y, w } = mod.instance.exports
@@ -101,7 +101,7 @@ t('array: nested static', t => {
 })
 
 t.todo('array: comprehension', t => {
-  let wat = compileSruti(`x = [1..3 |> _ * 2]`)
+  let wat = compileZ(`x = [1..3 |> _ * 2]`)
   let mod = compileWat(wat)
   let { memory, x } = mod.instance.exports
   let xarr = new Float64Array(memory.buffer, x, 2)
@@ -109,11 +109,11 @@ t.todo('array: comprehension', t => {
 })
 
 t.todo('array: nested comprehension', t => {
-  let wat = compileSruti(`x = [1..3 <| [0.._ <| _ * 2]]`)
+  let wat = compileZ(`x = [1..3 <| [0.._ <| _ * 2]]`)
 })
 
 t('array: simple write', t => {
-  let wat = compileSruti(`x=[..3]; x[0]=1; x[1]=2; x[-1]=x[]; x`)
+  let wat = compileZ(`x=[..3]; x[0]=1; x[1]=2; x[-1]=x[]; x`)
   // console.log(wat)
   let mod = compileWat(wat)
   let { memory, x } = mod.instance.exports
@@ -124,7 +124,7 @@ t('array: simple write', t => {
 })
 
 t('array: simple read', t => {
-  let wat = compileSruti(`x = [1, 2, 3]; a=x[0],b=x[1],c=x[2],d=x[-1]`)
+  let wat = compileZ(`x = [1, 2, 3]; a=x[0],b=x[1],c=x[2],d=x[-1]`)
   // console.log(wat)
   let mod = compileWat(wat)
   let { a, b, c, d } = mod.instance.exports
@@ -135,7 +135,7 @@ t('array: simple read', t => {
 })
 
 t('array: group read', t => {
-  let wat = compileSruti(`x = [1, 2, 3]; (a,b,c)=x[0,1,2]`)
+  let wat = compileZ(`x = [1, 2, 3]; (a,b,c)=x[0,1,2]`)
   // console.log(wat)
   let mod = compileWat(wat)
   let { a, b, c } = mod.instance.exports
@@ -145,7 +145,7 @@ t('array: group read', t => {
 })
 
 t('array: group write', t => {
-  let wat = compileSruti(`x = [..3]; x[0,1,2]=(1,2,3)`)
+  let wat = compileZ(`x = [..3]; x[0,1,2]=(1,2,3)`)
   // console.log(wat)
   let mod = compileWat(wat)
   let { x, memory } = mod.instance.exports
@@ -156,7 +156,7 @@ t('array: group write', t => {
 })
 
 t('compile: sublist', t => {
-  let wat = compileSruti(`x = [1,2,3], y = [x]`)
+  let wat = compileZ(`x = [1,2,3], y = [x]`)
   let mod = compileWat(wat)
   let { memory, x, y } = mod.instance.exports
   let xarr = new Float64Array(memory.buffer, x, 3), yarr = new Float64Array(memory.buffer, y, 1)

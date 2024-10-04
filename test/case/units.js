@@ -1,9 +1,9 @@
 import t, { almost, is, not, ok, same, throws } from 'tst'
-import compileSruti from '../../src/compile.js'
+import compileZ from '../../src/compile.js'
 import { compileWat } from '../util.js'
 
 t('units: core', t => {
-  let wat = compileSruti(`
+  let wat = compileZ(`
     pi = 3.1415;
     1k = 1000; 1pi = pi;
     1s = 44100; 1m=60s; 1h=60m; 1ms = 0.001s;
@@ -19,6 +19,6 @@ t('units: core', t => {
 t.todo('units: units - errors', t => {
   // bad expressions
   //
-  compileSruti(`1h=1s;1s=44800;`)
-  compileSruti(`1k=x();`)
+  compileZ(`1h=1s;1s=44800;`)
+  compileZ(`1k=x();`)
 })

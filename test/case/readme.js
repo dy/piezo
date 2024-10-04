@@ -1,9 +1,9 @@
 import t, { almost, is, not, ok, same, throws } from 'tst'
-import compileSruti from '../../src/compile.js'
+import compileZ from '../../src/compile.js'
 import { compileWat } from '../util.js'
 
 t('readme: numbers', t => {
-  let numbers = compileSruti(`
+  let numbers = compileZ(`
     a=16, b=0x10, c=0b0;                 ;; int, hex or binary
     d=16.0, e=.1, f=1e3, g=2e-3;           ;; float
     a,b,c,d,e,f,g
@@ -13,7 +13,7 @@ t('readme: numbers', t => {
 })
 
 t('readme: standard operators', t => {
-  let ops = compileSruti(`
+  let ops = compileZ(`
     a=3,b=2,c=1;
     (
       o0, o1, o2, o3, o4, o5, o5a, o6, o6a,
