@@ -1,5 +1,6 @@
 {
   "devDependencies": {
+    "esbuild": "^0.24.0",
     "sprae": "^6.1.2",
     "tst": "^7.2.0"
   },
