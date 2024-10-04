@@ -4,7 +4,7 @@
 // also we need adjusted precedences and parsing order
 import parse, { lookup, skip, next, cur, idx, err, expr, token, unary, binary, access, group, nary, id } from 'subscript/parse'
 
-import { FLOAT, INT } from './const.js'
+export const INT = 'int', FLOAT = 'flt'
 
 export default parse
 

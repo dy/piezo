@@ -1,5 +1,5 @@
 // compile source/ast to WAST
-import { FLOAT, INT } from './const.js';
+import { FLOAT, INT } from './parse.js';
 import parse from './parse.js';
 import precompile from './precompile.js';
 import { ids, stringify, err, u82s, pretty } from './util.js';

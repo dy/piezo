@@ -1,4 +1,4 @@
-## [x] name -> sruti
+## [x] name -> piezo
 
 
   * auriel, aureil, aury
@@ -42,6 +42,7 @@
     - reminds mux, which it is not
     + au-dio [processing,synthesis,analysis]
       ~- can be not just audio
+    + asm -> ausm -> aux
   * adya
     + short from audio
     + "now" in sanskrit
@@ -64,17 +65,21 @@
   * auzio
   * acoust, acoustica, acoustical
 
+  * bandpass
   * beato
   * beat, baet, beaut, bitr
     + kick.beat
   * beatr, beatl, bitl
   * beatok
+  * beepbop
 
   * chor, choir
   * cyntia, synthia
   * coo-coo
     + sound
   * coustic
+  * cyme, cyma, cymo
+    + cymatics
 
   * deci
   * dizz
@@ -216,6 +221,16 @@
   * phaso, phasae, phas
     + free
     + more generic than just sound
+  * piezo
+    + refers to electricity
+    + refers to audio / signals / recording
+    + refers to low-level
+    + refers to zz
+    + `.z` or `.zz` extension
+    + indirectly relates to language (direct is boring)
+    + piezo-language
+      + there's so much of piezo-, but not language
+    + пишу на пьезе sounds cool
 
   * raev
     + рёв
@@ -300,9 +315,15 @@
     - too similar to "sane" - cannot publish
   * synto
   * sinu
+  * sino
+    + sine
+    + signal-noise
+    + si/no (spanish)
+    + lino
   * sinusoid
   * sina
   * soid
+  * souno
   * sen
   * symph
     + symphony
@@ -340,12 +361,34 @@
   * sonarm
     + tonarm + sone
   * sonant
+  * sonophone
   * sonat
   * syntone, sinton, synton, syntonic
   * sonm, solm
   * sonant, sonorant
+  * sounio
+  * sousound, sousoun
+    + сусоня
+  * soun
+  * subsound
+  * subwoofer
+  * subharmonic
+  * subtonic
+  * subsonic
+  * soge
+    + sound gen
+  * sige
+    + signal generator
+    + signal
+    - not just generator, must be analysis, synthesis, processing
+  * syg
+    + signal
+    - zig lang
 
   * timbr
+  * tinnitus, tinnit
+    + tin - nit
+    + ringing when no sound present
   * tonr, tonl
   * tonar, tonae, toneau, tonau
     + bureao
@@ -374,9 +417,14 @@
     + free
     + tone, sprae
   * tonola
+  * tonophone
 
   * utone, uton
   * uphone
+  * undertone
+  * ubertone
+  * unsweep
+    + unidentified sound
 
   * veena
     + narada's playing instrument

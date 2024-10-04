@@ -1,5 +1,5 @@
 import t, { is, ok, same, throws } from 'tst'
-import { FLOAT, INT } from '../../src/const.js'
+import { FLOAT, INT } from '../../src/parse.js'
 import parse from '../../src/parse.js'
 
 

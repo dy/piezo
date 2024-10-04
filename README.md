@@ -1,6 +1,6 @@
-# sruti ![stability](https://img.shields.io/badge/stability-experimental-black) [![test](https://github.com/dy/sruti/actions/workflows/test.yml/badge.svg)](https://github.com/dy/sruti/actions/workflows/test.yml)
+# piezo ![stability](https://img.shields.io/badge/stability-experimental-black) [![test](https://github.com/dy/piezo/actions/workflows/test.yml/badge.svg)](https://github.com/dy/piezo/actions/workflows/test.yml)
 
-Simple language for signal processing, synthesis and analysis.<br/>
+Low-level language for signal processing, synthesis and analysis.<br/>
 Compiles to compact 0-runtime WASM with linear memory.<br/>
 
 <!--[Motivation](./docs/motivation.md)  |  [Documentation](./docs/reference.md)  |  [Examples](./docs/examples.md).-->
@@ -363,14 +363,14 @@ See [all examples](/examples)
 <!--
 ## Usage
 
-_Sruti_ is available as CLI or JS package.
+_piezo_ is available as CLI or JS package.
 
-`npm i sruti`
+`npm i piezo`
 
 ### CLI
 
 ```sh
-sruti source.s -o dest.wasm
+piezo source.z -o dest.wasm
 ```
 
 This produces compiled WASM binary.
@@ -378,10 +378,10 @@ This produces compiled WASM binary.
 ### JS
 
 ```js
-import sruti from 'sruti'
+import piezo from 'piezo'
 
 // create wasm arrayBuffer
-const buffer = sruti.compile(`
+const buffer = piezo.compile(`
   n=1;
   mult(x) = x*PI;
   arr=[1, 2, sin(1.08)];
@@ -427,7 +427,7 @@ const arrValues = y.array(arr, memory)
 
 Audio processing in has no cross-platform solution, various environments deal with audio differently, some don't have audio processing at all. Besides, _Web Audio API_ is unreliable - it has unpredictable pauses, glitches and so on, so <q>audio is better handled in WASM worklet</q> ([@stagas](https://github.com/stagas)).
 
-_Sruti_ attempts to fill that gap, providing a common layer for audio processing. It is also a personal attempt on language design - rethinking parts and providing safe ground. WASM target gives max performance and compatibility - browsers, [audio/worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) etc.
+_piezo_ attempts to fill that gap, providing a common layer for audio processing. It is also a personal attempt on language design - rethinking parts and providing safe ground. WASM target gives max performance and compatibility - browsers, [audio/worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) etc.
 
 <!--
 ### Principles
@@ -449,7 +449,7 @@ _Sruti_ attempts to fill that gap, providing a common layer for audio processing
 -->
 
 <!--
-## Projects using sruti
+## Projects using piezo
 
 * [web-audio-api](https://github.com/audiojs/web-audio-api)
 * [audiojs](https://github.com/audiojs/)

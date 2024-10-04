@@ -1,5 +1,5 @@
 
-import { FLOAT, INT } from "./const.js"
+import { FLOAT, INT } from "./parse.js"
 import { print } from "watr"
 
 // show error meaningfully

@@ -2,7 +2,7 @@
 import { globals, locals, funcs, func, initing, returns, RETURN } from "./compile.js"
 import { err } from "./util.js"
 import stdlib from "./stdlib.js"
-import { FLOAT, INT } from "./const.js"
+import { FLOAT, INT } from "./parse.js"
 
 export const i32 = {
   const: a => op(`(i32.const ${a})`, 'i32'),

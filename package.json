@@ -8,7 +8,7 @@
     "subscript": "^8.6.0",
     "watr": "^2.4.1"
   },
-  "name": "sruti",
+  "name": "piezo",
   "description": "Low-level language for audio/signal purposes",
   "version": "0.0.0",
   "main": "index.js",
@@ -20,12 +20,12 @@
   "type": "module",
   "scripts": {
     "test": "node test",
-    "watch": "esbuild --bundle --watch ./index.js --outfile=./sruti.js --format=esm",
-    "build": "esbuild --bundle --minify ./index.js --outfile=./sruti.js --format=esm"
+    "watch": "esbuild --bundle --watch ./index.js --outfile=./piezo.js --format=esm",
+    "build": "esbuild --bundle --minify ./index.js --outfile=./piezo.js --format=esm"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dy/sruti.git"
+    "url": "git+https://github.com/dy/piezo.git"
   },
   "keywords": [
     "sound",
@@ -35,7 +35,7 @@
   "author": "dmitry iv",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/dy/sruti/issues"
+    "url": "https://github.com/dy/piezo/issues"
   },
-  "homepage": "https://github.com/dy/sruti#readme"
+  "homepage": "https://github.com/dy/piezo#readme"
 }
