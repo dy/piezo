@@ -1,5 +1,6 @@
-import piezo from '../piezo.js'
-import watr from '../node_modules/watr/watr.js'
+import piezo from '../dist/piezo.js'
+// import watr from '../node_modules/watr/watr.js'
+import watr from 'https://unpkg.com/watr'
 
 class MeloProcessor extends AudioWorkletProcessor {
   f() { return Math.random() * 2 - 1 }

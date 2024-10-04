@@ -32,7 +32,7 @@
   async function init() {
     if (audioContext) return
     audioContext = new AudioContext();
-    await audioContext.audioWorklet.addModule("processor.js");
+    await audioContext.audioWorklet.addModule("./processor.js");
     processor = new AudioWorkletNode(
       audioContext,
       "processor",

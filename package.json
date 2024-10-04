@@ -21,8 +21,8 @@
   "type": "module",
   "scripts": {
     "test": "node test",
-    "watch": "esbuild --bundle --watch ./index.js --outfile=./piezo.js --format=esm",
-    "build": "esbuild --bundle --minify ./index.js --outfile=./piezo.js --format=esm"
+    "watch": "esbuild --bundle --watch ./index.js --outfile=./dist/piezo.js --format=esm",
+    "build": "esbuild --bundle --minify ./index.js --outfile=./dist/piezo.js --format=esm"
   },
   "repository": {
     "type": "git",

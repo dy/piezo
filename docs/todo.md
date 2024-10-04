@@ -38,6 +38,7 @@
 * [x] remove op `info`
 * [x] unvoid `a ? b;`
 * [x] make `/`, `/a` as function return
+* [ ] make all viznut bytebeats work (ints rotate)
 * [ ] make nan as null in fn arguments (`config(a,,b,c)`)
 * [ ] range iterator via pipe
 * [ ] convert all string instructions to builder calls
