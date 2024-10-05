@@ -3,7 +3,7 @@
 Low-level language for signal processing, synthesis and analysis.<br/>
 Compiles to compact 0-runtime WASM with linear memory.<br/>
 
-[Examples](https://dy.github.io/piezo/examples/) | [Motivation](#motivation)
+<!-- [Examples](https://dy.github.io/piezo/examples/) | [Motivation](#motivation) -->
 
 ## Reference
 
@@ -431,16 +431,16 @@ _Piezo_ attempts to fill that gap, providing a common layer. It is also a person
 * _Intuitivity_: common syntax, familiarity, no intimidation with new operators.
 * _Elegance_: compact expressions, fit for live coding.
 * _Performance_: compiles optimal code quickly, suitable for live envs.
-* _No keywords_: word means variable, symbol means operator, allows i18l code.
-* _Implicit types_: type is defined by operator, to focus on logic rather than language.
-* _Explicit vars_: no implicit globals, no import-alls, no file conventions (like package.json).
+* _0 keywords_: word means variable, symbol means operator, allows i18l code.
+* _0 runtime_: statically analyzable, no OOP, no dynamic structures, no lamda funcs, no nested scopes.
+* _0 waste_: no GC, linear memory, fixed heap.
+* _Implicit types_: only int and float defined by operator, to focus on logic rather than language.
+* _Explicit vars_: no implicit globals, no import-alls, no implicit file conventions (like package.json).
 * _Space-agnostic_: spaces/newlines can be removed or added, eg. for compression or prettifying.
 * _Case-agnostic_: changing vars case doesn't break code, no `sampleRate` vs `samplerate` mistakes.
+* _Normalized syntax_: no smart parsing rules, everything is just unary, binary or nary operators.
 * _Readabile output_: produces readable wasm text.
-* _Normalized syntax_: no smart parsing rules, everything is unary, binary or nary operators.
-* _0 runtime_: statically analyzable, no OOP, no dynamic structures, no lamda funcs, no nested scopes.
-* _Low-level_: no fancy features beyond math and buffers.
-* _Linear memory_: no garbage to collect, fixed-size heap.
+* _Low-level_: no fancy features beyond math and buffers, compilable to ASM envs.
 
 <!--
 ## Projects using piezo
