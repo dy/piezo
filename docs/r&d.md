@@ -1,6 +1,5 @@
 ## [x] name -> piezo
 
-
   * auriel, aureil, aury
     + available
     + refers to arch-angel
@@ -471,7 +470,7 @@
     - everything with Z is now war-related
     - headplugs
 
-### [ ] Name matrix
+### [x] Name matrix
 
   * Prefix: syno, zylo, auro, mono, phono, tono, melo, micro, nano, pano, peri, neo, chrono, ambi, duro, uber/ober
   * Postfix: -on, -ona, -l, -la, -al, -ala, -ula, -ela, -lo, -lu, -r, -a, -ar, -er, -ara, -or, -ora, -e, -ea, -ae, -oa, -oe, -ue, -ee, -eau, -eon, -eo, -iou, -o, -ou, -au, -ieu, -q, -y, -ya, -ay, -aya, -ey, -ant, -ata, -ine, -ism, -um, -ium, -us, -ify, -ory, -esque, -ique, -quoe, -quai, -oid, -ure, -ance, -ence, -iq, -ix, -ys, -yn, -ux, -yr, -io, -is, -os, -yre
@@ -542,7 +541,7 @@
     + better indicator of fn primitive
     ? batch output: `~() -> 1` vs `() -> ~1` vs `() ~> 1`
 
-## [x] Ranges: f(x ~ 0..100=100, y ~ 0..100, p ~ 0.001..5, shape = sin)
+## [ ] Ranges: clamp symbol f(x ~ 0..100=100, y ~ 0..100, p ~ 0.001..5, shape = sin)
 
   * ~~`f(x=100 in 0..100, y=1 in 0..100, z in 1..100, p in 0.001..5) = ...`~~
     - conflicts with no-keywords policy
@@ -613,7 +612,14 @@
 
   * `f(x = 100 >< 0..100, y >< 0..100 = 1, z >< 1..100, p >< 0.001..5, shape >< (tri, sin, tan) = sin)`
   * `f(x = 100 <> 0..100, y <> 0..100 = 1, z <> 1..100, p <> 0.001..5, shape <> (tri, sin, tan) = sin)`
-  * `f(x = 100 <0..100>, y <0..100> = 1, z <1..100>, p <0.001..5>, shape <(tri, sin, tan)> = sin)`
+    + `x <> 0..100` means `x < 100 && x > 0`
+    + visually intuitive, one of the first guesses
+      + gpt suggested it
+    + math-ways are like that
+    + supports style of piezo operators `<>`, `-|`, `-/`, `-*`
+    + makes smooths look less intimidating `-//`, `-**`
+
+  * ~~`f(x = 100 <0..100>, y <0..100> = 1, z <1..100>, p <0.001..5>, shape <(tri, sin, tan)> = sin)`~~
 
   * `f(x = 100 <= 0..100, y <= 0..100 = 1, z <= 1..100, p <= 0.001..5, shape <= (tri, sin, tan) = sin)`
     + very natural & known operator `<=`
@@ -624,6 +630,7 @@
 
   * `f(x = 100 -| 0..100, y -| 0..100 = 1, z -| 1..100, p -| 0.001..5, shape -| (tri, sin, tan) = sin)`
     - looks too much like table separators
+    + compatible `a -/ 0..10`, `a -* 0..10`, `a -< 0..10`
 
 ## [x] Enums → try avoiding explicit notation
 

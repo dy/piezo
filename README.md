@@ -3,7 +3,7 @@
 Low-level language for signal processing, synthesis and analysis.<br/>
 Compiles to compact 0-runtime WASM with linear memory.<br/>
 
-<!--[Motivation](./docs/motivation.md)  |  [Documentation](./docs/reference.md)  |  [Examples](./docs/examples.md).-->
+[Examples](/examples/) | [Motivation](#motivation)  |
 
 ## Reference
 
@@ -46,11 +46,10 @@ inf = 1/0, nan = 0/0;         ;; eg: alias infinity, NaN
 (a-1)..(a+1);                 ;; computed range
 0..3 * 2;                     ;; mapped range: 0*2, 1*2, 2*2
 (a,b,c) = 0..3 * 2;           ;; destructure: a=0, b=2, c=4
-a ~ 0..10;                    ;; clamp(a, 0, 10);
-a ~= 0..10;                   ;; a = clamp(a, 0, 10);
-a ~< 0..10;                   ;; a >= 0 && a < 10
-a ~/ 0..10;                   ;; normalize(a, 0, 10)
-a ~* 0..10;                   ;; lerp(a, 0, 10);
+a <> 0..10;                   ;; a >= 0 && a < 10
+a -| 0..10;                   ;; clamp(a, 0, 10);
+a -/ 0..10;                   ;; normalize(a, 0, 10)
+a -* 0..10;                   ;; lerp(a, 0, 10);
 
 ;; Groups
 (a,b,c) = (1,2,3);            ;; assign: a=1, b=2, c=3
@@ -104,7 +103,7 @@ x[..] |> f(#) |> g(#);        ;; pipeline sequence
 
 ;; Functions
 double(n) = n*2;              ;; define a function
-times(m = 1, n ~ 1..) = (    ;; optional, clamped arg
+times(m = 1, n <> 1..) = (    ;; optional, clamped arg
   n == 0 ? /n;                ;; early return
   m * n;                      ;; returns last statement
 );                            ;;
@@ -144,6 +143,7 @@ a[..] |> _==" " ? (a[from..to],from=to) : to++              ;; split: "a b" / " 
 
  -->
 
+<!--
 ## Examples
 
 <details>
@@ -154,14 +154,12 @@ Provides k-rate amplification for block of samples.
 ```
 gain(                             ;; define a function with block, volume arguments.
   block,                          ;; block is a array argument
-  volume ~ 0..100                 ;; volume is limited to 0..100 range
+  volume <> 0..100                ;; volume is limited to 0..100 range
 ) = (
-  block[..] |>= _ * volume        ;; multiply each sample by volume value
+  block[..] |>= # * volume        ;; multiply each sample by volume value
 );
 
 gain([0..5 * 0.1], 2);            ;; 0, .2, .4, .6, .8, 1
-
-gain                              ;; export gain function
 ```
 
 </details>
@@ -179,8 +177,8 @@ A-rate (per-sample) biquad filter processor.
 
 lpf(                              ;; per-sample processing function
   x0,                             ;; input sample value
-  freq = 100 ~ 1..10k,            ;; filter frequency, float
-  Q = 1.0 ~ 0.001..3.0            ;; quality factor, float
+  freq = 100 <> 1..10k,            ;; filter frequency, float
+  Q = 1.0 <> 0.001..3.0            ;; quality factor, float
 ) = (
   *(x1, y1, x2, y2) = 0;          ;; define filter state
 
@@ -203,8 +201,6 @@ lpf(                              ;; per-sample processing function
 );
 
 ;; i = [0, .1, .3] |> lpf(i, 108, 5);
-
-lpf                               ;; export lpf function, end program
 ```
 
 </details>
@@ -228,7 +224,7 @@ oscillator = [
 ;; applies adsr curve to sequence of samples
 adsr(
   x,
-  a ~ 1ms..,                    ;; prevent click
+  a <> 1ms..,                    ;; prevent click
   d,
   (s, sv=1),                    ;; optional group-argument
   r
@@ -272,7 +268,7 @@ coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
 ```
 
 </details>
-
+-->
 <!--
 ## [Freeverb](https://github.com/opendsp/freeverb/blob/master/index.js)
 
@@ -353,19 +349,19 @@ Features:
 * _string literal_ − `"abc"` acts as array with ASCII codes.
 * _length operator_ − `items[]` returns total number of items of either an array, group, string or range.
 -->
-
+<!--
 * [Freeverb](/examples/freeverb.s)
 * [Floatbeat](/examples/floatbeat.s)
 * [Complete ZZFX](/examples/zzfx.s)
 
-See [all examples](/examples)
+See [all examples](/examples) -->
 
-<!--
+
 ## Usage
 
 _piezo_ is available as CLI or JS package.
 
-`npm i piezo`
+`npm i -g piezo`
 
 ### CLI
 
@@ -390,7 +386,7 @@ const buffer = piezo.compile(`
   // js objects or paths to files
   imports: {
     math: Math,
-    mylib: './path/to/my/lib.y'
+    mylib: './path/to/my/lib.z'
   },
   // optional: import memory
   memory: true
@@ -419,9 +415,9 @@ n.value = 2;
 mult(108)
 
 // array is a pointer to memory, get values via
-const arrValues = y.array(arr, memory)
+const arrValues = new Float64Array(arr, memory)
 ```
--->
+
 
 ## Motivation
 
@@ -429,24 +425,22 @@ Audio processing in has no cross-platform solution, various environments deal wi
 
 _Piezo_ attempts to fill that gap, providing a common layer for audio processing. It is also a personal attempt on language design - rethinking parts and providing safe ground. WASM target gives max performance and compatibility - browsers, [audio/worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) etc.
 
-<!--
+
 ### Principles
 
-* _0 entry_: common syntax, simplicity.
-* _Compact_: expressions must be allowed in a very concise way.
-* _Poetic_: intuitive typographic patterns.
-* _No keywords_: word means variable, symbol means operator - allows truly i18l code.
-* _No types_: type is defined by operator – better focus on logic rather than language.
-* _Space-agnostic_: spaces/newlines (excluding comments) can be safely removed or added, eg. for compression or prettifying.
-* _Case-agnostic_: changing case doesn't break code: URL-safe. Typo-proof, eg. no `sampleRate` vs `samplerate` mistake.
+* _Intuitivity_: common syntax, coherency.
+* _Compactness_: short form expressions.
+* _No keywords_: word means variable, symbol means operator.
+* _Implicit types_: type is defined by operator, focus on logic rather than language.
+* _Space-agnostic_: spaces/newlines can be safely removed or added, eg. for compression or prettifying.
+* _Case-agnostic_: changing case doesn't break code, no `sampleRate` vs `samplerate` mistakes.
 * _0 runtime_: statically analyzable, no OOP, no structures, no lamda functions, no dynamic scopes.
 * _Explicit_: no implicit globals, no import-alls, no file conventions (like package.json).
 * _Low-level_: no fancy features beyond math and buffers.
-* _Static/Linear memory_: no garbage to collect, static-size heap.
-* _Readability_: produced WASM must be readable.
-* _Normalized_: there's no smart or inconsistent parsing: everything is done via unary, binary, nary operators
-* _0 security_: security checks complicate and inhibit coding. Language is open to hackers, you can read random memory etc.
--->
+* _Linear memory_: no garbage to collect, fixed-size heap.
+* _Readabile output_: produces readable wasm text.
+* _Normalized syntax_: no smart parsing rules, everything is unary, binary or nary operators.
+
 
 <!--
 ## Projects using piezo
