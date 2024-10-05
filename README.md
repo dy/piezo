@@ -457,6 +457,5 @@ _Piezo_ attempts to fill that gap, providing a common layer. It is also a person
 ### Acknowledgement
 
 * @stagas for initial drive & ideas
-* for package name
 
 <p align=center><a href="https://github.com/krsnzd/license/">🕉</a></p>
