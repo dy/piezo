@@ -38,6 +38,7 @@
 * [x] remove op `info`
 * [x] unvoid `a ? b;`
 * [x] make `/`, `/a` as function return
+* [ ] consider `-<`, `-/`, `-*`
 * [ ] make all viznut bytebeats work (ints rotate)
 * [ ] make nan as null in fn arguments (`config(a,,b,c)`)
 * [ ] range iterator via pipe

@@ -600,6 +600,7 @@
       ~ not anymore a problem if we make loop/reducer `<|` and `|>`
     + by rearranging loop/reducer it's not more at conflict
     - a bit too far meaning, indirect. `-<` is more like fork, mb switch or etc
+    + better intuition about what's going on
 
   * ~~`f(x = 100 <- 0..100, y <- 0..100 = 1, z <- 1..100, p <- 0.001..5, shape <- (tri, sin, tan) = sin)`~~
     + literally elixir/haskel/erlang/R/Scala's list comprehension assigner
@@ -618,6 +619,7 @@
     + math-ways are like that
     + supports style of piezo operators `<>`, `-|`, `-/`, `-*`
     + makes smooths look less intimidating `-//`, `-**`
+    - conflict with `x = 100 <> 0..100` as returning true/false
 
   * ~~`f(x = 100 <0..100>, y <0..100> = 1, z <1..100>, p <0.001..5>, shape <(tri, sin, tan)> = sin)`~~
 
