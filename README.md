@@ -421,26 +421,26 @@ const arrValues = new Float64Array(arr, memory)
 
 ## Motivation
 
-Audio processing in has no cross-platform solution, various environments deal with audio differently, some don't have audio processing at all. _Web Audio API_ is unreliable - it has unpredictable pauses, glitches and so on, so <q>audio is better handled in WASM worklet</q> ([@stagas](https://github.com/stagas)).
+Audio processing has no cross-platform solution, various environments deal with audio differently, some don't have audio processing at all. _Web Audio API_ is unreliable - it has unpredictable pauses, glitches and so on, so <q>audio is better handled in WASM worklet</q> ([@stagas](https://github.com/stagas)).
 
-_Piezo_ attempts to fill that gap, providing a common layer for audio processing. It is also a personal attempt on language design - rethinking parts and providing safe ground. WASM target gives max performance and compatibility - browsers, [audio/worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) etc.
+_Piezo_ attempts to fill that gap, providing a common layer. It is also a personal attempt on language design - rethinking parts and providing safe haven. WASM target gives max performance and compatibility - browsers, [audio/worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) etc.
 
 
 ### Principles
 
-* _Intuitivity_: common syntax, coherency.
-* _Compactness_: short form expressions.
-* _No keywords_: word means variable, symbol means operator.
-* _Implicit types_: type is defined by operator, focus on logic rather than language.
-* _Space-agnostic_: spaces/newlines can be safely removed or added, eg. for compression or prettifying.
-* _Case-agnostic_: changing case doesn't break code, no `sampleRate` vs `samplerate` mistakes.
-* _0 runtime_: statically analyzable, no OOP, no structures, no lamda functions, no dynamic scopes.
-* _Explicit_: no implicit globals, no import-alls, no file conventions (like package.json).
-* _Low-level_: no fancy features beyond math and buffers.
-* _Linear memory_: no garbage to collect, fixed-size heap.
+* _Intuitivity_: common syntax, familiarity, no intimidation with new operators.
+* _Elegance_: compact expressions, fit for live coding.
+* _Performance_: compiles optimal code quickly, suitable for live envs.
+* _No keywords_: word means variable, symbol means operator, allows i18l code.
+* _Implicit types_: type is defined by operator, to focus on logic rather than language.
+* _Explicit vars_: no implicit globals, no import-alls, no file conventions (like package.json).
+* _Space-agnostic_: spaces/newlines can be removed or added, eg. for compression or prettifying.
+* _Case-agnostic_: changing vars case doesn't break code, no `sampleRate` vs `samplerate` mistakes.
 * _Readabile output_: produces readable wasm text.
 * _Normalized syntax_: no smart parsing rules, everything is unary, binary or nary operators.
-
+* _0 runtime_: statically analyzable, no OOP, no dynamic structures, no lamda funcs, no nested scopes.
+* _Low-level_: no fancy features beyond math and buffers.
+* _Linear memory_: no garbage to collect, fixed-size heap.
 
 <!--
 ## Projects using piezo
