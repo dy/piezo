@@ -3,7 +3,7 @@
 Low-level language for signal processing, synthesis and analysis.<br/>
 Compiles to compact 0-runtime WASM with linear memory.<br/>
 
-[Examples](/examples/) | [Motivation](#motivation)  |
+[Examples](https://dy.github.io/piezo/examples/) | [Motivation](#motivation)
 
 ## Reference
 
