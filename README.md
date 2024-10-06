@@ -18,7 +18,7 @@ Compiles to compact 0-runtime WASM with linear memory.<br/>
 ?: ?                          ;; conditions
 x[i] x[]                      ;; member access, length
 a..b a.. ..b ..               ;; ranges
-|> #                          ;; pipe/loop/map
+|> #                          ;; pipe/loop/map, topic reference
 ./ ../ /                      ;; continue/skip, break/stop, return
 >< <>                         ;; inside, outside
 ~ ~/ ~*                       ;; clamp, normalize, lerp
