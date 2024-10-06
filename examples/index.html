@@ -452,7 +452,7 @@
     ],
     async run(code, o) {
       await init();
-      if (o.bytebeat) code = `f()=(*t=0;${code};^t=(t+1)%65536;)`
+      if (o.bytebeat) code = `f()=(*t=0;${code};^t++;)`
       processor.port.postMessage(code)
     },
     async load(url, o) {

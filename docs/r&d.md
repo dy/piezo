@@ -578,7 +578,7 @@
   ALT: can we introduce alternative syntax for HEX/data?
     * `{0xabaababa13241abbabaabbabab123451236546389}` or something like
 
-### [ ] Strings: String is array of uint8, but melo supports only f64 numbers. How to read as u8s? ->
+### [ ] Strings: String is array of uint8, but piezo supports only f64 numbers. How to read as u8s? ->
 
   1. discard uint8 and just do f64 instead?
     ~ since strings are static, we at-part know what type it has.
@@ -621,7 +621,7 @@
       c. store stride
         - doesn't help making sense which type to read from memory
 
-## [ ] !? atoms: 'hello' (not string)
+## [x] !? atoms: 'hello' (not string) -> no, until needed
   * Atoms are useful for referencing:
     + function instances
       ~ we have funcref type, not necessary
@@ -641,9 +641,9 @@
 
   1. `"a {b} c"`
   2. `"a $<b> c"`
-  + matches includes signature `<math#x,y>`
-  + matches JS regex signature
-  + `<>` means insert something here
+    + matches includes signature `<math#x,y>`
+    + matches JS regex signature
+    + `<>` means insert something here
 
 ## [ ] Strings: string operations - concat, split, join etc
 
@@ -652,7 +652,7 @@
     + zlang/purescript/etc - compatible
     * `a -- b` for split?
       * `"abc:def" -- ":"`
-  * `a <> b` for concat, `"abc" <> "def"`
+  * ~~`a <> b` for concat, `"abc" <> "def"`~~
     * `a >< b` for split, `"abc:def" >< ":"`
   * `"ab:cd" :- ":"` for split
     * `"ab", "cd" :+ ":"` for join
@@ -2015,7 +2015,7 @@
 ## [x] Comments: `//`, `/*` vs `;;`,`(; ;)` ~~`//` is most based choice. `\\` gives many benefits~~ `;;` has same benefits, but least toxic
 
   1. `;;`
-  * Message: mel is like assembly, expect low-level stuff & reading docs
+  * Message: piezo is like assembly, expect low-level stuff & reading docs
   + ;; make more sense, since ; is separator, and everything behind it doesn't matter
   + `(;` makes more sense as "group with comments", since we use only ( for groups.
   + ;; is less noisy than //
@@ -2067,7 +2067,7 @@
     - doesn't allow inserting inline comments within sequences like `a,;;xxx\n b`
 
   2. `//`, `/**/`
-  * Message: mel is like C / JS / Scala, expect similar intuition
+  * Message: piezo is like C / JS / Scala, expect similar intuition
   - // is noisy conflict with / and occupies operator space, eg.:
   ```
     tri(freq in 10..10000) = (
@@ -2078,18 +2078,18 @@
   ```
     ~+ it doesn't go without `;` so not so much conflict
   - // is used in python for floor division, very handy: (a / b | 0) -> a//b
-    - that is especially not just floor division but autoconverting to int, which is super handy!!
+    - not just floor division but autoconverting to int, which is super handy
       ? can that be resolved somehow?
       ~ what's the big deal of just a/b | 0? internally that's same, no?
     - it's just so nice symmetricity of ++ -- ** %% but not //
   - it blocks smoothstep as `-//`
-  + allows defer to be `\x++`.
-  + // associates besides C+/Java/JS with F#, which is pipy
+  + ~~allows defer to be `\x++`.~~
+    ~ we don't do defer via escape
+  + // associates C+/Java/JS/F#, that's well-established
     + with many others: ActionScript, Boo, C (C99), C++, C#, D, F#, Go, Java, JavaScript, Kotlin, Object Pascal (Delphi), Objective-C, PHP, Rust, Scala, SASS, Swift, Xojo
   + ~~makes C#, F#-compatible syntax highlight~~
     - `(*p)` makes F# comment
     - `#p` makes C# comment
-  + // is super-familiar and js/c-y
   + saves soooo much time converting bytebeats to lino
     + sooo natural to feel
     + maintaining syntax plugins is heavy task
@@ -2097,14 +2097,13 @@
   - search-matches with protocols like `https://`
   - pretends to be C/JS, when it is not.
     * Such comments would make sense if: code was case-sensitive; it had standard allowed chars (no #@); code had if|else|while|for|return|in keywords.
-      - code is case-sensitive now
     + gives fresh feeling of old standard, since syntax is updated to be cool
     + and still it's like scala also
   - chances are // was unlucky choice in C, since for all basic arithmetics there's double + ++, - --, * **, % %%, & &&, | ||, but / // remains, as well as ^ ^^.
   - there's integer div in wasm, but no integer div in mel
 
   3. `\` or `\\`
-  * Message: mel is breaking new, but also weirdish like Julia, you gotta expect fancy stuff
+  * Message: piezo is breaking new, but also weirdish like Julia, you gotta expect fancy stuff
   + mono lang reference
   +~ Forth?
   + \ is almost never used in langs & that's unique
@@ -2134,7 +2133,7 @@
     - maintaining all possible highlighters can be a lifetime effort
       ~ can be one-time vscode contribution
     ~+ not so heavy, can be done once
-    ~+ existing highlighters don't know melo anyways
+    ~+ existing highlighters don't know piezo anyways
   - takes primary semantic meaning, rather than "safe" secondary meaning
   ?- what's inline pairing?
     * `\* *\`?
@@ -2190,7 +2189,7 @@
     - reserves object syntax space
 
   7. `# xxx`
-    * Message: mel is like python - quirky, inlinish, unintuitive
+    * Message: piezo is like python - quirky, inlinish, unintuitive
     + Python, Perl, R, Raku, PHP, Shells, Ruby, Julia, Nim, Make
     - reserves `#` from the name, loop placeholder
     - too black, dark, heavy
@@ -3681,7 +3680,7 @@
   + reduces use of camelcase convention
   + lowcase constants are fun `4p * i`
     - can define via units
-  - `AbB` vs `ABb` can be different chords, but melo mixes them up together
+  - `AbB` vs `ABb` can be different chords, but piezo mixes them up together
     ~ can be addressed via separators `Ab_B`, `A_Bb` or (?) `Ab.B`, `A.Bb`
   - `X1` and `x1` can be different things in math
     ~ can be solved as eg. `x1` and `_x1`, `@x1`, `#x1`, `$x1`
@@ -4546,7 +4545,7 @@
       + we need to encode int24 into fractional part as binary, allows up to 99999999 memory address value
 
   7. v128
-    + throws at times ensuring arrays belong to melo, not outside
+    + throws at times ensuring arrays belong to piezo, not outside
     + properly stores 4xi32 for tech purposes: address, length, data type, shift etc
     - fn arg requires to be indicated somehow via syntax, like `a(x[])`
       + that gives slight type definition, which facilitates handling them

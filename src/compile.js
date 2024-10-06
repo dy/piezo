@@ -382,8 +382,8 @@ Object.assign(expr, {
       // define result, comes after (param) before (local)
       if (returns.type.length) result = `(result ${returns.type.join(' ')})`
 
-      // if it has defers - wrap to block
-      if (defers.length) body = op(`(block $func ${result} ${body})`, body.type)
+      // if it has defers with returns - wrap to block
+      if (defers.length && returns.length) body = op(`(block $func ${result} ${body})`, body.type)
 
       let initState
 
@@ -649,7 +649,7 @@ Object.assign(expr, {
   '^'([, a, b], out) {
     // ^b
     if (!b) {
-      let aop = expr(a, false)
+      let aop = expr(a, false) // defers should not produce value in stack
       if (!defers) err('Bad defer')
       defers.push(aop)
       return

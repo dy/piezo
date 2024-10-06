@@ -25,7 +25,7 @@ a..b a.. ..b ..               ;; ranges
 * ^                           ;; static, defer
 
 ;; Numbers
-16, 0x10, 0b0;                ;; int, hex or binary
+16, 0x10, 0o755, 0b0;         ;; int, hex, oct or binary
 16.0, .1, 2e-3;               ;; float
 1k = 1000; 1pi = 3.1415926;   ;; units
 1s = 44100; 1m = 60s;         ;; eg: sample indexes
