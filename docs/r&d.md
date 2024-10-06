@@ -4949,6 +4949,8 @@
       ~ likely we'd need to have a range modifier, eg. `x = 10 ~ 0..10**0.2`
     - not as piezo as `x = 10 -< 0..100`
       + still refers to piezo as "active current" or "wave"
+    - `a ~* b..c` is also `a ~ *b..c`
+    + ChatGPT suggests it as better option, since has built intuition
   * `f(x = 100 ~= 0..100, y ~= 0..100 = 1, z ~= 1..100, p ~= 0.001..5, shape ~= (tri, sin, tan) = sin)`
     + matches Ruby's regex-search operator, inversed
     + matches "equals" as "clamp"
@@ -4979,10 +4981,10 @@
     + allows `a -<= 0..10`
     + visually clear, in terms of noise
     + aligns with `-/` for smoothstep operator better than `~/`
-      - `a-*b..c`: `a -* b..c` vs `a - * b..c`
+    - `a-*b..c`: `a -* b..c` vs `a - *b..c`
     + looks cooler than `<?` or `~`
-    - some uncertainty/conflict with `in`
-      ? maybe `a <> 0..10`
+    + ChatGPT suggests as visually distinct option
+      - but a bit higher entry barrier to learn
 
   * ~~`f(x = 100 <- 0..100, y <- 0..100 = 1, z <- 1..100, p <- 0.001..5, shape <- (tri, sin, tan) = sin)`~~
     + literally elixir/haskel/erlang/R/Scala's list comprehension assigner
@@ -5968,3 +5970,9 @@
       - should not be the case
         ~ eg. can be args type can be figured out from defaults
     - not nice to pay with performance for syntax sugar
+
+## [x] Approximately operator `a =~ 10` -> no
+  + fira converts to ~~
+  - `a = ~10`
+
+## [ ]

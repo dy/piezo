@@ -21,7 +21,7 @@ a..b a.. ..b ..               ;; ranges
 |> #                          ;; pipe/loop, map
 ./ ../ /                      ;; continue/skip, break/stop, return
 >< <>                         ;; inside, outside
-~ ~/ ~*                       ;; clamp, normalize, lerp
+~ ~= ~/ ~*                    ;; clamp, normalize, lerp
 * ^                           ;; static, defer
 
 ;; Numbers
@@ -112,7 +112,7 @@ times(4), times(,5);          ;; 4, 5: optional, skipped arg
 dup(x) = (x,x);               ;; return multiple
 (a,b) = dup(b);               ;; destructure
 a=1,b=1; x()=(a=2;b=2); x();  ;; a==1, b==2: first statement declares locals
-fn() = ( x; ^log(x) );        ;; defer: calls log after fn returns x
+fn() = ( x; ^log(x) );        ;; defer: calls log after returning x
 f(a[], cb()) = cb(a[0]);      ;; array, func args
 a() = ( *i=0; ++i );          ;; static var: i persists value
 a(), a();                     ;; 1,2
@@ -426,18 +426,18 @@ _Piezo_ attempts to fill that gap, providing a common layer. It is also a person
 
 ### Principles
 
-* _Intuitivity_: common syntax, familiarity, no intimidation with new operators.
-* _Elegance_: compact expressions, fit for live coding.
-* _Performance_: compiles optimal code quickly, suitable for live envs.
-* _0 keywords_: word means variable, symbol means operator, allows i18l code.
-* _0 runtime_: statically analyzable, no OOP, no dynamic structures, no lamda funcs, no nested scopes.
-* _0 waste_: no GC, linear memory, fixed heap.
-* _Implicit types_: only int and float defined by operator, to focus on logic rather than language.
-* _Explicit vars_: no implicit globals, no import-alls, no implicit file conventions (like package.json).
-* _Space-agnostic_: spaces/newlines can be removed or added, eg. for compression or prettifying.
-* _Case-agnostic_: changing vars case doesn't break code, no `sampleRate` vs `samplerate` mistakes.
-* _Normalized syntax_: no smart parsing rules, everything is just unary, binary or nary operators.
-* _Readabile output_: produces readable wasm text.
+* _Intuitivity_: common syntax foundation, clear patterns for new operators.
+* _Elegance_: compact expressions, ideal for live coding.
+* _Performance_: compiles optimal code quickly, suited for live envs.
+* _No keywords_: variables are words, operators are symbols, allowing i18l code.
+* _No runtime_: statically analyzable, no OOP, no dynamic structures, no lamdas, no nested scopes.
+* _No waste_: linear memory, fixed heap, no GC.
+* _Inferred types_: derived from usage, focus on logic over language.
+* _Explicit vars_: no implicit globals, no wildcard imports, no hidden file conventions.
+* _Space-agnostic_: spaces and newlines can be removed or added freely (eg. for compression or formatting).
+* _Case-agnostic_: case changes don't break code (eg. `sampleRate` vs `samplerate`).
+* _Normalized syntax_: no complex parsing rules – just unary, binary or n-ary operators.
+* _Readabile output_: produces readable WebAssembly text (eg. can be used as meta-language).
 * _Low-level_: no fancy features beyond math and buffers, compilable to ASM envs.
 
 <!--
