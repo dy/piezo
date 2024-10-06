@@ -10,6 +10,10 @@ t('defer: - basics', () => {
   wat = compileZ(`f()=(*t=0;/t;^++t)`)
   mod = compileWat(wat), f = mod.instance.exports.f;
   is([f(), f(), f()], [0, 1, 2], 'after return')
+
+  wat = compileZ(`f()=(*t=0;t;^++t)`)
+  mod = compileWat(wat), f = mod.instance.exports.f;
+  is([f(), f(), f()], [0, 1, 2], 'after return')
 })
 
 t.skip('defer: - errors', () => {

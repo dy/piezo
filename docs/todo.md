@@ -5,12 +5,10 @@
   . parsing time can be improved via wasm version;
   * [x] ~~make subscript generate wasm binary for evaluator.~~ nah, later
     * Example: https://crypto.stanford.edu/~blynn/asm/wasm.html
-
 * [x] Watr
   * [x] compiler
   * [x] parser: very basic commands, no legacy
   * [x] Compare vs wabt, wat-compiler
-
 * [x] Parser
 
 ## 0.1
@@ -178,6 +176,15 @@
 * [ ] other bytebeat-like library (forgot name)
 * [ ] Web-Audio-API
 * [ ] Metronome app: variable speed, variable tone
+
+## Studio
+
+* [ ] Code editor
+* [ ] Playback
+* [ ] Display spectrogram, like glitch
+* [ ] Display waveform, like glitch
+* [ ] Choose output context: 8k, 44k
+* [ ] Select & lock params knobs
 
 ## Backlog
 

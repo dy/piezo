@@ -113,7 +113,7 @@ dup(x) = (x,x);               ;; return multiple
 (a,b) = dup(b);               ;; destructure
 a=1,b=1; x()=(a=2;b=2); x();  ;; a==1, b==2: first statement declares locals
 fn() = ( x; ^log(x) );        ;; defer: calls log after returning x
-f(a[], cb()) = cb(a[0]);      ;; array, func args
+f(a, cb) = cb(a[0]);      ;; array, func args
 a() = ( *i=0; ++i );          ;; static var: i persists value
 a(), a();                     ;; 1,2
 a1() = ( *copy=a; copy() );   ;; clone function
@@ -437,7 +437,7 @@ _Piezo_ attempts to fill that gap, providing a common layer. It is also a person
 * _Space-agnostic_: spaces and newlines can be removed or added freely (eg. for compression or formatting).
 * _Case-agnostic_: case changes don't break code (eg. `sampleRate` vs `samplerate`).
 * _Normalized syntax_: no complex parsing rules – just unary, binary or n-ary operators.
-* _Readabile output_: produces readable WebAssembly text (eg. can be used as meta-language).
+* _Readable output_: produces readable WebAssembly text (eg. can serve as meta-language).
 * _Low-level_: no fancy features beyond math and buffers, compilable to ASM envs.
 
 <!--

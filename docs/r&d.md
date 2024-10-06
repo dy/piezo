@@ -5343,7 +5343,7 @@
 
   9. Simple static vars: we have a function with single static context.
 
-### [x] Functions / Static variables: how to create context? `x() = (*f1 = f);`
+### [x] Functions / Static variables: how to create context? -> `x() = (*f1 = f);`
 
   1. Operator
     a. `a() = (*t=0;^t++); b = a;` - assignment creates fn instance.
@@ -5390,10 +5390,16 @@
 ### [ ] Functions / Static variables: How do we detect passed function as an argument? `f1(f) = (*_f=f; _f())`;
 
   1. By usage. If it is ever called - that's a function. If not - we don't care.
-    - we cannot say if we should instantiate or not here: `f1(f) = (*_f=f; _f)`
-  2. Type definition for args: `f1(a[], b, f()) = (*_f=f;_f)`
+    - we cannot say if we should instantiate or not here: `f1(f) = (*clone=f; clone)`
+  2. Type definition for args: `f1(a[], b, f()) = (*clone=f;clone)`
     + gentle types, feel natural & friendly
     + allows making vars something else but integers, with static-time checks
+    - contrary to logic how we infer types
+  3. Prohibit cloning callbacks
+    -? how do we know if we're passing a function
+  3.1 Limit init to only global vars
+    + natural perf boost: no need to check for nan
+    + no
 
 ## [ ] Static variables: logic - how to map callsite to memory address? -> ~~see implementation~~ - we use simple static vars
 
