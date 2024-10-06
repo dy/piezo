@@ -541,99 +541,6 @@
     + better indicator of fn primitive
     ? batch output: `~() -> 1` vs `() -> ~1` vs `() ~> 1`
 
-## [ ] Ranges: clamp symbol f(x ~ 0..100=100, y ~ 0..100, p ~ 0.001..5, shape = sin)
-
-  * ~~`f(x=100 in 0..100, y=1 in 0..100, z in 1..100, p in 0.001..5) = ...`~~
-    - conflicts with no-keywords policy
-
-  * ~~! Swift: non-inclusive range is 0..<100~~
-    - see exclusive ranges research, confusable with `0.. < 100`
-
-  * ~~`f(x{0..100} = 100, y{0..100} = 1, z{1..100}, p{0.001..5}, shape{sin,tri,tan}=sin )`~~
-    + matches set definition
-    - missing operator
-    + allows defining limited variables `a{0..100} = b`
-
-  * `f(x = 100 ~ 0..100, y ~ 0..100 = 1, z ~ 1..100, p ~ 0.001..5, shape ~ (tri, sin, tan) = sin)`
-    + swift has ~= operator checking if value is within range
-    - needs special construct for enums
-    ? shape ~ tri+sin+tan
-    ? shape ~ tri || sin || tan
-    ? shape ~ [tri, sin, tan]
-      - nope: array is not a group and raises question why not `[1..100]` then.
-    ? shape ~ (tri, sin, tan)
-      + matches direct groups
-      + parens are just means to group items
-    + ~ punctuationally refers to range, but direct ~ is too little info
-    - `i ~ 0..x` not the most apparent indicator of assigning to i, intuition wants assignment to be here
-      ~+ can be as meaning of clamp
-    + less characters than ~=
-
-  * `f(x = 100: 0..100, y: 0..100 = 1, z: 1..100, p: 0.001..5, shape: (tri, sin, tan) = sin)`
-    + `:` is standard type definition
-    - doesn't play well after value `x=100:0..100`
-      ~ feature of variable/argument
-    - interferes with named arguments
-    - calculation-wise can be too heavy, compared to one-time clamp
-    - has different precedence with `=`
-    - has possible conflict with ternary
-
-  * `f(x = 100 ~= 0..100, y ~= 0..100 = 1, z ~= 1..100, p ~= 0.001..5, shape ~= (tri, sin, tan) = sin)`
-    + matches Ruby's regex-search operator, inversed
-    + matches "equals" as "clamp"
-    - isn't interchangable with `=`, has different meaning
-    → too much `=` noise - not clear associativity; `~` shows better contrast.
-    - `~=` means `a = ~a`
-
-  * ~~`f(x = 100 ~ {0..100}, y ~ {0..100} = 1, z ~ {1..100}, p ~ {0.001..5}, shape ~ {tri, sin, tan} = sin)`~~
-    + less digit-y as above
-    - a bit redundant
-    + allows sets
-    - confuses of 0..10 and {0..10}
-    + allows joining ranges {0..10, 20..30}
-      ~ can be solved as 0..10 + 20..30
-    - too curvy
-
-  * `f(x = 100 -< 0..100, y -< 0..100 = 1, z -< 1..100, p -< 0.001..5, shape -< (tri, sin, tan) = sin)`
-    + visually precise indication of what's going on
-    - false match with reduce/loop operator
-      ~ not anymore a problem if we make loop/reducer `<|` and `|>`
-    + by rearranging loop/reducer it's not more at conflict
-    - a bit too far meaning, indirect. `-<` is more like fork, mb switch or etc
-    + better intuition about what's going on
-
-  * ~~`f(x = 100 <- 0..100, y <- 0..100 = 1, z <- 1..100, p <- 0.001..5, shape <- (tri, sin, tan) = sin)`~~
-    + literally elixir/haskel/erlang/R/Scala's list comprehension assigner
-    + stands in-place for "in" operator
-    + similar to -<
-    - `100 < -0..100`
-
-  * `f(x = 100 =< 0..100, y =< 0..100 = 1, z =< 1..100)`
-    - interferes with `=`, see below reasoning
-
-  * `f(x = 100 >< 0..100, y >< 0..100 = 1, z >< 1..100, p >< 0.001..5, shape >< (tri, sin, tan) = sin)`
-  * `f(x = 100 <> 0..100, y <> 0..100 = 1, z <> 1..100, p <> 0.001..5, shape <> (tri, sin, tan) = sin)`
-    + `x <> 0..100` means `x < 100 && x > 0`
-    + visually intuitive, one of the first guesses
-      + gpt suggested it
-    + math-ways are like that
-    + supports style of piezo operators `<>`, `-|`, `-/`, `-*`
-    + makes smooths look less intimidating `-//`, `-**`
-    - conflict with `x = 100 <> 0..100` as returning true/false
-
-  * ~~`f(x = 100 <0..100>, y <0..100> = 1, z <1..100>, p <0.001..5>, shape <(tri, sin, tan)> = sin)`~~
-
-  * `f(x = 100 <= 0..100, y <= 0..100 = 1, z <= 1..100, p <= 0.001..5, shape <= (tri, sin, tan) = sin)`
-    + very natural & known operator `<=`
-    + matches `element of` notation `<-`
-    + no ordering problem with `<=` and `=`
-    + frees `:` for technical needs, like import or named args
-    - `x <= 0..3` means `x <= 0, x <= 1, x <= 2`
-
-  * `f(x = 100 -| 0..100, y -| 0..100 = 1, z -| 1..100, p -| 0.001..5, shape -| (tri, sin, tan) = sin)`
-    - looks too much like table separators
-    + compatible `a -/ 0..10`, `a -* 0..10`, `a -< 0..10`
-
 ## [x] Enums → try avoiding explicit notation
 
   * ? for enums and ranges `{a,b,c}` seems to be the best:
@@ -1018,7 +925,7 @@
       * or else `.` depends on `()`: `(a.)` is result, `a.` is export.
   + Since `(a;b;c)` naturally returns last element, so must function body.
 
-## [x] End operator → indicator of no-return statement, last statement automatically returns
+## [x] End operator → ~~indicator of no-return statement,~~ no for now, last statement automatically returns
 
   * `.` operator can finish function body and save state. `delay(x,y) = (*d=[1s], z=0; d[z++]=x; d[z-y].)`
   * ? is it optional?
@@ -1048,7 +955,7 @@
       - doesn't help much if expr comes after, eg. `pi,rate. a=3;`
     -> so seems uncovered period can stand only at the end of scope. Else there must be a semi.
 
-### [ ] End operator `.` (discussion above is old): to have or not to have? -> use `(a;/)` for void return, otherwise last expression
+### [ ] End operator `.` (discussion above is old): to have or not to have? -> use `(a;/)` for void return
 
   1. `a,b,c.` explicitly indicates exported members
       - we can do export by last statement as `a,b,c`, thinking it be similar to fn return
@@ -1214,7 +1121,7 @@
 
   4. `a..b |> (x < 10 ?>; x > 100 ?.)`
 
-## [ ] Return operator: alternatives → try `/` for returning value from ~~block~~ function.
+## [x] Return operator: alternatives → try `/` for returning value from ~~block~~ function.
 
   1. `.`
     + erlang-y
@@ -1251,7 +1158,7 @@
   9. `a ? /; a ? /b; a ? /b,c;`
     + matches `./`, `../` logically
 
-## [ ] Break, continue, return? -> `./` for continue, `../` for return, `/` for root return.
+## [x] Break, continue, return? -> `./` for continue, `../` for return, `/` for root return.
 
   1. ~~`^` for continue, `^^` for break;~~
     + nice pattern to skip callstack;
@@ -1287,7 +1194,7 @@
   ? If `?..` is early return current scope, then how to break loop?
     * we can avoid return generally and only bail out from current scope.
 
-## [ ] Break, continue, return: from block or from function? -> ./ skip, ../ stop, / return, no block return
+## [x] Break, continue, return: from block or from function? -> ./ skip, ../ stop, / return, no block return
 
   1. `./` - break block, `../` - break 2 blocks, `.../` - break blocks to the root
     + consistent with loops: `.. |> ./`
@@ -1329,11 +1236,12 @@
   + allows separating return value from increments needed after function
   * no deferring?
     + obvious code sequence
+      + conceptually it's not nice to make code spaghetti-like
     + no conceptual/syntax/mental layer over operator
-    - no nice definition of variable state and its change
+    - definition of static variable and its change are separate
+      ~ potentially change can depend on certain conditions
     - noisy code of creating result holder var, performing state update, returning result
     + kind of natural
-    - state vars really need it, `x()=(*a=[0,1];>>a[1..]=a[0..];)`
   * ~~`x()=(@a;b,c;@(d)); x()=(*i=0;@i++;)`~~
     + `@` for after
     + good candidate by chatgpt as it's used for "annotations in Java/C#, so associated with modifying behavior"
@@ -1457,18 +1365,45 @@
   * `^` for return, `x() = (*i=0;^:i++;)`, `x()=(^:a; b,c,; ^:d;)`, `x(a) = (^:log(a); ^:a+=1; a)` for defer
     + means "after return"
   * `x() = (*i=0;^i++;)`, `x(a) = (^log(a); ^a+=1; a)`
-    + means "delay" operator in some contexts (aka next tick but technically not)
+    + means "delay" operator in DSP
     + means "after return"
     + `^` and `A` have similar shape
     + reminds debugger's jump over icon ↷
-    ~+ `x() = (#i=0;^i++;)` - good balance of familiarity and novation
-    + `^` means footnote in certain contexts
+    ~+ `x() = (*i=0;^i++;)` - balance of familiarity and novation
+    + `^` means footnote in typographics
+    + can go last literally to reduce unary intimidation
+      + if that's the case, literally means "return prev statement"
+  * No defer, but mark fn return as: `=a*b`: means take expression as function result `f()=(*i=0; =...; i++)`
+    + avoids problems with last expression
+    + avoids accumulated stack issue
+    - `f() = ( *t=0; =t*2; t++ );`
+      - intimidating prefix operators, `=` must be less standard practice
+
+### [ ] Defer/return: !Return to stack `=a;=b;` same as `a,b;` -> likely no need, just use defer
+  + allows avoiding drops
+  + points at how assignment works
+  + allows organizing deferred `f()=(*i=0; =...; i++)`
+  - from groups perspective `=a` is `,=a,`, which is "assign to nowhere"
+  - accumulating stack is dubious, something from asm
+    - `0..10 |> =#`
+      ?- can we put arbitrary len items to stack
+        + we may know stack in advance, so yes, nulls
+        + we may use array for complex cases
+      ?- conflicts `a[..] |>= # * 2`
+  - blocks common postfix ops, eg. `a!` becomes `a!=b`
+  - requires void or drop
+    a. we make last `;` sensitive, in sense `a;` means drop
+    b. we make void as `f()=(*i=0; =...; i++.)`
+      - too much effort for simply defer
+    c. syntax order `f()=(*i=0; (=...), i++;)`
+      - trick rather than normal practice
+      - doesn't replace stack
+    d. some marker for deferred area eg. `f()=(*i=0;...;i++)`
+      - can't think up obvious marking for such block
+      - that marker is essentially "omit output"
+      ~ that case is already covered by "defer" operator: just put statement at the end if you wish so
 
 ## [x] !Prefer operator `x()=(a;<<x=1;a*x;)` - declares values at the beginning? -> nah
-
-## [ ] !Return to stack `=a;=b;` same as `a,b;`
-  + allows avoiding drops
-  + allows organizing deferred
 
 ## [x] Export: ? Can we use something else but . for export? → ~~let's try `a.` as global export operator~~ -> last members are exported by default
 
@@ -4921,42 +4856,6 @@
     + allows merging analyser into 1-pass compiler
     + retains precision
 
-## [x] Operators: normalize, step, mix, smoothstep operators -> normalize is `a ~/ x..y`, mix is `a ~* x..y`
-
-  * `x -< a..b` defines clamping?
-  * `x -/ a..b` for smoothstep?
-    + reminds `_/`
-    + compatible with clamping by meaning (one of integral)
-      - x is clamped, but here x is mapped
-    + `(0-1) * threshold = (0-threshold)`, then `(0-tsh)/tsh=(0,1)`, then `(min-max) -/ min..max = (0,1)` is step
-      + and then `(0-1) -* min..max = (min-max)` is inverse step
-    - `-|` turnstile has different meaning in math
-  ? `-//` for smoothstep
-    - can't use `//`, unless we change comments style back to `\`
-  * ALT: smoothness range modifier, along with exp, step etc `0..10 ** 0.2`
-    + makes use of step operator
-    + gives wide variety of possible range transitions
-    + resolves `//` issue
-  ? `~/`
-    + `~*`
-  * `x ~/ a..b`
-    + allows `x -/ a..b` for lerp
-  * `x ~< a..b`
-  * `x ~~/ a..b` for smoothstep
-  * `a..b -> x`
-    - looks like function
-  * can be done via external lib
-  * `x >< a..b` for mix/lerp?
-  * `x =< a..b` for mix?
-    - what's infinity then?
-  * `x / a..b` for step/normalize, `x * a..b` for lerp?
-    + logical meaning for operators
-    - can be confused with applying to each value in a range
-  * `x <= a..b`
-    - can be used to compare ranges
-
-## [ ] Operators: Do we need smoothstep/ismoothstep -> not for now, since there are many ways to do smoothness
-
 ## [x] Variables: ow do we represent infinity? -> `1/0`, `0/0`
 
   * `oo`
@@ -4969,6 +4868,19 @@
   * `0/0`
     + even simpler and more mathy
     + reminds actual infinity sign
+
+## [ ] Functions: for references use i32? -> likely not, use regular fn refs if needed
+
+  + we can hold both $x global and $x function name
+  + i32 can automatically mean function reference
+  + allows storing funcs in lists
+    - we'd need to use NaNs with non-canonical form as list members
+  - better use native func refs
+
+## [ ] Use v128 of i64 for rational numbers?
+
+  + Converts back to f64 on export
+  + Gives extreme precision/dimension
 
 ## [x] Ranges: exclusive / non-inclusive range: how? -> use `0..10` as exclusive, operators decide inclusivity
 
@@ -5007,23 +4919,159 @@
     + `+` has no meaning as operator anyways
     - `10..-+10` vs `10..+-10` is weird, vs `10..=-10`
 
-## [x] Ranges: replace clamp `x -< 0..10` with clamp-assign `x =< 0..10`? -> ~~clamp is `x <? 0..10`~~ clamp is `x ~ 0..10`
+## [ ] Ranges: clamp symbol –> f(x ~ 0..100=100, y ~ 0..100, p ~ 0.001..5, shape = sin), because `x-*y` is `x - *y`
 
-  ? do we ever need `clamp(x, 0, 10)`, opposed to `x = clamp(x, 0, 10)`?
-    + it seems from examples we always `x = clamp(x, 0..10)`
-  + it's similar to `-<` but more specific
-  + for fn definition `x =< 0..10` is more precise what's going on there (value is clamped to range)
-  + `=<` consists of standard understandable characters
-    - the order is messed up, the pattern is `-<` + `=`
-      ~+ it doesn't necessarily match `+=` or `*=`: we don't modify the value, we completely rewrite/map it
-  + it's 2 chars vs 3
-  ? how do we indicate clamp or min/max?
-    * `x <= ..10`
-    ? keep `x -< ..10` ?
-  ?+ kind-of enables `=/` for smoothstep?
-    ? then `x =/ 0..10` maps x to smooth range, `x -/ 0..10` returns value from smooth range
-      * `x = x -/ 0..10`, `x =/ 0..10`
-  - seems that's confusable: `a <= b..c` vs `a =< b..c`
+  * ~~`f(x=100 in 0..100, y=1 in 0..100, z in 1..100, p in 0.001..5) = ...`~~
+    - conflicts with no-keywords policy
+
+  * ~~! Swift: non-inclusive range is 0..<100~~
+    - see exclusive ranges research, confusable with `0.. < 100`
+
+  * ~~`f(x{0..100} = 100, y{0..100} = 1, z{1..100}, p{0.001..5}, shape{sin,tri,tan}=sin )`~~
+    + matches set definition
+    - missing operator
+    + allows defining limited variables `a{0..100} = b`
+
+  * `f(x = 100 ~ 0..100, y ~ 0..100 = 1, z ~ 1..100, p ~ 0.001..5, shape ~ (tri, sin, tan) = sin)`
+    + swift has ~= operator checking if value is within range
+      * https://docs.swift.org/swift-book/documentation/the-swift-programming-language/patterns/
+      ~- it's reversed order, `0..100 ~= a`
+    ? shape ~ (tri, sin, tan)
+      + matches direct groups
+      + parens are just means to group items
+    + ~ punctuationally refers to range, but direct ~ is too little info
+    + shortest
+    + has matching mathy meaning
+    + it is very natural (up and down)
+    +? `a ~/ 0..10` for normalize, `a ~* 0..10` for lerp
+    + enables definitions like `x = 10 ~ 0..10;`
+    ? what about smoothstep
+      ~ likely we'd need to have a range modifier, eg. `x = 10 ~ 0..10**0.2`
+    - not as piezo as `x = 10 -< 0..100`
+      + still refers to piezo as "active current" or "wave"
+  * `f(x = 100 ~= 0..100, y ~= 0..100 = 1, z ~= 1..100, p ~= 0.001..5, shape ~= (tri, sin, tan) = sin)`
+    + matches Ruby's regex-search operator, inversed
+    + matches "equals" as "clamp"
+    - isn't interchangable with `=`, has different meaning
+    → too much `=` noise - not clear associativity; `~` shows better contrast.
+
+  * ~~`f(x = 100: 0..100, y: 0..100 = 1, z: 1..100, p: 0.001..5, shape: (tri, sin, tan) = sin)`~~
+    + `:` is standard type definition
+    - doesn't play well after value `x=100:0..100`
+      ~ feature of variable/argument
+    - interferes with named arguments
+    - calculation-wise can be too heavy, compared to one-time clamp
+    - has different precedence with `=`
+    - has possible conflict with ternary
+
+  * ~~`f(x = 100 ~ {0..100}, y ~ {0..100} = 1, z ~ {1..100}, p ~ {0.001..5}, shape ~ {tri, sin, tan} = sin)`~~
+    + less digit-y as above
+    - a bit redundant
+    + allows sets
+    - confuses of 0..10 and {0..10}
+    + allows joining ranges {0..10, 20..30}
+      ~ can be solved as 0..10 + 20..30
+    - too curvy
+
+  * `f(x = 100 -< 0..100, y -< 0..100 = 1, z -< 1..100, p -< 0.001..5, shape -< (tri, sin, tan) = sin)`
+    + visually precise indication of what's going on
+    + fork literally means from..to (in Russian at least)
+    + allows `a -<= 0..10`
+    + visually clear, in terms of noise
+    + aligns with `-/` for smoothstep operator better than `~/`
+      - `a-*b..c`: `a -* b..c` vs `a - * b..c`
+    + looks cooler than `<?` or `~`
+    - some uncertainty/conflict with `in`
+      ? maybe `a <> 0..10`
+
+  * ~~`f(x = 100 <- 0..100, y <- 0..100 = 1, z <- 1..100, p <- 0.001..5, shape <- (tri, sin, tan) = sin)`~~
+    + literally elixir/haskel/erlang/R/Scala's list comprehension assigner
+    + stands in-place for "in" operator
+    + similar to -<
+    - `100 < -0..100`
+
+  * `f(x = 100 =< 0..100, y =< 0..100 = 1, z =< 1..100)`
+    - we don't have operators starting with `=`
+
+  * `f(x = 100 >< 0..100, y >< 0..100 = 1, z >< 1..100, p >< 0.001..5, shape >< (tri, sin, tan) = sin)`
+  * `f(x = 100 <> 0..100, y <> 0..100 = 1, z <> 1..100, p <> 0.001..5, shape <> (tri, sin, tan) = sin)`
+    + `x <> 0..100` means `x < 100 && x > 0`
+    + visually intuitive, one of the first guesses
+      + gpt suggested it
+    + math charts for inc/excl ranges are like that
+    + supports style of piezo operators `<>`, `-|`, `-/`, `-*`
+    + makes smooths look less intimidating `-//`, `-**`
+    + allows reverse clamp as `a >< 0..10`
+    + visual logic
+    - spaceship, not equal meaning already
+    - `a = 100 <> 0..100` returns true/false
+
+  * ~~`f(x = 100 <0..100>, y <0..100> = 1, z <1..100>, p <0.001..5>, shape <(tri, sin, tan)> = sin)`~~
+
+  * `f(x = 100 <= 0..100, y <= 0..100 = 1, z <= 1..100, p <= 0.001..5, shape <= (tri, sin, tan) = sin)`
+    + very natural & known operator `<=`
+    + matches `element of` notation `<-`
+    + no ordering problem with `<=` and `=`
+    + frees `:` for technical needs, like import or named args
+    - `x <= 0..3` means `x <= 0, x <= 1, x <= 2`
+    + more meaningful for function arguments
+    - less matching definition of `a < 10 ? 10 : a > 0 ? 0 : a`
+
+  * ~~`f(x = 100 -| 0..100, y -| 0..100 = 1, z -| 1..100, p -| 0.001..5, shape -| (tri, sin, tan) = sin)`~~
+    - looks too much like table separators
+    + compatible `a -/ 0..10`, `a -* 0..10`
+
+  * `a |< ..10`, `a >| 10`
+
+  * `f(x = 100 <? 0..100, y <? 0..100 = 1, z <? 1..100, p <? 0.001..5, shape <? (tri, sin, tan) = sin)`
+    * `f(x<?0..10)=()`, `a >? 0..10`, `a <? 0..10`
+    + meaningful shortened `a > 10 ? 10 : a`, `a < 10 ? 10 : a`
+    ? logically clamp is `a > 10 ? 10 : a < 0 ? 0 : a` -> `a <?> 0..10` or `a >?< 0..10` or `a <>? 0..10`
+      * or `a <? 10 >? 0` -> `a <? 0..10` meaning within, or less than
+      + `a >? 0..10` means outside, not clear though which side
+    - introduces `a <=? ..10` for inclusive test
+      ? should we use `..=10` then instead?
+    - intimidating look in arguments
+
+## [x] Ranges: Element of range: `a in b`? -> likely ~~`a ~< (b,c,d)`~~ ~~`a <> (b,c,d)`~~ `a >< (b,c,d)`
+
+  * Range can be iterable, so comparison can cause evaluation
+
+  0. `x < 0..2`
+    - `x < 0..2` is `x < 0, x < 1`
+  1. `x ~< from..to`, `x ~< a,b,c`
+    - `x <~ from..to` is `x < ~from..to`
+      + `from..to ~> x`
+    - conflicts with `x ~ from..to` for just clamp
+    - heavy
+    - doesn't play well with sets
+    + logical in a sense referring to `~` for ranges
+  2. `from < x < to`
+    - makes comparison nary operator
+    - destroys range, meaning it cannot be calculable
+    - doesn't play with sets
+  3. `x = from..to ? ^`
+  4. `x <> from..to`
+    - wrong direction of `>`: `x < from || x > 10`
+      - in many langs this operator means "not equal"
+    + can allow `x >< from..10`
+    + natural suggestion
+  4.1 `x >< from..to`, `x ><= from..to`, `x >< a,b,c`
+    + right direction of operands `x > from && x < to`
+    + intersection literally means one of elements
+      + in -tersection means `in`
+    + `<>` operator is reinforced by many languages as "not equal" or "outside"
+  5. `from..to -> x`, `a,b,c -> x`
+    + follows https://en.wikipedia.org/wiki/Element_(mathematics)
+    ?+ can be used for loops: `x[..] -> i : i+1 : i + 2 => x[..]`
+      - conflict with `i = a,b,c : i**2`
+  6. `a ==|| (b,c,d)` for set comparison
+    + `a == b || a == c || a == d`
+    - non-conventional use joined operator, usually that's assignment
+  7. `a ?:== (b,c,d)`
+  8. `a -| b..c`
+  9. `a <: b..c`, `a <=: b..c`
+  9.1 `a :< b..c`, `a :<= b..c`
 
 ## [x] Ranges: Limited variables `x:0..100; x = 1000;` -> nah, perf-unwise
 
@@ -5035,64 +5083,40 @@
   - can be unexpected meaning
   - can slow down calculations, since performs runtime checks on every write
 
-## [ ] Functions: for references use i32? -> likely not, use regular fn refs
+## [ ] Ranges: Range step -> likely 0..10:0.5
 
-  + we can hold both $x global and $x function name
-  + i32 can automatically mean function reference
-  + allows storing funcs in lists
-    - we'd need to use NaNs with non-canonical form as list members
-  - better use native func refs
+  * `[-10..10..0.5]`
+  * `[-10..0.5..10]`
+  * `[0..10 : 0.5]`
+    + possible, : is free now
+    + similar to type definition, but more meaningful
+    + double-symbol refers to iteration
+    - conflicts with brainching `?:` - meaning "code after branch" `a ? 0..10:0.5;` vs `a ? 0..10 : 0.5;`
+      ~ technically none of these make sense
+    ? can be used as stride in mem reading as uint8? `x = y[2:u8]`
+  * `[0..20 |> _*0.5]`
+    - verbose
+    - messes up initial range
+  * `0..20 += .01 : `
+    - each member is increased by .01
+  * `0..20 ~| 1`, `0..20 |~ 1`
+  * ~~`[0..10 / 0.01]`~~
+    + recommended by gpt
+    - divides each item from range by 0.01
+  * ~~`[0..10 + 0.01]`~~
+    + compatible with range modifiers
+    - can be confusable with `(0,1,2,3,4,...) + 0.01`
+  * `[0..10 \ .5]`
+    + makes use of `\` nicely
+  * `[0..10 ++ .5]`
+    - what about descending range?
 
-## [ ] Use v128 of i64 for rational numbers?
+## [x] Ranges: Range modifiers: -> any operators are range modifiers
 
-  + Converts back to f64 on export
-  + Gives extreme precision/dimension
-
-## [x] Ranges, operators: min, max, clamp as `a <? 0..100`? ~~yes~~ ~~keep `a <= 0..100` for in, and~~ ~~`a ~ 0..100` for clamp~~
-
-  * `a |< ..10`, `a >| 10` for
-  * can be solved via clamp operator `a <> ..10`, `a <> 10..`
-    - adds confusion as `a < >..10`
-  * `a >? 10`, `a <? 10`
-    + meaningful shortened `a > 10 ? 10 : a`, `a < 10 ? 10 : a`
-    ? logically clamp is `a > 10 ? 10 : a < 0 ? 0 : a` -> `a <?> 0..10` or `a >?< 0..10` or `a <>? 0..10`
-      * or `a <? 10 >? 0` -> `a <? 0..10` meaning within, or less than
-      + `a >? 0..10` means outside, not clear though which side
-    - introduces `a <=? ..10` for inclusive test
-      ? should we use `..=10` then instead?
-  * `a <> 0..10`, `a <=> 0..10`
-    + meaningful as `a < 10 && a > 0`, `a <= 10 && a > 0`
-      - can do `0 < a < 10`
-    ? is that `clamp(a, 0, 10)` or `a in 0..10`?
-      * logically it's `in`, what would be `clamp`?
-    + clamp as `a <>= 0..10`?
-      - logically it's `a = a <> 0..10`, which is assigning to boolean
-    + allows reverse clamp as `a >< 0..10`
-    + visual logic
-    - spaceship, not equal meaning already
-  * ALT: `a <= 0..10` for clamp, `a <? 0..10` is within check
-    + more meaningful for function arguments
-    - less matching definition of `a < 10 ? 10 : a > 0 ? 0 : a`
-    - `a <= 0..2` is `a<=0, a<=1`
-  * `a -< 0..10`
-    + allows `a -<= 0..10`
-    + visually clear
-    + aligns with `-/` for smoothstep operator
-    + looks cooler than `<?`
-    - some uncertainty/conflict with `in`
-      ? maybe `a <> 0..10`
-  * `a ~ 0..10` for clamp, `a ~= 0..10` for `a = a ~ 0..10`
-    + super short
-    + has matching mathy meaning
-    + it is very natural
-    - `a ~= 10` can be almost equal
-      ~+ we remake almost equal to `a <= (from-f32)..(from+f32)`
-      + or better from-f32 < a < from+f32
-    + makes sense as `a ~/ 0..10` for normalize, `a ~* 0..10` for lerp
-    + enables definitions like `x = 10 ~ 0..10;`
-    ? what about smoothstep
-      ~ likely we'd need to have a range modifier, eg. `x = 10 ~ 0..10**0.2`
-    - not cool enough
+  * `0..100 ** 0.01`
+    * `a ~ 0..100 ** .01` - maps to pow range?
+      + reinforces meaning of max operator, which is nice
+    - pow each member
 
 ## [x] Arrays: Create empty array - how? -> `[..10]` since range is exclusive
 
@@ -5186,41 +5210,6 @@
     ~ kind of valid self-slicing
     - loses reference to initial list
     - means `x = x[10..]` would create reference, not clone
-
-## [ ] Ranges: Range step -> likely 0..10:0.5
-
-  * `[-10..10..0.5]`
-  * `[-10..0.5..10]`
-  * `[0..10 : 0.5]`
-    + possible, : is free now
-    + similar to type definition, but more meaningful
-    + double-symbol refers to iteration
-    - conflicts with brainching `?:` - meaning "code after branch" `a ? 0..10:0.5;` vs `a ? 0..10 : 0.5;`
-      ~ technically none of these make sense
-    ? can be used as stride in mem reading as uint8? `x = y[2:u8]`
-  * `[0..20 |> _*0.5]`
-    - verbose
-    - messes up initial range
-  * `0..20 += .01 : `
-    - each member is increased by .01
-  * `0..20 ~| 1`, `0..20 |~ 1`
-  * ~~`[0..10 / 0.01]`~~
-    + recommended by gpt
-    - divides each item from range by 0.01
-  * ~~`[0..10 + 0.01]`~~
-    + compatible with range modifiers
-    - can be confusable with `(0,1,2,3,4,...) + 0.01`
-  * `[0..10 \ .5]`
-    + makes use of `\` nicely
-  * `[0..10 ++ .5]`
-    - what about descending range?
-
-## [x] Ranges: Range modifiers: -> any operators are range modifiers
-
-  * `0..100 ** 0.01`
-    * `a ~ 0..100 ** .01` - maps to pow range?
-      + reinforces meaning of max operator, which is nice
-    - pow each member
 
 ## [ ] Early return: how to consolidate type? -> just enforce f64 for now for early returns
 
@@ -5797,41 +5786,6 @@
   - same as elvis `a ?: b` is not void, this is not void
   - `/ a ? 1 : b ? 2;`
     ~- essentially `a ? b` means `a ? b : nan`
-
-## [ ] Ranges: Element of range: `a in b`? -> likely `a ~< (b,c,d)`
-
-  * Range can be iterable, so comparison can cause evaluation
-
-  0. `x < 0..2`
-    - `x < 0..2` is `x < 0, x < 1`
-  1. `x ~< from..to`, `x ~< a,b,c`
-    - `x <~ from..to` is `x < ~from..to`
-      + `from..to ~> x`
-    - conflicts with `x ~ from..to` for just clamp
-    - heavy
-    - doesn't play well with sets
-    + logical in a sense referring to `~` for ranges
-  2. `from < x < to`
-    - makes comparison nary operator
-    - destroys range, meaning it cannot be calculable
-    - doesn't play with sets
-  3. `x = from..to ? ^`
-  4. `x <> from..to`
-    - wrong direction of `>`
-  4.1 `x >< from..to`, `x ><= from..to`, `x >< a,b,c`
-    + right direction of operands `x > from && x < to`
-    - refers to intersection
-  5. `from..to -> x`, `a,b,c -> x`
-    + follows https://en.wikipedia.org/wiki/Element_(mathematics)
-    ?+ can be used for loops: `x[..] -> i : i+1 : i + 2 => x[..]`
-      - conflict with `i = a,b,c : i**2`
-  6. `a ==|| (b,c,d)` for set comparison
-    + `a == b || a == c || a == d`
-    - non-conventional use joined operator, usually that's assignment
-  7. `a ?:== (b,c,d)`
-  8. `a -| b..c`
-  9. `a <: b..c`, `a <=: b..c`
-  9.1 `a :< b..c`, `a :<= b..c`
 
 ## [x] Loops: Write out operator `x[..] : a : b : x[..]` -> `x[..] |> a() |> b() |> x[..] = _`
 

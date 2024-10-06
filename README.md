@@ -20,6 +20,7 @@ x[i] x[]                      ;; member access, length
 a..b a.. ..b ..               ;; ranges
 |> #                          ;; pipe/loop, map
 ./ ../ /                      ;; continue/skip, break/stop, return
+>< <>                         ;; inside, outside
 ~ ~/ ~*                       ;; clamp, normalize, lerp
 * ^                           ;; static, defer
 
@@ -46,10 +47,9 @@ inf = 1/0, nan = 0/0;         ;; eg: alias infinity, NaN
 (a-1)..(a+1);                 ;; computed range
 0..3 * 2;                     ;; mapped range: 0*2, 1*2, 2*2
 (a,b,c) = 0..3 * 2;           ;; destructure: a=0, b=2, c=4
-a <> 0..10;                   ;; a >= 0 && a < 10
-a ~ 0..10;                    ;; clamp(a, 0, 10);
-a ~/ 0..10;                   ;; normalize(a, 0, 10)
-a ~* 0..10;                   ;; lerp(a, 0, 10);
+a >< 0..10, a <> 0..10;       ;; a >= 0 && a < 10, a < 0 || a >= 10
+a ~ 0..10, a ~= 0..10;        ;; clamp(a, 0, 10), a = clamp(a, 0, 10)
+a ~* 0..10, a ~/ 0..10;       ;; lerp(a, 0, 10), normalize(a, 0, 10)
 
 ;; Groups
 (a,b,c) = (1,2,3);            ;; assign: a=1, b=2, c=3
@@ -80,12 +80,12 @@ m[0..] = m[-1..];             ;; reverse
 m[0..] = m[1..,0];            ;; rotate
 
 ;; Conditions
-a ? b;                        ;; if a then b (else nan)
+a ? b;                        ;; if a then b (else 0)
+a ?: b;                       ;; elvis: if not a then b
 sign = a < 0 ? -1 : +1;       ;; ternary conditional
 (2+2 >= 4) ? log(1) :         ;; multiline/switch
-  3 <= 1..2 ? log(2) :        ;; else if
+  3 >< 1..2 ? log(2) :        ;; else if
   log(3);                     ;; else
-a && b || c;                  ;; (a and b) or c
 
 ;; Loops
 (a, b, c) |> f(#);            ;; for each item in a, b, c do f(item)
@@ -103,7 +103,7 @@ x[..] |> f(#) |> g(#);        ;; pipeline sequence
 
 ;; Functions
 double(n) = n*2;              ;; define a function
-times(m = 1, n ~ 1..) = (    ;; optional, clamped arg
+times(m = 1, n ~= 1..) = (    ;; optional, clamped arg
   n == 0 ? /n;                ;; early return
   m * n;                      ;; returns last statement
 );                            ;;
@@ -118,7 +118,7 @@ a() = ( *i=0; ++i );          ;; i keeps value between calls
 a(), a();                     ;; 1,2
 a1() = ( *copy=a; copy() );   ;; clone function
 a(), a(); a1(), a1();         ;; 3,4; 1,2;
-f() = ( *t=0; ^t++; t*2 );    ;; defer: t++ called after return
+fn() = ( *t=0; t*2; ^t++ );   ;; defer: t++ called after fn returns `t*2`
 x(a[], f()) = f(a[0]);        ;; array, func args
 
 ;; Export
@@ -154,7 +154,7 @@ Provides k-rate amplification for block of samples.
 ```
 gain(                             ;; define a function with block, volume arguments.
   block,                          ;; block is a array argument
-  volume <> 0..100                ;; volume is limited to 0..100 range
+  volume -< 0..100                ;; volume is limited to 0..100 range
 ) = (
   block[..] |>= # * volume        ;; multiply each sample by volume value
 );
@@ -177,8 +177,8 @@ A-rate (per-sample) biquad filter processor.
 
 lpf(                              ;; per-sample processing function
   x0,                             ;; input sample value
-  freq = 100 <> 1..10k,            ;; filter frequency, float
-  Q = 1.0 <> 0.001..3.0            ;; quality factor, float
+  freq = 100 -< 1..10k,            ;; filter frequency, float
+  Q = 1.0 -< 0.001..3.0            ;; quality factor, float
 ) = (
   *(x1, y1, x2, y2) = 0;          ;; define filter state
 
@@ -224,7 +224,7 @@ oscillator = [
 ;; applies adsr curve to sequence of samples
 adsr(
   x,
-  a <> 1ms..,                    ;; prevent click
+  a -< 1ms..,                    ;; prevent click
   d,
   (s, sv=1),                    ;; optional group-argument
   r
