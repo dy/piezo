@@ -112,14 +112,12 @@ times(4), times(,5);          ;; 4, 5: optional, skipped arg
 dup(x) = (x,x);               ;; return multiple
 (a,b) = dup(b);               ;; destructure
 a=1,b=1; x()=(a=2;b=2); x();  ;; a==1, b==2: first statement declares locals
-
-;; Static vars
-a() = ( *i=0; ++i );          ;; i keeps value between calls
+fn() = ( x; ^log(x) );        ;; defer: calls log after fn returns x
+f(a[], cb()) = cb(a[0]);      ;; array, func args
+a() = ( *i=0; ++i );          ;; static var: i persists value
 a(), a();                     ;; 1,2
 a1() = ( *copy=a; copy() );   ;; clone function
 a(), a(); a1(), a1();         ;; 3,4; 1,2;
-fn() = ( *t=0; t*2; ^t++ );   ;; defer: t++ called after fn returns `t*2`
-x(a[], f()) = f(a[0]);        ;; array, func args
 
 ;; Export
 x, y, z;                      ;; exports last statement
