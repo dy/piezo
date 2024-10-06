@@ -31,7 +31,7 @@
   let audioContext, processor
   async function init() {
     if (audioContext) return
-    audioContext = new AudioContext();
+    audioContext = new AudioContext({ sampleRate: 8000 });
     await audioContext.audioWorklet.addModule("./processor.js");
     processor = new AudioWorkletNode(
       audioContext,
@@ -452,7 +452,7 @@
     ],
     async run(code, o) {
       await init();
-      if (o.bytebeat) code = `f()=(*t=0;^t++;${code})`
+      if (o.bytebeat) code = `f()=(*t=0;${code};^t=(t+1)%65536;)`
       processor.port.postMessage(code)
     },
     async load(url, o) {

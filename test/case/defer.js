@@ -11,7 +11,7 @@ t('defer: - basics', () => {
   mod = compileWat(wat), f = mod.instance.exports.f;
   is([f(), f(), f()], [0, 1, 2], 'after return')
 
-  wat = compileZ(`f()=(*t=0;t;^++t)`)
+  wat = compileZ(`f()=(*t=0;t;^++t;t%=256)`)
   mod = compileWat(wat), f = mod.instance.exports.f;
   is([f(), f(), f()], [0, 1, 2], 'after return')
 })
