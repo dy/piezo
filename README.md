@@ -21,7 +21,7 @@ a..b a.. ..b ..               ;; ranges
 |> #                          ;; pipe/loop/map, topic reference
 ./ ../ /                      ;; continue/skip, break/stop, return
 >< <>                         ;; inside, outside
-~ ~/ ~*                       ;; clamp, normalize, lerp
+-< -/ -*                      ;; clamp, normalize, lerp
 * ^                           ;; static, defer
 
 ;; Numbers
@@ -47,9 +47,9 @@ inf = 1/0, nan = 0/0;         ;; eg: alias infinity, NaN
 (a-1)..(a+1);                 ;; computed range
 0..3 * 2;                     ;; mapped range: 0*2, 1*2, 2*2
 (a,b,c) = 0..3 * 2;           ;; destructure: a=0, b=2, c=4
-a >< 0..10, a <> 0..10;       ;; a >= 0 && a < 10, a < 0 || a >= 10
-a ~ 0..10, a ~= 0..10;        ;; clamp(a, 0, 10), a = clamp(a, 0, 10)
-a ~* 0..10, a ~/ 0..10;       ;; lerp(a, 0, 10), normalize(a, 0, 10)
+a >< 0..10, a <> 0..10;       ;; inside(a, 0, 10), outside(a, 0, 10);
+a -< 0..10, a -<= 0..10;      ;; clamp(a, 0, 10), a = clamp(a, 0, 10)
+a -* 0..10, a -/ 0..10;       ;; lerp(a, 0, 10), normalize(a, 0, 10)
 
 ;; Groups
 (a,b,c) = (1,2,3);            ;; assign: a=1, b=2, c=3
@@ -103,7 +103,7 @@ x[..] |> f(#) |> g(#);        ;; pipeline sequence
 
 ;; Functions
 double(n) = n*2;              ;; define a function
-times(m = 1, n ~= 1..) = (    ;; optional, clamped arg
+times(m = 1, n -< 1..) = (    ;; optional, clamped arg
   n == 0 ? /n;                ;; early return
   m * n;                      ;; returns last statement
 );                            ;;
@@ -113,7 +113,7 @@ dup(x) = (x,x);               ;; return multiple
 (a,b) = dup(b);               ;; destructure
 a=1,b=1; x()=(a=2;b=2); x();  ;; a==1, b==2: first statement declares locals
 fn() = ( x; ^log(x) );        ;; defer: calls log after returning x
-f(a, cb) = cb(a[0]);      ;; array, func args
+f(a, cb) = cb(a[0]);          ;; array, func args
 a() = ( *i=0; ++i );          ;; static var: i persists value
 a(), a();                     ;; 1,2
 a1() = ( *copy=a; copy() );   ;; clone function

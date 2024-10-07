@@ -4495,7 +4495,7 @@
       -> arg must be only one
   1.1 We reserve special types sequence eg. `(i32, i32)`
 
-  2. with GC types can be solved as `(type $ptr (struct i32 i32)) (func (param (ref $ptr)))`
+  2. structs `(type $ptr (struct i32 i32)) (func (param (ref $ptr)))`
     - unknown when structs will be supported
       ~ it's supported everywhere already
     + standard way
@@ -4505,6 +4505,7 @@
       - may complicate compilation to simpler embedded envs
         - eg. not supported by wasm2c
     - what do we need memory for then?
+    - if we involve structs, we may as well use arrays directly
 
   3. funcref returning ptr and length upon call?~~
     + we anyways read length via operator
@@ -4568,7 +4569,9 @@
   9. Use WASM GC
     + supported by all wasm engines
     + direct returns in JS side
+    + uncontaminates memory from heap
     - involves GC
+      - which can make it less portable
 
 ## [x] Arrays: Prohibit dynamic arrays `a()=(x=[1,2,3])`? -> keep them, but dispose immediately once ref is lost, statically
 
@@ -4918,7 +4921,7 @@
     + `+` has no meaning as operator anyways
     - `10..-+10` vs `10..+-10` is weird, vs `10..=-10`
 
-## [ ] Ranges: clamp symbol –> f(x ~ 0..100=100, y ~ 0..100, p ~ 0.001..5, shape = sin), because `x-*y` is `x - *y`
+## [ ] Ranges: clamp symbol –> ~~f(x ~ 0..100=100, y ~ 0..100, p ~ 0.001..5, shape = sin)~~ `x = 100 -< 0..100, y -< 0..100` is more visually coherent, `~` is a bit too cryptic/old-school
 
   * ~~`f(x=100 in 0..100, y=1 in 0..100, z in 1..100, p in 0.001..5) = ...`~~
     - conflicts with no-keywords policy
@@ -4950,6 +4953,7 @@
       + still refers to piezo as "active current" or "wave"
     - `a ~* b..c` is also `a ~ *b..c`
     + ChatGPT suggests it as better option, since has built intuition
+      - intuition is slightly off, it has not direct visual sense, and ~ means more "roughly", not "within range"
   * `f(x = 100 ~= 0..100, y ~= 0..100 = 1, z ~= 1..100, p ~= 0.001..5, shape ~= (tri, sin, tan) = sin)`
     + matches Ruby's regex-search operator, inversed
     + matches "equals" as "clamp"
@@ -4981,9 +4985,13 @@
     + visually clear, in terms of noise
     + aligns with `-/` for smoothstep operator better than `~/`
     - `a-*b..c`: `a -* b..c` vs `a - *b..c`
+      ~ same defect with `a~*b..c` as `a ~ *b..c`
+      ~ `a - *b..c` has no much sense, star operator is used in declaration only
     + looks cooler than `<?` or `~`
     + ChatGPT suggests as visually distinct option
       - but a bit higher entry barrier to learn
+    + it is a bit more consistent visually with `<>`, `><` than `~`, very strong clue
+      + also it's a bit more in-sync with piezo style of "crystals" and "flashes", zz
 
   * ~~`f(x = 100 <- 0..100, y <- 0..100 = 1, z <- 1..100, p <- 0.001..5, shape <- (tri, sin, tan) = sin)`~~
     + literally elixir/haskel/erlang/R/Scala's list comprehension assigner
@@ -5226,7 +5234,7 @@
       ~+ prelim returns belong to userland anyways, it's not demanded internally
     - we can't
 
-## [ ] Static variables / Functions: How can we call same fn twice with same context? How to call with different contetx ->
+## [x] Static variables / Functions: How can we call same fn with different context -> static var makes a clone `*clone=fn;clone()`
 
   * It seems for now to be able only externally
   ? but what if we need to say fill an array with signal from synth?
@@ -5398,7 +5406,8 @@
     -? how do we know if we're passing a function
   3.1 Limit init to only global vars
     + natural perf boost: no need to check for nan
-    + no
+
+  ? Do we need cloning callbacks and when? `x(cb) = (*clone = cb; clone())`
 
 ## [ ] Static variables: logic - how to map callsite to memory address? -> ~~see implementation~~ - we use simple static vars
 
@@ -5979,5 +5988,3 @@
 ## [x] Approximately operator `a =~ 10` -> no
   + fira converts to ~~
   - `a = ~10`
-
-## [ ]

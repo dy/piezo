@@ -26,10 +26,11 @@
 * [x] make `#` as topic placeholder
 * [x] make writable globals, init on the first line
 * [x] make simple static variables as `*b=a`
-  * [ ] fn capture declaring new static `*b = a`
+  * [ ] clone fn static `a()=(), b()=(*clone=a;clone())`
   * [x] init detection
   * [x] `nan:` and constant expressions for watr
   * [x] static groups `*(a,b,c)`
+* [ ] -<, -*, -/
 * [x] `^` for deferred
   * [x] preliminary return with defer `f()=(^i++;i>10?./1;)` - likely via block as `f()=(ret;(i>10?ret=1);i++;ret)`
 * [x] conciliate returns types
