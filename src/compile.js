@@ -173,7 +173,9 @@ Object.assign(expr, {
 
   // a; b; c;
   ';'([, ...statements], out) {
-    let last = statements.findLastIndex(s => (s && s[0] !== '^')) // ignore tail defers
+    // ignore tail defers
+    let last = statements.length - 1
+    for (; last; last--) if (statements[last] !== '^') break // findLastIndex alternative
 
     // return last statement always
     let list = statements.map((s, i) => (initing = !i, expr(s, i == last ? out : false)))
