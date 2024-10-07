@@ -4,7 +4,7 @@ import { compileWat } from '../util.js'
 
 t('loops: range global', t => {
   let wat, mod, arr
-  wat = compileZ(`x=[1..3]; 0..x[] |> x[_]=_+1; x`)
+  wat = compileZ(`x=[1..3]; 0..x[] |> x[#]=#+1; x`)
   mod = compileWat(wat);
   let { memory, x } = mod.instance.exports
   arr = new Float64Array(memory.buffer, x.value, 3)
@@ -15,7 +15,7 @@ t('loops: range global', t => {
 
 t('loops: range local', t => {
   let wat, mod
-  wat = compileZ(`x=[1..3], c = 0, fill() = (0..x[] |> (x[_]++;c++))`)
+  wat = compileZ(`x=[1..3], c = 0, fill() = (0..x[] |> (x[#]++;c++))`)
   mod = compileWat(wat)
   let { memory, x, fill, c } = mod.instance.exports
 
@@ -34,7 +34,7 @@ t('loops: range local', t => {
 
 t.todo('loop: current item write', t => {
   let wat, mod
-  wat = compileZ(`x=[1..3]; x[..] |> _+=1; x`)
+  wat = compileZ(`x=[1..3]; x[..] |> #+=1; x`)
   mod = compileWat(wat)
   let { memory, x } = mod.instance.exports
   arr = new Float64Array(memory.buffer, x.value, 3)
@@ -45,8 +45,8 @@ t.todo('loop: current item write', t => {
 
 t('loop: range in range', t => {
   let wat = compileZ(`a=[..9], f(a,w,h)=(
-    0..w |> (x=_;
-      0..h |> (y=_;
+    0..w |> (x=#;
+      0..h |> (y=#;
         a[y*w + x] = x+y*w;
       );
     )
@@ -61,7 +61,7 @@ t('loop: range in range', t => {
 })
 
 t.todo('loop: as fn return', () => {
-  let wat = compileZ(`x=[1..3]; fill() = (0..x[] |> x[_]=_+1); fill, x`)
+  let wat = compileZ(`x=[1..3]; fill() = (0..x[] |> x[#]=#+1); fill, x`)
 })
 
 t

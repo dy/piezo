@@ -455,7 +455,7 @@ Object.assign(expr, {
       const [, min, max] = a
       // FIXME: iterate with int if minop/maxop is int
       const minop = expr(min), maxop = expr(max)
-      const cur = '_', // FIXME: we may need to replace _ with reading / writing element instead
+      const cur = '#', // FIXME: we may need to replace _ with reading / writing element instead
         idx = `idx:${depth}`,
         end = `end:${depth}`,
         bop = expr(b, out)
