@@ -23,13 +23,13 @@
   * [x] undo `.` - make semicolon-based void
 * [x] make globals readable, but locals writable
 * [x] first bytebeat: viznut
-* [ ] make `#` as topic placeholder
+* [x] make `#` as topic placeholder
 * [x] make writable globals, init on the first line
 * [x] make simple static variables as `*b=a`
   * [ ] fn capture declaring new static `*b = a`
   * [x] init detection
   * [x] `nan:` and constant expressions for watr
-  * [ ] static groups `*(a,b,c)`
+  * [x] static groups `*(a,b,c)`
 * [x] `^` for deferred
   * [x] preliminary return with defer `f()=(^i++;i>10?./1;)` - likely via block as `f()=(ret;(i>10?ret=1);i++;ret)`
 * [x] conciliate returns types

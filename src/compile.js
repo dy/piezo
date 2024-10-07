@@ -175,7 +175,8 @@ Object.assign(expr, {
   ';'([, ...statements], out) {
     // ignore tail defers
     let last = statements.length - 1
-    for (; last; last--) if (statements[last] !== '^') break // findLastIndex alternative
+
+    for (; last; last--) if (statements[last]?.[0] !== '^') break // findLastIndex alternative
 
     // return last statement always
     let list = statements.map((s, i) => (initing = !i, expr(s, i == last ? out : false)))
@@ -409,22 +410,6 @@ Object.assign(expr, {
       return initState
     }
 
-    // *a = b - static variable init
-    if (a[0] === '*') {
-      [, a] = a
-      locals[a] ||= { static: `${func}.${a}`, type: 'f64' }
-
-      // precalculable init, like *a=0
-      if (isConstExpr(b)) {
-        globals[`${func}.${a}`] = { type: 'f64', init: float(expr(b)) };
-        return
-      }
-
-      // *a=0; becomes a!=a?a=0;
-      globals[`${func}.${a}`] = { type: 'f64', init: op('(f64.const nan)') }; // FIXME: make signaling nan:0x01 (requires watr)
-      return expr(['?', ['!=', a, a], ['=', a, b]], out)
-    }
-
     if (typeof a === 'string') {
       // a = b,  a = (b,c),   a = (b;c,d)
       if (globals[a]?.func) err(`Redefining function '${a}' is not allowed`)
@@ -542,11 +527,26 @@ Object.assign(expr, {
   '*'([, a, b], out) {
     // *a;
     if (!b) {
+      if (typeof a === 'string');
+      // *a=1
+      else if (a[0] === '=') [, a, b] = a
+      else err('Bad static variable init')
+
       locals[a] ||= { static: `${func}.${a}`, type: 'f64' }
 
-      // *a=0; becomes a!=a?a=0;
-      globals[`${func}.${a}`] = { type: 'f64', init: op('(f64.const nan)') };
-      return expr(a, out)
+      // precalculable init, like *a=0
+      if (b && isConstExpr(b)) {
+        globals[`${func}.${a}`] = { type: 'f64', init: float(expr(b)) };
+        return out ? get(`${func}.${a}`) : null
+      }
+      // *a=b; becomes a!=a?a=b;
+      else {
+        // FIXME: make signaling nan:0x01 (requires watr)
+        globals[`${func}.${a}`] = { type: 'f64', init: op('(f64.const nan)') };
+
+        if (!b) b = [INT, 'nan']
+        return expr(['?', ['!=', a, a], ['=', a, b]], out)
+      }
     }
 
     // group multiply
@@ -610,7 +610,7 @@ Object.assign(expr, {
   '++'([, a], out) {
     if (!out) return expr(['=', a, ['+', a, [INT, 1]]], false)
 
-    // NOTE: for a[n]++ it's cheaper to (a[n]+=1)-1 (a[n];drop(a[n]=a[n]+1)) due to read
+    // NOTE: for a[n]++ it's cheaper to (a[n]+=1)-1 than (a[n]=a[n]+1) due to read
     if (a[0] === '[') return expr(['-', ['=', a, ['+', a, [INT, 1]]], [INT, 1]])
     if (typeof a !== 'string') err('Invalid left hand-side expression in prefix operation')
 

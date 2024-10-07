@@ -23,33 +23,29 @@ t('static: array init', t => {
   let mod = compileWat(wat)
   let { x, y, memory } = mod.instance.exports
   is(x(), 0)
-  console.log(new Float64Array(memory.buffer))
   is(x(), 2)
-  console.log(new Float64Array(memory.buffer))
   is(x(), 4)
-  console.log(new Float64Array(memory.buffer))
   is(y(), 6)
-  console.log(new Float64Array(memory.buffer))
   is(y(), 8)
   is(y(), 10)
 })
 
-t.todo('static: group init', t => {
-  let wat = compileCode(`x()=(*(i=0,j=1,k=2);i+j+k), y()=x()`)
+t('static: group init', t => {
+  let wat = compileCode(`x()=(*(i=0,j=1,k=2);i,j,k;^(i,j,k)++);`)
   let mod = compileWat(wat)
-  let { x, y } = mod.instance.exports
+  let { x } = mod.instance.exports
+  is(x(), [0, 1, 2])
+  is(x(), [1, 2, 3])
 })
 
-t.todo('static: multiple states', t => {
-  let wat = compileCode(`x()=(*i=0,*j=1,*a=[..2]; i++ + j++ + a[0]++ + a[1]++); y()=(x()+x());`)
+t('static: multiple states', t => {
+  let wat = compileCode(`x()=(*i=0,*j=1,*a=[..2]; i++ + j++ + a[0]++ + a[1]++);`)
   let mod = compileWat(wat)
-  let { x, y } = mod.instance.exports
+  let { x } = mod.instance.exports
   is(x(), 1)
   is(x(), 5)
   is(x(), 9)
   is(x(), 13)
-  is(y(), 6)
-  is(y(), 21)
 })
 
 t.todo('static: mixed deps', t => {

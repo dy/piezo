@@ -15,6 +15,7 @@ const OPAREN = 40, CPAREN = 41, OBRACK = 91, CBRACK = 93, SPACE = 32, QUOTE = 39
 const PREC_SEMI = 1, // a; b;
   PREC_RETURN = 4, // x ? ./a,b : y
   PREC_SEQ = 6, //  ./a,b,c;  a, b ? (c,d) : (e,f); a,b,c |> d
+  PREC_STATE = 7, // *x=1, x=2;
   PREC_IF = 8,    // a ? b=c;  a = b?c;
   // FIXME: should pipe be lower than if? a |> b?c;
   PREC_PIPE = 8, // |> should match JS pipe, a = b|>c; a, b|>c, d; a|>b ? c
@@ -122,7 +123,7 @@ binary('/', PREC_MULT)
 binary('%', PREC_MULT)
 
 // static
-unary('*', PREC_UNARY)
+unary('*', PREC_STATE)
 
 // adds
 binary('+', PREC_ADD)

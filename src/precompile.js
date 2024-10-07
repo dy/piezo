@@ -1,5 +1,5 @@
-// Static optimizations, denormalizations, left-hand-side checks etc
-// Prepares tree for compiler which expects valid executable tree
+// Prepares/streamlines tree for compiler, to reduce unnecessary tree checks and transforms
+// Doesn't define compilation logic
 
 import { INT, FLOAT } from './parse.js';
 import { err, ids, intersect } from './util.js';
@@ -207,6 +207,9 @@ Object.assign(expr, {
   '**='([, a, b]) { return expr(['=', a, ['**', a, b]]) },
   '~='([, a, b]) { return expr(['=', a, ['~', a, b]]) },
 
+  '++'([, a, b]) { return unroll('++', expr(a)) || ['++', expr(a)] },
+  '--'([, a, b]) { return unroll('--', expr(a)) || ['--', expr(a)] },
+
   '+'([, a, b]) {
     a = expr(a), b = expr(b);
     return unroll('+', a, b) || (
@@ -233,7 +236,9 @@ Object.assign(expr, {
     )
   },
   '*'([, a, b]) {
-    if (!b) return ['*', expr(a)]
+    if (!b) {
+      return unroll('*', expr(a)) || ['*', expr(a)]
+    }
     a = expr(a)
     b = expr(b);
     return unroll('*', a, b) || (

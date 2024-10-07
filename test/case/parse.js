@@ -239,25 +239,32 @@ t('parse: argument cases', t => {
   is(parse('a(a=1,b) = a'), ['=', ['(', 'a', [',', ['=', 'a', [INT, 1]], 'b']], 'a'], 'inline function')
 })
 
-t('parse: state variables', t => {
+t('parse: static variables', t => {
   is(parse(`
     a() = ( *i=0; ++i );      ;; state variable persist value between fn calls
-    a(), a();                     ;; 0, 1
+    a(), a();                 ;; 0, 1
   `), [';',
-    ['=', ['(', 'a', ,], ['()', [';', ['=', ['*', 'i'], [INT, 0]], ['+=', 'i', [INT, 1]]]]],
+    ['=', ['(', 'a', ,], ['()', [';', ['*', ['=', 'i', [INT, 0]]], ['+=', 'i', [INT, 1]]]]],
     [',', ['(', 'a', ,], ['(', 'a', ,]]
     , [],
   ])
+
   // is(parse('*[4]i'), ['*',['[',[INT,4],'i']], 'memory')
-  is(parse(`b() = (                   ;;
+  is(parse(`b() = (             ;;
     *i=[..4];                   ;; memory of 4 items
     i[0] = i[1]+1;              ;; read previous value
     i[0]                        ;; return currrent value
   );`), [';', ['=', ['(', 'b', ,], ['()', [';',
-    ['=', ['*', 'i'], ['[]', ['..', undefined, [INT, 4]]]],
+    ['*', ['=', 'i', ['[]', ['..', undefined, [INT, 4]]]]],
     ['=', ['[', 'i', [INT, 0]], ['+', ['[', 'i', [INT, 1]], [INT, 1]]],
     ['[', 'i', [INT, 0]]
   ]]], ,])
+
+  is(parse(`a() = ( *i=0,j )`), ['=',
+    ['(', 'a', ,],
+    ['()', [',', ['*', ['=', 'i', [INT, 0]]], 'j']]
+  ])
+
   is(parse('b(), b(), b();'), [';', [',', ['(', 'b', ,], ['(', 'b', ,], ['(', 'b', ,]], ,], '1, 2, 3')
 })
 
@@ -266,7 +273,7 @@ t('parse: defer', t => {
     ['(', 'a', ,],
     ['()',
       [';',
-        ['=', ['*', 'i'], [INT, 0]],
+        ['*', ['=', 'i', [INT, 0]]],
         ['^', ['+=', 'i', [INT, 1]]]
       ]]
   ])
@@ -357,7 +364,7 @@ t('parse: sine gen', t => {
       ['(', 'sine', 'freq'],
       ['()',
         [';',
-          ['=', ['*', 'phase'], [INT, 0]],
+          ['*', ['=', 'phase', [INT, 0]]],
           ['+=', 'phase', ['/', ['*', 'freq', 'pi2'], 'sampleRate']],
           ['[]', ['(', 'sin', 'phase']]
         ]
