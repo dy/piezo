@@ -427,8 +427,8 @@ _Piezo_ attempts to fill that gap, providing a common layer. It is also a person
 ### Principles
 
 * _Intuitivity_: common syntax foundation, clear patterns for new operators.
-* _Elegance_: compact expressions, ideal for live coding.
-* _Performance_: compiles optimal code quickly, suited for live envs.
+* _Elegance_: compact expressions, good for live coding.
+* _Performance_: compiles optimal code quickly, good for live envs.
 * _No keywords_: variables are words, operators are symbols, allowing i18l code.
 * _No runtime_: statically analyzable, no OOP, no dynamic structures, no lamdas, no nested scopes.
 * _No waste_: linear memory, fixed heap, no GC.
@@ -438,7 +438,7 @@ _Piezo_ attempts to fill that gap, providing a common layer. It is also a person
 * _Case-agnostic_: case changes don't break code (eg. `sampleRate` vs `samplerate`).
 * _Normalized syntax_: no complex parsing rules – just unary, binary or n-ary operators.
 * _Readable output_: produces readable WebAssembly text (eg. can serve as meta-language).
-* _Low-level_: no fancy features beyond math and buffers, compilable to ASM envs.
+* _Low-level_: no fancy features beyond math and buffers, embeddable.
 
 <!--
 ## Projects using piezo

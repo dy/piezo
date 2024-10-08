@@ -4353,7 +4353,7 @@
     - has weird connotation as binary
     - makes `list |> ^^&&&` a valid construct, ugh
     - there's too much meaning for `&` character as `&`, `&&` already
-  * `list |> @ * 2`, `list |> @>2?^^@:^@`
+  * ~~`list |> @ * 2`, `list |> @>2?^^@:^@`~~
     + relatively safe
     + associates with id / character
     + not reserved by other meanings
@@ -4369,6 +4369,7 @@
       - looks too much to reserve for that lil task
       - no "placeholder" or "insertion" feeling
       - associates with some mystical meta-stuff like decorators or directives
+    - can be reserved for params descriptors aka jsdoc `;; @t – time`
   * `list |> _ * 2`, `list |> _>2?^^_:^_`
     + less mystery than with `@`
     + more conventional (Elixir, Julia, Scala, Perl, PowerShell)
@@ -4471,7 +4472,7 @@
     - prohibits `x[1..10] <|= # * 2`
     - breaks pipe `0..items[] |> filter(items[#]) |> gain(items[#])` is super-verbose
 
-## [ ] Arrays: How to represent array pointer in code? -> ~~let's try f64~~
+## [ ] Arrays: How to represent array (pointer) in code? -> ~~let's try f64~~
 
   1. Use multiple stack values?
     + allows returning arrays as a couple [ptr,length] instead of storing length in memory
@@ -4569,9 +4570,9 @@
   9. Use WASM GC
     + supported by all wasm engines
     + direct returns in JS side
-    + uncontaminates memory from heap
+    + uncontaminates memory, no heap required
     - involves GC
-      - which can make it less portable
+      - less portable
 
 ## [x] Arrays: Prohibit dynamic arrays `a()=(x=[1,2,3])`? -> keep them, but dispose immediately once ref is lost, statically
 
@@ -4592,6 +4593,99 @@
   2. Alternatively we can create large-dynamic slot for the time of array init, then dispose unused after init
   3. Just create new array and push members to it, increasing array's length. We suggest there's only one dynamic array at-a-time created, so it's safe to increase length on creating time.
     -> Or better just write length after the array is created, eg. somewhere in dynamic `$alloc` method.
+
+## [x] Arrays: Create empty array - how? -> `[..10]` since range is exclusive
+
+  * `[..10]`
+    - not clear if that's 10 members from 1 to 10 or 0 to 10 or what
+      ~+ with enforced 1-idx convention it doen't make sense to have anything below 1
+    - confusing, since range starts with minus-infinity
+    + a bit hacky = non-main way to create blank list, ie. values can be heap-y
+
+  * `[1..10 <| 0]`
+    + very explicit
+    - verbose
+    + protects from not-zero values
+    - requires initializer
+
+  * `[0..10]` creates empty array instead of raising seq
+    - not how range maps to group
+
+  * `[15]x` creates `x` as array
+    + gives static indication of var/argument as list.
+    - sabotages whole concept of `x = [1,2,3]` as `[]x = (1,2,3)`
+      + which can be nice since can replace concept of buffers with just lists
+      + this avoids `m = [n[1..3, 5, 6..]]` as `m[] = n[1..3, 4, 6..]`
+      - nah, `[1,2,3]` is too nice to avoid
+    - introduces new operator
+      * (set length? a bit weird/unclear outside of declaration, eg. `[10]x = (1,2,3)`, `x = [10]y, [10]x = [1,2,3];`)
+    + returns newly created array, not array property
+
+  ** `x[0..6];`
+    + same as just declaring variable, but immediately declares a list
+    + removes the whole syntax concept of `[a,b,c]`
+    - discards position aliases
+      ? can be done as `x[2,-1] = (third:3, last:-1); x.third; x.last;`
+      ? alt: `x[third:2, last:-1] = (3,-1); x.last`
+        + then `(third, last) = x[..];`
+    - `x[2..4]` doesn't make any sense for initializing buffers
+      ~+ can just refer to items to prefill, eg. `x[5] = 0` or `x[2..3] = 4,5`
+    - `x[4]` creates buffer of 5 items
+      ? unless we make 1-based indexing
+    + if we drop named args/array members we can save `:` operator for later uses
+      ?! can be used for clamp or var range indication? like type definition but more meaningful
+    + solves issue of table of funcs definition: `funcs[..] = (a()=(), b()=())`
+    - iteration is available as `x <| #` and `x[..] <| #`
+      ~+ first case it's list iteration, second case it's group iteration
+    - declaring fn argument `gain(out[])` vs `gain(out[1024])` vs `gain(out)` - not clear the difference
+      ~ `x(out[])` is meaningless,
+      ~? `x(out[3])` creates array of 3 if arg is not provided
+        ? alt: it writes argument to 3rd position in `out` local variable
+    + reduces the necessity of 0-based indexing since list becomes a bit more hi-level thing
+    - inconsistent: expected to return an array reference, but returns value of an array instead
+      - so that if we want to return just created array, we'd need to `x[10];x;`
+    - creates not very nice condition in code of property access.
+    - enforces 1-based index for list elements
+
+## [x] Arrays: Should we keep immediate list notation? -> yes, let's keep
+
+  + Allows passing memory area directly `gain([1,2,3])`
+  + Enables nested lists for tree structures, unlike groups `[1,2,[3,4,[5]]]`
+  + Looks more natural
+
+## [ ] Arrays: How to create subarray? -> ~~@latr.sublist or directly math `y+=2; y[]-=2;`~~
+
+  * `x[] = y[1,2..3]`
+    - syntactically creates copy of y
+    - writes to x's length
+
+  * `x[10]; y = x + 3;`
+    + mathematically correct
+    + keeps proper offset
+    - may need to have special fn to change length, since uses reinterpreting
+    - knows about pointers
+    - super confusing to represent array as number
+
+  * `x[10]; y = @latr.sublist(x, len: 3, start: 2)`
+
+  * `x[..] = y[..]`
+    - writes into x
+
+  * `x = *y` for copy array, `x = y` for subarray
+    - subtle conflict with C's pointers
+    - in Kotlin `*` is for spread
+
+  * `x = y[..]`
+    - ~~takes first item from many~~
+    - attempts to iterate through array
+
+  * `x = [10..]y`
+    - weird syntax
+
+  * `x []= 10..`
+    ~ kind of valid self-slicing
+    - loses reference to initial list
+    - means `x = x[10..]` would create reference, not clone
 
 ## [x] Loops: Should loops return multiple arguments? How to maintain the heap? -> `<|` returns multiple members to heap
 
@@ -4921,7 +5015,7 @@
     + `+` has no meaning as operator anyways
     - `10..-+10` vs `10..+-10` is weird, vs `10..=-10`
 
-## [ ] Ranges: clamp symbol –> ~~f(x ~ 0..100=100, y ~ 0..100, p ~ 0.001..5, shape = sin)~~ `x = 100 -< 0..100, y -< 0..100` is more visually coherent, `~` is a bit too cryptic/old-school
+## [ ] Ranges: clamp symbol –> ~~f(x ~ 0..100=100, y ~ 0..100, p ~ 0.001..5, shape = sin)~~ `x = 100 -< 0..100, y -< 0..100` is more visually coherent and new, `~` is a bit too cryptic/old
 
   * ~~`f(x=100 in 0..100, y=1 in 0..100, z in 1..100, p in 0.001..5) = ...`~~
     - conflicts with no-keywords policy
@@ -5127,99 +5221,6 @@
       + reinforces meaning of max operator, which is nice
     - pow each member
 
-## [x] Arrays: Create empty array - how? -> `[..10]` since range is exclusive
-
-  * `[..10]`
-    - not clear if that's 10 members from 1 to 10 or 0 to 10 or what
-      ~+ with enforced 1-idx convention it doen't make sense to have anything below 1
-    - confusing, since range starts with minus-infinity
-    + a bit hacky = non-main way to create blank list, ie. values can be heap-y
-
-  * `[1..10 <| 0]`
-    + very explicit
-    - verbose
-    + protects from not-zero values
-    - requires initializer
-
-  * `[0..10]` creates empty array instead of raising seq
-    - not how range maps to group
-
-  * `[15]x` creates `x` as array
-    + gives static indication of var/argument as list.
-    - sabotages whole concept of `x = [1,2,3]` as `[]x = (1,2,3)`
-      + which can be nice since can replace concept of buffers with just lists
-      + this avoids `m = [n[1..3, 5, 6..]]` as `m[] = n[1..3, 4, 6..]`
-      - nah, `[1,2,3]` is too nice to avoid
-    - introduces new operator
-      * (set length? a bit weird/unclear outside of declaration, eg. `[10]x = (1,2,3)`, `x = [10]y, [10]x = [1,2,3];`)
-    + returns newly created array, not array property
-
-  ** `x[0..6];`
-    + same as just declaring variable, but immediately declares a list
-    + removes the whole syntax concept of `[a,b,c]`
-    - discards position aliases
-      ? can be done as `x[2,-1] = (third:3, last:-1); x.third; x.last;`
-      ? alt: `x[third:2, last:-1] = (3,-1); x.last`
-        + then `(third, last) = x[..];`
-    - `x[2..4]` doesn't make any sense for initializing buffers
-      ~+ can just refer to items to prefill, eg. `x[5] = 0` or `x[2..3] = 4,5`
-    - `x[4]` creates buffer of 5 items
-      ? unless we make 1-based indexing
-    + if we drop named args/array members we can save `:` operator for later uses
-      ?! can be used for clamp or var range indication? like type definition but more meaningful
-    + solves issue of table of funcs definition: `funcs[..] = (a()=(), b()=())`
-    - iteration is available as `x <| #` and `x[..] <| #`
-      ~+ first case it's list iteration, second case it's group iteration
-    - declaring fn argument `gain(out[])` vs `gain(out[1024])` vs `gain(out)` - not clear the difference
-      ~ `x(out[])` is meaningless,
-      ~? `x(out[3])` creates array of 3 if arg is not provided
-        ? alt: it writes argument to 3rd position in `out` local variable
-    + reduces the necessity of 0-based indexing since list becomes a bit more hi-level thing
-    - inconsistent: expected to return an array reference, but returns value of an array instead
-      - so that if we want to return just created array, we'd need to `x[10];x;`
-    - creates not very nice condition in code of property access.
-    - enforces 1-based index for list elements
-
-## [x] Arrays: Should we keep immediate list notation? -> yes, let's keep
-
-  + Allows passing memory area directly `gain([1,2,3])`
-  + Enables nested lists for tree structures, unlike groups `[1,2,[3,4,[5]]]`
-  + Looks more natural
-
-## [ ] Arrays: How to create subarray? -> ~~@latr.sublist or directly math `y+=2; y[]-=2;`~~
-
-  * `x[] = y[1,2..3]`
-    - syntactically creates copy of y
-    - writes to x's length
-
-  * `x[10]; y = x + 3;`
-    + mathematically correct
-    + keeps proper offset
-    - may need to have special fn to change length, since uses reinterpreting
-    - knows about pointers
-    - super confusing to represent array as number
-
-  * `x[10]; y = @latr.sublist(x, len: 3, start: 2)`
-
-  * `x[..] = y[..]`
-    - writes into x
-
-  * `x = *y` for copy array, `x = y` for subarray
-    - subtle conflict with C's pointers
-    - in Kotlin `*` is for spread
-
-  * `x = y[..]`
-    - ~~takes first item from many~~
-    - attempts to iterate through array
-
-  * `x = [10..]y`
-    - weird syntax
-
-  * `x []= 10..`
-    ~ kind of valid self-slicing
-    - loses reference to initial list
-    - means `x = x[10..]` would create reference, not clone
-
 ## [ ] Early return: how to consolidate type? -> just enforce f64 for now for early returns
 
   * we have to consolidate output type with early returns
@@ -5350,7 +5351,7 @@
 
   9. Simple static vars: we have a function with single static context.
 
-### [x] Functions / Static variables: how to create context? -> `x() = (*f1 = f);`
+### [ ] Functions / Static variables: how to clone function? -> `x() = (*f1 = f);`
 
   1. Operator
     a. `a() = (*t=0;^t++); b = a;` - assignment creates fn instance.
@@ -5393,6 +5394,7 @@
     + this is intention of `*f1` - to have local instance of generic fn
       + we almost never process code globally, I wonder what are these cases
     + this allows create clones as `f1(x) = (*_f=f;_f(x))` - like global vars locally defined
+    - it doesn't immediately answer how to "reset" sound
 
 ### [ ] Functions / Static variables: How do we detect passed function as an argument? `f1(f) = (*_f=f; _f())`;
 
@@ -5408,6 +5410,20 @@
     + natural perf boost: no need to check for nan
 
   ? Do we need cloning callbacks and when? `x(cb) = (*clone = cb; clone())`
+
+### [ ] Functions: how to "reset" sound, since one fn is once sound -> `f.t = 0`
+  * Apparently there's difference of cloning a function and resetting a function
+
+  1. `~f;`
+    + we never need to ~ a function
+    - we need to track types to know the difference
+    + `~` means "refresh", "destroy"
+
+  2. `*f;`
+    - creates a clone intuitively
+
+  3. `f.t = 0;`
+    + meaningful
 
 ## [ ] Static variables: logic - how to map callsite to memory address? -> ~~see implementation~~ - we use simple static vars
 
@@ -5792,7 +5808,7 @@
   + to iterate array always provide range or list `a[..] |> #`, `a, b, c |> #`
   + removes ambiguity from code and from brain
 
-## [ ] Conditions: Is `a ? b;` void or not? -> not void, like elvis a ?: b or a ? b : c
+## [x] Conditions: Is `a ? b;` void or not? -> not void, like elvis a ?: b or a ? b : c
 
   * research was done somewhere here, but keyword "void" wasn't used, so to clarify
   + void: makes it direct, simple and different from `a && b`
@@ -5988,3 +6004,5 @@
 ## [x] Approximately operator `a =~ 10` -> no
   + fira converts to ~~
   - `a = ~10`
+
+## [ ] Function: !Automemoize function so that the following runs read from memory
