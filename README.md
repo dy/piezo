@@ -49,6 +49,8 @@ inf = 1/0, nan = 0/0;         ;; eg: alias infinity, NaN
 (a,b,c) = 0..3 * 2;           ;; destructure: a=0, b=2, c=4
 a >< 0..10, a <> 0..10;       ;; inside(a, 0, 10), outside(a, 0, 10);
 a ~ 0..10, a ~= 0..10;        ;; clamp(a, 0, 10), a = clamp(a, 0, 10)
+a ~ ..10, a ~ 10..;           ;; min(a, 10), max(a, 10)
+a ~* 0..10, a ~/ 0..10;       ;; lerp(a, 0, 10), normalize(a, 0, 10)
 
 ;; Groups
 (a,b,c) = (1,2,3);            ;; assign: a=1, b=2, c=3
