@@ -1,7 +1,7 @@
 # piezo ![stability](https://img.shields.io/badge/stability-experimental-black) [![test](https://github.com/dy/piezo/actions/workflows/test.yml/badge.svg)](https://github.com/dy/piezo/actions/workflows/test.yml)
 
 Low-level language for signal processing, synthesis and analysis.<br/>
-Compiles to compact 0-runtime WASM with linear memory.<br/>
+Compiles to compact 0-runtime WASM.<br/>
 
 <!-- [Examples](https://dy.github.io/piezo/examples/) | [Motivation](#motivation) -->
 
@@ -21,8 +21,8 @@ a..b a.. ..b ..               ;; ranges
 |> #                          ;; pipe/loop/map, topic reference
 ./ ../ /                      ;; continue/skip, break/stop, return
 >< <>                         ;; inside, outside
--< -/ -*                      ;; clamp, normalize, lerp
-* ^                           ;; static, defer
+~ ~/ ~*                       ;; clamp, normalize, lerp
+^                             ;; defer
 
 ;; Numbers
 16, 0x10, 0o755, 0b0;         ;; int, hex, oct or binary
@@ -48,8 +48,7 @@ inf = 1/0, nan = 0/0;         ;; eg: alias infinity, NaN
 0..3 * 2;                     ;; mapped range: 0*2, 1*2, 2*2
 (a,b,c) = 0..3 * 2;           ;; destructure: a=0, b=2, c=4
 a >< 0..10, a <> 0..10;       ;; inside(a, 0, 10), outside(a, 0, 10);
-a -< 0..10, a -<= 0..10;      ;; clamp(a, 0, 10), a = clamp(a, 0, 10)
-a -* 0..10, a -/ 0..10;       ;; lerp(a, 0, 10), normalize(a, 0, 10)
+a ~ 0..10, a ~= 0..10;        ;; clamp(a, 0, 10), a = clamp(a, 0, 10)
 
 ;; Groups
 (a,b,c) = (1,2,3);            ;; assign: a=1, b=2, c=3
@@ -69,7 +68,7 @@ m = [1,2,3,4];                ;; array of 4 elements
 m = [n[..]];                  ;; copy n
 m = [1, 2..4, 5];             ;; mixed definition
 m = [1, [2, 3, [4]]];         ;; nested arrays (tree)
-m = [0..4 |> # ** 2];         ;; list comprehension
+m = [0..4 |> _ ** 2];         ;; list comprehension
 (a, z) = (m[0], m[-1]);       ;; get by index
 (b, .., z) = m[1, 2..];       ;; get multiple values
 length = m[];                 ;; get length
@@ -88,22 +87,22 @@ sign = a < 0 ? -1 : +1;       ;; ternary conditional
   log(3);                     ;; else
 
 ;; Loops
-(a, b, c) |> f(#);            ;; for each item in a, b, c do f(item)
+(a, b, c) |> f(_);            ;; for each item in a, b, c do f(item)
 (i = 10..) |> (               ;; descend over range
   i < 5 ? a ./;               ;; if item < 5 skip (continue)
   i < 0 ? a ../;              ;; if item < 0 stop (break)
 );                            ;;
-x[..] |> f(#) |> g(#);        ;; pipeline sequence
+x[..] |> f(_) |> g(_);        ;; pipeline sequence
 (i = 0..w) |> (               ;; nest iterations
   (j = 0..h) |> f(i, j);      ;; f(x,y)
 );                            ;;
 ((a,b) = 0..10) |> a+b;       ;; iterate pairs
-(x,,y) = (a,b,c) |> # * 2;    ;; capture result x = a*2, y = c*2;
+(x,,y) = (a,b,c) |> _ * 2;    ;; capture result x = a*2, y = c*2;
 .. |> i < 10 ? i++ : ../;     ;; while i < 10 i++
 
 ;; Functions
 double(n) = n*2;              ;; define a function
-times(m = 1, n -< 1..) = (    ;; optional, clamped arg
+times(m = 1, n ~ 1..) = (     ;; optional, clamped arg
   n == 0 ? /n;                ;; early return
   m * n;                      ;; returns last statement
 );                            ;;
@@ -114,10 +113,6 @@ dup(x) = (x,x);               ;; return multiple
 a=1,b=1; x()=(a=2;b=2); x();  ;; a==1, b==2: first statement declares locals
 fn() = ( x; ^log(x) );        ;; defer: calls log after returning x
 f(a, cb) = cb(a[0]);          ;; array, func args
-a() = ( *i=0; ++i );          ;; static var: i persists value
-a(), a();                     ;; 1,2
-a1() = ( *copy=a; copy() );   ;; clone function
-a(), a(); a1(), a1();         ;; 3,4; 1,2;
 
 ;; Export
 x, y, z;                      ;; exports last statement
@@ -423,22 +418,23 @@ Audio processing has no cross-platform solution, various environments deal with 
 
 _Piezo_ attempts to fill that gap, providing a common layer. It is also a personal attempt on language design - rethinking parts and providing safe haven. WASM target gives max performance and compatibility - browsers, [audio/worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) etc.
 
-
+<!--
 ### Principles
 
-* _Intuitivity_: common syntax foundation, clear patterns for new operators.
-* _Elegance_: compact expressions, good for live coding.
-* _Performance_: compiles optimal code quickly, good for live envs.
-* _No keywords_: variables are words, operators are symbols, allowing i18l code.
+* _Familiar_: common syntax, clear patterns for new operators.
+* _Compact_: short expressions – good for live coding and serialization.
+* _Performant_: fast compile, fast execution – good for live envs.
+* _No keywords_: chars for vars, symbols for operators – good for i18l code.
 * _No runtime_: statically analyzable, no OOP, no dynamic structures, no lamdas, no nested scopes.
 * _No waste_: linear memory, fixed heap, no GC.
-* _Inferred types_: derived from usage, focus on logic over language.
-* _Explicit vars_: no implicit globals, no wildcard imports, no hidden file conventions.
+* _Inferred types_: derived by usage – focus on logic over language.
+* _Explicit_: no implicit globals, no wildcard imports, no hidden file conventions.
 * _Space-agnostic_: spaces and newlines can be removed or added freely (eg. for compression or formatting).
 * _Case-agnostic_: case changes don't break code (eg. `sampleRate` vs `samplerate`).
 * _Normalized syntax_: no complex parsing rules – just unary, binary or n-ary operators.
 * _Readable output_: produces readable WebAssembly text (eg. can serve as meta-language).
-* _Low-level_: no fancy features beyond math and buffers, embeddable.
+* _Low-level_: no fancy features beyond math and buffers, embeddable. -->
+
 
 <!--
 ## Projects using piezo
@@ -456,4 +452,4 @@ _Piezo_ attempts to fill that gap, providing a common layer. It is also a person
 
 * @stagas for initial drive & ideas
 
-<p align=center><a href="https://github.com/krsnzd/license/">⚡ 🕉</a></p>
+<p align=center><a href="https://github.com/krsnzd/license/">🕉</a></p>

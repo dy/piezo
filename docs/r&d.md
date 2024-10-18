@@ -514,9 +514,14 @@
   * Native bytecode
   * others?
 
-## [ ] Variables: Standard channel names `a.lr`, `a.xyzw`
+## [ ] Variables: Standard channel names `a.lr`, `a.xyzw` -> likely no: very little value over swap
 
   + like glsl (data views to underlying block buffer), with [standard channel ids](https://en.wikipedia.org/wiki/Surround_sound#Standard_speaker_channels); swizzles as `a.l, a.r = a.r, a.l; a.fl, a.fr = a.fl`
+  - conflicts with no-keyword principle, eg. would be inconsistent to `звук.lr = звук.rl`
+  - conflicts with internal vars access `sound.t = 0`
+
+  * ALT: `a.01 = a.10`
+    - `a[0,1]=a[1,0]`
 
 ## [x] Functions: signature -> `f(x, y) = x + y`
 
@@ -667,7 +672,7 @@
 ## [x] Numbers: float64 by default, unless it's statically inferrable as int32, like ++, +-1 etc ops only
   * Boolean operators turn float64 into int64
 
-## [x] Pipes: ~~→ | with anon functions~~ ~~transform ternary `list | x -> a(x) | x -> b(x)`~~ pipes are loops `x |> _ * 0.6 + reverb(_) * 0.4 |> `
+## [x] Pipes / Loops: ~~→ | with anon functions~~ ~~transform ternary `list | x -> a(x) | x -> b(x)`~~ pipes are loops `x |> _ * 0.6 + reverb(_) * 0.4 |> `
 
   1. Placeholder as `x | #*0.6 + reverb() * 0.4`, `source | lp($, frq, Q)`?
     ? can there be multiple args to pipe operator? `a,b |` runs 2 pipes, not multiarg.
@@ -877,7 +882,7 @@
   - we can't include all units anyways, it's pointless
     ~ we don't need all, whereas 2k..20k is very elegant, instead of legacy 2e3..20e3
 
-## [x] Time units: convert to sample rate samples (or to floats)? -> try generic units `1k=1000,1s=48000,1pi=pi`
+## [x] Units: convert to sample rate samples (or to floats)? -> try generic units `1k=1000,1s=48000,1pi=pi`
 
   + saves many conversions
   - has implicit sr variable...
@@ -1445,7 +1450,7 @@
     + `.` is replacement for `;`
     ?! missing `.` means program is unfinished? like, a library to include?
 
-## [x] Static variables: syntax → `*` seems to be most natural for save ~~let's try `#` as it is more distinguishable~~
+## [ ] Static variables: syntax → `*` seems to be most natural for save
 
   * There's disagreement on `...` is best candidate for loading prev state. Let's consider alternatives.
   1. ~~`...x1,y1,x2,y2`~~
@@ -1478,6 +1483,7 @@
     )
     ```
     - `song()=(...t=0;)`
+
   1.1 `.x, .y, .z`
     + minimal look
     + associates with "static members" in swift
@@ -1505,11 +1511,13 @@
     ```
     - `a..b` vs `a. .b`
     - looks like mandatory part of variable
+
   2. `^x1, ^y1, ^x2, ^y2`
     - ~~too many meanings to topical operator~~
     + refers as "belonging" to the function
     + doesn't create opposites `*/` for static `/` defer.
     - doesn't feel like static (yet), `#x` is more direct intuition
+
   → 3. `*x1, *x2, *y1, *y2`
     + existing convention of `*` as save
     + "star operator" for "save"
@@ -1554,6 +1562,7 @@
   3.1 ~~`x1*, x2*, y1*, y2*`~~
     + typographic meaning as footnote
     - `x1*=2`
+
   4. `#x1, #x2, #y1, #y2`, `#(x1,x2,x3)`
     + private state from JS, act as instance private properties
     + sense of "private", "behind the cell"
@@ -1581,11 +1590,14 @@
     - ~~may conflict with cardinal number (count) operator~~
     - reserves `#` as operator, not part of variable name
       - cannot use notes, indices `x#1, x#2`, placeholder `a |> #`
+    - has too strong sense as "global declaration", outside of program
+
   5. ~~`[x1, x2, y1, y2] = #`~~
     + involves destructuring syntax
     - introduces unnecessary token
     - `#` is hardly works on its own not in conjunction
     - `#` is reserved for too many things: count, import, comment.
+
   6. `<x1, x2, y1, y2>`
     - doesn't come along with regular definition `x=1, <y>=2`
   7. ~~Introduce keywords? Not having if (a) b can be too cryptic.~~
@@ -1629,7 +1641,7 @@
     ~ `song()=(&t=0;)`
     + complementary with `*` as defer operator
 
-  10. `@x1, @x2, @y1, @y2`
+  10. ~~`@x1, @x2, @y1, @y2`~~
     + 'at' means current scope, 'at this'
     + more wordy - less operator-y, as if part of id
     + matches import directive by meaning
@@ -1655,11 +1667,13 @@
     )
     ```
     - feels a bit heavy for internals
-  11. `:> x1, x2, y1, y2`
+    - we reserve @ for param declarations
+
+  11. ~~`:> x1, x2, y1, y2`~~
     ~ `song()=(:>t=0;)`
   12. `:: x1, x2, y1, y2`
     ~ `song()=(::t=0;)`
-  13. `<< x1, x2, y1, y2`
+  13. ~~`<< x1, x2, y1, y2`~~
     + Matches ^
       +~ ASCII in 1962 had <- character for _, which was alternative to ^
     - `song()=(<<t=0;)`
@@ -1707,7 +1721,7 @@
 
   ! ALT: can be done via early return as `(a ? b.; )`
 
-## [x] Loops: ~~`i <- 0..10 <| a + i`, `i <- list <| a`, `[x <- 1,2,3 <| x*2]`~~ ~~`0..10 | i -> a + i`~~ ~~`list |> # * 2;`~~
+## [x] Loops: look and feel ~~`i <- 0..10 <| a + i`, `i <- list <| a`, `[x <- 1,2,3 <| x*2]`~~ ~~`0..10 | i -> a + i`~~ `list |> # * 2;`
 
   * `for i in 0..10 (a,b,c)`, `for i in src a;`
   * alternatively as elixir does: `item <- 0..10 a,b,c`
@@ -3125,7 +3139,7 @@
 
   * No need to define scope: imports full contents
   * `#[math]; #[./path/to/lib.sy];` (Rusti)
-  * `#math;#./path/to/lib.sy;`
+  * `#math; #./path/to/lib.sy;`
     + like md title
     + shortcut from #include, #import in C, C++, Obj C
     + `# 'math': sin, cos;`
@@ -3133,6 +3147,8 @@
     + music sheets start with # and b
     + similar to Rust
     - conflicts with cardinality (number) operator: #str literally means number of items in string.
+      ~ we don't have cardinal operator
+    + associates with declaration, something global, outside of program
   * shebang `#!'math'`
   * ... 'math', 'latr', 'musi';
   * << 'math', 'latr', 'musi';
@@ -3154,12 +3170,7 @@
     + et ≈ include
     - no easy way to scope imports
     - might be occupied by state
-  * @ 'math', 'latr', './my.son'
-    + at - better reflects
-  * +'math', +'latr', +'musi', +'my-module':
-    * overloaded + for atoms includes them
-  * wildcard? 'math.*', 'latr.*', './my.son/*'
-  * `* :: 'math', sin, cos :: 'math'`
+
   * `@math: sin, cos; @latr; @./my-lib.son`
     + literal meaning: at math: sin, cos;
     + @ has address intuition, which better fits for paths.
@@ -3168,6 +3179,7 @@
     - double `@@audio-lab`
     - reserves `@` and `:` operators.
     - disregards URLs.
+
   * `sin, cos @ 'math', * @ 'latr'`
     + a,b at source
     +~ reminds npm namespace convention
@@ -3177,17 +3189,8 @@
       ~ we may not necessarily want to resolve node_modules path, it's going to be either just `synth` or full path.
     + no case-sensitivity problem, `math#PI` and `math#pi` are different
     + it's more obvious that variables become part of scope, rather than figuring out vars from atom `'#a,b,c'`
-  * `'math' / sin, cos;`
-    ? 'math' / *; ?
-  * `'math': sin,cos, 'latr': *`
-    - too pale, usual and conflicting
-  * `sin,cos =< 'math'`
-  * `sin,cos -< math`
-    - conflict with reducer >-
-  * `'math'!sin,cos, '@audio-lab/synth'!, './my-sound.son'!`
-    - prefix is easier identifiable
-  * `osc1, osc2 =: '@audio-lab/synt'`
-  * `<math>, <./path/to/my/sound.sy>, <@audio-lab/synth>;`
+
+  * `<math>, <./path/to/my/sound.sy>, <@audio-lab/synth>, <inline-url>;`
     + associates with C's `#import <std>`
     + encloses internal stuff: it's not string nor expression, same time safe
     + frees extra operator `@`, `:` - allows `#` internally as part of URL
@@ -3198,7 +3201,9 @@
     - looks like JSX/C++/TypeScript type templates
     - multiple lines in a row look heavy `<math#pi>;<./path/to/lib.sy>;`
       + allows sequence as `<math#pi>, <./path/to/lib.sy>;`
-    - not as natural as `@math:sin,cos;@./path/to/lib.sy;`
+    - not as natural as `@math:sin,cos; @./path/to/lib.sy;`
+    - reduced to none becomes `outside` operator `a <> b..c`
+
   * `{math},{./path/to/lib.sy},{@aydui-lab/synth};`
   * sin, cos <- 'math', <- '@audio-lab/synth'
     + reminds list comprehension with assignment
@@ -4329,7 +4334,7 @@
 
   ? ALT: `<( x>2?!; )>`
 
-### [x] Loops: What's the best character for topic placeholder? -> `#` feels the best ~~`_` means "insert here"~~
+### [x] Loops: What's the best character for topic placeholder? -> `#` feels the best or `_` means "insert here"
 
   * `list |> #*2`, `list |> #>2?^^#:^#;`
     + `#` is almost perfect for topic/reference, associates with `#`th item
@@ -4348,6 +4353,8 @@
       ~ unless we allow `#` as part of variable name
     - has strong flavor of directive (C++ etc) or comment (Python etc)
     + easier to scan visually, compared to `_`
+    - has some sense of global declaration. We may want to reserve `#` for declarations purposes
+
   * ~~`list |> &*2`, `list |> &>2?^^&:^&;`~~
     + & is almost-character, feels more like an id
     - has weird connotation as binary
@@ -4708,6 +4715,13 @@
     * when we've finished generating multiple args - we either copy them / send to stack and discard heap
     * we continue previous heap
 
+## [x] Loop, condition: how to define block -> deal with precedence of `|>` and `?` operators only, they're lower than commas.
+
+  * these are apparently a separate syntax group
+  * these operators may require lower precedence than `,` or even `;`: `a ? x(), y(), z()` - these are elements of array, but not part of a condition.
+    ~ can be done as `a ? (x(); y(); z())`
+  * one possible simplest loop is without any condition, only by breaks `(a() ? x.; b(); c() ? y!;)`
+
 ## [x] Heap strategy: tail or head -> let's use head with compile-time heap size detection: heap is just static array in memory
 
   * Head: `[ Heap | Static... ]`
@@ -4876,13 +4890,6 @@
       ~ so `label:` works more as part of block/group as `(name: a,b,c)` rather than individual items.
         + which makes sense in terms of importing `@modul:a,b,c`
 
-## [x] Loop, condition: how to define block -> deal with precedence of `|>` and `?` operators only, they're lower than commas.
-
-  * these are apparently a separate syntax group
-  * these operators may require lower precedence than `,` or even `;`: `a ? x(), y(), z()` - these are elements of array, but not part of a condition.
-    ~ can be done as `a ? (x(); y(); z())`
-  * one possible simplest loop is without any condition, only by breaks `(a() ? x.; b(); c() ? y!;)`
-
 ## [x] Import: Is it worthy introducing `:` only for importing members, ie. -> no, we use href as `<math#a,b>`
 
   1. `@math:sin,cos`
@@ -4898,7 +4905,6 @@
       - nah, in lino we use `=` for mapping
       - also `a=b,c=d` is closer to cmdline args, `:` is more like specifier
     + CPP/C tend to import headers, meaning importing to global scope. It feels nice.
-
 
   2. `@math.sin, @math.cos`
     + explicitly indicates that that's external code
@@ -5015,7 +5021,7 @@
     + `+` has no meaning as operator anyways
     - `10..-+10` vs `10..+-10` is weird, vs `10..=-10`
 
-## [ ] Ranges: clamp symbol –> ~~f(x ~ 0..100=100, y ~ 0..100, p ~ 0.001..5, shape = sin)~~ `x = 100 -< 0..100, y -< 0..100` is more visually coherent and new, `~` is a bit too cryptic/old
+## [ ] Ranges: clamp symbol –> f(x ~ 0..100=100, y ~ 0..100, p ~ 0.001..5, shape = sin) ~~`x = 100 -< 0..100, y -< 0..100` is more visually coherent and new, `~` is a bit too cryptic/old~~
 
   * ~~`f(x=100 in 0..100, y=1 in 0..100, z in 1..100, p in 0.001..5) = ...`~~
     - conflicts with no-keywords policy
@@ -5048,6 +5054,7 @@
     - `a ~* b..c` is also `a ~ *b..c`
     + ChatGPT suggests it as better option, since has built intuition
       - intuition is slightly off, it has not direct visual sense, and ~ means more "roughly", not "within range"
+
   * `f(x = 100 ~= 0..100, y ~= 0..100 = 1, z ~= 1..100, p ~= 0.001..5, shape ~= (tri, sin, tan) = sin)`
     + matches Ruby's regex-search operator, inversed
     + matches "equals" as "clamp"
@@ -5086,6 +5093,8 @@
       - but a bit higher entry barrier to learn
     + it is a bit more consistent visually with `<>`, `><` than `~`, very strong clue
       + also it's a bit more in-sync with piezo style of "crystals" and "flashes", zz
+    - it has too innovative twist, code looks overwhelmed with new stuff
+    - there's confusion of `-<=` as `-< =` vs `- <=` - we stick to exclusive right member
 
   * ~~`f(x = 100 <- 0..100, y <- 0..100 = 1, z <- 1..100, p <- 0.001..5, shape <- (tri, sin, tan) = sin)`~~
     + literally elixir/haskel/erlang/R/Scala's list comprehension assigner
@@ -5235,7 +5244,7 @@
       ~+ prelim returns belong to userland anyways, it's not demanded internally
     - we can't
 
-## [x] Static variables / Functions: How can we call same fn with different context -> static var makes a clone `*clone=fn;clone()`
+## [ ] Static variables / Functions: How can we call same fn with different context -> static var makes a clone `*clone=fn;clone()`
 
   * It seems for now to be able only externally
   ? but what if we need to say fill an array with signal from synth?
@@ -5375,6 +5384,11 @@
     + organic way to create multiple instances
     + no new operators introduced
     - not clear how to instantiate imported fn multiple times
+      ~+ we may want to limit dynamic imports/linking so that all fns are known static
+
+  3.1. `a[10]() = (...); a.2()`
+    + easiest way to define multiple instances
+    - hints at `a[10];` syntax for initializing arrays - first array
 
   4. `c1 = c` - default assignment is clonable
     + we know that `c` is a function, not number (know its type)
@@ -5388,13 +5402,16 @@
     - it is not runtime function
     - forces imports
 
-  6. ref-assign eg. `*f1 = f`, `*arr1 = arr`
-
-  7. The `*f1 = f` operator clones a function
+  6. The `*f1 = f` operator clones a function
     + this is intention of `*f1` - to have local instance of generic fn
       + we almost never process code globally, I wonder what are these cases
     + this allows create clones as `f1(x) = (*_f=f;_f(x))` - like global vars locally defined
     - it doesn't immediately answer how to "reset" sound
+    - limits to fn scope, confusing in case of global
+
+  7. No clone
+    + explicit clone operator would imply dynamic cloning of arbitrary functions, which we don't support
+
 
 ### [ ] Functions / Static variables: How do we detect passed function as an argument? `f1(f) = (*_f=f; _f())`;
 
@@ -5423,7 +5440,13 @@
     - creates a clone intuitively
 
   3. `f.t = 0;`
-    + meaningful
+    + meaningful: we anyways need special token to pass to a function
+      + this just exposes internal state/param
+    +
+    - need to know private variables
+    - cannot reset in full sense
+    - conflicts with swizzles
+    - fn name can be long `mySpecialSoundName.phase = 0`
 
 ## [ ] Static variables: logic - how to map callsite to memory address? -> ~~see implementation~~ - we use simple static vars
 
@@ -6006,3 +6029,63 @@
   - `a = ~10`
 
 ## [ ] Function: !Automemoize function so that the following runs read from memory
+
+
+## [ ] Static variables: do we ever need it?
+
+  + allows defining per-fn state
+    - entails cloning arbitrary fn state, which entails memory use for fns, which is better to be avoided
+  - it seems we're trying to define per-function state to avoid clash of multiple sounds
+    - instead, we could focus on describing sound well in very familiar and intuitive way and just include other sounds
+    - each sound this way would naturally have its own scope: stateful would become globals
+    - see argumentation below
+  - params like `t` can be just global vars
+    - it allows easily sharing state between multiple functions
+      - we likely would need sharing that state anyways
+    - it is shortest syntax: no new operators `*`, symbols `#`, prefixes `fn.t`
+    - resetting state is super-obvious, just `t=0`
+      + each sound would imply its own explicit global variable: just creates name collision
+  + multiple sounds may have each one its own internal state
+    + eg. global age of the universe and local age of each individual
+
+### [ ] Static variables: get rid of
+
+  * it seems we're trying to define per-function state via static variables to avoid clash of multiple sounds
+  * instead, we could focus on describing sound well in very familiar and intuitive way in one file and wrap it as module
+  + each sound this way would naturally have its own scope: static would become globals
+  + sound descriptors would become tiny copy-pasteable formulas
+  + sound fragments can be URL parts
+    !+ it can be even inlined completely
+    !+ compiler can take handle of fetching URLs, if imports are by URLs
+  + it makes code less intimidating: reduced amount of new stuff, just plain expectation
+  + it solves problem of fn argument type: we don't need to clone functions as static anymore
+  + it would make compiler / parser code less intimidating
+  + modularization allows easier fns memoization
+  ? what would import look like then, with fn instantiation?
+
+## [ ] Alternative: porforr
+
+  + For web-audio-api we can get started already
+    + It will be more solid, familiar choice, with shared codebase
+  + For metronome we can get started/prototype with existing floatbeater
+  + For bytebeats we don't need to recompile anything into piezo - just have a collection
+  + Porforr is way ahead already for basic things
+    + Porforr has good pace/traction
+    + Porforr has growing community, can become a big thing
+  + Piezo gets stuck over basics: it aims at problems in so many directions, from syntax to compilation logic
+    + Porforr just improves on existing JS base with cool proposals
+  + Porforr is fast enough for live coding
+  + It already has 2c compiler for embeddeds
+  + With piezo it will take years to build strong foundation
+    + Anyone from JS land will struggle understanding the base, despite shared syntax
+  + Porf is supported by immense existing JS ecosystem
+  + Porf is a great deal of delegation of secondary tasks: focus on sound well instead of compiler
+
+  - porf is very experimental
+  - there's no proof of future stable version, it can stall halfway
+  - there's risk of including too much and bloating wasms
+  - no ranges, no units, no groups, no multiple values, no pipe, no defer
+    - a bunch of keywords, implicits
+    - objects, promises, regexes and other unnecessary structures
+  - code is less compact
+  - possible risk of runtime

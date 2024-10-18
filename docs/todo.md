@@ -26,10 +26,14 @@
 * [x] make `#` as topic placeholder
 * [x] make writable globals, init on the first line
 * [x] make simple static variables as `*b=a`
-  * [ ] clone fn static `a()=(), b()=(*clone=a;clone())`
+  * [x] ~~clone fn static `a()=(), b()=(*clone=a;clone())`~~
   * [x] init detection
   * [x] `nan:` and constant expressions for watr
   * [x] static groups `*(a,b,c)`
+* [ ] Decide about way to import
+* [ ] Car signalisation gen
+* [ ] Metronome gen
+* [ ] Other famous sounds/tropes
 * [ ] -<, -*, -/
 * [x] `^` for deferred
   * [x] preliminary return with defer `f()=(^i++;i>10?./1;)` - likely via block as `f()=(ret;(i>10?ret=1);i++;ret)`
@@ -43,16 +47,13 @@
 * [ ] range iterator via pipe
 * [ ] convert all string instructions to builder calls
 * [ ] list comprehension
-* [ ] make use of `./`, `../` for loops only (not parent)
-* [ ] swizzles `a.xyz`, `a.lr`
+* [ ] make use of `./`, `../` for loops only (not parent)\
 * [ ] all readmes test
-* [ ] `~, ~=`
-* [ ] `~/, ~*`
+* [ ] case-insensitive variables
 * [ ] strings
 * [x] make use of watr compiler
   * [x] fix watr discrepancies with wabt in lino context
 * [x] Add proper scope mechanism (streamline compiler)
-* [ ] case-insensitive variables
 * [x] merge analyzer into compile
   + the difference between them is unclear, compiler can map expression results
   + compiler follows scopes anyways, easier to merge scope vars if needed
@@ -74,7 +75,6 @@
 * [x] arity of ops, for proper `(drop)` amount, eg. `a ? b;` has 0 items in stack;
 * [x] early return detection
 * [ ] while loop
-* [ ] break/continue/return as `^`, `^^` and `^^^`
 * [x] Readable generated code
 * [x] Per-function vars scope: we don't need parens as scope
 * [x] Change `,` precedence to be under `=` to allow `^a,b,c`, `x?1,2,3:4,5,6`, `a,b<|x,i->x,i`
@@ -103,7 +103,6 @@
 * [ ] Group operators with range
 * [ ] Complex group operators (via heap)
 * [ ] Internalize memory: only imported memory is available
-* [ ] `(drop)` collapse
 * [x] CLI
 * [x] get rid of a.1: we can do that via static knowledge
 * [ ] dispose static arrays once ref is lost `[1,2,3]`
@@ -153,7 +152,7 @@
   * [ ] Sine gen example
 * [ ] Ignore unassigned immediate constructs like `[1,2,3]` or `"abc"`.
 * [ ] All FIXMEs
-* [ ] customizable float type
+* [ ] customizable float type, int type, array
 
 ## 1.0 MVP
 
