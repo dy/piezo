@@ -1163,6 +1163,8 @@
   9. `a ? /; a ? /b; a ? /b,c;`
     + matches `./`, `../` logically
 
+  10. `a ?= 10; =20;`
+
 ## [x] Break, continue, return? -> `./` for continue, `../` for return, `/` for root return.
 
   1. ~~`^` for continue, `^^` for break;~~
@@ -1509,8 +1511,11 @@
       [y0]
     )
     ```
-    - `a..b` vs `a. .b`
+    ~- `a..b` vs `a. .b`
+      ~ `a.` is illegal
     - looks like mandatory part of variable
+      - `.i=1; --.i`
+    + `.abc` has sense of "class" from CSS
 
   2. `^x1, ^y1, ^x2, ^y2`
     - ~~too many meanings to topical operator~~
@@ -1518,7 +1523,7 @@
     + doesn't create opposites `*/` for static `/` defer.
     - doesn't feel like static (yet), `#x` is more direct intuition
 
-  → 3. `*x1, *x2, *y1, *y2`
+  3. `*x1, *x2, *y1, *y2`
     + existing convention of `*` as save
     + "star operator" for "save"
     + star also refers to "new", since it clones a function as well
@@ -1591,6 +1596,7 @@
     - reserves `#` as operator, not part of variable name
       - cannot use notes, indices `x#1, x#2`, placeholder `a |> #`
     - has too strong sense as "global declaration", outside of program
+      - if private, we can't use as static reset access `f.x = 0`
 
   5. ~~`[x1, x2, y1, y2] = #`~~
     + involves destructuring syntax
@@ -1618,7 +1624,7 @@
     + doesn't indicate & as part of name, more operator-y
     - conceptually different from binary / boolean operator, looks same
     ```
-    lp([x0], freq = 100 in 1..10000, Q = 1.0 in 0.001..3.0) = (
+    lp([x0], freq = 100 ~ 1..10000, Q = 1.0 ~ 0.001..3.0) = (
       &(x1, x2, y1, y2) = 0;    // internal state
 
       w = pi2 * freq / sampleRate;
@@ -1671,13 +1677,20 @@
 
   11. ~~`:> x1, x2, y1, y2`~~
     ~ `song()=(:>t=0;)`
-  12. `:: x1, x2, y1, y2`
+  12. ~~`:: x1, x2, y1, y2`~~
     ~ `song()=(::t=0;)`
   13. ~~`<< x1, x2, y1, y2`~~
     + Matches ^
       +~ ASCII in 1962 had <- character for _, which was alternative to ^
     - `song()=(<<t=0;)`
     - opens tag
+
+  14. `a.x1 = 1; a.x2 = 2`
+    + literally what it is
+
+  15. `&.x1 = 1; &.x2 = 2; &.(x1, x2) = (1, 2);`
+    + literally what it is
+    + CSS literals technique
 
 ## [x] Variables: Binding/referencing variables via pointers? → no
 
@@ -1700,26 +1713,32 @@
   - requires strings to implement dynamic access `x['first']`
   - some arrays have aliases, others don't: we're not going to make aliases dynamic
 
-## [x] If conditional: `a ? b` returning b or 0, elvis: `a ?: b`
-  + organic extension of ternary `a ? b`, `a ?: b`.
-  - weirdly confusing, as if very important part is lost. Maybe just introduce elvis `a>b ? a=1` → `a<=b ?: a=1`
-  - it has no definite returning type. What's the result of `(a ? b)`?
-    ~+ `b` or `0`?
-    ~+ likely returning type is never going to be needed
-    ~+ it's 0, ie. kind-of step function `a ? b`
-  * return type is `0` or `typeof b`
-  - burdens `?` with semantic load, impeding other proposals like `try..catch`
-    ~ there's a chance try..catch is not going to be needed
-  !? What if `a ?! b`, which is essentially `!a ?: b`
-    + no conflict with ternary `?:`
-    - nah, wrong ordering, we inverse `a`, not `b`
-  !? What if `a ?? b`?
-    - means `a || b` from JS, which is just `a ?: b`
-  - almost identical with `a&&b`
-    + allows early returns as `a ? ^b;`, whereas `a && ^b` doesn't really work like that.
-  - tiny profit, big discrepancy with convention
+## [ ] Conditions:
 
-  ! ALT: can be done via early return as `(a ? b.; )`
+  1. `a ? b` returning b or 0, elvis: `a ?: b`
+    + organic extension of ternary `a ? b`, `a ?: b`.
+    - weirdly confusing, as if very important part is lost. Maybe just introduce elvis `a>b ? a=1` → `a<=b ?: a=1`
+    ~- it has no definite returning type. What's the result of `(a ? b)`?
+      ~+ `b` or `0`?
+      ~+ likely returning type is never going to be needed
+      ~+ it's 0, ie. kind-of step function `a ? b`
+    * return type is `0` or `typeof b`
+    - burdens `?` with semantic load, impeding other proposals like `try..catch`
+      ~ there's a chance try..catch is not going to be needed
+    !? What if `a ?! b`, which is essentially `!a ?: b`
+      + no conflict with ternary `?:`
+      - nah, wrong ordering, we inverse `a`, not `b`
+    !? What if `a ?? b`?
+      - means `a || b` from JS, which is just `a ?: b`
+    - almost identical with `a&&b`
+      + allows early returns as `a ?/ b;`, whereas `a && ^b` doesn't really work like that.
+    - tiny profit, big discrepancy with convention
+
+  2. Early return as `(a ?/ b; )`
+
+  3. No special conditions, use `a && b`, `a || b`
+    + no new syntax
+    + all same perf benefits
 
 ## [x] Loops: look and feel ~~`i <- 0..10 <| a + i`, `i <- list <| a`, `[x <- 1,2,3 <| x*2]`~~ ~~`0..10 | i -> a + i`~~ `list |> # * 2;`
 
@@ -2025,6 +2044,11 @@
     + meaningful as `-<` counterpart
     + enables if-else as `1,0 >- x ? true : false;`
       . `1 >- x ? true`;
+
+## [ ] Switch: how?
+
+  1. `a == (1, 2, 3) ? (a+1, a+2, a+3)`
+  2. `(1: a+1, 2: a+2, 3: a+3)[a]`
 
 ## [x] Comments: `//`, `/*` vs `;;`,`(; ;)` ~~`//` is most based choice. `\\` gives many benefits~~ `;;` has same benefits, but least toxic
 
@@ -3134,146 +3158,6 @@
   + It frees user from caring about variable name conflict. `in`, `from`, `if`, `for`, `at` can be useful variable bits.
   + JS keywords are ridiculous: they block many good names pushing user use marginal names.
   + keywords play role of comments anyways. It's better to put freeword explanation into comments rather than pollute language.
-
-## [x] Import no-keyword? -> ~~`<math#floor>`~~ let's hold on for now
-
-  * No need to define scope: imports full contents
-  * `#[math]; #[./path/to/lib.sy];` (Rusti)
-  * `#math; #./path/to/lib.sy;`
-    + like md title
-    + shortcut from #include, #import in C, C++, Obj C
-    + `# 'math': sin, cos;`
-    + shebang starts as `#!`
-    + music sheets start with # and b
-    + similar to Rust
-    - conflicts with cardinality (number) operator: #str literally means number of items in string.
-      ~ we don't have cardinal operator
-    + associates with declaration, something global, outside of program
-  * shebang `#!'math'`
-  * ... 'math', 'latr', 'musi';
-  * << 'math', 'latr', 'musi';
-    + (mathematica, wolfram)
-    + C-streams like
-  * ! 'math', 'latr', 'musi'
-    + matches doctype delcaration
-    + reversed i
-  * <'math', 'latr', 'musi'>
-  * :: 'math', 'latr', 'musi'
-  * > 'math', 'latr', 'musi'
-    + quote in md
-  * {{math}} {{latr}} {{musi}}
-    + like django templates
-  * {'math', 'latr', 'musi'}
-    - occupies sets convention
-  * `& 'math', 'latr', './my.son'`
-    + semantically makes point as "with math"
-    + et ≈ include
-    - no easy way to scope imports
-    - might be occupied by state
-
-  * `@math: sin, cos; @latr; @./my-lib.son`
-    + literal meaning: at math: sin, cos;
-    + @ has address intuition, which better fits for paths.
-    + very typographical natural convention.
-    - doesn't allow sequence `@math:sin, @latr, @@audio-lab/synth, @./path/to/my/lib.sy;`
-    - double `@@audio-lab`
-    - reserves `@` and `:` operators.
-    - disregards URLs.
-
-  * `sin, cos @ 'math', * @ 'latr'`
-    + a,b at source
-    +~ reminds npm namespace convention
-    + CSS @import, Objective C @import.
-    + relatively exceptional character, compared to #, :, &
-    - conflicts with npm namespaces `osc1, osc2 @ '@audio-lab/synt'`
-      ~ we may not necessarily want to resolve node_modules path, it's going to be either just `synth` or full path.
-    + no case-sensitivity problem, `math#PI` and `math#pi` are different
-    + it's more obvious that variables become part of scope, rather than figuring out vars from atom `'#a,b,c'`
-
-  * `<math>, <./path/to/my/sound.sy>, <@audio-lab/synth>, <inline-url>;`
-    + associates with C's `#import <std>`
-    + encloses internal stuff: it's not string nor expression, same time safe
-    + frees extra operator `@`, `:` - allows `#` internally as part of URL
-      + can be used for defer or privates
-    + reminds brackets in terms of "include here"
-    + relatively rare to use for anything else
-    + allows protocols inside as `<https://sonr.io/kick.s#a,b,c>`
-    - looks like JSX/C++/TypeScript type templates
-    - multiple lines in a row look heavy `<math#pi>;<./path/to/lib.sy>;`
-      + allows sequence as `<math#pi>, <./path/to/lib.sy>;`
-    - not as natural as `@math:sin,cos; @./path/to/lib.sy;`
-    - reduced to none becomes `outside` operator `a <> b..c`
-
-  * `{math},{./path/to/lib.sy},{@aydui-lab/synth};`
-  * sin, cos <- 'math', <- '@audio-lab/synth'
-    + reminds list comprehension with assignment
-    - conflict with arrow function ->
-
-  ? is there a change we're going to need to include generic binary fragments?
-
-  * importing all is not nice pattern: that causes implicit conflict.
-    * it's better to always assign to a variable to make importable parts explicit.
-    - conflicts with notes. We need to import all of them.
-
-## [x] Import subparts → ~~try `<math#floor,cos,sin>`~~ let's hold on
-
-  1. `@ 'math': sin, cos`
-    + defines global functions
-    + less problem scoping imports
-
-  2. `@ 'math#sin,cos'`
-    + [qwik](https://www.builder.io/blog/hydration-is-pure-overhead)-like
-    + URL notation
-    + SVG `<use href="#ref-to-part">`
-    + no `:` overloading.
-    - global functions come as part of atom
-      ~ they're not really global
-      ~+ can be rethought as `<math#sin>` - not so much part of atom.
-    + easier to type
-    - list `#a,b,c` is non-standard-ish.
-      ~ google uses it like that
-      ~ the most natural way
-    - disallows spaces: `@ 'math#pi,sin,abs';` looks messy, if imports many items
-      ~ maybe that's nice, since it's not full-fledged syntax anyways
-      ~ besides URLs are like that yep, have a look at font imports.
-      + smaller
-      ~+ doesn't have to be single-string in case of `<>`, can safely do `<math#sin, pi, abs`
-    + looks cleaner as a single "addressing" token.
-    + easier to indicate "import all" as just `@ 'math'`
-
-  2.1 `@math#sin,cos`, `@./path/to/file.son#a,b,c`
-    - messes up with native syntax - paths are not part of it.
-
-  3. `sin,cos @ math`
-    + sounds nicely
-    + obvious definition of global module variables, not some part of atom
-    + similar to assignment by order
-    - scoping problem, same as JS.
-
-  3.1 `math @ sin, cos`
-
-## [ ] Import: should we delegate it to compiler options?
-
-  + no need to care about file loading method: left up to user
-  + no syntax questions
-  + no code noise
-  + sonr can make some default math convention for imports, as well as export
-  + we anyways have to provide imports in compiler options, so that's unnecessary in code
-  - introduces implicit environment
-
-## [x] Import: Do we need to have `@` for imports? Can't we just indicate atom directly? -> we can import without atoms
-
-  ? Can we do directly `'math#sin,cos'`?
-  + saves from `@'@brain/pkg'` case
-  + frees `@`
-    - maybe we don't need too much diversity in var names, `#` for arrays, `_` for privates and `$` for specials is enough
-  + less cognitive load, very simple
-  + less characters
-  - reserves atoms for single-purpose use, better keep them for generic escaping non-codes?
-    + case-insensitive code doesn't make point for quoted values
-      * so qotes only act as separators from regular syntax, not literal strings
-  - some imports can be without quotes, like `@math#pi;`
-    + less separation from code
 
 ## [x] Compiler: Wasmtree instead of IR would be simpler -> nope, it's less flexible and less supported
 
@@ -4715,7 +4599,7 @@
     * when we've finished generating multiple args - we either copy them / send to stack and discard heap
     * we continue previous heap
 
-## [x] Loop, condition: how to define block -> deal with precedence of `|>` and `?` operators only, they're lower than commas.
+## [x] Loops, conditions: how to define block -> deal with precedence of `|>` and `?` operators only, they're lower than commas.
 
   * these are apparently a separate syntax group
   * these operators may require lower precedence than `,` or even `;`: `a ? x(), y(), z()` - these are elements of array, but not part of a condition.
@@ -4789,6 +4673,146 @@
 
   * Mixed no-heap as much as possible, otherwise heap
 
+## [x] Import: no-keyword? -> ~~`<math#floor>`~~ let's hold on for now
+
+  * No need to define scope: imports full contents
+  * `#[math]; #[./path/to/lib.sy];` (Rusti)
+  * `#math; #./path/to/lib.sy;`
+    + like md title
+    + shortcut from #include, #import in C, C++, Obj C
+    + `# 'math': sin, cos;`
+    + shebang starts as `#!`
+    + music sheets start with # and b
+    + similar to Rust
+    - conflicts with cardinality (number) operator: #str literally means number of items in string.
+      ~ we don't have cardinal operator
+    + associates with declaration, something global, outside of program
+  * shebang `#!'math'`
+  * ... 'math', 'latr', 'musi';
+  * << 'math', 'latr', 'musi';
+    + (mathematica, wolfram)
+    + C-streams like
+  * ! 'math', 'latr', 'musi'
+    + matches doctype delcaration
+    + reversed i
+  * <'math', 'latr', 'musi'>
+  * :: 'math', 'latr', 'musi'
+  * > 'math', 'latr', 'musi'
+    + quote in md
+  * {{math}} {{latr}} {{musi}}
+    + like django templates
+  * {'math', 'latr', 'musi'}
+    - occupies sets convention
+  * `& 'math', 'latr', './my.son'`
+    + semantically makes point as "with math"
+    + et ≈ include
+    - no easy way to scope imports
+    - might be occupied by state
+
+  * `@math: sin, cos; @latr; @./my-lib.son`
+    + literal meaning: at math: sin, cos;
+    + @ has address intuition, which better fits for paths.
+    + very typographical natural convention.
+    - doesn't allow sequence `@math:sin, @latr, @@audio-lab/synth, @./path/to/my/lib.sy;`
+    - double `@@audio-lab`
+    - reserves `@` and `:` operators.
+    - disregards URLs.
+
+  * `sin, cos @ 'math', * @ 'latr'`
+    + a,b at source
+    +~ reminds npm namespace convention
+    + CSS @import, Objective C @import.
+    + relatively exceptional character, compared to #, :, &
+    - conflicts with npm namespaces `osc1, osc2 @ '@audio-lab/synt'`
+      ~ we may not necessarily want to resolve node_modules path, it's going to be either just `synth` or full path.
+    + no case-sensitivity problem, `math#PI` and `math#pi` are different
+    + it's more obvious that variables become part of scope, rather than figuring out vars from atom `'#a,b,c'`
+
+  * `<math>, <./path/to/my/sound.sy>, <@audio-lab/synth>, <inline-url>;`
+    + associates with C's `#import <std>`
+    + encloses internal stuff: it's not string nor expression, same time safe
+    + frees extra operator `@`, `:` - allows `#` internally as part of URL
+      + can be used for defer or privates
+    + reminds brackets in terms of "include here"
+    + relatively rare to use for anything else
+    + allows protocols inside as `<https://sonr.io/kick.s#a,b,c>`
+    - looks like JSX/C++/TypeScript type templates
+    - multiple lines in a row look heavy `<math#pi>;<./path/to/lib.sy>;`
+      + allows sequence as `<math#pi>, <./path/to/lib.sy>;`
+    - not as natural as `@math:sin,cos; @./path/to/lib.sy;`
+    - reduced to none becomes `outside` operator `a <> b..c`
+
+  * `{math},{./path/to/lib.sy},{@aydui-lab/synth};`
+  * sin, cos <- 'math', <- '@audio-lab/synth'
+    + reminds list comprehension with assignment
+    - conflict with arrow function ->
+
+  ? is there a change we're going to need to include generic binary fragments?
+
+  * importing all is not nice pattern: that causes implicit conflict.
+    * it's better to always assign to a variable to make importable parts explicit.
+    - conflicts with notes. We need to import all of them.
+
+## [x] Import: subparts → ~~try `<math#floor,cos,sin>`~~ let's hold on
+
+  1. `@ 'math': sin, cos`
+    + defines global functions
+    + less problem scoping imports
+
+  2. `@ 'math#sin,cos'`
+    + [qwik](https://www.builder.io/blog/hydration-is-pure-overhead)-like
+    + URL notation
+    + SVG `<use href="#ref-to-part">`
+    + no `:` overloading.
+    - global functions come as part of atom
+      ~ they're not really global
+      ~+ can be rethought as `<math#sin>` - not so much part of atom.
+    + easier to type
+    - list `#a,b,c` is non-standard-ish.
+      ~ google uses it like that
+      ~ the most natural way
+    - disallows spaces: `@ 'math#pi,sin,abs';` looks messy, if imports many items
+      ~ maybe that's nice, since it's not full-fledged syntax anyways
+      ~ besides URLs are like that yep, have a look at font imports.
+      + smaller
+      ~+ doesn't have to be single-string in case of `<>`, can safely do `<math#sin, pi, abs`
+    + looks cleaner as a single "addressing" token.
+    + easier to indicate "import all" as just `@ 'math'`
+
+  2.1 `@math#sin,cos`, `@./path/to/file.son#a,b,c`
+    - messes up with native syntax - paths are not part of it.
+
+  3. `sin,cos @ math`
+    + sounds nicely
+    + obvious definition of global module variables, not some part of atom
+    + similar to assignment by order
+    - scoping problem, same as JS.
+
+  3.1 `math @ sin, cos`
+
+## [ ] Import: should we delegate it to compiler options?
+
+  + no need to care about file loading method: left up to user
+  + no syntax questions
+  + no code noise
+  + sonr can make some default math convention for imports, as well as export
+  + we anyways have to provide imports in compiler options, so that's unnecessary in code
+  - introduces implicit environment
+
+## [x] Import: Do we need to have `@` for imports? Can't we just indicate atom directly? -> we can import without atoms
+
+  ? Can we do directly `'math#sin,cos'`?
+  + saves from `@'@brain/pkg'` case
+  + frees `@`
+    - maybe we don't need too much diversity in var names, `#` for arrays, `_` for privates and `$` for specials is enough
+  + less cognitive load, very simple
+  + less characters
+  - reserves atoms for single-purpose use, better keep them for generic escaping non-codes?
+    + case-insensitive code doesn't make point for quoted values
+      * so qotes only act as separators from regular syntax, not literal strings
+  - some imports can be without quotes, like `@math#pi;`
+    + less separation from code
+
 ## [x] Import: into function scope? -> no, too big of a workaround for wasm imports
 
   * `saw() = (<math#pi>; pi*2+...)`
@@ -4807,7 +4831,7 @@
     + makes `#` part of var names
     + allows avoiding quotes
 
-## [x] Memory: Should we make memory importable, instead of exportable? -> internalize memory - it is exported only if imported
+## [x] Import, Memory: Should we make memory importable, instead of exportable? -> internalize memory - it is exported only if imported
 
   + naturally enables shared memory
   ? can help with question of naming memory?
@@ -5102,11 +5126,11 @@
     + similar to -<
     - `100 < -0..100`
 
-  * `f(x = 100 =< 0..100, y =< 0..100 = 1, z =< 1..100)`
+  * ~~`f(x = 100 =< 0..100, y =< 0..100 = 1, z =< 1..100)`~~
     - we don't have operators starting with `=`
 
-  * `f(x = 100 >< 0..100, y >< 0..100 = 1, z >< 1..100, p >< 0.001..5, shape >< (tri, sin, tan) = sin)`
-  * `f(x = 100 <> 0..100, y <> 0..100 = 1, z <> 1..100, p <> 0.001..5, shape <> (tri, sin, tan) = sin)`
+  * ~~`f(x = 100 >< 0..100, y >< 0..100 = 1, z >< 1..100, p >< 0.001..5, shape >< (tri, sin, tan) = sin)`~~
+  * ~~`f(x = 100 <> 0..100, y <> 0..100 = 1, z <> 1..100, p <> 0.001..5, shape <> (tri, sin, tan) = sin)`~~
     + `x <> 0..100` means `x < 100 && x > 0`
     + visually intuitive, one of the first guesses
       + gpt suggested it
@@ -5132,6 +5156,9 @@
   * ~~`f(x = 100 -| 0..100, y -| 0..100 = 1, z -| 1..100, p -| 0.001..5, shape -| (tri, sin, tan) = sin)`~~
     - looks too much like table separators
     + compatible `a -/ 0..10`, `a -* 0..10`
+
+  * `f(x = 100 -: 0..100, y -: 0..100 = 1, z -: 1..100, p -: 0.001..5, shape -: (tri, sin, tan) = sin)`
+  * `f(x = 100 ~: 0..100, y ~: 0..100 = 1, z ~: 1..100, p ~: 0.001..5, shape ~: (tri, sin, tan) = sin)`
 
   * `a |< ..10`, `a >| 10`
 
@@ -5408,10 +5435,10 @@
     + this allows create clones as `f1(x) = (*_f=f;_f(x))` - like global vars locally defined
     - it doesn't immediately answer how to "reset" sound
     - limits to fn scope, confusing in case of global
+      ~ we encourage to use fns, global instance is singleton
 
   7. No clone
     + explicit clone operator would imply dynamic cloning of arbitrary functions, which we don't support
-
 
 ### [ ] Functions / Static variables: How do we detect passed function as an argument? `f1(f) = (*_f=f; _f())`;
 
@@ -6030,7 +6057,6 @@
 
 ## [ ] Function: !Automemoize function so that the following runs read from memory
 
-
 ## [ ] Static variables: do we ever need it?
 
   + allows defining per-fn state
@@ -6038,7 +6064,6 @@
   - it seems we're trying to define per-function state to avoid clash of multiple sounds
     - instead, we could focus on describing sound well in very familiar and intuitive way and just include other sounds
     - each sound this way would naturally have its own scope: stateful would become globals
-    - see argumentation below
   - params like `t` can be just global vars
     - it allows easily sharing state between multiple functions
       - we likely would need sharing that state anyways
@@ -6047,23 +6072,31 @@
       + each sound would imply its own explicit global variable: just creates name collision
   + multiple sounds may have each one its own internal state
     + eg. global age of the universe and local age of each individual
+  + initially that was `useState` idiom - state per component
+    + reset makes it look like object `a = (*x=1;); a.x = 2;`
 
-### [ ] Static variables: get rid of
+### [ ] Static variables: get rid of ->
 
   * it seems we're trying to define per-function state via static variables to avoid clash of multiple sounds
   * instead, we could focus on describing sound well in very familiar and intuitive way in one file and wrap it as module
   + each sound this way would naturally have its own scope: static would become globals
+    - state for a fn is pretty natural as well
   + sound descriptors would become tiny copy-pasteable formulas
+    - they are still tiny with stateful
   + sound fragments can be URL parts
     !+ it can be even inlined completely
     !+ compiler can take handle of fetching URLs, if imports are by URLs
+    - doesn't implicate state vars, it can still be copy-pasteable
   + it makes code less intimidating: reduced amount of new stuff, just plain expectation
   + it solves problem of fn argument type: we don't need to clone functions as static anymore
+    - we still have to clone functions somehow even if they're external
   + it would make compiler / parser code less intimidating
+    - except for import/instantiation
   + modularization allows easier fns memoization
+    - we can memoize regardless
   ? what would import look like then, with fn instantiation?
 
-## [ ] Alternative: porforr
+## [ ] Alternative: Porffor -> likely not: different priority
 
   + For web-audio-api we can get started already
     + It will be more solid, familiar choice, with shared codebase
@@ -6082,10 +6115,51 @@
   + Porf is a great deal of delegation of secondary tasks: focus on sound well instead of compiler
 
   - porf is very experimental
+    - changes every 10 mins
   - there's no proof of future stable version, it can stall halfway
+    - it gives no guarantees if wasm will work
   - there's risk of including too much and bloating wasms
-  - no ranges, no units, no groups, no multiple values, no pipe, no defer
+    - it's already heavy
+    - it's too heavy for live env compile
+  - no ranges, no units, no groups, no multiple values, no pipe, no defer, no inits/exports
     - a bunch of keywords, implicits
     - objects, promises, regexes and other unnecessary structures
+  - JS keeps bloating
   - code is less compact
   - possible risk of runtime
+  - it's way less familiar
+  - it has way less control
+  - it is already slower than piezo
+    - the parsing is expecially dirty
+  - some solutions look super-unoptimal (arrays storage)
+  - one of big points for web-audio-api was to test piezo, not vice-versa
+  - it doesn't have clear type conversion / tracking
+  -? not sure if it will allow bytebeats
+
+  * let's consider projections
+
+  1. Piezo
+    + Unique niche language with variety of niche cases
+    + Easier to search code pieces in tight ecosystem
+    + More limited & focused syntax
+    + Fastest in class parsing / syntax deals
+    + Minimally meaningful output
+    + Independent of all that nonsense (in potential - absolutely)
+    + It can be compiled to porfor, c, anywhere
+    - Less adoption
+    - Slower growth rate
+    - Embedding can be very far
+    - No standard test base
+
+  2. Porffor
+    + Compatible, reliable, WASI-enabled JS compiler to WASM
+    - Heavier than piezo, in all aspects: codebase, produced wasm, runtime
+      - It aims for 262 compatibility, which is redundancy of its own
+    + High credibility due to standardized test base
+    - Writing JS for binary code is lame-ish
+
+## [ ] Mixing fn / object / array
+
+  a. We want to have arrays as objects `a = [x:1, y:2]; a.x = 2`
+  b. We see state vars as objects `f() = (.x=1,.y=2;); f.x = 2`
+  c. Clone should work for both `a1 = [*a]; f1 = (*f);`
