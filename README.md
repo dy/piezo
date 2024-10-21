@@ -1,7 +1,7 @@
 # piezo ![stability](https://img.shields.io/badge/stability-experimental-black) [![test](https://github.com/dy/piezo/actions/workflows/test.yml/badge.svg)](https://github.com/dy/piezo/actions/workflows/test.yml)
 
-Low-level language for signal processing, synthesis and analysis.<br/>
-Compiles to compact 0-runtime WASM.<br/>
+Prototype language designed for signal processing, synthesis and analysis.<br/>
+Project is early experimental stage, design decisions must be consolidated.
 
 <!-- [Examples](https://dy.github.io/piezo/examples/) | [Motivation](#motivation) -->
 
@@ -18,7 +18,7 @@ Compiles to compact 0-runtime WASM.<br/>
 ?: ?                          ;; conditions
 x[i] x[]                      ;; member access, length
 a..b a.. ..b ..               ;; ranges
-|> #                          ;; pipe/loop/map, topic reference
+|> _                          ;; pipe/loop/map, topic reference
 ./ ../ /                      ;; continue/skip, break/stop, return
 >< <>                         ;; inside, outside
 ~ ~/ ~*                       ;; clamp, normalize, lerp
@@ -80,13 +80,22 @@ m[1,2] = m[2,1];              ;; swap
 m[0..] = m[-1..];             ;; reverse
 m[0..] = m[1..,0];            ;; rotate
 
+;; Strings
+hi="Hello";                   ;; creates static array
+string="$<hi>, world!";       ;; interpolate: "hello world"
+string[1, 3..5, -2];          ;; pick elements: 'e', 'lo', 'd'
+string[0..5];                 ;; substring: 'Hello'
+string[-1..0];                ;; reversed: '!dlrow ,olleH'
+string[];                     ;; length: 13
+
 ;; Conditions
-a ? b;                        ;; if a then b (else 0)
-a ?: b;                       ;; elvis: if not a then b
-sign = a < 0 ? -1 : +1;       ;; ternary conditional
-(2+2 >= 4) ? log(1) :         ;; multiline/switch
+a && b;                       ;; if a then b (else 0)
+a || b;                       ;; if not a then b
+sign = a < 0 ? -1 : +1;       ;; ternary
+(2+2 >= 4) ? log(1) :         ;; multiline (switch)
   3 >< 1..2 ? log(2) :        ;; else if
   log(3);                     ;; else
+a ?/ b;                       ;; early return: if a then return b
 
 ;; Loops
 (a, b, c) |> f(_);            ;; for each item in a, b, c do f(item)
@@ -115,28 +124,15 @@ dup(x) = (x,x);               ;; return multiple
 a=1,b=1; x()=(a=2;b=2); x();  ;; a==1, b==2: first statement declares locals
 fn() = ( x; ^log(x) );        ;; defer: calls log after returning x
 f(a, cb) = cb(a[0]);          ;; array, func args
+a() = ( .i=0; .i++ );         ;; state var: i persists value
+a(), a();                     ;; 0,1
+a.i = 0;                      ;; reset state
+a1() = ( *copy=a; copy() );   ;; clone function
+a(), a(); a1(), a1();         ;; 0,1; 0,1;
 
 ;; Export
 x, y, z;                      ;; exports last statement
 ```
-
-<!--
-;; strings
-hi="Hello, World!\n\t\x22\x27";;; creates static array (uint)
-string="$<hi> world";         ;; interpolate: "hello world"
-string[1];                    ;; positive indexing from first element [0]: 'e'
-string[-3];                   ;; negative indexing from last element [-1]: 'r'
-string[2..10];                ;; substring
-string[1, 2..10, -1];         ;; slice/pick multiple elements
-string[-1..0];                ;; reversed
-string[];                     ;; length
-(..a[] |> a[#] == b[#] ?: ../)[-1];   ;; compare (==,!=,>,<)
-a = b ++ c;                   ;; concat: "hello worldhello world"
-a[..] |> _==" " ? (a[from..to],from=to) : to++              ;; split: "a b" / " " = ["a", "b"]
-(list[..]|>(_[..]," "))[..-1];;; join: " " * ["a", "b"] = "a b"
-..2 |> b[..]                  ;; repeat: "abc" * 2 = "abcabc"
-
- -->
 
 <!--
 ## Examples
@@ -351,7 +347,7 @@ Features:
 
 See [all examples](/examples) -->
 
-
+<!--
 ## Usage
 
 _piezo_ is available as CLI or JS package.
@@ -412,15 +408,16 @@ mult(108)
 // array is a pointer to memory, get values via
 const arrValues = new Float64Array(arr, memory)
 ```
+-->
 
-
+<!--
 ## Motivation
 
 Audio processing has no cross-platform solution, various environments deal with audio differently, some don't have audio processing at all. _Web Audio API_ is unreliable - it has unpredictable pauses, glitches and so on, so <q>audio is better handled in WASM worklet</q> ([@stagas](https://github.com/stagas)).
 
 _Piezo_ attempts to fill that gap, providing a common layer. It is also a personal attempt on language design - rethinking parts and providing safe haven. WASM target gives max performance and compatibility - browsers, [audio/worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) etc.
 
-<!--
+
 ### Principles
 
 * _Familiar_: common syntax, clear patterns for new operators.
@@ -435,8 +432,10 @@ _Piezo_ attempts to fill that gap, providing a common layer. It is also a person
 * _Case-agnostic_: case changes don't break code (eg. `sampleRate` vs `samplerate`).
 * _Normalized syntax_: no complex parsing rules – just unary, binary or n-ary operators.
 * _Readable output_: produces readable WebAssembly text (eg. can serve as meta-language).
-* _Low-level_: no fancy features beyond math and buffers, embeddable. -->
+* _Low-level_: no fancy features beyond math and buffers, embeddable.
+* _Minimal footprint_: minimally possible produced WASM output, no heavy workarounds.
 
+-->
 
 <!--
 ## Projects using piezo
