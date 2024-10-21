@@ -154,7 +154,7 @@
 * [ ] All FIXMEs
 * [ ] customizable float type, int type, array
 
-## 1.0 MVP
+## 1.0: good stable release
 
 * [ ] All Bytebeats/Floatbeats
   * [ ] classics http://viznut.fi/demos/unix/bytebeat_formulas.txt
