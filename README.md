@@ -21,7 +21,7 @@ a..b a.. ..b ..               ;; ranges
 |> _                          ;; pipe/loop/map, topic reference
 ./ ../ /                      ;; continue/skip, break/stop, return
 >< <>                         ;; inside, outside
-~ ~/ ~*                       ;; clamp, normalize, lerp
+-< -/ -*                      ;; clamp, normalize, lerp
 ^                             ;; defer
 
 ;; Numbers
