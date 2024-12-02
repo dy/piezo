@@ -1237,7 +1237,7 @@
       ~+ maintains similarity with paths
     + connects with end as `a.`
 
-## [ ] Defer -> ~~`x(a) = (/log(a); /a+=1; a)`~~ `x(a) = (^log(a); ^a++; a)`
+## [ ] Defer: -> ~~`x(a) = (/log(a); /a+=1; a)`~~ `x(a) = (^log(a); ^a++; a)`
 
   + like golang defer execution runs item after function return
   + allows separating return value from increments needed after function
@@ -1290,7 +1290,7 @@
       + it was even an alternative to `*` in the beginning
     - has meaning as "part" of identifier, not operator (higher precedence)
       - ie. `&i++` raises confusion, it's not `&(i++)`, it's `(&i)++`
-  * `x() = (~a; b,c; ~d)`
+  * ~~`x() = (~a; b,c; ~d)`~~
     + very strong sense of "destructor"
     + relatively safe within other options: `/i++, \i++, &i++, 'i++, #i++, @i++, >>i++, .i++`
     + follows spirit of C in terms of "common" operators choice `*, ~`
@@ -1380,11 +1380,25 @@
     + `^` means footnote in typographics
     + can go last literally to reduce unary intimidation
       + if that's the case, literally means "return prev statement"
-  * No defer, but mark fn return as: `=a*b`: means take expression as function result `f()=(*i=0; =...; i++)`
+  * fn return as: `=a*b`: means take expression as function result `f()=(*i=0; =...; i++)`
     + avoids problems with last expression
     + avoids accumulated stack issue
     - `f() = ( *t=0; =t*2; t++ );`
       - intimidating prefix operators, `=` must be less standard practice
+  * `x() = (i=0;abc;;i++)`
+    + gentle indicator of "after all sequences"
+    + extends meaning of `;` operator
+    + defer has to do with sequence indeed, not with "own land of meaning"
+    + refers to `for (i=0;;i++)` as `defer` is last statement there
+    - not safe to squash `;;`
+    - `(a;;b;;c;d)` - not clear which part goes last which first
+    - not easy to make multiple statements `(a;b;;(a++;b++))`
+  * `x(a,b,c; i=0, y=2; i++) = (...)`
+  * `x(a,b,c,.t; t++) = (...)`
+    + a bit like `for (init;;after) = (...)`
+    + no new syntax introduced
+    - no access to local vars
+    - messy multiple statements `x(a,b,c;(a++,b++)) = (...)`
 
 ### [ ] Defer/return: !Return to stack `=a;=b;` same as `a,b;` -> likely no need, just use defer
   + allows avoiding drops
@@ -3450,8 +3464,9 @@
   * first line is for declaring locals, rest is read/write globals but define locals `a,b;f()=(a=1;b=2)` - defines local `a`, writes global `b`
     + compatible with last-line for returns
     + intuitive as sequence of vars `a,b,c;` for declaring locals (prev option), but assignment is allowed on first line.
+    + matces `for (init; before; after)` syntax
 
-### [x] Variables: how to indicate global vars? -> ~~`^x;x;`~~ globals are available for read by default; and for write after first line
+### [x] Variables: how to indicate global vars? -> ~~`^x;x;`~~ globals are for read by default and for write after first line
 
   1. Python `global x;` + prevent modification
   2. Ruby `$x;`
@@ -3467,6 +3482,7 @@
       + kind-of in-sync with logic, since globals can be imported in global scope same way
     - interfere with imports
     - not as compact as `^`
+  5. See prev question last answer
 
 ## [x] Variables: UI variables -> move to latr
 
@@ -3907,7 +3923,7 @@
       ? can we work that around?
   - harder for optimizers
 
-## [x] How to detect optional params -> comparing `a!=a` is not a biggie
+## [x] Functions: How to detect optional params -> comparing `a!=a` is not a biggie
 
   * If we enforce function arguments always be f64 we can detect it via NaN
     - unnecessarily slows down fn calls
@@ -6162,4 +6178,4 @@
 
   a. We want to have arrays as objects `a = [x:1, y:2]; a.x = 2`
   b. We see state vars as objects `f() = (.x=1,.y=2;); f.x = 2`
-  c. Clone should work for both `a1 = [*a]; f1 = (*f);`
+  c. Positional statements have meaning in `for (init; before; after) {}`

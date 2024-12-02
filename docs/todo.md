@@ -11,6 +11,8 @@
   * [x] Compare vs wabt, wat-compiler
 * [x] Parser
 
+* [ ] jasm - JS-compatible min surface
+
 ## 0.1
 
 * [x] update subscript

@@ -15,7 +15,7 @@ Project is early experimental stage, design decisions must be consolidated.
 <<< >>>                       ;; rotate left, right
 && || !                       ;; logical
 > >= < <= == !=               ;; comparisons (boolean)
-?: ?                          ;; conditions
+?:                            ;; conditions
 x[i] x[]                      ;; member access, length
 a..b a.. ..b ..               ;; ranges
 |> #                          ;; pipe/loop/map, topic reference
