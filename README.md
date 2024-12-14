@@ -15,14 +15,13 @@ Project is early experimental stage, design decisions must be consolidated.
 <<< >>>                       ;; rotate left, right
 && || !                       ;; logical
 > >= < <= == !=               ;; comparisons (boolean)
-?:                            ;; conditions
+?:                            ;; condition, switch
 x[i] x[]                      ;; member access, length
 a..b a.. ..b ..               ;; ranges
-|> #                          ;; pipe/loop/map, topic reference
+|> _                          ;; pipe/loop/map, topic reference
 ./ ../ /                      ;; continue/skip, break/stop, return
 >< <>                         ;; inside, outside
 -< -/ -*                      ;; clamp, normalize, lerp
-^                             ;; defer
 
 ;; Numbers
 16, 0x10, 0o755, 0b0;         ;; int, hex, oct or binary
@@ -69,8 +68,8 @@ m = [..10 |> 2];              ;; filled with 2
 m = [1,2,3,4];                ;; array of 4 elements
 m = [n[..]];                  ;; copy n
 m = [1, 2..4, 5];             ;; mixed definition
-m = [1, [2, 3, [4]]];         ;; nested arrays (tree)
-m = [0..4 |> # ** 2];         ;; list comprehension
+m = [1, [2, 3, [4, m]]];      ;; nested arrays (tree)
+m = [0..4 |> _ ** 2];         ;; list comprehension
 (a, z) = (m[0], m[-1]);       ;; get by index
 (b, .., z) = m[1, 2..];       ;; get multiple values
 length = m[];                 ;; get length
@@ -79,6 +78,7 @@ m[2..] = (1, 2..4, n[1..3]);  ;; set multiple values from offset 2
 m[1,2] = m[2,1];              ;; swap
 m[0..] = m[-1..];             ;; reverse
 m[0..] = m[1..,0];            ;; rotate
+n = *m;                       ;; clone m
 
 ;; Strings
 hi="Hello";                   ;; creates static array
@@ -89,26 +89,28 @@ string[-1..0];                ;; reversed: '!dlrow ,olleH'
 string[];                     ;; length: 13
 
 ;; Conditions
-a && b;                       ;; if a then b (else 0)
-a || b;                       ;; if not a then b
+a ? b;                        ;; if a then b (else 0)
+a ?: b;                       ;; if (a then 0) else b
 sign = a < 0 ? -1 : +1;       ;; ternary
-(2+2 >= 4) ? log(1) :         ;; multiline (switch)
-  3 >< 1..2 ? log(2) :        ;; else if
-  log(3);                     ;; else
+val = (                       ;; switch
+  a == 1 ? ./log(1);          ;; if a == 1 return log(1)
+  a >< 2..4 ? ./log(2);       ;; if a in 2..4 return log(2)
+  log(3)                      ;; otherwise
+);
 a ?/ b;                       ;; early return: if a then return b
 
 ;; Loops
-(a, b, c) |> f(#);            ;; for each item in a, b, c do f(item)
+(a, b, c) |> f(_);            ;; for each item in a, b, c do f(item)
 (i = 10..) |> (               ;; descend over range
   i < 5 ? a ./;               ;; if item < 5 skip (continue)
   i < 0 ? a ../;              ;; if item < 0 stop (break)
 );                            ;;
-x[..] |> f(#) |> g(#);        ;; pipeline sequence
+x[..] |> f(_) |> g(_);        ;; pipeline sequence
 (i = 0..w) |> (               ;; nest iterations
   (j = 0..h) |> f(i, j);      ;; f(x,y)
 );                            ;;
 ((a,b) = 0..10) |> a+b;       ;; iterate pairs
-(x,,y) = (a,b,c) |> # * 2;    ;; capture result x = a*2, y = c*2;
+(x,,y) = (a,b,c) |> _ * 2;    ;; capture result x = a*2, y = c*2;
 .. |> i < 10 ? i++ : ../;     ;; while i < 10 i++
 
 ;; Functions
@@ -122,12 +124,12 @@ times(4), times(,5);          ;; 4, 5: optional, skipped arg
 dup(x) = (x,x);               ;; return multiple
 (a,b) = dup(b);               ;; destructure
 a=1,b=1; x()=(a=2;b=2); x();  ;; a==1, b==2: first statement declares locals
-fn() = ( x; log(x) );        ;; defer: calls log after returning x
+fn() = ( x; log(x) );         ;; defer: calls log after returning x
 f(a, cb) = cb(a[0]);          ;; array, func args
 a() = ( .i=0; .i++ );         ;; state var: i persists value
 a(), a();                     ;; 0,1
 a.i = 0;                      ;; reset state
-a1() = ( *copy=a; copy() );   ;; clone function
+a1 = *a;                      ;; clone function
 a(), a(); a1(), a1();         ;; 0,1; 0,1;
 
 ;; Export

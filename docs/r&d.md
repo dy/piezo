@@ -2059,10 +2059,61 @@
     + enables if-else as `1,0 >- x ? true : false;`
       . `1 >- x ? true`;
 
-## [ ] Switch: how?
+## [x] Switch: how? -> not needed if we have conditional return (br_if) operator, which is literally `a ? ./b` or `a ?/ b`
 
   1. `a == (1, 2, 3) ? (a+1, a+2, a+3)`
   2. `(1: a+1, 2: a+2, 3: a+3)[a]`
+    + these work like labels
+  3. `a ? ( 1 => 1, 2.. => 2, _ => ...)`
+    + looks like rust
+    + looks like kotlin
+    + looks like Z notation
+  4. `a ?= ( 1 -> 1, 2.. -> 2, _ -> ...)`
+  5. `a ?> (1: a+1, 2..: a+2, _: a+3)`
+    + makes sense of labels
+    + combines condition `?` and go `>` (like pipe)
+    - looks like terminal input
+  5.1 `a => (1: a+1, 2..: a+2, _: a+3)`
+  6. `a == (1: a+1, 2..: a+2, _: a+3)`
+    + makes sense of labels
+    + switch compares anyways
+  6.1 `a ?= (1: a+1, 2..: a+2, _: a+3)`
+    + makes sense of labels
+    + combines condition `?:` and comparison `==`
+    - commas define group - unclear how would you return a group
+  6.2 `a ?= (1: a+1; 2..: a+2; a+3)`
+  7. `a == (1 ? a+1 : 2.. ? a+2 : a+3)`
+    + no new operators
+    - contradicts to meaning of ternary
+  7.1 `a := (1 ? a+1; 2 ? a+2; a+3)`
+  8. `a ?: (1 -> a+1, 2.. -> a+2, _ -> a+3)`
+    - commas don't make sense since it's for group
+    - default condition can be undefined
+    - elvis operator
+  8.1 `a ?: (1: a+1, 2..: a+2, _: a+3)`
+    - too many colons
+    - elvis operator
+  8.2 `a ?: (1 => a+1; 2 => a+1; a+3)`
+    + we explore return operator as `=>`
+    - elvis operator
+  9. `a ::= (1 => a+1; 2 => a+2; 3 )`
+    + backus naur form mixed with z-notation
+
+  * So there must be improvement over
+  ```
+    a == 1 ? log(1) :
+    a >< 2..4 ? log(2) :
+    log(3)
+
+    (
+      a == 1 ? ./log(1);
+      a >< 2..4 ? ./log(2);
+      log(3)
+    )
+  ```
+  * Essentially, it can be simply "return from current scope" operator, which in wasm is called "br" - break, or `../` / `./`
+  10. `(a == 1 ?^ log(1); a >< 2.. ?^ log(2); log(3))`
+
 
 ## [x] Comments: `//`, `/*` vs `;;`,`(; ;)` ~~`//` is most based choice. `\\` gives many benefits~~ `;;` has same benefits, but least toxic
 
