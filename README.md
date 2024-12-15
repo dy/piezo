@@ -78,7 +78,6 @@ m[2..] = (1, 2..4, n[1..3]);  ;; set multiple values from offset 2
 m[1,2] = m[2,1];              ;; swap
 m[0..] = m[-1..];             ;; reverse
 m[0..] = m[1..,0];            ;; rotate
-n = *m;                       ;; clone m
 
 ;; Strings
 hi="Hello";                   ;; creates static array
@@ -129,7 +128,7 @@ f(a, cb) = cb(a[0]);          ;; array, func args
 a() = ( .i=0; .i++ );         ;; state var: i persists value
 a(), a();                     ;; 0,1
 a.i = 0;                      ;; reset state
-a1 = *a;                      ;; clone function
+a1() = a(..);                 ;; clone function
 a(), a(); a1(), a1();         ;; 0,1; 0,1;
 
 ;; Export

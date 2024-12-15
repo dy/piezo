@@ -2114,7 +2114,6 @@
   * Essentially, it can be simply "return from current scope" operator, which in wasm is called "br" - break, or `../` / `./`
   10. `(a == 1 ?^ log(1); a >< 2.. ?^ log(2); log(3))`
 
-
 ## [x] Comments: `//`, `/*` vs `;;`,`(; ;)` ~~`//` is most based choice. `\\` gives many benefits~~ `;;` has same benefits, but least toxic
 
   1. `;;`
@@ -6230,3 +6229,24 @@
   a. We want to have arrays as objects `a = [x:1, y:2]; a.x = 2`
   b. We see state vars as objects `f() = (.x=1,.y=2;); f.x = 2`
   c. Positional statements have meaning in `for (init; before; after) {}`
+
+## [ ] Functions: anonymous functions?
+
++ they allow avoiding state variables: scope mechanism naturally defines "instance"
+```
+Sine = f -> (
+  phase=0;
+  () -> (phase++; sin(phase))
+)
+sine = Sine()
+```
+  - that doesn't help resolving name, since we may want to do case-agnostic
++ they allow creating hash/dict
+```
+let gen = [
+  sin: f -> (p, () -> ()),
+  cos: f -> (p, () -> ())
+]
+```
+  - that creates potential for infinite functional recursion, which is hell: we only need 2 levels
++ that creates difficulty figuring out type of input argument, since that can be a function
