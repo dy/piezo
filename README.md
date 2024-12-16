@@ -125,10 +125,10 @@ dup(x) = (x,x);               ;; return multiple
 a=1,b=1; x()=(a=2;b=2); x();  ;; a==1, b==2: first statement declares locals
 fn() = ( x; log(x) );         ;; defer: calls log after returning x
 f(a, cb) = cb(a[0]);          ;; array, func args
-a() = ( .i=0; .i++ );         ;; state var: i persists value
+a() = ( *i=0; *i++ );         ;; state var: i persists value
 a(), a();                     ;; 0,1
 a.i = 0;                      ;; reset state
-a1() = a(..);                 ;; clone function
+*a1 = a;                      ;; clone function
 a(), a(); a1(), a1();         ;; 0,1; 0,1;
 
 ;; Export
@@ -444,6 +444,9 @@ _Piezo_ attempts to fill that gap, providing a common layer. It is also a person
 * [web-audio-api](https://github.com/audiojs/web-audio-api)
 * [audiojs](https://github.com/audiojs/)
 -->
+
+### Philosophy
+
 
 
 ### Inspiration
