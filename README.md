@@ -69,7 +69,7 @@ m = [1,2,3,4];                ;; array of 4 elements
 m = [n[..]];                  ;; copy n
 m = [1, 2..4, 5];             ;; mixed definition
 m = [1, [2, 3, [4, m]]];      ;; nested arrays (tree)
-m = [0..4 |> _ ** 2];         ;; list comprehension
+m = [0..4 |> # ** 2];         ;; list comprehension
 (a, z) = (m[0], m[-1]);       ;; get by index
 (b, .., z) = m[1, 2..];       ;; get multiple values
 length = m[];                 ;; get length
@@ -99,17 +99,17 @@ val = (                       ;; switch
 a ?/ b;                       ;; early return: if a then return b
 
 ;; Loops
-(a, b, c) |> f(_);            ;; for each item in a, b, c do f(item)
+(a, b, c) |> f(#);            ;; for each item in a, b, c do f(item)
 (i = 10..) |> (               ;; descend over range
   i < 5 ? a ./;               ;; if item < 5 skip (continue)
   i < 0 ? a ../;              ;; if item < 0 stop (break)
 );                            ;;
-x[..] |> f(_) |> g(_);        ;; pipeline sequence
+x[..] |> f(#) |> g(#);        ;; pipeline sequence
 (i = 0..w) |> (               ;; nest iterations
   (j = 0..h) |> f(i, j);      ;; f(x,y)
 );                            ;;
 ((a,b) = 0..10) |> a+b;       ;; iterate pairs
-(x,,y) = (a,b,c) |> _ * 2;    ;; capture result x = a*2, y = c*2;
+(x,,y) = (a,b,c) |> # * 2;    ;; capture result x = a*2, y = c*2;
 .. |> i < 10 ? i++ : ../;     ;; while i < 10 i++
 
 ;; Functions
