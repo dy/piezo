@@ -2478,7 +2478,7 @@
   * Pipe can be used as simple convolver (see above):
     * `a,b,c | a,b -> a+b` means  `((a,b) | a,b->a+b, (b,c) | a,b->a+b)`
 
-## [x] Notes as hi-level aliases for frequencies A4, B1 etc. -> available
+## [x] Variables: Notes as hi-level aliases for frequencies A4, B1 etc. -> available
   * import 'musi' - imports all these constants
   + allows building chords as (C3, E3, G3) = Cmaj
     ~ would require # to be valid part of identifier
@@ -3692,6 +3692,19 @@
   - `'Oscillator'()` is unusual construct...
   - not clear if `'oscillator'`, `'Oscillator'`, `oscillator` and `Oscillator` resolve to the same
   - can cause conflicts with "bad" names, like `pipe/arg`
+
+## [ ] Variables: id characters
+
+  * `$`
+    + yes
+  * `_`
+    + yes
+  * `@`
+  * `#`
+    + allows notes a#
+    + allows colors as variables `#abcdef`
+    - reserves operator/syntax uses
+    - non-standard
 
 ## [ ] Ranges: how to organize in wasm level? ->
 
@@ -5048,7 +5061,7 @@
     + allows merging analyser into 1-pass compiler
     + retains precision
 
-## [x] Variables: ow do we represent infinity? -> `1/0`, `0/0`
+## [x] Variables: or do we represent infinity? -> `1/0`, `0/0`
 
   * `oo`
   * `~~`
@@ -5069,10 +5082,11 @@
     - we'd need to use NaNs with non-canonical form as list members
   - better use native func refs
 
-## [ ] Use v128 of i64 for rational numbers?
+## [ ] Use v128 of i64 for rational numbers? -> better off, use special float type
 
   + Converts back to f64 on export
   + Gives extreme precision/dimension
+  + See android calc post - combined with units it can produce extreme precision
 
 ## [x] Ranges: exclusive / non-inclusive range: how? -> use `0..10` as exclusive, operators decide inclusivity
 
