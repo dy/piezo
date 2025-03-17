@@ -4297,7 +4297,7 @@
 
   ? ALT: `<( x>2?!; )>`
 
-### [x] Loops: What's the best character for topic placeholder? -> `#` feels the best or `_` means "insert here"
+### [x] Loops: What's the best character for topic placeholder? -> `_` means "insert here", also it's terminal caret
 
   * `list |> #*2`, `list |> #>2?^^#:^#;`
     + `#` is almost perfect for topic/reference, associates with `#`th item
@@ -4317,6 +4317,7 @@
     - has strong flavor of directive (C++ etc) or comment (Python etc)
     + easier to scan visually, compared to `_`
     - has some sense of global declaration. We may want to reserve `#` for declarations purposes
+    - too heavy semantic load from other concepts, like comment in python, hash in HTML, tags, private in JS, markdown header
 
   * ~~`list |> &*2`, `list |> &>2?^^&:^&;`~~
     + & is almost-character, feels more like an id
@@ -4355,6 +4356,7 @@
     + literally means "placeholder", for "placeholder" variable
     + we don't have special designation for lowdash otherwise
     - HARD to scan - it doesn't look like id, compared to `#`
+    + it's caret in old terminals, meaning literally "insert here"
   * ~~`list |> ^ * 2`~~
     - conflicts with `^` for return `list |> ^>2?^^^:^^;`
     + compatible with js proposal; compatible with makefile;
