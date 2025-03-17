@@ -5201,6 +5201,7 @@
       + also it's a bit more in-sync with piezo style of "crystals" and "flashes", zz
     - it has too innovative twist, code looks overwhelmed with new stuff
     - there's confusion of `-<=` as `-< =` vs `- <=` - we stick to exclusive right member
+    + grok recommendation https://grok.com/share/bGVnYWN5_362848bb-789a-41c4-8077-606787c712d9: crystal/flash aesthetic, less familiar, unifies with <>, ><, extensible to -*,-/
 
   * ~~`f(x = 100 <- 0..100, y <- 0..100 = 1, z <- 1..100, p <- 0.001..5, shape <- (tri, sin, tan) = sin)`~~
     + literally elixir/haskel/erlang/R/Scala's list comprehension assigner
