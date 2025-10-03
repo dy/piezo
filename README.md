@@ -421,8 +421,8 @@ _Piezo_ attempts to fill that gap, providing a common layer. It is also a person
 
 ### Principles
 
-* _Minimal_: maximal expressivity with concise syntax.
-* _Intuitive_: common syntax, familiar patterns.
+* _Minimal_: maximal expressivity with shortest syntax.
+* _Intuitive_: common syntax, familiar patterns, visual hints.
 * _No keywords_: chars for vars, symbols for operators, real i18l code.
 * _Performant_: fast compile, fast execution, good for live envs.
 * _No runtime_: statically analyzable, no OOP, no dynamic structures, no lamdas.
