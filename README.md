@@ -93,8 +93,8 @@ a ? b : c;                    /* if a then b else c */
 a ? b;                        /* if a then b (else 0) */
 a ?: b;                       /* if (a then 0) else b */
 val = (                       /* switch */
-  a == 1 ? ./log(1);          /* if a == 1 then break log(1) */
-  a >< 2..4 ? ./log(2);       /* if a in 2..4 then break log(2) */
+  a == 1 ? ./log(1);          /* if a == 1 then out log(1) */
+  a >< 2..4 ? ./log(2);       /* if a in 2..4 then out log(2) */
   log(3)                      /* otherwise */
 );
 a ?/ b;                       /* early return: if a then return b */
