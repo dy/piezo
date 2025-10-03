@@ -89,12 +89,12 @@ string[-1..0];                /* reversed: '!dlrow ,olleH' */
 string[];                     /* length: 13 */
 
 /* Conditions */
+a ? b : c;                    /* if a then b else c */
 a ? b;                        /* if a then b (else 0) */
 a ?: b;                       /* if (a then 0) else b */
-sign = a < 0 ? -1 : +1;       /* ternary */
 val = (                       /* switch */
-  a == 1 ? ./log(1);          /* if a == 1 then skip block with log(1) */
-  a >< 2..4 ? ./log(2);       /* if a in 2..4 then skip block with log(2) */
+  a == 1 ? ./log(1);          /* if a == 1 then break log(1) */
+  a >< 2..4 ? ./log(2);       /* if a in 2..4 then break log(2) */
   log(3)                      /* otherwise */
 );
 a ?/ b;                       /* early return: if a then return b */
@@ -419,9 +419,9 @@ const arrValues = new Float64Array(arr, memory)
 
 Audio processing has no cross-platform solution, every environment deals with audio differently, many don't have audio processing at all. The _Web Audio API_ is unreliable – unpredictable pauses, glitches and so on, so <q>audio is better handled in WASM worklet</q> ([@stagas](https://github.com/stagas)).
 
-_Piezo_ attempts to fill that gap: a minimal, expressive language for signal processing, synthesis, and analysis that compiles to WebAssembly. It is also a personal take in language design - rethinking parts, adding missing features, and providing safe haven.
+_Piezo_ attempts to fill that gap, providing a common layer. It is also a personal take in language design - rethinking parts, adding missing features, and providing safe haven. It explores groups as syntax sugar, multiple returns, ranges, pipes, state vars, no-OOP functional style.
 
-WASM target gives performance and compatibility - browsers, [audio/worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) etc.
+<!-- WASM target gives performance and portability - browsers, [audio/worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) etc. -->
 
 
 <!--
@@ -432,7 +432,7 @@ WASM target gives performance and compatibility - browsers, [audio/worklets](htt
 -->
 
 
-### Principles
+## Principles
 
 * _Minimal_: maximal expressivity with short syntax.
 * _Intuitive_: common base, familiar patterns, visual hints.
