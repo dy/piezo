@@ -2282,6 +2282,7 @@
     - pair-operators are heavy to handle
       - editors don't use it as shortcuts as Cmd+/
     + space-agnostic, newline-agnostic: allows just removing all spaces from code safely, unlike `//` comments
+      ~ we're still not space agnostic due to strings
     - not so nice without `//` pair
     - noisy
     - in JSX we anyways use that for comments
@@ -3645,7 +3646,7 @@
   ~- we can do that via just returns
   - Errors make program syntax case-sensitive
 
-## [ ] Variables: Case-insensitive? -> likely yes: AbB/ABb, x1/X1, ~~@math.E/@math.e~~, export names, import names, constants, strings, atoms
+## [ ] Variables: Case-sensitive? -> likely yes: AbB/ABb, x1/X1, ~~@math.E/@math.e~~, export names, import names, constants, strings, atoms
   * should not be too smart, should be very simple
 
   0. Case-insensitive
