@@ -258,7 +258,7 @@
     + like .tone but .sone - more about signals/noises
     + legacy own name
       - smells old
-  * sone / sonescript
+  * ~~sone / sonescript~~ -> donated
     + like sanskrit
     + sound script
     + son is common root for sound
@@ -272,6 +272,7 @@
       +~ same as other options
     ~ script has association with javascript, or roots from that (assemblyscript etc) - to mind that point.
     → if we root from assembly, it has more sense to call sont
+
   * soneslang?
   * solo? solr? soloscript? solos?
     - taken
@@ -1237,7 +1238,7 @@
       ~+ maintains similarity with paths
     + connects with end as `a.`
 
-## [ ] Defer: -> ~~`x(a) = (/log(a); /a+=1; a)`~~ `x(a) = (^log(a); ^a++; a)`
+## [x] Defer: -> ~~`x(a) = (/log(a); /a+=1; a)`~~ ~~`x(a) = (^log(a); ^a++; a)`~~ or `x(a) = (;;log(a); a++; a)`
 
   + like golang defer execution runs item after function return
   + allows separating return value from increments needed after function
@@ -1290,7 +1291,7 @@
       + it was even an alternative to `*` in the beginning
     - has meaning as "part" of identifier, not operator (higher precedence)
       - ie. `&i++` raises confusion, it's not `&(i++)`, it's `(&i)++`
-  * ~~`x() = (~a; b,c; ~d)`~~
+  * `x() = (~a; b,c; ~d)`
     + very strong sense of "destructor"
     + relatively safe within other options: `/i++, \i++, &i++, 'i++, #i++, @i++, >>i++, .i++`
     + follows spirit of C in terms of "common" operators choice `*, ~`
@@ -1303,7 +1304,7 @@
       ~ `x()=(#i=0;~i++;)`
       ~ `x()=(#i=0;^++i;)`
     - reserved for unary "binary inversion", already married
-    - reserved for ranges
+    ~- reserved for ranges
   * ~~`x() = (a.; b,c; d.)`~~
     + meaning "at the end"
     + same operator is used for export
@@ -1326,7 +1327,8 @@
     + requires some operand, cannot be on its own in case of continue
     + good candidate by chatgpt: "could suggest “pushing” an operation after the function"
     - association with C++ pipe (cout)
-    - 2 chars, opposed to 1 char in `*i=0;`
+    - something more like "side return" or "write somewhere"
+    - 2 chars, opposed to 1 char in `^i=0;`
     - a bit too much visual noise, defer doesn't have primary meaning
       - `>>++i` is line noise
   * ~~`x() = (*i=0;>i++;*phase=0;>phase+=t;)`, `x()=(>log(a);>a+=1;)`~~
@@ -1369,7 +1371,7 @@
     + kind-of matches meaning of labels in JS
     - a bit clumsy
     - has connection to types in langs
-  * `^` for return, `x() = (*i=0;^:i++;)`, `x()=(^:a; b,c,; ^:d;)`, `x(a) = (^:log(a); ^:a+=1; a)` for defer
+  * ~~`^` for return, `x() = (*i=0;^:i++;)`, `x()=(^:a; b,c,; ^:d;)`, `x(a) = (^:log(a); ^:a+=1; a)` for defer~~
     + means "after return"
   * `x() = (*i=0;^i++;)`, `x(a) = (^log(a); ^a+=1; a)`
     + means "delay" operator in DSP
@@ -1380,27 +1382,32 @@
     + `^` means footnote in typographics
     + can go last literally to reduce unary intimidation
       + if that's the case, literally means "return prev statement"
+    - has more "operator" sense than positional
   * fn return as: `=a*b`: means take expression as function result `f()=(*i=0; =...; i++)`
     + avoids problems with last expression
     + avoids accumulated stack issue
     - `f() = ( *t=0; =t*2; t++ );`
       - intimidating prefix operators, `=` must be less standard practice
-  * `x() = (i=0;abc;;i++)`
+  * `x() = (i=0;abc;;i++)`, `x()=(*i=0;;i++; ...)`
     + gentle indicator of "after all sequences"
     + extends meaning of `;` operator
+    + has better "positional" sense rather than operator sense like `^`
     + defer has to do with sequence indeed, not with "own land of meaning"
     + refers to `for (i=0;;i++)` as `defer` is last statement there
-    - not safe to squash `;;`
-    - `(a;;b;;c;d)` - not clear which part goes last which first
+      + that is sort of good pattern
+    - `;;a;;;b` - what's that?
+      ~ `b` is deferred
+    - `(a;;b;;c;d)` - which part goes last which first?
+      ~? `b` and `c` are deferred
     - not easy to make multiple statements `(a;b;;(a++;b++))`
-  * `x(a,b,c; i=0, y=2; i++) = (...)`
-  * `x(a,b,c,.t; t++) = (...)`
+      ~ `;;a;;b`
+  * `x(a,b,c; i=0, y=2; i++) = (...)`, `x(a,b,c,.t; t++) = (...)`
     + a bit like `for (init;;after) = (...)`
     + no new syntax introduced
     - no access to local vars
     - messy multiple statements `x(a,b,c;(a++,b++)) = (...)`
 
-### [ ] Defer/return: !Return to stack `=a;=b;` same as `a,b;` -> likely no need, just use defer
+### [x] Defer/return: !Return to stack `=a;=b;` same as `a,b;` -> likely no need, just use defer
   + allows avoiding drops
   + points at how assignment works
   + allows organizing deferred `f()=(*i=0; =...; i++)`
@@ -2114,7 +2121,7 @@
   * Essentially, it can be simply "return from current scope" operator, which in wasm is called "br" - break, or `../` / `./`
   10. `(a == 1 ?^ log(1); a >< 2.. ?^ log(2); log(3))`
 
-## [x] Comments: `//`, `/*` vs `;;`,`(; ;)` ~~`//` is most based choice. `\\` gives many benefits~~ `;;` has same benefits, but least toxic
+## [x] Comments: ~~`//`,~~ `/*` vs ~~`;;`,`(; ;)`~~ ~~`//` is most based choice.~~ `\\` gives many benefits ~~`;;` has same benefits, but least toxic~~
 
   1. `;;`
   * Message: piezo is like assembly, expect low-level stuff & reading docs
@@ -2127,7 +2134,7 @@
   + doesn't introduce any new syntax space
   + it has "safe" or "light" semantic expectation, like, noone would guess it does something heavy
     + unlike `a \ b` or `a \\ b`
-  - associates with autohotkey, which is the opposite of fast
+  - associates with autohotkey and other heavy scripts, which is the opposite of fast
   + associates with assembly langs and others: Most assembly languages, AutoHotkey, AutoIt, Lisp, Common Lisp, Clojure, PGN, Rebol, Red, Scheme
     + csound
   - single-comment breaks inline structures like a(x)=b;c;d.
@@ -2160,6 +2167,8 @@
   + if all programs use that comment style it seems fine: it's a good balance between neutrality, familiarity/intuitivity, innovation
   - it gives hand-made impression
   - `x()=(;a)` is SUPER common use case when first line is used for local var inits
+  - `;;` has more in-code positional sense, not strong enough delimiter
+  - `;;` is a nice pattern from `for (before;;after)`, we can use it for `;;defer` operator
 
   1.1 should we make comment an alternative to semi token `fn() ;;do something`
     + less symbols
@@ -2245,7 +2254,7 @@
     ~ can be `\\`
     + comments become part of ascii art which is cool
   - `\\`` is pessimist comment, // is optimist
-    ~ not necessarily bad
+    ~+ not necessarily bad: pessimistic note contrasts optimism of code
   + not confusable with http://
   + allows `-//`, `//` operators
     ~ we don't need them as much, `-//` is not best choice anyways
@@ -2259,6 +2268,7 @@
     ~ not so much
   - we're not creating language from scratch, we extend existing common syntax, and comments are standard part...
     + yes, but we are rethinking parts
+    + besides it's a new language
 
   4. `/* */`
   + popular (CSS, C-family, PHP, Swift, Kotlin, Java, JS)
@@ -2271,6 +2281,8 @@
     - editors don't use it as shortcuts as Cmd+/
   + space-agnostic, newline-agnostic: allows just removing all spaces from code safely, unlike `//` comments
   - not so nice without `//` pair
+  - noisy
+  - in JSX we anyways use that for comments
 
   5. `(; ;)`
     - wrongly associates with block

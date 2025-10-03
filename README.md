@@ -5,134 +5,155 @@ Project is early experimental stage, design decisions must be consolidated.
 
 <!-- [Examples](https://dy.github.io/piezo/examples/) | [Motivation](#motivation) -->
 
+
+### Principles
+
+* _Minimal_: maximal expressivity with short syntax.
+* _Intuitive_: common base, familiar patterns, visual hints.
+* _No keywords_: chars for vars, symbols for operators, real i18l code.
+* _Case-agnostic_: case changes don't break code (eg. `sampleRate` vs `samplerate`).
+* _Space-agnostic_: spaces and newlines can be removed or added freely.
+* _Explicit_: no implicit globals, no wildcard imports, no hidden file conventions (eg. `package.json`).
+* _Inferred types_: derived by usage, focus on logic over language.
+* _Normalized AST_: no complex parsing rules, just unary, binary or n-ary operators.
+* _Performant_: fast compile, fast execution, good for live envs.
+* _No runtime_: statically analyzable, no OOP, no dynamic structures, no lamdas.
+* _No waste_: linear memory, fixed heap, no GC.
+* _Low-level_: no fancy features beyond math and buffers, embeddable.
+* _Readable output_: produces readable WebAssembly text, can serve as meta-language.
+* _Minimal footprint_: minimally possible produced WASM output, no heavy workarounds.
+
+
 ## Reference
 
 ```
-;; Operators
-+ - * / % -- ++               ;; arithmetical (float)
-** %% //                      ;; power, unsigned mod, flooring div
-& | ^ ~ >> <<                 ;; binary (integer)
-<<< >>>                       ;; rotate left, right
-&& || !                       ;; logical
-> >= < <= == !=               ;; comparisons (boolean)
-?:                            ;; condition, switch
-x[i] x[]                      ;; member access, length
-a..b a.. ..b ..               ;; ranges
-|> _                          ;; pipe/loop/map, topic reference
-./ ../ /                      ;; continue/skip, break/stop, return
->< <>                         ;; inside, outside
--< -/ -*                      ;; clamp, normalize, lerp
+/* Operators */
++ - * / % -- ++               /* arithmetical (float) */
+** %% //                      /* power, unsigned mod, flooring div */
+& | ^ ~ >> <<                 /* binary (integer) */
+<<< >>>                       /* rotate left, right */
+&& || !                       /* logical */
+> >= < <= == !=               /* comparisons (boolean) */
+?:                            /* condition, switch */
+x[i] x[]                      /* member access, length */
+a..b a.. ..b ..               /* ranges */
+|> _                          /* pipe/loop/map, topic reference */
+./ ../ /                      /* continue/skip, break/stop, return */
+>< <>                         /* inside, outside */
+-< -/ -*                      /* clamp, normalize, lerp */
 
-;; Numbers
-16, 0x10, 0o755, 0b0;         ;; int, hex, oct or binary
-16.0, .1, 2e-3;               ;; float
-1k = 1000; 1pi = 3.1415926;   ;; units
-1s = 44100; 1m = 60s;         ;; eg: sample indexes
-10.1k, 2pi, 1m30s;            ;; 10100, 6.283..., 66150
+/* Numbers */
+16, 0x10, 0o755, 0b0;         /* int, hex, oct or binary */
+16.0, .1, 2e-3;               /* float */
+1k = 1000; 1pi = 3.1415926;   /* units */
+1s = 44100; 1m = 60s;         /* eg: sample indexes */
+10.1k, 2pi, 1m30s;            /* 10100, 6.283..., 66150 */
 
-;; Variables
-foo=1, bar=2.0;               ;; declare vars
-AbC, $0, Δx, x@1, A#;         ;; names permit alnum, unicodes, _$#@
-foo == Foo, bar == bAr;       ;; case-insensitive
-default=1, eval=fn, else=0;   ;; no reserved words
-true = 0b1, false = 0b0;      ;; eg: alias bools
-inf = 1/0, nan = 0/0;         ;; eg: alias infinity, NaN
+/* Variables */
+foo=1, bar=2.0;               /* declare vars */
+AbC, $0, Δx, x@1, A#;         /* names permit alnum, unicodes, _$#@ */
+foo == Foo, bar == bAr;       /* case-insensitive */
+default=1, eval=fn, else=0;   /* no reserved words */
+true = 0b1, false = 0b0;      /* eg: alias bools */
+inf = 1/0, nan = 0/0;         /* eg: alias infinity, NaN */
 
-;; Ranges
-0..10;                        ;; from 1 to 9 (10 exclusive)
-0.., ..10, ..;                ;; open ranges
-10..1;                        ;; reverse range
-1.08..108.0;                  ;; float range
-(a-1)..(a+1);                 ;; computed range
-0..3 * 2;                     ;; mapped range: 0*2, 1*2, 2*2
-(a,b,c) = 0..3 * 2;           ;; destructure: a=0, b=2, c=4
-a >< 0..10, a <> 0..10;       ;; inside(a, 0, 10), outside(a, 0, 10);
-a -< 0..10, a -<= 0..10;      ;; clamp(a, 0, 10), a = clamp(a, 0, 10)
-a -< ..10, a -< 10..;         ;; min(a, 10), max(a, 10)
-a -* 0..10, a -/ 0..10;       ;; lerp(a, 0, 10), normalize(a, 0, 10)
+/* Ranges */
+0..10;                        /* from 1 to 9 (10 exclusive) */
+0.., ..10, ..;                /* open ranges */
+10..1;                        /* reverse range */
+1.08..108.0;                  /* float range */
+(a-1)..(a+1);                 /* computed range */
+0..3 * 2;                     /* mapped range: 0*2, 1*2, 2*2 */
+(a,b,c) = 0..3 * 2;           /* destructure: a=0, b=2, c=4 */
+a >< 0..10, a <> 0..10;       /* inside(a, 0, 10), outside(a, 0, 10); */
+a -< 0..10, a -<= 0..10;      /* clamp(a, 0, 10), a = clamp(a, 0, 10) */
+a -< ..10, a -< 10..;         /* min(a, 10), max(a, 10) */
+a -* 0..10, a -/ 0..10;       /* lerp(a, 0, 10), normalize(a, 0, 10) */
 
-;; Groups
-(a,b,c) = (1,2,3);            ;; assign: a=1, b=2, c=3
-(a,b) = (b,a);                ;; swap
-(a,b,c) = d;                  ;; duplicate: a=d, b=d, c=d
-(a,,b) = (c,d,e);             ;; skip: a=c, b=e
-(a,b) + (c,d);                ;; group binary: a+c, b+d
-(a, b, c)++;                  ;; group unary: a++, b++, c++
-(a,b)[1] = c[2,3];            ;; props: a[1]=c[2], b[1]=c[3]
-(a,..,z) = (1,2,3,4);         ;; pick: a=1, z=4
-a = (b,c,d);                  ;; pick first: a=b; see loops
+/* Groups */
+(a,b,c) = (1,2,3);            /* assign: a=1, b=2, c=3 */
+(a,b) = (b,a);                /* swap */
+(a,b,c) = d;                  /* duplicate: a=d, b=d, c=d */
+(a,,b) = (c,d,e);             /* skip: a=c, b=e */
+(a,b) + (c,d);                /* group binary: a+c, b+d */
+(a, b, c)++;                  /* group unary: a++, b++, c++ */
+(a,b)[1] = c[2,3];            /* props: a[1]=c[2], b[1]=c[3] */
+(a,..,z) = (1,2,3,4);         /* pick: a=1, z=4 */
+a = (b,c,d);                  /* pick first: a=b; see loops */
 
-;; Arrays
-m = [..10];                   ;; array of 10 elements
-m = [..10 |> 2];              ;; filled with 2
-m = [1,2,3,4];                ;; array of 4 elements
-m = [n[..]];                  ;; copy n
-m = [1, 2..4, 5];             ;; mixed definition
-m = [1, [2, 3, [4, m]]];      ;; nested arrays (tree)
-m = [0..4 |> _ ** 2];         ;; list comprehension
-(a, z) = (m[0], m[-1]);       ;; get by index
-(b, .., z) = m[1, 2..];       ;; get multiple values
-length = m[];                 ;; get length
-m[0] = 1;                     ;; set value
-m[2..] = (1, 2..4, n[1..3]);  ;; set multiple values from offset 2
-m[1,2] = m[2,1];              ;; swap
-m[0..] = m[-1..];             ;; reverse
-m[0..] = m[1..,0];            ;; rotate
+/* Arrays */
+m = [..10];                   /* array of 10 elements */
+m = [..10 |> 2];              /* filled with 2 */
+m = [1,2,3,4];                /* array of 4 elements */
+m = [n[..]];                  /* copy n */
+m = [1, 2..4, 5];             /* mixed definition */
+m = [1, [2, 3, [4, m]]];      /* nested arrays (tree) */
+m = [0..4 |> _ ** 2];         /* list comprehension */
+(a, z) = (m[0], m[-1]);       /* get by index */
+(b, .., z) = m[1, 2..];       /* get multiple values */
+length = m[];                 /* get length */
+m[0] = 1;                     /* set value */
+m[2..] = (1, 2..4, n[1..3]);  /* set multiple values from offset 2 */
+m[1,2] = m[2,1];              /* swap */
+m[0..] = m[-1..];             /* reverse */
+m[0..] = m[1..,0];            /* rotate */
 
-;; Strings
-hi="Hello";                   ;; creates static array
-string="$<hi>, world!";       ;; interpolate: "hello world"
-string[1, 3..5, -2];          ;; pick elements: 'e', 'lo', 'd'
-string[0..5];                 ;; substring: 'Hello'
-string[-1..0];                ;; reversed: '!dlrow ,olleH'
-string[];                     ;; length: 13
+/* Strings */
+hi="Hello";                   /* creates static array */
+string="$<hi>, world!";       /* interpolate: "hello world" */
+string[1, 3..5, -2];          /* pick elements: 'e', 'lo', 'd' */
+string[0..5];                 /* substring: 'Hello' */
+string[-1..0];                /* reversed: '!dlrow ,olleH' */
+string[];                     /* length: 13 */
 
-;; Conditions
-a ? b;                        ;; if a then b (else 0)
-a ?: b;                       ;; if (a then 0) else b
-sign = a < 0 ? -1 : +1;       ;; ternary
-val = (                       ;; switch
-  a == 1 ? ./log(1);          ;; if a == 1 return log(1)
-  a >< 2..4 ? ./log(2);       ;; if a in 2..4 return log(2)
-  log(3)                      ;; otherwise
+/* Conditions */
+a ? b;                        /* if a then b (else 0) */
+a ?: b;                       /* if (a then 0) else b */
+sign = a < 0 ? -1 : +1;       /* ternary */
+val = (                       /* switch */
+  a == 1 ? ./log(1);          /* if a == 1 then skip block with log(1) */
+  a >< 2..4 ? ./log(2);       /* if a in 2..4 then skip block with log(2) */
+  log(3)                      /* otherwise */
 );
-a ?/ b;                       ;; early return: if a then return b
+a ?/ b;                       /* early return: if a then return b */
 
-;; Loops
-(a, b, c) |> f(_);            ;; for each item in a, b, c do f(item)
-(i = 10..) |> (               ;; descend over range
-  i < 5 ? a ./;               ;; if item < 5 skip (continue)
-  i < 0 ? a ../;              ;; if item < 0 stop (break)
-);                            ;;
-x[..] |> f(_) |> g(_);        ;; pipeline sequence
-(i = 0..w) |> (               ;; nest iterations
-  (j = 0..h) |> f(i, j);      ;; f(x,y)
-);                            ;;
-((a,b) = 0..10) |> a+b;       ;; iterate pairs
-(x,,y) = (a,b,c) |> _ * 2;    ;; capture result x = a*2, y = c*2;
-.. |> i < 10 ? i++ : ../;     ;; while i < 10 i++
+/* Loops */
+(a, b, c) |> f(_);            /* for each item in a, b, c do f(item) */
+(i = 10..) |> (               /* descend over range */
+  i < 5 ? a ./;               /* if item < 5 skip (continue) */
+  i < 0 ? a ../;              /* if item < 0 stop (break) */
+);
+x[..] |> f(_) |> g(_);        /* pipeline sequence */
+(i = 0..w) |> (               /* nest iterations */
+  (j = 0..h) |> f(i, j);      /* f(x,y) */
+);
+((a,b) = 0..10) |> a+b;       /* iterate pairs */
+(x,,y) = (a,b,c) |> _ * 2;    /* capture result x = a*2, y = c*2; */
+.. |> i < 10 ? i++ : ../;     /* while i < 10 i++ */
 
-;; Functions
-double(n) = n*2;              ;; define a function
-times(m = 1, n -< 1..) = (    ;; optional, clamped arg
-  n == 0 ? /n;                ;; early return
-  m * n;                      ;; returns last statement
-);                            ;;
-times(3,2);                   ;; 6
-times(4), times(,5);          ;; 4, 5: optional, skipped arg
-dup(x) = (x,x);               ;; return multiple
-(a,b) = dup(b);               ;; destructure
-a=1,b=1; x()=(a=2;b=2); x();  ;; a==1, b==2: first statement declares locals
-fn() = ( x; ^log(x) );        ;; defer: calls log after returning x
-f(a, cb) = cb(a[0]);          ;; array, func args
-a() = ( *i=0; *i++ );         ;; state var: i persists value
-a(), a();                     ;; 0,1
-a.i = 0;                      ;; reset state
-*a1 = a;                      ;; clone function
-a(), a(); a1(), a1();         ;; 0,1; 0,1;
+/* Functions */
+double(n) = n*2;              /* define a function */
+times(m = 1, n -< 1..) = (    /* optional, clamped arg */
+  n == 0 ? /n;                /* early return */
+  m * n;                      /* returns last statement */
+);
+times(3,2);                   /* 6 */
+times(4), times(,5);          /* 4, 5: optional, skipped arg */
+dup(x) = (x,x);               /* return multiple */
+(a,b) = dup(b);               /* destructure */
+a=1,b=1; x()=(a=2;b=2); x();  /* a==1, b==2: first statement declares locals */
+fn() = ( x ;; log(x) );       /* defer: log(x) after returning x */
+f(a, cb) = cb(a[0]);          /* array, func args */
 
-;; Export
-x, y, z;                      ;; exports last statement
+/* State vars */
+a() = ( *i=0;; i++ );         /* i persists value (defer increment) */
+a(), a();                     /* 0,1 */
+a.i = 0;                      /* reset state */
+*a1 = a;                      /* clone function */
+a(), a(); a1(), a1();         /* 0,1; 0,1; */
+
+/* Export */
+x, y, z;                      /* exports last statement */
 ```
 
 <!--
@@ -418,25 +439,6 @@ Audio processing has no cross-platform solution, various environments deal with 
 
 _Piezo_ attempts to fill that gap, providing a common layer. It is also a personal attempt on language design - rethinking parts and providing safe haven. WASM target gives max performance and compatibility - browsers, [audio/worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) etc.
 -->
-
-### Principles
-
-* _Minimal_: maximal expressivity with shortest syntax.
-* _Intuitive_: common syntax, familiar patterns, visual hints.
-* _No keywords_: chars for vars, symbols for operators, real i18l code.
-* _Performant_: fast compile, fast execution, good for live envs.
-* _No runtime_: statically analyzable, no OOP, no dynamic structures, no lamdas.
-* _No waste_: linear memory, fixed heap, no GC.
-* _Inferred types_: derived by usage, focus on logic over language.
-* _Explicit_: no implicit globals, no wildcard imports, no hidden file conventions.
-* _Space-agnostic_: spaces and newlines can be removed or added freely (except comments).
-* _Case-agnostic_: case changes don't break code (eg. `sampleRate` vs `samplerate`).
-* _Normalized syntax_: no complex parsing rules – just unary, binary or n-ary operators.
-* _Readable output_: produces readable WebAssembly text (eg. can serve as meta-language).
-* _Low-level_: no fancy features beyond math and buffers, embeddable.
-* _Minimal footprint_: minimally possible produced WASM output, no heavy workarounds.
-
-
 
 <!--
 ## Projects using piezo
