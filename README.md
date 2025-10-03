@@ -417,10 +417,10 @@ const arrValues = new Float64Array(arr, memory)
 
 ## Motivation
 
-Audio processing has no cross-platform solution, various environments deal with audio differently, some don't have audio processing at all.<br>
-_Web Audio API_ is unreliable - it has unpredictable pauses, glitches and so on, so <q>audio is better handled in WASM worklet</q> ([@stagas](https://github.com/stagas)).
+Audio processing has no cross-platform solution, every environment deals with audio differently, many don't have audio processing at all. The _Web Audio API_ is unreliable – unpredictable pauses, glitches and so on, so <q>audio is better handled in WASM worklet</q> ([@stagas](https://github.com/stagas)).
 
-_Piezo_ attempts to fill that gap, providing a common layer. It is also a personal take in language design - rethinking parts, adding missing features, and providing safe haven.<br>
+_Piezo_ attempts to fill that gap: a minimal, expressive language for signal processing, synthesis, and analysis that compiles to WebAssembly. It is also a personal take in language design - rethinking parts, adding missing features, and providing safe haven.
+
 WASM target gives performance and compatibility - browsers, [audio/worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) etc.
 
 
