@@ -20,7 +20,7 @@ Project is early experimental stage, design decisions must be consolidated.
 x[i] x[]                      /* member access, length */
 a..b a.. ..b ..               /* ranges */
 |> _                          /* pipe/loop/map, topic reference */
-./ ../ /                      /* continue/skip, break/stop, return */
+./ ../ .../                   /* continue/skip, break/stop, root return */
 >< <>                         /* inside, outside */
 -< -/ -*                      /* clamp, normalize, lerp */
 
@@ -93,17 +93,17 @@ a ? b : c;                    /* if a then b else c */
 a ? b;                        /* if a then b (else 0) */
 a ?: b;                       /* if (a then 0) else b */
 val = (                       /* switch */
-  a == 1 ? ./log(1);          /* if a == 1 then out log(1) */
-  a >< 2..4 ? ./log(2);       /* if a in 2..4 then out log(2) */
-  log(3)                      /* otherwise */
+  a == 1 ? ./1;               /* if a == 1 then val = 1 */
+  a >< 2..4 ? ./2;            /* if a in 2..4 then val = 2 */
+  3                           /* otherwise 3 */
 );
-a ?/ b;                       /* early return: if a then return b */
+a ? ./b;                      /* early return: if a then return b */
 
 /* Loops */
 (a, b, c) |> f(_);            /* for each item in a, b, c do f(item) */
 (i = 10..) |> (               /* descend over range */
-  i < 5 ? a ./;               /* if item < 5 skip (continue) */
-  i < 0 ? a ../;              /* if item < 0 stop (break) */
+  i < 5 ? ./a;                /* if item < 5 skip (continue) */
+  i < 0 ? ../a;               /* if item < 0 stop (break) */
 );
 x[..] |> f(_) |> g(_);        /* pipeline sequence */
 (i = 0..w) |> (               /* nest iterations */
@@ -116,45 +116,46 @@ x[..] |> f(_) |> g(_);        /* pipeline sequence */
 /* Functions */
 double(n) = n*2;              /* define a function */
 times(m = 1, n -< 1..) = (    /* optional, clamped arg */
-  n == 0 ? /n;                /* early return */
+  n == 0 ? ./n;               /* early return */
   m * n;                      /* returns last statement */
 );
 times(3,2);                   /* 6 */
 times(4), times(,5);          /* 4, 5: optional, skipped arg */
 dup(x) = (x,x);               /* return multiple */
 (a,b) = dup(b);               /* destructure */
-a=1,b=1; x()=(a=2;b=2); x();  /* a==1, b==2: first statement declares locals */
+a,b; x()=(a=1;b=1); x();      /* first expr declares locals, last returns */
 fn() = ( x ;; log(x) );       /* defer: log(x) after returning x */
 f(a, cb) = cb(a[0]);          /* array, func args */
 
 /* State vars */
-a() = ( *i=0;; i++ );         /* i persists value (defer increment) */
-a(), a();                     /* 0,1 */
+a() = ( *i=0; i++ );          /* i persists value */
+a(), a();                     /* 0, 1 */
 a.i = 0;                      /* reset state */
 *a1 = a;                      /* clone function */
-a(), a(); a1(), a1();         /* 0,1; 0,1; */
+a(), a(); a1(), a1();         /* 0, 1; 0, 1; */
+f() = ( *i=0;; i++; ... );    /* couples with defer */
 
 /* Export */
 x, y, z;                      /* exports last statement */
 ```
 
-<!--
+
 ## Examples
 
 <details>
 <summary><strong>Gain</strong></summary>
 
-Provides k-rate amplification for block of samples.
+Amplify k-rate block of samples.
 
 ```
-gain(                             ;; define a function with block, volume arguments.
-  block,                          ;; block is a array argument
-  volume -< 0..100                ;; volume is limited to 0..100 range
+gain(                             /* define a function with block, volume arguments. */
+  block,                          /* block is a array argument */
+  volume -< 0..100                /* volume is limited to 0..100 range */
 ) = (
-  block[..] |>= # * volume        ;; multiply each sample by volume value
+  block[..] |>= # * volume        /* multiply each sample by volume value */
 );
 
-gain([0..5 * 0.1], 2);            ;; 0, .2, .4, .6, .8, 1
+gain([0..5 * 0.1], 2);            /* 0, .2, .4, .6, .8, 1 */
 ```
 
 </details>
@@ -166,18 +167,18 @@ gain([0..5 * 0.1], 2);            ;; 0, .2, .4, .6, .8, 1
 A-rate (per-sample) biquad filter processor.
 
 ```
-1pi = pi;                         ;; define pi units
-1s = 44100;                       ;; define time units in samples
-1k = 10000;                       ;; basic si units
+1pi = pi;                         /* define pi units */
+1s = 44100;                       /* define time units in samples */
+1k = 10000;                       /* basic si units */
 
-lpf(                              ;; per-sample processing function
-  x0,                             ;; input sample value
-  freq = 100 -< 1..10k,            ;; filter frequency, float
-  Q = 1.0 -< 0.001..3.0            ;; quality factor, float
+lpf(                              /* per-sample processing function */
+  x0,                             /* input sample value */
+  freq = 100 -< 1..10k,            /* filter frequency, float */
+  Q = 1.0 -< 0.001..3.0            /* quality factor, float */
 ) = (
-  *(x1, y1, x2, y2) = 0;          ;; define filter state
+  *(x1, y1, x2, y2) = 0;          /* define filter state */
 
-  ;; lpf formula
+  /* lpf formula */
   w = 2pi * freq / 1s;
   sin_w, cos_w = sin(w), cos(w);
   a = sin_w / (2.0 * Q);
@@ -189,13 +190,13 @@ lpf(                              ;; per-sample processing function
 
   y0 = b0*x0 + b1*x1 + b2*x2 - a1*y1 - a2*y2;
 
-  x1, x2 = x0, x1;            ;; shift state
+  x1, x2 = x0, x1;            /* shift state */
   y1, y2 = y0, y1;
 
-  y0                              ;; return y0
+  y0                              /* return y0 */
 );
 
-;; i = [0, .1, .3] |> lpf(i, 108, 5);
+/* i = [0, .1, .3] |> lpf(i, 108, 5); */
 ```
 
 </details>
@@ -210,48 +211,48 @@ Generates ZZFX's [coin sound](https://codepen.io/KilledByAPixel/full/BaowKzv) `z
 1s = 44100;
 1ms = 1s / 1000;
 
-;; define waveform generators
+/* define waveform generators */
 oscillator = [
   saw(phase) = (1 - 4 * abs( round(phase/2pi) - phase/2pi )),
   sine(phase) = sin(phase)
 ];
 
-;; applies adsr curve to sequence of samples
+/* applies adsr curve to sequence of samples */
 adsr(
   x,
-  a -< 1ms..,                    ;; prevent click
+  a -< 1ms..,                    /* prevent click */
   d,
-  (s, sv=1),                    ;; optional group-argument
+  (s, sv=1),                    /* optional group-argument */
   r
 ) = (
-  *i = 0;                       ;; internal counter, increments after fn body
+  *i = 0;                       /* internal counter, increments after fn body */
   t = i / 1s;
 
   total = a + d + s + r;
 
   y = t >= total ? 0 : (
-    t < a ? t/a :               ;; attack
-    t < a + d ?                 ;; decay
-    1-((t-a)/d)*(1-sv) :        ;; decay falloff
-    t < a  + d + s ?            ;; sustain
-    sv :                        ;; sustain volume
+    t < a ? t/a :               /* attack */
+    t < a + d ?                 /* decay */
+    1-((t-a)/d)*(1-sv) :        /* decay falloff */
+    t < a  + d + s ?            /* sustain */
+    sv :                        /* sustain volume */
     (total - t)/r * sv
   ) * x;
   i++;
   y
 );
 
-;; curve effect
+/* curve effect */
 curve(x, amt~0..10=1.82) = (sign(x) * abs(x)) ** amt;
 
-;; coin = triangle with pitch jump, produces block
+/* coin = triangle with pitch jump, produces block */
 coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
   *out=[..1024];
   *i=0;
-  *phase = 0;                   ;; current phase
+  *phase = 0;                   /* current phase */
   t = i / 1s;
 
-  ;; generate samples block, apply adsr/curve, write result to out
+  /* generate samples block, apply adsr/curve, write result to out */
   ..  |> oscillator[shape](phase)
       |> adsr(_, 0, 0, .06, .24)
       |> curve(_, 1.82)

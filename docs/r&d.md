@@ -989,7 +989,7 @@
 
   3. void return `(a;b;/)` (like coffee)
 
-## [x] Early return operator? → ~~keep `a ? ^;` for now~~ `./`, `../`, `/` is most logical
+## [x] Early return operator? → ~~keep `a ? ^;` for now~~ `./`, `../`, ~~`/`~~ `.../` is most logical
 
   * can often see `if (a) return;` - useful construct. How's that in lino?
   1. `a ? value.`
@@ -1004,6 +1004,7 @@
     + no (b.c;d) syntax case
     + gl code doesn't support preliminary returns as well as optimal branching, so maybe meaningful
     - no reason to not have it
+    - no switch pattern
 
   3. Guard / early return operator?
     + we don't want to introduce void `a?b;` identical to `a&&b`
@@ -1084,6 +1085,7 @@
     - not following patterns
     - conflicts with comments
     + consistent with `./` for skip, `../` for break
+    - `/x` from inside loop is super rare case, make it `.../`
   * `cond ?< b; cond ?<; cond ? <<b;`
   * `cond ? =b; cond ? .=b; cond ? := b`
   * `cond ?= b; cond ? ==b; cond ?=;`
@@ -2121,54 +2123,54 @@
   * Essentially, it can be simply "return from current scope" operator, which in wasm is called "br" - break, or `../` / `./`
   10. `(a == 1 ?^ log(1); a >< 2.. ?^ log(2); log(3))`
 
-## [x] Comments: ~~`//`,~~ `/*` vs ~~`;;`,`(; ;)`~~ ~~`//` is most based choice.~~ `\\` gives many benefits ~~`;;` has same benefits, but least toxic~~
+## [x] Comments: ~~`//`,~~ `/*` is space agnostic and most neutral ~~`;;`,`(; ;)`~~ ~~`//` is most based choice.~~ ~~`\\` gives many benefits~~ ~~`;;` has same benefits, but least toxic~~
 
   1. `;;`
-  * Message: piezo is like assembly, expect low-level stuff & reading docs
-  + ;; make more sense, since ; is separator, and everything behind it doesn't matter
-  + `(;` makes more sense as "group with comments", since we use only ( for groups.
-  + ;; is less noisy than //
-  + ;; is associated with assembler or lisp/clojure
-    + wasm
-  + even simpler - everything after ; can be considered a comment?
-  + doesn't introduce any new syntax space
-  + it has "safe" or "light" semantic expectation, like, noone would guess it does something heavy
-    + unlike `a \ b` or `a \\ b`
-  - associates with autohotkey and other heavy scripts, which is the opposite of fast
-  + associates with assembly langs and others: Most assembly languages, AutoHotkey, AutoIt, Lisp, Common Lisp, Clojure, PGN, Rebol, Red, Scheme
-    + csound
-  - single-comment breaks inline structures like a(x)=b;c;d.
-    + that's why `;;`
-  - not as "cool" as `\\`
-  - `a + b;  ;; some comment` - not nice noise, compared to `// some comment`
-  + more lightweight than `\\`
-  + not confusable with `//`
-  + no conflict with ANYTHING, very organic part of code
-  + reminds `:` which is kind of cool for comments in typographics
-  + more conventional than `\\`
-  + Sercy sneezed
-  + gives indication that the code is compiled down to wasm, wasm can even keep exact same comments
-  + lisp, scheme, clojure, racket, asm style
-  + clean & minimalistic, easier to read
-  - `;; xxx` or `(;....;)` is valid actual syntax
-    - eg. `sin(x)(; explainer ;)` is equivalent to `sin(x)()`
-      ~+ kind-of equivalent to "nothing", eg. `x(a, (; some description;))` === `x(a,)`
-    + `;;` code is discouraged
-  + `;;` is safer & softer, not as spiky / scratchy, more familiar
-  + looks the most organic for non-too-nerdy code, the most design-ish
-  - `a();;;some action` - comment is detected at `a();;...` which produces invalid code
-    - in other words, such comments are not so easy to strip
-      ~ same problem is in C comments as `a///comment\nb`, way less frequently met though
-  - conflict with direct code, eg. `(;;;)` is valid code piece, but comment will strip it out
-    ~ that's an edge case, code like `(;;)` is discouraged
-    ~ paired with `(; comment ;)` that's not a threat
-  - the support of such comments is not widespread
-  + hints to asm/wasm languages
-  + if all programs use that comment style it seems fine: it's a good balance between neutrality, familiarity/intuitivity, innovation
-  - it gives hand-made impression
-  - `x()=(;a)` is SUPER common use case when first line is used for local var inits
-  - `;;` has more in-code positional sense, not strong enough delimiter
-  - `;;` is a nice pattern from `for (before;;after)`, we can use it for `;;defer` operator
+    * Message: piezo is like assembly, expect low-level stuff & reading docs
+    + ;; make more sense, since ; is separator, and everything behind it doesn't matter
+    + `(;` makes more sense as "group with comments", since we use only ( for groups.
+    + ;; is less noisy than //
+    + ;; is associated with assembler or lisp/clojure
+      + wasm
+    + even simpler - everything after ; can be considered a comment?
+    + doesn't introduce any new syntax space
+    + it has "safe" or "light" semantic expectation, like, noone would guess it does something heavy
+      + unlike `a \ b` or `a \\ b`
+    - associates with autohotkey and other heavy scripts, which is the opposite of fast
+    + associates with assembly langs and others: Most assembly languages, AutoHotkey, AutoIt, Lisp, Common Lisp, Clojure, PGN, Rebol, Red, Scheme
+      + csound
+    - single-comment breaks inline structures like a(x)=b;c;d.
+      + that's why `;;`
+    - not as "cool" as `\\`
+    - `a + b;  ;; some comment` - not nice noise, compared to `// some comment`
+    + more lightweight than `\\`
+    + not confusable with `//`
+    + no conflict with ANYTHING, very organic part of code
+    + reminds `:` which is kind of cool for comments in typographics
+    + more conventional than `\\`
+    + Sercy sneezed
+    + gives indication that the code is compiled down to wasm, wasm can even keep exact same comments
+    + lisp, scheme, clojure, racket, asm style
+    + clean & minimalistic, easier to read
+    - `;; xxx` or `(;....;)` is valid actual syntax
+      - eg. `sin(x)(; explainer ;)` is equivalent to `sin(x)()`
+        ~+ kind-of equivalent to "nothing", eg. `x(a, (; some description;))` === `x(a,)`
+      + `;;` code is discouraged
+    + `;;` is safer & softer, not as spiky / scratchy, more familiar
+    + looks the most organic for non-too-nerdy code, the most design-ish
+    - `a();;;some action` - comment is detected at `a();;...` which produces invalid code
+      - in other words, such comments are not so easy to strip
+        ~ same problem is in C comments as `a///comment\nb`, way less frequently met though
+    - conflict with direct code, eg. `(;;;)` is valid code piece, but comment will strip it out
+      ~ that's an edge case, code like `(;;)` is discouraged
+      ~ paired with `(; comment ;)` that's not a threat
+    - the support of such comments is not widespread
+    + hints to asm/wasm languages
+    + if all programs use that comment style it seems fine: it's a good balance between neutrality, familiarity/intuitivity, innovation
+    - it gives hand-made impression
+    - `x()=(;a)` is SUPER common use case when first line is used for local var inits
+    - `;;` has more in-code positional sense, not strong enough delimiter
+    - `;;` is a nice pattern from `for (before;;after)`, we can use it for `;;defer` operator
 
   1.1 should we make comment an alternative to semi token `fn() ;;do something`
     + less symbols
@@ -2178,111 +2180,112 @@
     - doesn't allow inserting inline comments within sequences like `a,;;xxx\n b`
 
   2. `//`, `/**/`
-  * Message: piezo is like C / JS / Scala, expect similar intuition
-  - // is noisy conflict with / and occupies operator space, eg.:
-  ```
-    tri(freq in 10..10000) = (
-      ...phase = 0; // phase state
-      phase += freq * pi2 / sampleRate;
-      (1 - 4 * abs( round(phase/pi2) - phase/pi2 ));
-    )
-  ```
-    ~+ it doesn't go without `;` so not so much conflict
-  - // is used in python for floor division, very handy: (a / b | 0) -> a//b
-    - not just floor division but autoconverting to int, which is super handy
-      ? can that be resolved somehow?
-      ~ what's the big deal of just a/b | 0? internally that's same, no?
-    - it's just so nice symmetricity of ++ -- ** %% but not //
-  - it blocks smoothstep as `-//`
-  + ~~allows defer to be `\x++`.~~
-    ~ we don't do defer via escape
-  + // associates C+/Java/JS/F#, that's well-established
-    + with many others: ActionScript, Boo, C (C99), C++, C#, D, F#, Go, Java, JavaScript, Kotlin, Object Pascal (Delphi), Objective-C, PHP, Rust, Scala, SASS, Swift, Xojo
-  + ~~makes C#, F#-compatible syntax highlight~~
-    - `(*p)` makes F# comment
-    - `#p` makes C# comment
-  + saves soooo much time converting bytebeats to lino
-    + sooo natural to feel
-    + maintaining syntax plugins is heavy task
-    - can be without hardships converted to `\\`
-  - search-matches with protocols like `https://`
-  - pretends to be C/JS, when it is not.
-    * Such comments would make sense if: code was case-sensitive; it had standard allowed chars (no #@); code had if|else|while|for|return|in keywords.
-    + gives fresh feeling of old standard, since syntax is updated to be cool
-    + and still it's like scala also
-  - chances are // was unlucky choice in C, since for all basic arithmetics there's double + ++, - --, * **, % %%, & &&, | ||, but / // remains, as well as ^ ^^.
-  - there's integer div in wasm, but no integer div in mel
+    + Message: piezo is like C / JS / Scala, expect similar intuition
+    - // is noisy conflict with / and occupies operator space, eg.:
+    ```
+      tri(freq in 10..10000) = (
+        ...phase = 0; // phase state
+        phase += freq * pi2 / sampleRate;
+        (1 - 4 * abs( round(phase/pi2) - phase/pi2 ));
+      )
+    ```
+      ~+ it doesn't go without `;` so not so much conflict
+    - // is used in python for floor division, very handy: (a / b | 0) -> a//b
+      - not just floor division but autoconverting to int, which is super handy
+        ? can that be resolved somehow?
+        ~ what's the big deal of just a/b | 0? internally that's same, no?
+      - it's just so nice symmetricity of ++ -- ** %% but not //
+    - it blocks smoothstep as `-//`
+    + ~~allows defer to be `\x++`.~~
+      ~ we don't do defer via escape
+    + // associates C+/Java/JS/F#, that's well-established
+      + with many others: ActionScript, Boo, C (C99), C++, C#, D, F#, Go, Java, JavaScript, Kotlin, Object Pascal (Delphi), Objective-C, PHP, Rust, Scala, SASS, Swift, Xojo
+    + ~~makes C#, F#-compatible syntax highlight~~
+      - `(*p)` makes F# comment
+      - `#p` makes C# comment
+    + saves soooo much time converting bytebeats to lino
+      + sooo natural to feel
+      + maintaining syntax plugins is heavy task
+      - can be without hardships converted to `\\`
+    - search-matches with protocols like `https://`
+    - pretends to be C/JS, when it is not.
+      * Such comments would make sense if: code was case-sensitive; it had standard allowed chars (no #@); code had if|else|while|for|return|in keywords.
+      + gives fresh feeling of old standard, since syntax is updated to be cool
+      + and still it's like scala also
+    - chances are // was unlucky choice in C, since for all basic arithmetics there's double + ++, - --, * **, % %%, & &&, | ||, but / // remains, as well as ^ ^^.
+    - there's integer div in wasm, but no integer div in mel
 
   3. `\` or `\\`
-  * Message: piezo is breaking new, but also weirdish like Julia, you gotta expect fancy stuff
-  + mono lang reference
-  +~ Forth?
-  + \ is almost never used in langs & that's unique
-  + reminds `//`
-  - sort-of constant footgun to confuse with `//`
-    ~ can be `\`
-    - imagine mood of "let's have fun write some floatbeat" - you'd need to remember that difference from JS always
-  - mental load to remember the comment style
-  + it's short
-  + association with "escape" sequence in strings
-  - if strings come in (likely yes), then select-alling comments will select a bunch of escapes
-    ~ can be `\\`
-    ~ escapes are rare
-    + doesn't conflict with JSy // comments on select-all
-  - possible conflict with string escapes
-    + can be resolved with `\\`
-      + creates clear separation of "comments" area
-    + `;;` can as well have conflict with strings, that's not a feature of this comment
-      - string escapes are more likely
-    + strings in JS/anywhere ignore comments
-  + cooler than `;;`
-    + `\` is cool
-  + looks fresh directionally, shadow effect `\\\\\\\\\\\\\\\\\\\\\\\\\`
-    + shadow makes sense as comments hide in "shadow" of real code
-  - syntax highlighters don't know that
-    ~ neither `;;`
-    - maintaining all possible highlighters can be a lifetime effort
-      ~ can be one-time vscode contribution
-    ~+ not so heavy, can be done once
-    ~+ existing highlighters don't know piezo anyways
-  - takes primary semantic meaning, rather than "safe" secondary meaning
-  ?- what's inline pairing?
-    * `\* *\`?
-    * `\ inline comment \`
-      -~ prohibits-ish `\\ abc`, `\\\\\\\ abc \\\\\\\`
-  - sometimes ascii art includes these - becomes cumbersome
-    ~ can be `\\`
-    + comments become part of ascii art which is cool
-  - `\\`` is pessimist comment, // is optimist
-    ~+ not necessarily bad: pessimistic note contrasts optimism of code
-  + not confusable with http://
-  + allows `-//`, `//` operators
-    ~ we don't need them as much, `-//` is not best choice anyways
-  - writing that comment by hand requires escaping each of these, so comment becomes `\\\\`
-    ~+ just `\` is good enough
-  - too ground-breaking
-    ~+ maybe that's good
-  - disturbs convention of C, JS, Scala, Rust, Java, Go etc
-    - forcing all programmers from these lands learn that new comments syntax
-  - complicates copy-paste of floatbeats
-    ~ not so much
-  - we're not creating language from scratch, we extend existing common syntax, and comments are standard part...
-    + yes, but we are rethinking parts
-    + besides it's a new language
+    * Message: piezo is breaking new, but also weirdish like Julia, you gotta expect fancy stuff
+    + mono lang reference
+    +~ Forth?
+    + \ is almost never used in langs & that's unique
+    + reminds `//`
+    - sort-of constant footgun to confuse with `//`
+      ~ can be `\`
+      - imagine mood of "let's have fun write some floatbeat" - you'd need to remember that difference from JS always
+    - mental load to remember the comment style
+    + it's short
+    + association with "escape" sequence in strings
+    - if strings come in (likely yes), then select-alling comments will select a bunch of escapes
+      ~ can be `\\`
+      ~ escapes are rare
+      + doesn't conflict with JSy // comments on select-all
+    - possible conflict with string escapes
+      + can be resolved with `\\`
+        + creates clear separation of "comments" area
+      + `;;` can as well have conflict with strings, that's not a feature of this comment
+        - string escapes are more likely
+      + strings in JS/anywhere ignore comments
+    + cooler than `;;`
+      + `\` is cool
+    + looks fresh directionally, shadow effect `\\\\\\\\\\\\\\\\\\\\\\\\\`
+      + shadow makes sense as comments hide in "shadow" of real code
+    - syntax highlighters don't know that
+      ~ neither `;;`
+      - maintaining all possible highlighters can be a lifetime effort
+        ~ can be one-time vscode contribution
+      ~+ not so heavy, can be done once
+      ~+ existing highlighters don't know piezo anyways
+    - takes primary semantic meaning, rather than "safe" secondary meaning
+    ?- what's inline pairing?
+      * `\* *\`?
+      * `\ inline comment \`
+        -~ prohibits-ish `\\ abc`, `\\\\\\\ abc \\\\\\\`
+    - sometimes ascii art includes these - becomes cumbersome
+      ~ can be `\\`
+      + comments become part of ascii art which is cool
+    - `\\`` is pessimist comment, // is optimist
+      ~+ not necessarily bad: pessimistic note contrasts optimism of code
+    + not confusable with http://
+    + allows `-//`, `//` operators
+      ~ we don't need them as much, `-//` is not best choice anyways
+    - writing that comment by hand requires escaping each of these, so comment becomes `\\\\`
+      ~+ just `\` is good enough
+    - too ground-breaking
+      ~+ maybe that's good
+    - disturbs convention of C, JS, Scala, Rust, Java, Go etc
+      - forcing all programmers from these lands learn that new comments syntax
+    - complicates copy-paste of floatbeats
+      ~ not so much
+    - we're not creating language from scratch, we extend existing common syntax, and comments are standard part...
+      + yes, but we are rethinking parts
+      + besides it's a new language
 
   4. `/* */`
-  + popular (CSS, C-family, PHP, Swift, Kotlin, Java, JS)
-    -~ F# doesn't have these, although we can't use F# anyways due to `(*x)` issue
-  + most conventional
-  + allows removing newlines safely
-  + supported by highlighters
-  - too decorative
-  - pair-operators are heavy to handle
-    - editors don't use it as shortcuts as Cmd+/
-  + space-agnostic, newline-agnostic: allows just removing all spaces from code safely, unlike `//` comments
-  - not so nice without `//` pair
-  - noisy
-  - in JSX we anyways use that for comments
+    + popular (CSS, C-family, PHP, Swift, Kotlin, Java, JS)
+      -~ F# doesn't have these, although we can't use F# anyways due to `(*x)` issue
+    + most conventional
+    + allows removing newlines safely
+    + supported by highlighters
+    - too decorative
+    - pair-operators are heavy to handle
+      - editors don't use it as shortcuts as Cmd+/
+    + space-agnostic, newline-agnostic: allows just removing all spaces from code safely, unlike `//` comments
+    - not so nice without `//` pair
+    - noisy
+    - in JSX we anyways use that for comments
+    + it discourages myriads of comments style, so the code keeps clean
 
   5. `(; ;)`
     - wrongly associates with block
@@ -3446,7 +3449,7 @@
     + matches array layout
     + it already indexes like that in biquad filter code `x1,x2 = x0,x1`
 
-## [x] Variables: how do we make var/let/const? -> implicitly; globals are available for read, but not write on the first line.
+## [x] Variables: how do we make var/let/const for local vs global? -> first expression in block defines locals; globals are available for read, but not write on the first line.
 
   * The logic: we use global fns directly, so globals should be available without prefixes either: `f()=sin();`
     * we don't redeclare something already available, and we declare something new: `f(a,b,c)=(*d,*e;)`
@@ -3477,6 +3480,10 @@
   * `x(a,b;c,d) = (...)` for local variables
     + no new syntax
     - unusual use
+    + kind-of what I do in JS by `(a,_b,_c) => (...)`
+    - unintuitive
+    - forces fns to be ugly - defining a bunch of vars upfront
+    - doesn't let subscopes in principle (`let`)
 
   * `x(...) = (&(a,b,c); )`
     + args AND locals
@@ -3523,10 +3530,12 @@
     + like Python - we can make writing variable as local, and reading as transparent
       + that seems to be a pattern: we read imports but write from outside; we read globals but write from outside
 
-  * first line is for declaring locals, rest is read/write globals but define locals `a,b;f()=(a=1;b=2)` - defines local `a`, writes global `b`
-    + compatible with last-line for returns
+  * first expression declares locals, rest is read/write globals `a,b;f()=(a=1;b=2)` - defines local `a`, writes global `b`
+    + compatible with last-expr for return
     + intuitive as sequence of vars `a,b,c;` for declaring locals (prev option), but assignment is allowed on first line.
     + matces `for (init; before; after)` syntax
+    - might be surprizing
+    - breaks grouping, `x()=(a=1;b=1)` is not the same as `x()=((a,b)=1;)` on the first line
 
 ### [x] Variables: how to indicate global vars? -> ~~`^x;x;`~~ globals are for read by default and for write after first line
 
