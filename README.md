@@ -6,24 +6,6 @@ Project is early experimental stage, design decisions must be consolidated.
 <!-- [Examples](https://dy.github.io/piezo/examples/) | [Motivation](#motivation) -->
 
 
-### Principles
-
-* _Minimal_: maximal expressivity with short syntax.
-* _Intuitive_: common base, familiar patterns, visual hints.
-* _No keywords_: chars for vars, symbols for operators, real i18l code.
-* _Case-agnostic_: case changes don't break code (eg. `sampleRate` vs `samplerate`).
-* _Space-agnostic_: spaces and newlines can be removed or added freely.
-* _Explicit_: no implicit globals, no wildcard imports, no hidden file conventions (eg. `package.json`).
-* _Inferred types_: derived by usage, focus on logic over language.
-* _Normalized AST_: no complex parsing rules, just unary, binary or n-ary operators.
-* _Performant_: fast compile, fast execution, good for live envs.
-* _No runtime_: statically analyzable, no OOP, no dynamic structures, no lamdas.
-* _No waste_: linear memory, fixed heap, no GC.
-* _Low-level_: no fancy features beyond math and buffers, embeddable.
-* _Readable output_: produces readable WebAssembly text, can serve as meta-language.
-* _Minimal footprint_: minimally possible produced WASM output, no heavy workarounds.
-
-
 ## Reference
 
 ```
@@ -432,13 +414,15 @@ const arrValues = new Float64Array(arr, memory)
 ```
 -->
 
-<!--
+
 ## Motivation
 
-Audio processing has no cross-platform solution, various environments deal with audio differently, some don't have audio processing at all. _Web Audio API_ is unreliable - it has unpredictable pauses, glitches and so on, so <q>audio is better handled in WASM worklet</q> ([@stagas](https://github.com/stagas)).
+Audio processing has no cross-platform solution, various environments deal with audio differently, some don't have audio processing at all.<br>
+_Web Audio API_ is unreliable - it has unpredictable pauses, glitches and so on, so <q>audio is better handled in WASM worklet</q> ([@stagas](https://github.com/stagas)).
 
-_Piezo_ attempts to fill that gap, providing a common layer. It is also a personal attempt on language design - rethinking parts and providing safe haven. WASM target gives max performance and compatibility - browsers, [audio/worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) etc.
--->
+_Piezo_ attempts to fill that gap, providing a common layer. It is also a personal take in language design - rethinking parts, adding missing features, and providing safe haven.<br>
+WASM target gives performance and compatibility - browsers, [audio/worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) etc.
+
 
 <!--
 ## Projects using piezo
@@ -446,6 +430,24 @@ _Piezo_ attempts to fill that gap, providing a common layer. It is also a person
 * [web-audio-api](https://github.com/audiojs/web-audio-api)
 * [audiojs](https://github.com/audiojs/)
 -->
+
+
+### Principles
+
+* _Minimal_: maximal expressivity with short syntax.
+* _Intuitive_: common base, familiar patterns, visual hints.
+* _No keywords_: chars for vars, symbols for operators, real i18l code.
+* _Case-agnostic_: case changes don't break code (eg. `sampleRate` vs `samplerate`).
+* _Space-agnostic_: spaces and newlines can be removed or added freely.
+* _Explicit_: no implicit globals, no wildcard imports, no hidden file conventions (eg. `package.json`).
+* _Inferred types_: derived by usage, focus on logic over language.
+* _Normalized AST_: no complex parsing rules, just unary, binary or n-ary operators.
+* _Performant_: fast compile, fast execution, good for live envs.
+* _No runtime_: statically analyzable, no OOP, no dynamic structures, no lamdas.
+* _No waste_: linear memory, fixed heap, no GC.
+* _Low-level_: no fancy features beyond math and buffers, embeddable.
+* _Readable output_: produces readable WebAssembly text, can serve as meta-language.
+* _Minimal footprint_: minimally possible produced WASM output, no heavy workarounds.
 
 
 
