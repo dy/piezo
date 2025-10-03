@@ -123,7 +123,7 @@ times(4), times(,5);          ;; 4, 5: optional, skipped arg
 dup(x) = (x,x);               ;; return multiple
 (a,b) = dup(b);               ;; destructure
 a=1,b=1; x()=(a=2;b=2); x();  ;; a==1, b==2: first statement declares locals
-fn() = ( x; log(x) );         ;; defer: calls log after returning x
+fn() = ( x; ~log(x) );        ;; defer: calls log after returning x
 f(a, cb) = cb(a[0]);          ;; array, func args
 a() = ( *i=0; *i++ );         ;; state var: i persists value
 a(), a();                     ;; 0,1
@@ -417,26 +417,26 @@ const arrValues = new Float64Array(arr, memory)
 Audio processing has no cross-platform solution, various environments deal with audio differently, some don't have audio processing at all. _Web Audio API_ is unreliable - it has unpredictable pauses, glitches and so on, so <q>audio is better handled in WASM worklet</q> ([@stagas](https://github.com/stagas)).
 
 _Piezo_ attempts to fill that gap, providing a common layer. It is also a personal attempt on language design - rethinking parts and providing safe haven. WASM target gives max performance and compatibility - browsers, [audio/worklets](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process), web-workers, nodejs, [embedded systems](https://github.com/bytecodealliance/wasm-micro-runtime) etc.
-
+-->
 
 ### Principles
 
-* Maximal expressivity with minimal syntax.
-* _Familiar_: common syntax, clear patterns for new operators.
-* _Performant_: fast compile, fast execution – good for live envs.
-* _No keywords_: chars for vars, symbols for operators – good for i18l code.
-* _No runtime_: statically analyzable, no OOP, no dynamic structures, no lamdas, no nested scopes.
+* _Minimal_: maximal expressivity with concise syntax.
+* _Intuitive_: common syntax, familiar patterns.
+* _No keywords_: chars for vars, symbols for operators, real i18l code.
+* _Performant_: fast compile, fast execution, good for live envs.
+* _No runtime_: statically analyzable, no OOP, no dynamic structures, no lamdas.
 * _No waste_: linear memory, fixed heap, no GC.
-* _Inferred types_: derived by usage – focus on logic over language.
+* _Inferred types_: derived by usage, focus on logic over language.
 * _Explicit_: no implicit globals, no wildcard imports, no hidden file conventions.
-* _Space-agnostic_: spaces and newlines can be removed or added freely (eg. for compression or formatting).
+* _Space-agnostic_: spaces and newlines can be removed or added freely (except comments).
 * _Case-agnostic_: case changes don't break code (eg. `sampleRate` vs `samplerate`).
 * _Normalized syntax_: no complex parsing rules – just unary, binary or n-ary operators.
 * _Readable output_: produces readable WebAssembly text (eg. can serve as meta-language).
 * _Low-level_: no fancy features beyond math and buffers, embeddable.
 * _Minimal footprint_: minimally possible produced WASM output, no heavy workarounds.
 
--->
+
 
 <!--
 ## Projects using piezo
@@ -444,8 +444,6 @@ _Piezo_ attempts to fill that gap, providing a common layer. It is also a person
 * [web-audio-api](https://github.com/audiojs/web-audio-api)
 * [audiojs](https://github.com/audiojs/)
 -->
-
-### Philosophy
 
 
 
