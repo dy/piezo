@@ -4319,8 +4319,8 @@
 
   ? ALT: `<( x>2?!; )>`
 
-### [x] Loops: What's the best character for topic placeholder? -> ~~`_` means "insert here", also it's terminal caret~~ `#` means index, id, ith item
-  * `list |> #*2`, `list |> #>2?^^#:^#;`
+### [x] Loops: What's the best character for topic placeholder? -> ~~`_` means "insert here", also it's terminal caret~~ `#` feels more obvious as ith item, index for `..x[] |> #` case
+  * `list |> #*2`, `list |> #>2?../#:./#;`
     + `#` is almost perfect for topic/reference, associates with `#`th item
       - pipe is not loop, it's "previous expression output insert here"
     - has more meaning as "number of" rather than i-th number
