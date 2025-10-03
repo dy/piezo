@@ -19,7 +19,7 @@ Project is early experimental stage, design decisions must be consolidated.
 ?:                            /* condition, switch */
 x[i] x[]                      /* member access, length */
 a..b a.. ..b ..               /* ranges */
-|> _                          /* pipe/loop/map, topic reference */
+|> _ |>=                      /* pipe/loop/map, topic reference */
 ./ ../ .../                   /* continue/skip, break/stop, root return */
 >< <>                         /* inside, outside */
 -< -/ -*                      /* clamp, normalize, lerp */
@@ -62,6 +62,7 @@ a -* 0..10, a -/ 0..10;       /* lerp(a, 0, 10), normalize(a, 0, 10) */
 (a,b)[1] = c[2,3];            /* props: a[1]=c[2], b[1]=c[3] */
 (a,..,z) = (1,2,3,4);         /* pick: a=1, z=4 */
 a = (b,c,d);                  /* pick first: a=b; see loops */
+(a,(b,(c))) == (a,b,c);       /* groups are always flat */
 
 /* Arrays */
 m = [..10];                   /* array of 10 elements */
@@ -148,11 +149,11 @@ x, y, z;                      /* exports last statement */
 Amplify k-rate block of samples.
 
 ```
-gain(                             /* define a function with block, volume arguments. */
+gain(
   block,                          /* block is a array argument */
   volume -< 0..100                /* volume is limited to 0..100 range */
 ) = (
-  block[..] |>= # * volume        /* multiply each sample by volume value */
+  (i=0; block[..]) |> block[i] *= volume;
 );
 
 gain([0..5 * 0.1], 2);            /* 0, .2, .4, .6, .8, 1 */
@@ -167,36 +168,34 @@ gain([0..5 * 0.1], 2);            /* 0, .2, .4, .6, .8, 1 */
 A-rate (per-sample) biquad filter processor.
 
 ```
-1pi = pi;                         /* define pi units */
-1s = 44100;                       /* define time units in samples */
-1k = 10000;                       /* basic si units */
+1pi = 3.1415;
+1s = 44100;
+1k = 10000;
 
-lpf(                              /* per-sample processing function */
-  x0,                             /* input sample value */
-  freq = 100 -< 1..10k,            /* filter frequency, float */
-  Q = 1.0 -< 0.001..3.0            /* quality factor, float */
+lpf(
+  x0,
+  freq = 100 -< 1..10k,
+  Q = 1.0 -< 0.001..3.0
 ) = (
-  *(x1, y1, x2, y2) = 0;          /* define filter state */
+  /* filter state */
+  *(x1, y1, x2, y2) = 0;
+
+  /* shift state */
+  ;; (x1, x2) = (x0, x1), (y1, y2) = (y0, y1);
 
   /* lpf formula */
   w = 2pi * freq / 1s;
-  sin_w, cos_w = sin(w), cos(w);
+  (sin_w, cos_w) = (sin(w), cos(w));
   a = sin_w / (2.0 * Q);
 
-  b0, b1, b2 = (1.0 - cos_w) / 2.0, 1.0 - cos_w, b0;
-  a0, a1, a2 = 1.0 + a, -2.0 * cos_w, 1.0 - a;
+  (b0, b1, b2) = ((1.0 - cos_w) / 2.0, 1.0 - cos_w, b0);
+  (a0, a1, a2) = (1.0 + a, -2.0 * cos_w, 1.0 - a);
+  (b0, b1, b2, a1, a2) /= a0;
 
-  b0, b1, b2, a1, a2 *= 1.0 / a0;
-
-  y0 = b0*x0 + b1*x1 + b2*x2 - a1*y1 - a2*y2;
-
-  x1, x2 = x0, x1;            /* shift state */
-  y1, y2 = y0, y1;
-
-  y0                              /* return y0 */
+  y0 = b0*x0 + b1*x1 + b2*x2 - a1*y1 - a2*y2
 );
 
-/* i = [0, .1, .3] |> lpf(i, 108, 5); */
+[0, .1, .3, ...] |> lpf(_, 108, 5);
 ```
 
 </details>
@@ -207,11 +206,11 @@ lpf(                              /* per-sample processing function */
 Generates ZZFX's [coin sound](https://codepen.io/KilledByAPixel/full/BaowKzv) `zzfx(...[,,1675,,.06,.24,1,1.82,,,837,.06])`.
 
 ```
-1pi = pi;
+1pi = 3.1415;
 1s = 44100;
 1ms = 1s / 1000;
 
-/* define waveform generators */
+/* waveform generators */
 oscillator = [
   saw(phase) = (1 - 4 * abs( round(phase/2pi) - phase/2pi )),
   sine(phase) = sin(phase)
@@ -220,57 +219,55 @@ oscillator = [
 /* applies adsr curve to sequence of samples */
 adsr(
   x,
-  a -< 1ms..,                    /* prevent click */
+  a -< 1ms..,                   /* prevent click */
   d,
   (s, sv=1),                    /* optional group-argument */
   r
 ) = (
-  *i = 0;                       /* internal counter, increments after fn body */
+  *i = 0 ;; i++;                /* internal counter */
   t = i / 1s;
 
   total = a + d + s + r;
 
-  y = t >= total ? 0 : (
+  t >= total ? 0 : (
     t < a ? t/a :               /* attack */
     t < a + d ?                 /* decay */
     1-((t-a)/d)*(1-sv) :        /* decay falloff */
     t < a  + d + s ?            /* sustain */
     sv :                        /* sustain volume */
     (total - t)/r * sv
-  ) * x;
-  i++;
-  y
+  ) * x
 );
 
 /* curve effect */
-curve(x, amt~0..10=1.82) = (sign(x) * abs(x)) ** amt;
+curve(x, amt -< 0..10 = 1.82) = (sign(x) * abs(x)) ** amt;
 
 /* coin = triangle with pitch jump, produces block */
 coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
   *out=[..1024];
-  *i=0;
-  *phase = 0;                   /* current phase */
+  *i=0;;i++;
+  *phase = 0;; phase += (freq + (t > delay && jump)) * 2pi / 1s;
   t = i / 1s;
 
   /* generate samples block, apply adsr/curve, write result to out */
-  ..  |> oscillator[shape](phase)
+  ..1024  |> oscillator[shape](phase)
       |> adsr(_, 0, 0, .06, .24)
       |> curve(_, 1.82)
       |> out[..] = _;
-
-  i++;
-  phase += (freq + (t > delay && jump)) * 2pi / 1s;
 )
 ```
 
 </details>
--->
-<!--
+
+
+<details>
+<summary><strong>Freeverb</strong></summary>
+
 ## [Freeverb](https://github.com/opendsp/freeverb/blob/master/index.js)
 
 ```
-<./combfilter.s#comb>;
-<./allpass.s#allpass>;
+<./combfilter.z#comb>;
+<./allpass.z#allpass>;
 
 1s = 44100;
 
@@ -278,7 +275,7 @@ coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
 (b1,b2,b3,b4) = (1422,1491,1557,1617);
 (p1,p2,p3,p4) = (225,556,441,341);
 
-;; TODO: stretch
+/* TODO: stretch */
 
 reverb(input, room=0.5, damp=0.5) = (
   *combs_a = a0,a1,a2,a3 | a: stretch(a),
@@ -298,6 +295,12 @@ Features:
 
 * _multiarg pipes_ − pipe can consume groups. Depending on arity of target it can act as convolver: `a,b,c | (a,b) -> a+b` becomes  `(a,b | (a,b)->a+b), (b,c | (a,b)->a+b)`.
 * _fold operator_ − `a,b,c |: fn` acts as `reduce(a,b,c, fn)`, provides efficient way to reduce a group or array to a single value.
+
+</details>
+
+
+<details>
+<summary><strong>Floatbeat</strong></summary>
 
 ### [Floatbeat](https://dollchan.net/bytebeat/index.html#v3b64fVNRS+QwEP4rQ0FMtnVNS9fz9E64F8E38blwZGvWDbaptCP2kP3vziTpumVPH0qZyXzfzHxf8p7U3aNJrhK0rYHfgHAOZZkrlVVu0+saKbd5dTXazolRwnvlKuwNvvYORjiB/LpyO6pt7XhYqTNYZ1DP64WGBYgczuhAQgpiTXEtIwP29pteBZXqwTrB30jwc7i/i0jX2cF8g2WIGKlhriTRcPjSvcVMBn5NxvgCOc3TmqZ7/IdmmEnAMkX2UPB3oMHdE9WcKqVK+i5Prz+PKa98uOl60RgE6zP0+wUr+qVpZNsDUjKhtyLkKvS+LID0FYVSrJql8KdSMptKKlx9eTIbcllvdf8HxabpaJrIXEiycV7WGPeEW9Y4v5CBS07WBbUitvRqVbg7UDtQRRG3dqtZv3C7bsBbFUVcALvwH86MfSDws62fD7CTb0eIghE/mDAPyw9O9+aoa9h63zxXl2SW/GKOFNRyxbyF3N+FA8bPyzFb5misC9+J/XCC14nVKfgRQ7RY5ivKeKmmjOJMaBJSbEZJoiZZMuj2pTEPGunZhqeatOEN3zadxrXRmOw+AA==)
 
@@ -344,7 +347,10 @@ Features:
 * _loop operator_ − `cond <| expr` acts as _while_ loop, calling expression until condition holds true. Produces sequence as result.
 * _string literal_ − `"abc"` acts as array with ASCII codes.
 * _length operator_ − `items[]` returns total number of items of either an array, group, string or range.
--->
+
+
+</details>
+
 <!--
 * [Freeverb](/examples/freeverb.s)
 * [Floatbeat](/examples/floatbeat.s)
@@ -352,7 +358,7 @@ Features:
 
 See [all examples](/examples) -->
 
-<!--
+
 ## Usage
 
 _piezo_ is available as CLI or JS package.
@@ -413,7 +419,6 @@ mult(108)
 // array is a pointer to memory, get values via
 const arrValues = new Float64Array(arr, memory)
 ```
--->
 
 
 ## Motivation

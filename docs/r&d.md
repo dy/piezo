@@ -3672,6 +3672,7 @@
   + solves problem mentioned by despawnerer (`dateRange` vs `daterange`)
   + lowcase is typographycally more expressive
   + code is robust to changing case, eg. as url string
+    - except for string
   - `1Ms` vs `1ms`
     ~ not sure it's good idea to designate such meaning to capitalization
     ~ `1Ms` is super-unlikely, for bytes can use `1mb` - it's never millibyte
@@ -3698,7 +3699,7 @@
 
   + simple
   + Enables extra room for naming, eg. `Oscillator` creates oscillator vs `oscillator` is instance
-  + Doesn't create exports naming conflict: `foo_bar` is non-js export name, like `samplerate`
+  + Doesn't create exports conflicts: `foo_bar` is non-js export name, like `samplerate`
   + More conventional: JS, C, Python
   - Possible problem mentioned by despawnerer: `fullName` vs `fullname`.
   ~ MySQL is fine being case-insensitive
