@@ -4319,8 +4319,7 @@
 
   ? ALT: `<( x>2?!; )>`
 
-### [x] Loops: What's the best character for topic placeholder? -> `_` means "insert here", also it's terminal caret
-
+### [x] Loops: What's the best character for topic placeholder? -> ~~`_` means "insert here", also it's terminal caret~~ `#` means index, id, ith item
   * `list |> #*2`, `list |> #>2?^^#:^#;`
     + `#` is almost perfect for topic/reference, associates with `#`th item
       - pipe is not loop, it's "previous expression output insert here"
@@ -4328,7 +4327,7 @@
       ~+ current item number as well
     + has typographical meaning as placeholder, or "insertion field"
       - less of "insert here" more of template
-    - needs prohibiting variables starting from # though
+    ~~- needs prohibiting variables starting from # though~~
       - which is problematic for mono buffers `#tri = [..1s] <|= tri(# * 2)`
       ~+ no, doesn't need, why?
     -~ interferes with `<math#a,b,c>`
@@ -4340,6 +4339,8 @@
     + easier to scan visually, compared to `_`
     - has some sense of global declaration. We may want to reserve `#` for declarations purposes
     - too heavy semantic load from other concepts, like comment in python, hash in HTML, tags, private in JS, markdown header
+    + has strong association with "id" in html
+      + which means index, id, ith item
 
   * ~~`list |> &*2`, `list |> &>2?^^&:^&;`~~
     + & is almost-character, feels more like an id
@@ -4379,6 +4380,7 @@
     + we don't have special designation for lowdash otherwise
     - HARD to scan - it doesn't look like id, compared to `#`
     + it's caret in old terminals, meaning literally "insert here"
+    - has strong meaning/use as "placeholder", throwable variable in js
   * ~~`list |> ^ * 2`~~
     - conflicts with `^` for return `list |> ^>2?^^^:^^;`
     + compatible with js proposal; compatible with makefile;

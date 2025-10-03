@@ -19,7 +19,7 @@ Project is early experimental stage, design decisions must be consolidated.
 ?:                            /* condition, switch */
 x[i] x[]                      /* member access, length */
 a..b a.. ..b ..               /* ranges */
-|> _ |>=                      /* pipe/loop/map, topic reference */
+|> #                          /* pipe/loop/map, topic reference */
 ./ ../ .../                   /* continue/skip, break/stop, root return */
 >< <>                         /* inside, outside */
 -< -/ -*                      /* clamp, normalize, lerp */
@@ -71,7 +71,7 @@ m = [1,2,3,4];                /* array of 4 elements */
 m = [n[..]];                  /* copy n */
 m = [1, 2..4, 5];             /* mixed definition */
 m = [1, [2, 3, [4, m]]];      /* nested arrays (tree) */
-m = [0..4 |> _ ** 2];         /* list comprehension */
+m = [0..4 |> # ** 2];         /* list comprehension */
 (a, z) = (m[0], m[-1]);       /* get by index */
 (b, .., z) = m[1, 2..];       /* get multiple values */
 length = m[];                 /* get length */
@@ -101,17 +101,17 @@ val = (                       /* switch */
 a ? ./b;                      /* early return: if a then return b */
 
 /* Loops */
-(a, b, c) |> f(_);            /* for each item in a, b, c do f(item) */
+(a, b, c) |> f(#);            /* for each item in a, b, c do f(item) */
 (i = 10..) |> (               /* descend over range */
   i < 5 ? ./a;                /* if item < 5 skip (continue) */
   i < 0 ? ../a;               /* if item < 0 stop (break) */
 );
-x[..] |> f(_) |> g(_);        /* pipeline sequence */
+x[..] |> f(#) |> g(#);        /* pipeline sequence */
 (i = 0..w) |> (               /* nest iterations */
   (j = 0..h) |> f(i, j);      /* f(x,y) */
 );
 ((a,b) = 0..10) |> a+b;       /* iterate pairs */
-(x,,y) = (a,b,c) |> _ * 2;    /* capture result x = a*2, y = c*2; */
+(x,,y) = (a,b,c) |> # * 2;    /* capture result x = a*2, y = c*2; */
 .. |> i < 10 ? i++ : ../;     /* while i < 10 i++ */
 
 /* Functions */
@@ -153,7 +153,7 @@ gain(
   block,                          /* block is a array argument */
   volume -< 0..100                /* volume is limited to 0..100 range */
 ) = (
-  (i=0; block[..]) |> block[i] *= volume;
+  ..block[] |> block[#] *= volume;
 );
 
 gain([0..5 * 0.1], 2);            /* 0, .2, .4, .6, .8, 1 */
@@ -195,7 +195,7 @@ lpf(
   y0 = b0*x0 + b1*x1 + b2*x2 - a1*y1 - a2*y2
 );
 
-[0, .1, .3, ...] |> lpf(_, 108, 5);
+[0, .1, .3, ...] |> lpf(#, 108, 5);
 ```
 
 </details>
@@ -251,9 +251,9 @@ coin(freq=1675, jump=freq/2, delay=0.06, shape=0) = (
 
   /* generate samples block, apply adsr/curve, write result to out */
   ..1024  |> oscillator[shape](phase)
-      |> adsr(_, 0, 0, .06, .24)
-      |> curve(_, 1.82)
-      |> out[..] = _;
+      |> adsr(#, 0, 0, .06, .24)
+      |> curve(#, 1.82)
+      |> out[..] = #;
 )
 ```
 
