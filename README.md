@@ -1,4 +1,4 @@
-# piezo ![stability](https://img.shields.io/badge/stability-experimental-black) [![test](https://github.com/dy/piezo/actions/workflows/test.yml/badge.svg)](https://github.com/dy/piezo/actions/workflows/test.yml)
+# ⚡︎ piezo ![stability](https://img.shields.io/badge/stability-experimental-black) [![test](https://github.com/dy/piezo/actions/workflows/test.yml/badge.svg)](https://github.com/dy/piezo/actions/workflows/test.yml)
 
 Prototype language designed for signal processing, synthesis and analysis.<br/>
 Project is early experimental stage, design decisions must be consolidated.
