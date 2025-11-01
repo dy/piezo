@@ -2123,7 +2123,7 @@
   * Essentially, it can be simply "return from current scope" operator, which in wasm is called "br" - break, or `../` / `./`
   10. `(a == 1 ?^ log(1); a >< 2.. ?^ log(2); log(3))`
 
-## [x] Comments: ~~`//`,~~ `/*` is space agnostic and most neutral ~~`;;`,`(; ;)`~~ ~~`//` is most based choice.~~ ~~`\\` gives many benefits~~ ~~`;;` has same benefits, but least toxic~~
+## [x] Comments: ~~`//`,~~ ~~`/*` is space agnostic and most neutral but tedious~~ ~~`;;`,`(; ;)`~~ ~~`//` is most based choice.~~ ~~`\\` gives many benefits but too fancy~~ ~~`;;` has same benefits, but least toxic~~ # seems to be the safe choice
 
   1. `;;`
     * Message: piezo is like assembly, expect low-level stuff & reading docs
@@ -2263,7 +2263,7 @@
     - writing that comment by hand requires escaping each of these, so comment becomes `\\\\`
       ~+ just `\` is good enough
     - too ground-breaking
-      ~+ maybe that's good
+      ~+ maybe that's good, we need something fresh
     - disturbs convention of C, JS, Scala, Rust, Java, Go etc
       - forcing all programmers from these lands learn that new comments syntax
     - complicates copy-paste of floatbeats
@@ -2271,6 +2271,7 @@
     - we're not creating language from scratch, we extend existing common syntax, and comments are standard part...
       + yes, but we are rethinking parts
       + besides it's a new language
+    - too fancy and unconventional
 
   4. `/* */`
     + popular (CSS, C-family, PHP, Swift, Kotlin, Java, JS)
@@ -2287,6 +2288,7 @@
     - noisy
     - in JSX we anyways use that for comments
     + it discourages myriads of comments style, so the code keeps clean
+    - not cool enough
 
   5. `(; ;)`
     - wrongly associates with block
@@ -2308,7 +2310,9 @@
 
   7. `# xxx`
     * Message: piezo is like python - quirky, inlinish, unintuitive
-    + Python, Perl, R, Raku, PHP, Shells, Ruby, Julia, Nim, Make
+    + Python, Perl, R, Ruby, Julia, Nim, Bash/Shell, PHP, Make, YAML, TOML, Dockerfile, CMake
+      + This is arguably the most common single-line comment syntax across scripting and configuration languages
+    + Meaning of double comment `//=`
     - reserves `#` from the name, loop placeholder
     - too black, dark, heavy
 
@@ -4320,7 +4324,7 @@
 
   ? ALT: `<( x>2?!; )>`
 
-### [x] Loops: What's the best character for topic placeholder? -> ~~`_` means "insert here", also it's terminal caret~~ `#` feels more obvious as ith item, index for `..x[] |> #` case
+### [x] Loops: What's the best character for topic placeholder? -> ~~`_` means "insert here", also it's terminal caret~~ ~~`#` feels more obvious as ith item, index for `..x[] |> #` case; a bit heavy~~ $ seems to be natural safe convention for insertion
   * `list |> #*2`, `list |> #>2?../#:./#;`
     + `#` is almost perfect for topic/reference, associates with `#`th item
       - pipe is not loop, it's "previous expression output insert here"
@@ -4339,7 +4343,7 @@
     - has strong flavor of directive (C++ etc) or comment (Python etc)
     + easier to scan visually, compared to `_`
     - has some sense of global declaration. We may want to reserve `#` for declarations purposes
-    - too heavy semantic load from other concepts, like comment in python, hash in HTML, tags, private in JS, markdown header
+    - too heavy semantic load from other concepts, like comment in python, hash in HTML, tags, private in JS, markdown header, directives
     + has strong association with "id" in html
       + which means index, id, ith item
 
@@ -4382,6 +4386,11 @@
     - HARD to scan - it doesn't look like id, compared to `#`
     + it's caret in old terminals, meaning literally "insert here"
     - has strong meaning/use as "placeholder", throwable variable in js
+  * `list |> $ * 2`, `list |> $ > 2 ? ../ : ./`
+    + compatible with strings placeholder convention `$<xxx>`
+    + can be named potentially
+    + powershell, perl `$_`
+    -? can conflict with strings `list |> "a$<$>b"`?
   * ~~`list |> ^ * 2`~~
     - conflicts with `^` for return `list |> ^>2?^^^:^^;`
     + compatible with js proposal; compatible with makefile;
