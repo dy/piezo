@@ -8,7 +8,7 @@ Project is early experimental stage, design decisions must be consolidated.
 
 ## Reference
 
-```r
+```
 # Operators
 + - * / % -- ++               # arithmetical (float)
 ** %% //                      # power, unsigned mod, flooring div
