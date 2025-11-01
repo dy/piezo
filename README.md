@@ -8,7 +8,7 @@ Project is early experimental stage, design decisions must be consolidated.
 
 ## Reference
 
-```
+```r
 # Operators
 + - * / % -- ++               # arithmetical (float)
 ** %% //                      # power, unsigned mod, flooring div
@@ -33,7 +33,7 @@ a..b a.. ..b ..               # ranges
 
 # Variables
 foo=1, bar=2.0;               # declare vars
-AbC, $0, Δx, x@1;             # names permit alnum, unicodes, _$#@
+AbC, $0, Δx, x_1;             # names permit alnum, unicodes, _$@
 foo == Foo, bar == bAr;       # case-insensitive
 default=1, eval=fn, else=0;   # no reserved words
 true = 0b1, false = 0b0;      # eg: alias bools
